@@ -8,7 +8,9 @@ import { ScreenShell } from '@/components/rpg/screen-shell';
 import { SectionHeader } from '@/components/rpg/section-header';
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
-import { getUnlockedRewardEntries, REWARD_TYPE_LABELS } from '@/lib/reward-unlocks';
+import { getCompletedChapterCountForSaga } from '@/lib/chapter-progress';
+import { getUnlockedRewardEntries, isSagaUnlocked, REWARD_TYPE_LABELS } from '@/lib/reward-unlocks';
+import { getSagaActiveChapter } from '@/lib/saga-progress';
 
 const RESET_CONFIRM_MESSAGE =
   'This will erase all local save data and return you to onboarding:\n\n' +
@@ -31,6 +33,14 @@ export function ProfileScreen() {
     quests,
     resetProgress,
   } = useGame();
+
+  const unlockedSagas = useMemo(
+    () =>
+      activeUniverse.sagas.filter((saga) =>
+        isSagaUnlocked(saga, playerProgress.unlockedRewards),
+      ),
+    [activeUniverse.sagas, playerProgress.unlockedRewards],
+  );
 
   const unlockedRewards = useMemo(
     () => getUnlockedRewardEntries(activeUniverse, playerProgress.unlockedRewards),
@@ -123,6 +133,43 @@ export function ProfileScreen() {
             ))
           )}
 
+          <Text style={[styles.section, { color: activeUniverse.palette.gold }]}>SAGA PROGRESS</Text>
+          {unlockedSagas.map((saga) => {
+            const completedChapters = getCompletedChapterCountForSaga(saga, playerProgress);
+            const activeChapter = getSagaActiveChapter(saga, playerProgress);
+            const totalChapters = saga.chapters.length;
+
+            return (
+              <View
+                key={saga.id}
+                style={[
+                  styles.sagaProgressRow,
+                  {
+                    backgroundColor: activeUniverse.palette.panel,
+                    borderColor:
+                      saga.id === activeSaga.id
+                        ? activeUniverse.palette.gold
+                        : activeUniverse.palette.panelBorder,
+                  },
+                ]}>
+                <View style={styles.sagaProgressHeader}>
+                  <Text style={[styles.sagaProgressTitle, { color: activeUniverse.palette.bone }]}>
+                    {saga.title}
+                  </Text>
+                  {saga.id === activeSaga.id && (
+                    <Text style={[styles.sagaProgressActive, { color: activeUniverse.palette.gold }]}>
+                      ACTIVE
+                    </Text>
+                  )}
+                </View>
+                <Text style={[styles.sagaProgressMeta, { color: activeUniverse.palette.fog }]}>
+                  {completedChapters}/{totalChapters} chapters cleared
+                  {activeChapter ? ` · riding ${activeChapter.title}` : ''}
+                </Text>
+              </View>
+            );
+          })}
+
           <Text style={[styles.section, { color: activeUniverse.palette.gold }]}>ALLIES & ENEMIES</Text>
           {characters.map((character, i) => (
             <CharacterCard
@@ -131,19 +178,6 @@ export function ProfileScreen() {
               index={i}
               relationship={playerProgress.relationshipByCharacter[character.id]}
             />
-          ))}
-
-          <Text style={[styles.section, { color: activeUniverse.palette.gold }]}>ACTIVE SAGA</Text>
-          {[activeSaga].map((saga) => (
-            <View
-              key={saga.id}
-              style={[styles.worldRow, { borderColor: activeUniverse.palette.panelBorder }]}>
-              <Text style={styles.worldIcon}>{activeUniverse.icon}</Text>
-              <Text style={[styles.worldName, { color: activeUniverse.palette.bone }]}>{saga.title}</Text>
-              <Text style={[styles.worldVillain, { color: activeUniverse.palette.fog }]}>
-                vs {saga.villainName}
-              </Text>
-            </View>
           ))}
 
           <Text style={[styles.section, { color: activeUniverse.palette.fog }]}>DEV / TESTING</Text>
@@ -222,6 +256,22 @@ const styles = StyleSheet.create({
   },
   rewardType: { fontFamily: GameFonts.uiSemi, fontSize: 9, letterSpacing: 2 },
   rewardName: { fontFamily: GameFonts.ui, fontSize: 15, letterSpacing: 1 },
+  sagaProgressRow: {
+    borderWidth: 1,
+    padding: 12,
+    gap: 6,
+    marginBottom: 8,
+    transform: [{ skewX: '-2deg' }],
+  },
+  sagaProgressHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  sagaProgressTitle: { fontFamily: GameFonts.ui, fontSize: 14, letterSpacing: 1, flex: 1 },
+  sagaProgressActive: { fontFamily: GameFonts.uiSemi, fontSize: 9, letterSpacing: 1.5 },
+  sagaProgressMeta: { fontFamily: GameFonts.uiSemi, fontSize: 10, letterSpacing: 0.5, lineHeight: 15 },
   worldRow: {
     flexDirection: 'row',
     alignItems: 'center',

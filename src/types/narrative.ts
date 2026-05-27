@@ -165,13 +165,14 @@ export type PlayerProgress = {
   hasOnboarded: boolean;
   selectedUniverseId: string;
   selectedSagaId: string;
-  /** Active chapter id in the selected saga (`activeChapterId`). */
+  /** Active chapter for the selected saga — mirrors activeChapterBySagaId[selectedSagaId]. */
   currentChapterId: string;
+  activeChapterBySagaId: Record<string, string>;
+  completedChapterIdsBySagaId: Record<string, string[]>;
+  completedQuestIdsBySagaId: Record<string, string[]>;
   totalXp: number;
   level: number;
   reputation: number;
-  completedQuestIds: string[];
-  completedChapterIds: string[];
   unlockedRewards: string[];
   userQuests: UserQuest[];
   villainInfluenceBySaga: Record<string, number>;
@@ -179,5 +180,5 @@ export type PlayerProgress = {
   relationshipByCharacter: Record<string, RelationshipTier>;
   characterAffinity: Record<string, number>;
   seenChapterIntros: string[];
-  dismissedTauntForChapterId: string | null;
+  dismissedTauntBySagaId: Record<string, string | null>;
 };

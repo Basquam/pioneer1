@@ -19,8 +19,8 @@ export function MapScreen() {
   const [detailMode, setDetailMode] = useState<ChapterStatus | null>(null);
 
   const territoryNodes = useMemo(
-    () => buildTerritoryNodes(chapters, playerProgress),
-    [chapters, playerProgress],
+    () => buildTerritoryNodes(chapters, activeSaga, playerProgress),
+    [activeSaga, chapters, playerProgress],
   );
 
   const reclaimedCount = territoryNodes.filter((node) => node.status === 'completed').length;

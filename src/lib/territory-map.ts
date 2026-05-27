@@ -1,4 +1,4 @@
-import type { Chapter, PlayerProgress } from '@/types/narrative';
+import type { Chapter, PlayerProgress, Saga } from '@/types/narrative';
 
 import { getChapterStatus, type ChapterStatus } from './chapter-progress';
 
@@ -7,12 +7,16 @@ export type TerritoryNode = {
   status: ChapterStatus;
 };
 
-export function buildTerritoryNodes(chapters: Chapter[], progress: PlayerProgress): TerritoryNode[] {
+export function buildTerritoryNodes(
+  chapters: Chapter[],
+  saga: Saga,
+  progress: PlayerProgress,
+): TerritoryNode[] {
   return [...chapters]
     .sort((a, b) => a.order - b.order)
     .map((chapter) => ({
       chapter,
-      status: getChapterStatus(chapter, chapters, progress),
+      status: getChapterStatus(chapter, chapters, saga, progress),
     }));
 }
 

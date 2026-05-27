@@ -20,15 +20,15 @@ export function StoryScreen() {
   const [detailMode, setDetailMode] = useState<ChapterStatus | null>(null);
   const [sagaSwitcherVisible, setSagaSwitcherVisible] = useState(false);
 
-  const activeChapterId = getActiveChapterId(playerProgress);
+  const activeChapterId = getActiveChapterId(activeSaga, playerProgress);
 
   const chapterRows = useMemo(
     () =>
       chapters.map((chapter) => ({
         chapter,
-        status: getChapterStatus(chapter, chapters, playerProgress),
+        status: getChapterStatus(chapter, chapters, activeSaga, playerProgress),
       })),
-    [chapters, playerProgress],
+    [activeSaga, chapters, playerProgress],
   );
 
   const completedCount = chapterRows.filter((row) => row.status === 'completed').length;

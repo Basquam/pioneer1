@@ -13,7 +13,7 @@ import {
 import { GlowButton } from '@/components/rpg/glow-button';
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
-import { CATEGORY_LABELS, TASK_CATEGORIES } from '@/lib/convert-task-to-quest';
+import { getTaskCategoryMeta, TASK_CATEGORIES } from '@/lib/task-categories';
 import type { TaskCategory } from '@/types/narrative';
 
 type AddQuestSheetProps = {
@@ -26,6 +26,8 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
   const { palette } = activeUniverse;
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState<TaskCategory>('cleaning');
+
+  const selectedMeta = getTaskCategoryMeta(category);
 
   const handleClose = () => {
     setTitle('');
@@ -69,10 +71,14 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
             autoFocus
           />
 
-          <Text style={[styles.label, { color: palette.gold }]}>CATEGORY</Text>
+          <Text style={[styles.label, { color: palette.gold }]}>QUEST ARCHETYPE</Text>
+          <Text style={[styles.categoryHelper, { color: palette.fog }]}>
+            Choose what kind of real-life task this is. We'll turn it into a story quest.
+          </Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
             {TASK_CATEGORIES.map((cat) => {
               const selected = category === cat;
+              const meta = getTaskCategoryMeta(cat);
               return (
                 <Pressable
                   key={cat}
@@ -87,13 +93,24 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
                       borderColor: selected ? palette.gold : palette.panelBorder,
                     },
                   ]}>
-                  <Text style={[styles.chipText, { color: selected ? palette.bone : palette.fog }]}>
-                    {CATEGORY_LABELS[cat].toUpperCase()}
+                  <Text style={[styles.chipIcon, { color: selected ? palette.bone : palette.fog }]}>
+                    {meta.icon}
+                  </Text>
+                  <Text style={[styles.chipFlavor, { color: selected ? palette.bone : palette.fog }]}>
+                    {meta.label}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.chipRealWorld,
+                      { color: selected ? palette.gold : `${palette.fog}cc` },
+                    ]}>
+                    {meta.realWorldLabel}
                   </Text>
                 </Pressable>
               );
             })}
           </ScrollView>
+          <Text style={[styles.categoryHint, { color: palette.fog }]}>{selectedMeta.description}</Text>
 
           <GlowButton label="CREATE QUEST" hint="Weave it into the story" onPress={handleCreate} />
         </View>
@@ -135,11 +152,41 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   chips: { gap: 8, paddingVertical: 4 },
+  categoryHelper: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 11,
+    letterSpacing: 0.3,
+    lineHeight: 16,
+    marginTop: -4,
+  },
   chip: {
     borderWidth: 1,
     paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingVertical: 10,
+    minWidth: 96,
     transform: [{ skewX: '-6deg' }],
+    alignItems: 'center',
+    gap: 2,
   },
-  chipText: { fontFamily: GameFonts.uiSemi, fontSize: 10, letterSpacing: 1.5 },
+  chipIcon: { fontSize: 14, marginBottom: 2 },
+  chipFlavor: {
+    fontFamily: GameFonts.ui,
+    fontSize: 10,
+    letterSpacing: 0.5,
+    textAlign: 'center',
+    lineHeight: 13,
+  },
+  chipRealWorld: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 9,
+    letterSpacing: 1,
+    textAlign: 'center',
+  },
+  categoryHint: {
+    fontFamily: GameFonts.displayRegular,
+    fontSize: 12,
+    fontStyle: 'italic',
+    lineHeight: 17,
+    marginTop: -4,
+  },
 });

@@ -1,4 +1,6 @@
-import type { BoardQuest, Chapter, PlayerProgress, QuestTemplate, UserQuest } from '@/types/narrative';
+import type { BoardQuest, Chapter, PlayerProgress, QuestTemplate, Saga, UserQuest } from '@/types/narrative';
+
+import { getSagaCompletedQuestIds } from './saga-progress';
 
 export function templateToBoardQuest(
   template: QuestTemplate,
@@ -35,15 +37,16 @@ export function userQuestToBoardQuest(quest: UserQuest): BoardQuest {
 
 export function buildBoardQuests(
   chapter: Chapter,
-  sagaId: string,
+  saga: Saga,
   progress: PlayerProgress,
 ): BoardQuest[] {
-  const templates = chapter.questTemplates.map((t) =>
-    templateToBoardQuest(t, progress.completedQuestIds),
+  const completedQuestIds = getSagaCompletedQuestIds(saga, progress);
+  const templates = chapter.questTemplates.map((template) =>
+    templateToBoardQuest(template, completedQuestIds),
   );
 
   const userQuests = progress.userQuests
-    .filter((q) => q.sourceSagaId === sagaId && q.sourceChapterId === chapter.id)
+    .filter((quest) => quest.sourceSagaId === saga.id && quest.sourceChapterId === chapter.id)
     .map(userQuestToBoardQuest);
 
   return [...templates, ...userQuests];
@@ -53,12 +56,12 @@ export function findBoardQuest(
   boardQuests: BoardQuest[],
   questId: string,
 ): BoardQuest | undefined {
-  return boardQuests.find((q) => q.id === questId);
+  return boardQuests.find((quest) => quest.id === questId);
 }
 
 export function countCompletedTemplates(
   chapter: Chapter,
   completedQuestIds: string[],
 ): number {
-  return chapter.questTemplates.filter((t) => completedQuestIds.includes(t.id)).length;
+  return chapter.questTemplates.filter((template) => completedQuestIds.includes(template.id)).length;
 }

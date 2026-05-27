@@ -19,28 +19,6 @@ const CHAPTER_STAKES: Record<number, string> = {
   5: 'pushes all-in at high noon',
 };
 
-export const TASK_CATEGORIES: TaskCategory[] = [
-  'cleaning',
-  'fitness',
-  'study',
-  'work',
-  'health',
-  'social',
-  'creative',
-  'errand',
-];
-
-export const CATEGORY_LABELS: Record<TaskCategory, string> = {
-  cleaning: 'Cleaning',
-  fitness: 'Fitness',
-  study: 'Study',
-  work: 'Work',
-  health: 'Health',
-  social: 'Social',
-  creative: 'Creative',
-  errand: 'Errand',
-};
-
 function capitalize(word: string): string {
   if (!word) return word;
   return word.charAt(0).toUpperCase() + word.slice(1);

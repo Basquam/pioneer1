@@ -9,20 +9,10 @@ import Animated, {
 
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
-import type { BoardQuest, TaskCategory } from '@/types/narrative';
+import { getTaskCategoryMeta } from '@/lib/task-categories';
+import type { BoardQuest } from '@/types/narrative';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
-
-const CATEGORY_LABEL: Record<TaskCategory, string> = {
-  cleaning: 'BOUNTY',
-  fitness: 'TRAINING',
-  study: 'INTEL',
-  work: 'CONTRACT',
-  health: 'SURVIVAL',
-  social: 'ALLIANCE',
-  creative: 'LEGEND',
-  errand: 'SUPPLY',
-};
 
 type QuestCardProps = {
   quest: BoardQuest;
@@ -52,6 +42,8 @@ export function QuestCard({ quest, index }: QuestCardProps) {
     );
   }
 
+  const categoryMeta = getTaskCategoryMeta(quest.category);
+
   const handlePress = () => {
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     scale.value = withSpring(0.97, { damping: 12 }, () => {
@@ -75,7 +67,7 @@ export function QuestCard({ quest, index }: QuestCardProps) {
           <View style={styles.badges}>
             <View style={[styles.badge, { backgroundColor: palette.primary }]}>
               <Text style={[styles.badgeText, { color: palette.bone }]}>
-                {CATEGORY_LABEL[quest.category]}
+                {categoryMeta.icon} {categoryMeta.label.toUpperCase()}
               </Text>
             </View>
             {quest.source === 'user' && (
@@ -88,6 +80,7 @@ export function QuestCard({ quest, index }: QuestCardProps) {
         </View>
         <Text style={[styles.title, { color: palette.bone }]}>{quest.narrativeTitle}</Text>
         <Text style={[styles.sub, { color: palette.fog }]}>{quest.narrativeDescription}</Text>
+        <Text style={[styles.categoryId, { color: palette.fog }]}>{quest.category}</Text>
         <View style={styles.realRow}>
           <Text style={[styles.realLabel, { color: palette.fog }]}>
             {quest.source === 'user' ? 'REAL TASK' : 'OBJECTIVE'}
@@ -117,6 +110,13 @@ const styles = StyleSheet.create({
   xp: { fontFamily: GameFonts.ui, fontSize: 13, letterSpacing: 2 },
   title: { fontFamily: GameFonts.display, fontSize: 18, lineHeight: 24 },
   sub: { fontFamily: GameFonts.displayRegular, fontSize: 13, lineHeight: 19, fontStyle: 'italic' },
+  categoryId: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 8,
+    letterSpacing: 1.5,
+    textTransform: 'lowercase',
+    opacity: 0.55,
+  },
   realRow: {
     flexDirection: 'row',
     gap: 8,
