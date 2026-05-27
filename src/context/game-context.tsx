@@ -1,4 +1,5 @@
 import { createContext, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { type Href, router } from 'expo-router';
 
 import { getUniverse, UNIVERSES } from '@/data/narrative/wild-west-universe';
 import { convertTaskToUserQuest, createUserQuestId } from '@/lib/convert-task-to-quest';
@@ -35,6 +36,7 @@ import type {
   Saga,
   TaskCategory,
   Universe,
+  UserQuest,
 } from '@/types/narrative';
 
 export type XpBurst = { id: string; amount: number };
@@ -64,6 +66,8 @@ type GameContextValue = {
   xpBurst: XpBurst | null;
   narrativeMoment: NarrativeMoment | null;
   chapterComplete: ChapterCompleteState | null;
+  questCreated: UserQuest | null;
+  addQuestSheetOpen: boolean;
   showChapterIntro: boolean;
   completedQuestCount: number;
   allQuestsComplete: boolean;
@@ -72,6 +76,10 @@ type GameContextValue = {
   switchSaga: (sagaId: string, options?: { forceFirstChapter?: boolean }) => void;
   completeOnboarding: () => void;
   addUserQuest: (originalTitle: string, category: TaskCategory) => void;
+  openAddQuestSheet: () => void;
+  closeAddQuestSheet: () => void;
+  viewCreatedQuestOnBoard: () => void;
+  addAnotherQuest: () => void;
   completeQuest: (questId: string) => void;
   dismissXpBurst: () => void;
   markChapterIntroSeen: () => void;
@@ -103,6 +111,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [xpBurst, setXpBurst] = useState<XpBurst | null>(null);
   const [narrativeMoment, setNarrativeMoment] = useState<NarrativeMoment | null>(null);
   const [chapterComplete, setChapterComplete] = useState<ChapterCompleteState | null>(null);
+  const [questCreated, setQuestCreated] = useState<UserQuest | null>(null);
+  const [addQuestSheetOpen, setAddQuestSheetOpen] = useState(false);
   const pendingChapterCompleteRef = useRef<ChapterCompleteState | null>(null);
 
   useEffect(() => {
@@ -263,16 +273,39 @@ export function GameProvider({ children }: { children: ReactNode }) {
         currentChapter,
       );
 
+      const quest: UserQuest = {
+        ...converted,
+        id: createUserQuestId(),
+        isCompleted: false,
+      };
+
       setProgress((prev) => ({
         ...prev,
-        userQuests: [
-          ...prev.userQuests,
-          { ...converted, id: createUserQuestId(), isCompleted: false },
-        ],
+        userQuests: [...prev.userQuests, quest],
       }));
+      setAddQuestSheetOpen(false);
+      setQuestCreated(quest);
     },
     [activeSaga, activeUniverse, currentChapter],
   );
+
+  const openAddQuestSheet = useCallback(() => {
+    setAddQuestSheetOpen(true);
+  }, []);
+
+  const closeAddQuestSheet = useCallback(() => {
+    setAddQuestSheetOpen(false);
+  }, []);
+
+  const viewCreatedQuestOnBoard = useCallback(() => {
+    setQuestCreated(null);
+    router.push('/(game)/quests' as Href);
+  }, []);
+
+  const addAnotherQuest = useCallback(() => {
+    setQuestCreated(null);
+    setAddQuestSheetOpen(true);
+  }, []);
 
   const markChapterIntroSeen = useCallback(() => {
     setProgress((prev) => ({
@@ -501,6 +534,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setXpBurst(null);
     setNarrativeMoment(null);
     setChapterComplete(null);
+    setQuestCreated(null);
+    setAddQuestSheetOpen(false);
     pendingChapterCompleteRef.current = null;
     await savePlayerProgress(fresh);
   }, []);
@@ -522,6 +557,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       xpBurst,
       narrativeMoment,
       chapterComplete,
+      questCreated,
+      addQuestSheetOpen,
       showChapterIntro,
       completedQuestCount,
       allQuestsComplete,
@@ -530,6 +567,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
       switchSaga,
       completeOnboarding,
       addUserQuest,
+      openAddQuestSheet,
+      closeAddQuestSheet,
+      viewCreatedQuestOnBoard,
+      addAnotherQuest,
       completeQuest,
       dismissXpBurst,
       markChapterIntroSeen,
@@ -543,12 +584,15 @@ export function GameProvider({ children }: { children: ReactNode }) {
     [
       activeSaga,
       activeUniverse,
+      addAnotherQuest,
+      addQuestSheetOpen,
+      addUserQuest,
       allQuestsComplete,
       chapters,
       characters,
       chapterComplete,
+      closeAddQuestSheet,
       completeOnboarding,
-      addUserQuest,
       completeQuest,
       completedQuestCount,
       continueFromChapterComplete,
@@ -559,8 +603,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
       markChapterIntroSeen,
       maybeShowVillainTaunt,
       narrativeMoment,
+      openAddQuestSheet,
       player,
       progress,
+      questCreated,
       quests,
       resetProgress,
       selectSaga,
@@ -569,6 +615,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       startUnlockedSagaFromChapterComplete,
       storyLine,
       switchSaga,
+      viewCreatedQuestOnBoard,
       villainInfluence,
       xpBurst,
     ],

@@ -1,5 +1,5 @@
 import * as Haptics from 'expo-haptics';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, {
   Easing,
@@ -11,7 +11,6 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
-import { AddQuestSheet } from '@/components/rpg/add-quest-sheet';
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
 
@@ -22,9 +21,8 @@ type AddQuestTriggerProps = {
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 export function AddQuestTrigger({ variant }: AddQuestTriggerProps) {
-  const { activeUniverse } = useGame();
+  const { activeUniverse, openAddQuestSheet } = useGame();
   const { palette } = activeUniverse;
-  const [visible, setVisible] = useState(false);
   const glow = useSharedValue(0);
 
   useEffect(() => {
@@ -44,7 +42,7 @@ export function AddQuestTrigger({ variant }: AddQuestTriggerProps) {
 
   const open = () => {
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    setVisible(true);
+    openAddQuestSheet();
   };
 
   return (
@@ -82,7 +80,6 @@ export function AddQuestTrigger({ variant }: AddQuestTriggerProps) {
           </View>
         </AnimatedPressable>
       )}
-      <AddQuestSheet visible={visible} onClose={() => setVisible(false)} />
     </>
   );
 }

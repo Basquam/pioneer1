@@ -1,8 +1,11 @@
+import { type Href, router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { ChapterDetailSheet } from '@/components/rpg/chapter-detail-sheet';
+import { CinematicEmptyState } from '@/components/rpg/cinematic-empty-state';
+import { SagaSwitcherSheet } from '@/components/rpg/saga-switcher-sheet';
 import { ScreenShell } from '@/components/rpg/screen-shell';
 import { SectionHeader } from '@/components/rpg/section-header';
 import { TerritoryMap } from '@/components/rpg/territory-map';
@@ -17,6 +20,7 @@ export function MapScreen() {
   const { activeUniverse, activeSaga, chapters, playerProgress } = useGame();
   const [selectedChapter, setSelectedChapter] = useState<Chapter | null>(null);
   const [detailMode, setDetailMode] = useState<ChapterStatus | null>(null);
+  const [sagaSwitcherVisible, setSagaSwitcherVisible] = useState(false);
 
   const territoryNodes = useMemo(
     () => buildTerritoryNodes(chapters, activeSaga, playerProgress),
@@ -24,6 +28,8 @@ export function MapScreen() {
   );
 
   const reclaimedCount = territoryNodes.filter((node) => node.status === 'completed').length;
+  const allTerritoriesReclaimed =
+    territoryNodes.length > 0 && reclaimedCount === territoryNodes.length;
 
   const handleNodePress = (node: TerritoryNode) => {
     setSelectedChapter(node.chapter);
@@ -63,6 +69,17 @@ export function MapScreen() {
             </Text>
           )}
 
+          {allTerritoriesReclaimed && (
+            <CinematicEmptyState
+              title="Territory reclaimed."
+              message={`Every frontier on the ${activeSaga.title} map flies your colors. Collect your spoils or ride a new trail.`}
+              primaryLabel="SWITCH SAGA"
+              onPrimaryPress={() => setSagaSwitcherVisible(true)}
+              secondaryLabel="VIEW REWARDS"
+              onSecondaryPress={() => router.push('/(game)/profile' as Href)}
+            />
+          )}
+
           <Text style={[styles.legend, { color: activeUniverse.palette.gold }]}>MAP LEGEND</Text>
           <Text style={[styles.legendItem, { color: activeUniverse.palette.fog }]}>
             RECLAIMED — chapter cleared · ACTIVE — current front · THREAT — locked territory
@@ -75,6 +92,10 @@ export function MapScreen() {
         chapter={selectedChapter}
         mode={detailMode}
         onClose={closeDetail}
+      />
+      <SagaSwitcherSheet
+        visible={sagaSwitcherVisible}
+        onClose={() => setSagaSwitcherVisible(false)}
       />
     </ScreenShell>
   );

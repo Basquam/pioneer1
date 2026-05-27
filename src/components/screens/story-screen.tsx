@@ -4,6 +4,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { ChapterCard } from '@/components/rpg/chapter-card';
 import { ChapterDetailSheet } from '@/components/rpg/chapter-detail-sheet';
+import { CinematicEmptyState } from '@/components/rpg/cinematic-empty-state';
 import { SagaSwitcherSheet } from '@/components/rpg/saga-switcher-sheet';
 import { ScreenShell } from '@/components/rpg/screen-shell';
 import { SectionHeader } from '@/components/rpg/section-header';
@@ -32,6 +33,7 @@ export function StoryScreen() {
   );
 
   const completedCount = chapterRows.filter((row) => row.status === 'completed').length;
+  const sagaComplete = chapters.length > 0 && completedCount === chapters.length;
   const activeChapter = chapters.find((chapter) => chapter.id === activeChapterId);
 
   const handleChapterPress = (chapter: Chapter, status: ChapterStatus) => {
@@ -88,6 +90,15 @@ export function StoryScreen() {
             )}
             <Text style={[styles.progressSub, { color: palette.fog }]}>{activeSaga.summary}</Text>
           </View>
+
+          {sagaComplete && (
+            <CinematicEmptyState
+              title="Saga complete."
+              message={`You rode every chapter of ${activeSaga.title}. The trail ends here — for now. Choose your next storyline.`}
+              primaryLabel="SWITCH SAGA"
+              onPrimaryPress={() => setSagaSwitcherVisible(true)}
+            />
+          )}
 
           <Text style={[styles.section, { color: palette.gold }]}>SAGA CHAPTERS</Text>
           <View style={styles.trail}>

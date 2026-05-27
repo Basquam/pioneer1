@@ -1,5 +1,5 @@
 import * as Haptics from 'expo-haptics';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Modal,
   Pressable,
@@ -39,8 +39,15 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
     if (!title.trim()) return;
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     addUserQuest(title, category);
-    handleClose();
+    setTitle('');
+    setCategory('cleaning');
   };
+
+  useEffect(() => {
+    if (visible) return;
+    setTitle('');
+    setCategory('cleaning');
+  }, [visible]);
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={handleClose}>

@@ -4,6 +4,7 @@ import { Alert, Platform, Pressable, ScrollView, StyleSheet, Text, View } from '
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { CharacterCard } from '@/components/rpg/character-card';
+import { CinematicEmptyState } from '@/components/rpg/cinematic-empty-state';
 import { ScreenShell } from '@/components/rpg/screen-shell';
 import { SectionHeader } from '@/components/rpg/section-header';
 import { GameFonts } from '@/constants/typography';
@@ -114,9 +115,12 @@ export function ProfileScreen() {
 
           <Text style={[styles.section, { color: activeUniverse.palette.gold }]}>UNLOCKS / REWARDS</Text>
           {unlockedRewards.length === 0 ? (
-            <Text style={[styles.emptyRewards, { color: activeUniverse.palette.fog }]}>
-              Complete chapters to earn badges, titles, and story unlocks.
-            </Text>
+            <CinematicEmptyState
+              title="No rewards unlocked yet."
+              message="Complete chapters to earn badges, titles, and story unlocks."
+              primaryLabel="VIEW STORY TRAIL"
+              onPrimaryPress={() => router.push('/(game)/story' as Href)}
+            />
           ) : (
             unlockedRewards.map((reward) => (
               <View
@@ -241,12 +245,6 @@ const styles = StyleSheet.create({
   statLabel: { fontFamily: GameFonts.uiSemi, fontSize: 10, letterSpacing: 2 },
   statValue: { fontFamily: GameFonts.ui, fontSize: 22 },
   section: { fontFamily: GameFonts.ui, fontSize: 11, letterSpacing: 3, marginTop: 8 },
-  emptyRewards: {
-    fontFamily: GameFonts.displayRegular,
-    fontSize: 13,
-    fontStyle: 'italic',
-    lineHeight: 19,
-  },
   rewardRow: {
     borderWidth: 1,
     padding: 12,
