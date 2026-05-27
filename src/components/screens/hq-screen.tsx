@@ -3,14 +3,12 @@ import { useEffect } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
-import { AddQuestTrigger } from '@/components/rpg/add-quest-trigger';
+import { DailyOperationsBriefing } from '@/components/rpg/daily-operations-briefing';
 import { DialoguePanel } from '@/components/rpg/dialogue-panel';
-import { GameHud } from '@/components/rpg/game-hud';
 import { NarrativeMomentOverlay } from '@/components/rpg/narrative-moment-overlay';
 import { QuestCard } from '@/components/rpg/quest-card';
 import { ScreenShell } from '@/components/rpg/screen-shell';
 import { SectionHeader } from '@/components/rpg/section-header';
-import { VillainMeter } from '@/components/rpg/villain-meter';
 import { XpPopup } from '@/components/rpg/xp-popup';
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
@@ -30,8 +28,6 @@ export function HqScreen() {
     maybeShowVillainTaunt();
   }, [currentChapter.id, maybeShowVillainTaunt]);
 
-  const activeQuests = quests.filter((q) => !q.completed);
-
   return (
     <ScreenShell edges={['top']} padded={false}>
       <ScrollView
@@ -47,23 +43,22 @@ export function HqScreen() {
             />
           </Animated.View>
 
-          <GameHud />
-          <VillainMeter />
+          <DailyOperationsBriefing />
 
           <DialoguePanel line={storyLine} badge="FIELD REPORT" animate={false} />
 
           <View style={styles.quickRow}>
             <QuickLink
-              label="QUEST BOARD"
-              sub={`${activeQuests.length} active`}
-              color={activeUniverse.palette.accent}
-              onPress={() => router.push('/(game)/quests' as Href)}
-            />
-            <QuickLink
               label="STORY"
-              sub={`Ch. ${currentChapter.order}`}
+              sub={`Ch. ${currentChapter.order} progress`}
               color={activeUniverse.palette.gold}
               onPress={() => router.push('/(game)/story' as Href)}
+            />
+            <QuickLink
+              label="WORLD MAP"
+              sub={activeUniverse.locationName}
+              color={activeUniverse.palette.accent}
+              onPress={() => router.push('/(game)/map' as Href)}
             />
           </View>
 
@@ -80,7 +75,6 @@ export function HqScreen() {
           )}
         </View>
       </ScrollView>
-      <AddQuestTrigger variant="fab" />
       <NarrativeMomentOverlay />
       <XpPopup />
     </ScreenShell>

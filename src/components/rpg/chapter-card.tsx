@@ -1,5 +1,5 @@
 import * as Haptics from 'expo-haptics';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { GameFonts } from '@/constants/typography';
@@ -24,7 +24,9 @@ export function ChapterCard({ chapter, status, index, onPress }: ChapterCardProp
   const isLocked = status === 'locked';
 
   const handlePress = () => {
-    void Haptics.selectionAsync();
+    if (Platform.OS !== 'web') {
+      void Haptics.selectionAsync();
+    }
     onPress();
   };
 

@@ -146,6 +146,7 @@ export type PlayerProgress = {
   hasOnboarded: boolean;
   selectedUniverseId: string;
   selectedSagaId: string;
+  /** Active chapter id in the selected saga (`activeChapterId`). */
   currentChapterId: string;
   totalXp: number;
   level: number;

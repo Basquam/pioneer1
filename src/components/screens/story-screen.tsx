@@ -9,15 +9,18 @@ import { SectionHeader } from '@/components/rpg/section-header';
 import { VillainMeter } from '@/components/rpg/villain-meter';
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
-import { getActiveChapterId, getChapterStatus } from '@/lib/chapter-progress';
+import { getActiveChapterId, getChapterStatus, type ChapterStatus } from '@/lib/chapter-progress';
 import type { Chapter } from '@/types/narrative';
 
 type DetailMode = 'completed' | 'locked';
 
 export function StoryScreen() {
   const { activeUniverse, activeSaga, chapters, playerProgress } = useGame();
+  const { palette } = activeUniverse;
   const [selectedChapter, setSelectedChapter] = useState<Chapter | null>(null);
   const [detailMode, setDetailMode] = useState<DetailMode | null>(null);
+
+  const activeChapterId = getActiveChapterId(playerProgress);
 
   const chapterRows = useMemo(
     () =>
@@ -29,9 +32,9 @@ export function StoryScreen() {
   );
 
   const completedCount = chapterRows.filter((row) => row.status === 'completed').length;
-  const activeChapter = chapters.find((chapter) => chapter.id === getActiveChapterId(playerProgress));
+  const activeChapter = chapters.find((chapter) => chapter.id === activeChapterId);
 
-  const handleChapterPress = (chapter: Chapter, status: ReturnType<typeof getChapterStatus>) => {
+  const handleChapterPress = (chapter: Chapter, status: ChapterStatus) => {
     if (status === 'completed') {
       setSelectedChapter(chapter);
       setDetailMode('completed');
@@ -61,30 +64,64 @@ export function StoryScreen() {
 
           <VillainMeter />
 
-          <View style={[styles.progressCard, { backgroundColor: activeUniverse.palette.panel, borderColor: activeUniverse.palette.panelBorder }]}>
-            <Text style={[styles.progressEyebrow, { color: activeUniverse.palette.gold }]}>
+          <View
+            style={[
+              styles.progressCard,
+              { backgroundColor: palette.panel, borderColor: palette.panelBorder },
+            ]}>
+            <Text style={[styles.progressEyebrow, { color: palette.gold }]}>
               {completedCount}/{chapters.length} CHAPTERS CLEARED
             </Text>
             {activeChapter && (
-              <Text style={[styles.progressActive, { color: activeUniverse.palette.bone }]}>
+              <Text style={[styles.progressActive, { color: palette.bone }]}>
                 Now riding through: {activeChapter.title}
               </Text>
             )}
-            <Text style={[styles.progressSub, { color: activeUniverse.palette.fog }]}>
-              {activeSaga.summary}
-            </Text>
+            <Text style={[styles.progressSub, { color: palette.fog }]}>{activeSaga.summary}</Text>
           </View>
 
-          <Text style={[styles.section, { color: activeUniverse.palette.gold }]}>SAGA CHAPTERS</Text>
-          {chapterRows.map(({ chapter, status }, index) => (
-            <ChapterCard
-              key={chapter.id}
-              chapter={chapter}
-              status={status}
-              index={index}
-              onPress={() => handleChapterPress(chapter, status)}
-            />
-          ))}
+          <Text style={[styles.section, { color: palette.gold }]}>SAGA CHAPTERS</Text>
+          <View style={styles.trail}>
+            {chapterRows.map(({ chapter, status }, index) => (
+              <View key={chapter.id} style={styles.trailRow}>
+                <View style={styles.rail}>
+                  <View
+                    style={[
+                      styles.railDot,
+                      {
+                        backgroundColor:
+                          status === 'completed'
+                            ? palette.gold
+                            : status === 'active'
+                              ? palette.primary
+                              : palette.ink,
+                        borderColor: status === 'active' ? palette.gold : palette.panelBorder,
+                      },
+                    ]}
+                  />
+                  {index < chapterRows.length - 1 && (
+                    <View
+                      style={[
+                        styles.railLine,
+                        {
+                          backgroundColor:
+                            status === 'completed' ? `${palette.gold}88` : `${palette.panelBorder}88`,
+                        },
+                      ]}
+                    />
+                  )}
+                </View>
+                <View style={styles.cardWrap}>
+                  <ChapterCard
+                    chapter={chapter}
+                    status={status}
+                    index={index}
+                    onPress={() => handleChapterPress(chapter, status)}
+                  />
+                </View>
+              </View>
+            ))}
+          </View>
         </Animated.View>
       </ScrollView>
 
@@ -116,4 +153,20 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
   section: { fontFamily: GameFonts.ui, fontSize: 11, letterSpacing: 3, marginTop: 8 },
+  trail: { gap: 0 },
+  trailRow: { flexDirection: 'row', gap: 12 },
+  rail: { width: 16, alignItems: 'center', paddingTop: 22 },
+  railDot: {
+    width: 12,
+    height: 12,
+    borderWidth: 1,
+    transform: [{ skewX: '-12deg' }],
+  },
+  railLine: {
+    flex: 1,
+    width: 2,
+    minHeight: 24,
+    marginTop: 4,
+  },
+  cardWrap: { flex: 1 },
 });
