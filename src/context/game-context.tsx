@@ -16,6 +16,7 @@ import {
   savePlayerProgress,
 } from '@/lib/player-progress-storage';
 import { buildBoardQuests, countCompletedTemplates, findBoardQuest } from '@/lib/quest-board';
+import { triggerQuestCompleteHaptic } from '@/lib/quest-haptics';
 import { sumChapterTemplateRewards } from '@/lib/chapter-rewards';
 import {
   appendSagaCompletedChapter,
@@ -33,6 +34,7 @@ import type {
   NarrativeCharacter,
   NarrativeMoment,
   PlayerProgress,
+  QuestCompleteState,
   Saga,
   TaskCategory,
   Universe,
@@ -66,6 +68,7 @@ type GameContextValue = {
   xpBurst: XpBurst | null;
   narrativeMoment: NarrativeMoment | null;
   chapterComplete: ChapterCompleteState | null;
+  questComplete: QuestCompleteState | null;
   questCreated: UserQuest | null;
   addQuestSheetOpen: boolean;
   showChapterIntro: boolean;
@@ -84,6 +87,7 @@ type GameContextValue = {
   dismissXpBurst: () => void;
   markChapterIntroSeen: () => void;
   dismissNarrativeMoment: () => void;
+  dismissQuestComplete: () => void;
   continueFromChapterComplete: () => void;
   startUnlockedSagaFromChapterComplete: (sagaId: string, entryChapterId: string) => void;
   maybeShowVillainTaunt: () => void;
@@ -111,6 +115,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [xpBurst, setXpBurst] = useState<XpBurst | null>(null);
   const [narrativeMoment, setNarrativeMoment] = useState<NarrativeMoment | null>(null);
   const [chapterComplete, setChapterComplete] = useState<ChapterCompleteState | null>(null);
+  const [questComplete, setQuestComplete] = useState<QuestCompleteState | null>(null);
   const [questCreated, setQuestCreated] = useState<UserQuest | null>(null);
   const [addQuestSheetOpen, setAddQuestSheetOpen] = useState(false);
   const pendingChapterCompleteRef = useRef<ChapterCompleteState | null>(null);
@@ -342,8 +347,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   const completeQuest = useCallback(
     (questId: string) => {
+      if (questComplete || chapterComplete) return;
+
       const boardQuest = findBoardQuest(quests, questId);
       if (!boardQuest || boardQuest.completed) return;
+
+      triggerQuestCompleteHaptic();
 
       const updatedInfluence = Math.max(
         0,
@@ -415,20 +424,41 @@ export function GameProvider({ children }: { children: ReactNode }) {
         };
       }
 
-      setXpBurst({ id: `${questId}-${Date.now()}`, amount: boardQuest.xpReward });
-
       const reactor = getCharacter(activeSaga, charId);
-      if (reactor) {
-        setNarrativeMoment({
-          type: 'quest_complete',
-          characterId: charId,
-          line: pickCharacterLine(reactor, 'questComplete', updatedCompletedIds.length),
-          questTitle: boardQuest.narrativeTitle,
-        });
-      }
+      setQuestComplete({
+        questId,
+        source: boardQuest.source,
+        narrativeTitle: boardQuest.narrativeTitle,
+        earnedXp: boardQuest.xpReward,
+        earnedReputation: boardQuest.reputationReward,
+        characterId: charId,
+        characterLine: reactor
+          ? pickCharacterLine(reactor, 'questComplete', updatedCompletedIds.length)
+          : 'The frontier remembers what you accomplished.',
+      });
     },
-    [activeSaga, currentChapter, progress, quests, sagaCompletedQuestIds],
+    [activeSaga, chapterComplete, currentChapter, progress, questComplete, quests, sagaCompletedQuestIds],
   );
+
+  const dismissQuestComplete = useCallback(() => {
+    setQuestComplete((current) => {
+      if (!current) return null;
+
+      const pendingChapter = pendingChapterCompleteRef.current;
+      pendingChapterCompleteRef.current = null;
+      if (pendingChapter) {
+        if (pendingChapter.newReward) {
+          setProgress((prev) => ({
+            ...prev,
+            unlockedRewards: unlockRewardIds(prev.unlockedRewards, pendingChapter.newReward!.id),
+          }));
+        }
+        setChapterComplete(pendingChapter);
+      }
+
+      return null;
+    });
+  }, []);
 
   const dismissNarrativeMoment = useCallback(() => {
     setNarrativeMoment((moment) => {
@@ -442,22 +472,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
             [activeSaga.id]: currentChapter.id,
           },
         }));
-        return null;
-      }
-
-      if (moment.type === 'quest_complete') {
-        const pendingChapter = pendingChapterCompleteRef.current;
-        pendingChapterCompleteRef.current = null;
-        if (pendingChapter) {
-          if (pendingChapter.newReward) {
-            setProgress((prev) => ({
-              ...prev,
-              unlockedRewards: unlockRewardIds(prev.unlockedRewards, pendingChapter.newReward!.id),
-            }));
-          }
-          setChapterComplete(pendingChapter);
-        }
-        return null;
       }
 
       return null;
@@ -534,6 +548,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setXpBurst(null);
     setNarrativeMoment(null);
     setChapterComplete(null);
+    setQuestComplete(null);
     setQuestCreated(null);
     setAddQuestSheetOpen(false);
     pendingChapterCompleteRef.current = null;
@@ -557,6 +572,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       xpBurst,
       narrativeMoment,
       chapterComplete,
+      questComplete,
       questCreated,
       addQuestSheetOpen,
       showChapterIntro,
@@ -575,6 +591,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       dismissXpBurst,
       markChapterIntroSeen,
       dismissNarrativeMoment,
+      dismissQuestComplete,
       continueFromChapterComplete,
       startUnlockedSagaFromChapterComplete,
       maybeShowVillainTaunt,
@@ -598,6 +615,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       continueFromChapterComplete,
       currentChapter,
       dismissNarrativeMoment,
+      dismissQuestComplete,
       dismissXpBurst,
       isHydrated,
       markChapterIntroSeen,
@@ -606,6 +624,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       openAddQuestSheet,
       player,
       progress,
+      questComplete,
       questCreated,
       quests,
       resetProgress,

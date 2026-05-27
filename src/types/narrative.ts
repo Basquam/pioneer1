@@ -133,6 +133,16 @@ export type ChapterCompleteState = {
   newReward?: ChapterReward;
 };
 
+export type QuestCompleteState = {
+  questId: string;
+  source: 'template' | 'user';
+  narrativeTitle: string;
+  earnedXp: number;
+  earnedReputation: number;
+  characterId: string;
+  characterLine: string;
+};
+
 export type UserQuest = {
   id: string;
   originalTitle: string;

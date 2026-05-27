@@ -10,12 +10,10 @@ export function NarrativeMomentOverlay() {
   const { activeUniverse, activeSaga, narrativeMoment, dismissNarrativeMoment } = useGame();
   const { palette } = activeUniverse;
 
-  if (!narrativeMoment) return null;
+  if (!narrativeMoment || narrativeMoment.type !== 'villain_taunt') return null;
 
   const character = getCharacter(activeSaga, narrativeMoment.characterId);
   if (!character) return null;
-
-  const isTaunt = narrativeMoment.type === 'villain_taunt';
 
   return (
     <Modal visible transparent animationType="fade" statusBarTranslucent>
@@ -27,18 +25,13 @@ export function NarrativeMomentOverlay() {
             styles.momentCard,
             {
               backgroundColor: palette.panel,
-              borderColor: isTaunt ? palette.villainGlow : palette.gold,
+              borderColor: palette.villainGlow,
             },
           ]}>
           <CharacterPortrait character={character} />
           <View style={styles.momentBody}>
-            <Text style={[styles.momentBadge, { color: isTaunt ? palette.villainGlow : palette.gold }]}>
-              {isTaunt ? 'VILLAIN TAUNT' : 'QUEST CLEARED'}
-            </Text>
+            <Text style={[styles.momentBadge, { color: palette.villainGlow }]}>VILLAIN TAUNT</Text>
             <Text style={[styles.momentName, { color: palette.bone }]}>{character.name}</Text>
-            {narrativeMoment.type === 'quest_complete' && (
-              <Text style={[styles.questRef, { color: palette.fog }]}>{narrativeMoment.questTitle}</Text>
-            )}
             <Text style={[styles.momentLine, { color: palette.bone }]}>{narrativeMoment.line}</Text>
             <Text style={[styles.dismiss, { color: palette.fog }]}>TAP TO DISMISS</Text>
           </View>
@@ -60,7 +53,6 @@ const styles = StyleSheet.create({
   momentBody: { flex: 1, gap: 6 },
   momentBadge: { fontFamily: GameFonts.uiSemi, fontSize: 9, letterSpacing: 2 },
   momentName: { fontFamily: GameFonts.ui, fontSize: 14, letterSpacing: 2 },
-  questRef: { fontFamily: GameFonts.uiSemi, fontSize: 10, letterSpacing: 1 },
   momentLine: {
     fontFamily: GameFonts.displayRegular,
     fontSize: 15,

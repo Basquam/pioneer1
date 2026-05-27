@@ -1,4 +1,3 @@
-import * as Haptics from 'expo-haptics';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, {
   FadeInDown,
@@ -45,8 +44,7 @@ export function QuestCard({ quest, index }: QuestCardProps) {
   const categoryMeta = getTaskCategoryMeta(quest.category);
 
   const handlePress = () => {
-    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    scale.value = withSpring(0.97, { damping: 12 }, () => {
+    scale.value = withSpring(0.94, { damping: 10 }, () => {
       scale.value = withSpring(1);
     });
     completeQuest(quest.id);
