@@ -13,8 +13,8 @@ import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
 
 export function XpPopup() {
-  const { theme, xpBurst, dismissXpBurst } = useGame();
-  const { colors } = theme;
+  const { activeUniverse, xpBurst, dismissXpBurst } = useGame();
+  const { palette } = activeUniverse;
   const translateY = useSharedValue(20);
   const scale = useSharedValue(0.6);
 
@@ -39,11 +39,11 @@ export function XpPopup() {
       style={[
         styles.wrap,
         style,
-        { backgroundColor: colors.primary, borderColor: colors.gold },
+        { backgroundColor: palette.primary, borderColor: palette.gold },
       ]}
       pointerEvents="none">
-      <Text style={[styles.amount, { color: colors.gold }]}>+{xpBurst.amount} XP</Text>
-      <Text style={[styles.flavor, { color: colors.bone }]}>BOUNTY CLAIMED</Text>
+      <Text style={[styles.amount, { color: palette.gold }]}>+{xpBurst.amount} XP</Text>
+      <Text style={[styles.flavor, { color: palette.bone }]}>BOUNTY CLAIMED</Text>
     </Animated.View>
   );
 }

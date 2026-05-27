@@ -13,10 +13,10 @@ type ScreenShellProps = {
 };
 
 export function ScreenShell({ children, edges = ['top'], padded = true }: ScreenShellProps) {
-  const { theme } = useGame();
+  const { activeUniverse } = useGame();
 
   return (
-    <View style={[styles.root, { backgroundColor: theme.colors.void }]}>
+    <View style={[styles.root, { backgroundColor: activeUniverse.palette.void }]}>
       <StatusBar style="light" />
       <CinematicBackground />
       <SafeAreaView

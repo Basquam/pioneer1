@@ -3,18 +3,18 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
-import type { StoryChapter } from '@/types/story';
+import type { Chapter } from '@/types/narrative';
 
 type ChapterCardProps = {
-  chapter: StoryChapter;
+  chapter: Chapter;
   unlocked: boolean;
   active: boolean;
   index: number;
 };
 
 export function ChapterCard({ chapter, unlocked, active, index }: ChapterCardProps) {
-  const { theme } = useGame();
-  const { colors } = theme;
+  const { activeUniverse } = useGame();
+  const { palette } = activeUniverse;
 
   return (
     <Animated.View
@@ -22,21 +22,21 @@ export function ChapterCard({ chapter, unlocked, active, index }: ChapterCardPro
       style={[
         styles.card,
         {
-          backgroundColor: colors.panel,
-          borderColor: active ? colors.gold : colors.panelBorder,
+          backgroundColor: palette.panel,
+          borderColor: active ? palette.gold : palette.panelBorder,
           opacity: unlocked ? 1 : 0.45,
         },
       ]}>
-      <View style={[styles.index, { backgroundColor: unlocked ? colors.primary : colors.ink }]}>
-        <Text style={[styles.indexText, { color: colors.bone }]}>
-          {unlocked ? chapter.index + 1 : '🔒'}
+      <View style={[styles.index, { backgroundColor: unlocked ? palette.primary : palette.ink }]}>
+        <Text style={[styles.indexText, { color: palette.bone }]}>
+          {unlocked ? chapter.order : '🔒'}
         </Text>
       </View>
       <View style={styles.body}>
-        <Text style={[styles.title, { color: colors.bone }]}>{chapter.title}</Text>
-        <Text style={[styles.summary, { color: colors.fog }]}>{chapter.summary}</Text>
+        <Text style={[styles.title, { color: palette.bone }]}>{chapter.title}</Text>
+        <Text style={[styles.summary, { color: palette.fog }]}>{chapter.summary}</Text>
         {active && unlocked && (
-          <Text style={[styles.dialogue, { color: colors.accent }]}>{chapter.dialogue}</Text>
+          <Text style={[styles.dialogue, { color: palette.accent }]}>{chapter.dramaticPurpose}</Text>
         )}
       </View>
     </Animated.View>

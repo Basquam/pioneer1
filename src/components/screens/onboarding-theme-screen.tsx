@@ -6,37 +6,36 @@ import { GlowButton } from '@/components/rpg/glow-button';
 import { ScreenShell } from '@/components/rpg/screen-shell';
 import { SectionHeader } from '@/components/rpg/section-header';
 import { ThemeCard } from '@/components/rpg/theme-card';
-import { THEME_LIST } from '@/data/themes';
 import { useGame } from '@/hooks/use-game';
 
 export function OnboardingThemeScreen() {
-  const { activeThemeId, selectTheme } = useGame();
+  const { universes, activeUniverse, selectUniverse } = useGame();
 
   return (
     <ScreenShell edges={['top', 'bottom']}>
       <Animated.View entering={FadeInDown.duration(500)}>
         <SectionHeader
-          eyebrow="SELECT WORLD"
-          title="CHOOSE YOUR SAGA"
+          eyebrow="UNIVERSE SELECTION"
+          title="CHOOSE YOUR UNIVERSE"
         />
       </Animated.View>
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}>
-        {THEME_LIST.map((t, i) => (
+        {universes.map((universe, i) => (
           <ThemeCard
-            key={t.id}
-            theme={t}
-            selected={activeThemeId === t.id}
+            key={universe.id}
+            universe={universe}
+            selected={activeUniverse.id === universe.id}
             index={i}
-            onPress={() => selectTheme(t.id)}
+            onPress={() => selectUniverse(universe.id)}
           />
         ))}
       </ScrollView>
       <GlowButton
-        label="LOCK IN WORLD"
-        onPress={() => router.push('/onboarding/intro' as Href)}
+        label="SELECT SAGA"
+        onPress={() => router.push('/onboarding/saga' as Href)}
       />
     </ScreenShell>
   );

@@ -10,19 +10,19 @@ type SectionHeaderProps = {
 };
 
 export function SectionHeader({ eyebrow, title, right }: SectionHeaderProps) {
-  const { theme } = useGame();
-  const { colors } = theme;
+  const { activeUniverse } = useGame();
+  const { palette } = activeUniverse;
 
   return (
     <View style={styles.row}>
       <View style={styles.left}>
         {eyebrow && (
-          <Text style={[styles.eyebrow, { color: colors.accent }]}>{eyebrow}</Text>
+          <Text style={[styles.eyebrow, { color: palette.accent }]}>{eyebrow}</Text>
         )}
-        <Text style={[styles.title, { color: colors.bone }]}>{title}</Text>
+        <Text style={[styles.title, { color: palette.bone }]}>{title}</Text>
       </View>
       {right && (
-        <Text style={[styles.right, { color: colors.gold }]}>{right}</Text>
+        <Text style={[styles.right, { color: palette.gold }]}>{right}</Text>
       )}
     </View>
   );

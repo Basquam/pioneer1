@@ -2,39 +2,38 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { GameFonts } from '@/constants/typography';
-import { getTheme } from '@/data/themes';
-import type { ThemeId } from '@/types/theme';
+import type { Saga, UniversePalette } from '@/types/narrative';
 
 type MapNodeProps = {
-  themeId: ThemeId;
+  saga: Saga;
+  palette: UniversePalette;
   active: boolean;
   influence: number;
   onPress: () => void;
 };
 
-export function MapNode({ themeId, active, influence, onPress }: MapNodeProps) {
-  const theme = getTheme(themeId);
-  const { colors } = theme;
-
+export function MapNode({ saga, palette, active, influence, onPress }: MapNodeProps) {
   return (
     <Animated.View entering={FadeIn.duration(400)}>
       <Pressable
+        disabled={saga.status === 'locked'}
         onPress={onPress}
         style={[
           styles.node,
           {
-            backgroundColor: colors.panel,
-            borderColor: active ? colors.gold : colors.panelBorder,
+            backgroundColor: palette.panel,
+            borderColor: active ? palette.gold : palette.panelBorder,
+            opacity: saga.status === 'locked' ? 0.5 : 1,
           },
         ]}>
-        <Text style={styles.icon}>{theme.icon}</Text>
+        <Text style={styles.icon}>{saga.status === 'locked' ? '🔒' : '⚔'}</Text>
         <View style={styles.info}>
-          <Text style={[styles.name, { color: colors.bone }]}>{theme.name}</Text>
-          <Text style={[styles.loc, { color: colors.fog }]}>{theme.locationName}</Text>
+          <Text style={[styles.name, { color: palette.bone }]}>{saga.title}</Text>
+          <Text style={[styles.loc, { color: palette.fog }]}>{saga.villainName}</Text>
         </View>
         <View style={styles.threat}>
-          <Text style={[styles.threatLabel, { color: colors.villainGlow }]}>THREAT</Text>
-          <Text style={[styles.threatVal, { color: colors.bone }]}>{influence}%</Text>
+          <Text style={[styles.threatLabel, { color: palette.villainGlow }]}>THREAT</Text>
+          <Text style={[styles.threatVal, { color: palette.bone }]}>{influence}%</Text>
         </View>
       </Pressable>
     </Animated.View>

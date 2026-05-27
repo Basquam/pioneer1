@@ -10,8 +10,8 @@ type GameHudProps = {
 };
 
 export function GameHud({ compact }: GameHudProps) {
-  const { theme, player, completedQuestCount, quests } = useGame();
-  const { colors } = theme;
+  const { activeUniverse, player, completedQuestCount, quests } = useGame();
+  const { palette } = activeUniverse;
   const fill = useSharedValue(player.xpProgress);
 
   useEffect(() => {
@@ -25,13 +25,13 @@ export function GameHud({ compact }: GameHudProps) {
   return (
     <View style={styles.container}>
       <View style={styles.topRow}>
-        <View style={[styles.levelBadge, { backgroundColor: colors.primary, borderColor: colors.gold }]}>
-          <Text style={[styles.levelLabel, { color: colors.bone }]}>LV</Text>
-          <Text style={[styles.levelValue, { color: colors.gold }]}>{player.level}</Text>
+        <View style={[styles.levelBadge, { backgroundColor: palette.primary, borderColor: palette.gold }]}>
+          <Text style={[styles.levelLabel, { color: palette.bone }]}>LV</Text>
+          <Text style={[styles.levelValue, { color: palette.gold }]}>{player.level}</Text>
         </View>
         <View style={styles.titleBlock}>
-          <Text style={[styles.rank, { color: colors.bone }]}>{player.rank.toUpperCase()}</Text>
-          <Text style={[styles.subtitle, { color: colors.fog }]}>
+          <Text style={[styles.rank, { color: palette.bone }]}>{player.rank.toUpperCase()}</Text>
+          <Text style={[styles.subtitle, { color: palette.fog }]}>
             {player.totalXp} XP · {completedQuestCount}/{quests.length} BOUNTIES
           </Text>
         </View>
@@ -39,13 +39,13 @@ export function GameHud({ compact }: GameHudProps) {
 
       {!compact && (
         <>
-          <View style={[styles.barTrack, { backgroundColor: colors.xpTrack, borderColor: `${colors.gold}40` }]}>
-            <Animated.View style={[styles.barFill, fillStyle, { backgroundColor: colors.xpFill }]} />
+          <View style={[styles.barTrack, { backgroundColor: palette.xpTrack, borderColor: `${palette.gold}40` }]}>
+            <Animated.View style={[styles.barFill, fillStyle, { backgroundColor: palette.xpFill }]} />
           </View>
           <View style={styles.statRow}>
-            <Stat label="GRIT" value={`${player.stats.grit}`} colors={colors} />
-            <Stat label="FOCUS" value={`${player.stats.focus}`} colors={colors} />
-            <Stat label="LEGEND" value={`${player.stats.legend}%`} colors={colors} />
+            <Stat label="GRIT" value={`${player.stats.grit}`} colors={palette} />
+            <Stat label="FOCUS" value={`${player.stats.focus}`} colors={palette} />
+            <Stat label="LEGEND" value={`${player.stats.legend}%`} colors={palette} />
           </View>
         </>
       )}

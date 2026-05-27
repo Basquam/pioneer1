@@ -64,8 +64,8 @@ function Star({
 }
 
 export function CinematicBackground() {
-  const { theme } = useGame();
-  const { colors } = theme;
+  const { activeUniverse } = useGame();
+  const { palette } = activeUniverse;
   const pulse = useSharedValue(0);
 
   useEffect(() => {
@@ -85,18 +85,18 @@ export function CinematicBackground() {
 
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="none">
-      <LinearGradient colors={colors.gradient} locations={[0, 0.5, 1]} style={StyleSheet.absoluteFill} />
+      <LinearGradient colors={palette.gradient} locations={[0, 0.5, 1]} style={StyleSheet.absoluteFill} />
       <LinearGradient
-        colors={['transparent', `${colors.primary}33`, `${colors.accent}18`]}
+        colors={['transparent', `${palette.primary}33`, `${palette.accent}18`]}
         locations={[0.5, 0.85, 1]}
         style={StyleSheet.absoluteFill}
       />
       {stars.map((s) => (
-        <Star key={s.id} {...s} color={colors.bone} />
+        <Star key={s.id} {...s} color={palette.bone} />
       ))}
-      <Animated.View style={[styles.ambientGlow, glowStyle, { backgroundColor: colors.glow }]} />
+      <Animated.View style={[styles.ambientGlow, glowStyle, { backgroundColor: palette.glow }]} />
       <LinearGradient
-        colors={['transparent', `${colors.void}99`, colors.void]}
+        colors={['transparent', `${palette.void}99`, palette.void]}
         locations={[0.55, 0.88, 1]}
         style={StyleSheet.absoluteFill}
       />

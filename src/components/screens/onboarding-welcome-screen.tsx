@@ -9,19 +9,19 @@ import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
 
 export function OnboardingWelcomeScreen() {
-  const { theme } = useGame();
+  const { activeUniverse } = useGame();
 
   return (
     <ScreenShell edges={['top', 'bottom']}>
       <Animated.View entering={FadeInDown.duration(600)} style={styles.content}>
         <SectionHeader eyebrow="WELCOME" title="YOUR TASKS\nBECOME LEGENDS" />
-        <Text style={[styles.body, { color: theme.colors.fog }]}>
+        <Text style={[styles.body, { color: activeUniverse.palette.fog }]}>
           Pioneer transforms real-life chores into cinematic story quests. Complete missions,
-          earn XP, level up, and push back villains across five worlds.
+          earn XP, raise reputation, and push back villains chapter by chapter.
         </Text>
         <View style={styles.features}>
           {['Story-driven quests', 'XP & leveling', 'Villain influence'].map((f) => (
-            <Text key={f} style={[styles.feature, { color: theme.colors.gold }]}>
+            <Text key={f} style={[styles.feature, { color: activeUniverse.palette.gold }]}>
               ◆ {f}
             </Text>
           ))}
@@ -29,7 +29,7 @@ export function OnboardingWelcomeScreen() {
       </Animated.View>
       <GlowButton
         label="BEGIN SAGA"
-        hint="CHOOSE YOUR WORLD"
+        hint="CHOOSE YOUR UNIVERSE"
         onPress={() => router.push('/onboarding/theme' as Href)}
       />
     </ScreenShell>

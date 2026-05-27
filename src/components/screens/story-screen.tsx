@@ -1,16 +1,19 @@
-import { ScrollView, StyleSheet } from 'react-native';
+import { ScrollView, StyleSheet, Text } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
+import { CharacterCard } from '@/components/rpg/character-card';
+import { CharacterDialoguePanel } from '@/components/rpg/character-dialogue-panel';
 import { ChapterCard } from '@/components/rpg/chapter-card';
-import { DialoguePanel } from '@/components/rpg/dialogue-panel';
 import { ScreenShell } from '@/components/rpg/screen-shell';
 import { SectionHeader } from '@/components/rpg/section-header';
 import { VillainMeter } from '@/components/rpg/villain-meter';
+import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
-import type { StoryChapter } from '@/types/story';
+import type { Chapter } from '@/types/narrative';
 
 export function StoryScreen() {
-  const { theme, chapters, themeProgress, completedQuestCount } = useGame();
+  const { activeUniverse, activeSaga, chapters, currentChapter, playerProgress, characters } = useGame();
+  const leadBeat = currentChapter.introScene[1] ?? currentChapter.introScene[0];
 
   return (
     <ScreenShell edges={['top']} padded={false}>
@@ -19,21 +22,27 @@ export function StoryScreen() {
           <SectionHeader
             eyebrow="NARRATIVE LOG"
             title="STORY PROGRESS"
-            right={theme.villain.name}
+            right={activeSaga.villainName}
           />
           <VillainMeter />
-          <DialoguePanel
-            line={`${theme.villain.title} tightens their grip on ${theme.locationName}. Each quest you finish rewrites the ending.`}
-            badge="CHRONICLE"
-            animate={false}
-          />
-          {chapters.map((ch: StoryChapter, i: number) => (
+          {leadBeat && <CharacterDialoguePanel beat={leadBeat} animate={false} />}
+          <Text style={[styles.section, { color: activeUniverse.palette.gold }]}>CHAPTERS</Text>
+          {chapters.map((ch: Chapter, i: number) => (
             <ChapterCard
               key={ch.id}
               chapter={ch}
               index={i}
-              unlocked={completedQuestCount >= ch.requiredQuests}
-              active={themeProgress.unlockedChapterIndex === ch.index}
+              unlocked={(playerProgress.chapterCompletions[ch.id] ?? 0) > 0 || ch.order === 1}
+              active={currentChapter.id === ch.id}
+            />
+          ))}
+          <Text style={[styles.section, { color: activeUniverse.palette.gold }]}>CAST</Text>
+          {characters.map((character, i) => (
+            <CharacterCard
+              key={character.id}
+              character={character}
+              index={i}
+              relationship={playerProgress.relationshipByCharacter[character.id]}
             />
           ))}
         </Animated.View>
@@ -45,4 +54,5 @@ export function StoryScreen() {
 const styles = StyleSheet.create({
   scroll: { paddingBottom: 100 },
   pad: { paddingHorizontal: 20, gap: 12, paddingTop: 8 },
+  section: { fontFamily: GameFonts.ui, fontSize: 11, letterSpacing: 3, marginTop: 8 },
 });

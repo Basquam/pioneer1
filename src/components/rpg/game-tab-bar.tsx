@@ -24,8 +24,8 @@ export function GameTabBar(props: {
 }) {
   const { state, navigation } = props;
   const insets = useSafeAreaInsets();
-  const { theme } = useGame();
-  const { colors } = theme;
+  const { activeUniverse } = useGame();
+  const { palette } = activeUniverse;
 
   return (
     <View
@@ -33,8 +33,8 @@ export function GameTabBar(props: {
         styles.bar,
         {
           paddingBottom: insets.bottom + 8,
-          backgroundColor: colors.ink,
-          borderTopColor: colors.panelBorder,
+          backgroundColor: palette.ink,
+          borderTopColor: palette.panelBorder,
         },
       ]}>
       {state.routes.map((route, index) => {
@@ -55,18 +55,18 @@ export function GameTabBar(props: {
 
         return (
           <Pressable key={route.key} onPress={onPress} style={styles.tab}>
-            <Text style={[styles.icon, { color: focused ? colors.gold : colors.fog }]}>
+            <Text style={[styles.icon, { color: focused ? palette.gold : palette.fog }]}>
               {meta.icon}
             </Text>
             <Text
               style={[
                 styles.label,
-                { color: focused ? colors.gold : colors.fog },
+                { color: focused ? palette.gold : palette.fog },
               ]}>
               {meta.label}
             </Text>
             {focused && (
-              <View style={[styles.indicator, { backgroundColor: colors.primary }]} />
+              <View style={[styles.indicator, { backgroundColor: palette.primary }]} />
             )}
           </Pressable>
         );

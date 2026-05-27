@@ -22,8 +22,8 @@ type GlowButtonProps = {
 };
 
 export function GlowButton({ label, hint, onPress }: GlowButtonProps) {
-  const { theme } = useGame();
-  const { colors } = theme;
+  const { activeUniverse } = useGame();
+  const { palette } = activeUniverse;
   const glow = useSharedValue(0);
   const scale = useSharedValue(1);
 
@@ -52,7 +52,7 @@ export function GlowButton({ label, hint, onPress }: GlowButtonProps) {
 
   return (
     <View style={styles.wrap}>
-      <Animated.View style={[styles.glowOrb, glowStyle, { backgroundColor: colors.glow }]} />
+      <Animated.View style={[styles.glowOrb, glowStyle, { backgroundColor: palette.glow }]} />
       <AnimatedPressable
         onPress={handlePress}
         onPressIn={() => {
@@ -64,10 +64,10 @@ export function GlowButton({ label, hint, onPress }: GlowButtonProps) {
         style={[
           styles.button,
           btnStyle,
-          { backgroundColor: colors.primary, borderColor: colors.gold },
+          { backgroundColor: palette.primary, borderColor: palette.gold },
         ]}>
-        <Text style={[styles.label, { color: colors.bone }]}>{label}</Text>
-        {hint && <Text style={[styles.hint, { color: colors.gold }]}>{hint}</Text>}
+        <Text style={[styles.label, { color: palette.bone }]}>{label}</Text>
+        {hint && <Text style={[styles.hint, { color: palette.gold }]}>{hint}</Text>}
       </AnimatedPressable>
     </View>
   );

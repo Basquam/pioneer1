@@ -1,9 +1,12 @@
 import { type Href, router } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
+import { ChapterIntroScene } from '@/components/rpg/chapter-intro-scene';
 import { DialoguePanel } from '@/components/rpg/dialogue-panel';
 import { GameHud } from '@/components/rpg/game-hud';
+import { NarrativeMomentOverlay } from '@/components/rpg/narrative-moment-overlay';
 import { QuestCard } from '@/components/rpg/quest-card';
 import { ScreenShell } from '@/components/rpg/screen-shell';
 import { SectionHeader } from '@/components/rpg/section-header';
@@ -14,15 +17,28 @@ import { useGame } from '@/hooks/use-game';
 
 export function HqScreen() {
   const {
-    theme,
-    themeProgress,
+    activeUniverse,
+    activeSaga,
+    currentChapter,
+    storyLine,
     quests,
-    allQuestsComplete,
     completedQuestCount,
+    showChapterIntro,
+    markChapterIntroSeen,
+    maybeShowVillainTaunt,
   } = useGame();
 
+  const [introVisible, setIntroVisible] = useState(showChapterIntro);
+
+  useEffect(() => {
+    setIntroVisible(showChapterIntro);
+  }, [showChapterIntro, currentChapter.id]);
+
+  useEffect(() => {
+    maybeShowVillainTaunt();
+  }, [currentChapter.id, maybeShowVillainTaunt]);
+
   const activeQuests = quests.filter((q) => !q.completed);
-  const storyLine = allQuestsComplete ? theme.victoryLine : themeProgress.storyLine;
 
   return (
     <ScreenShell edges={['top']} padded={false}>
@@ -31,11 +47,11 @@ export function HqScreen() {
         showsVerticalScrollIndicator={false}>
         <View style={styles.pad}>
           <Animated.View entering={FadeInDown.duration(500)}>
-            <Text style={styles.icon}>{theme.icon}</Text>
+            <Text style={styles.icon}>{activeUniverse.icon}</Text>
             <SectionHeader
-              eyebrow={theme.chapterTitle}
-              title={`${theme.locationName} HQ`}
-              right={`${theme.name}`}
+              eyebrow={`${activeSaga.title.toUpperCase()} · CH ${currentChapter.order}`}
+              title={`${activeUniverse.locationName} HQ`}
+              right={activeUniverse.name}
             />
           </Animated.View>
 
@@ -48,30 +64,38 @@ export function HqScreen() {
             <QuickLink
               label="QUEST BOARD"
               sub={`${activeQuests.length} active`}
-              color={theme.colors.accent}
+              color={activeUniverse.palette.accent}
               onPress={() => router.push('/(game)/quests' as Href)}
             />
             <QuickLink
               label="STORY"
-              sub={`Ch. ${themeProgress.unlockedChapterIndex + 1}`}
-              color={theme.colors.gold}
+              sub={`Ch. ${currentChapter.order}`}
+              color={activeUniverse.palette.gold}
               onPress={() => router.push('/(game)/story' as Href)}
             />
           </View>
 
-          <Text style={[styles.section, { color: theme.colors.gold }]}>PRIORITY BOUNTIES</Text>
+          <Text style={[styles.section, { color: activeUniverse.palette.gold }]}>PRIORITY BOUNTIES</Text>
           {quests.slice(0, 2).map((q, i) => (
             <QuestCard key={q.id} quest={q} index={i} />
           ))}
           {completedQuestCount < quests.length && (
             <Pressable onPress={() => router.push('/(game)/quests' as Href)}>
-              <Text style={[styles.more, { color: theme.colors.accent }]}>
+              <Text style={[styles.more, { color: activeUniverse.palette.accent }]}>
                 VIEW ALL BOUNTIES ›
               </Text>
             </Pressable>
           )}
         </View>
       </ScrollView>
+      <ChapterIntroScene
+        visible={introVisible}
+        onComplete={() => {
+          setIntroVisible(false);
+          markChapterIntroSeen();
+        }}
+      />
+      <NarrativeMomentOverlay />
       <XpPopup />
     </ScreenShell>
   );

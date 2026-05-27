@@ -2,17 +2,18 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { GameFonts } from '@/constants/typography';
-import type { StoryTheme } from '@/types/theme';
+import type { Universe } from '@/types/narrative';
 
 type ThemeCardProps = {
-  theme: StoryTheme;
+  universe: Universe;
   selected: boolean;
   index: number;
   onPress: () => void;
 };
 
-export function ThemeCard({ theme, selected, index, onPress }: ThemeCardProps) {
-  const { colors } = theme;
+export function ThemeCard({ universe, selected, index, onPress }: ThemeCardProps) {
+  const { palette } = universe;
+  const availableSagas = universe.sagas.filter((saga) => saga.status === 'available').length;
 
   return (
     <Animated.View entering={FadeInDown.delay(index * 80).springify()}>
@@ -21,21 +22,21 @@ export function ThemeCard({ theme, selected, index, onPress }: ThemeCardProps) {
         style={[
           styles.card,
           {
-            backgroundColor: colors.panel,
-            borderColor: selected ? colors.gold : colors.panelBorder,
+            backgroundColor: palette.panel,
+            borderColor: selected ? palette.gold : palette.panelBorder,
           },
         ]}>
-        <Text style={styles.icon}>{theme.icon}</Text>
+        <Text style={styles.icon}>{universe.icon}</Text>
         <View style={styles.text}>
-          <Text style={[styles.name, { color: colors.bone }]}>{theme.name}</Text>
-          <Text style={[styles.tag, { color: colors.fog }]}>{theme.tagline}</Text>
-          <Text style={[styles.villain, { color: colors.villainGlow }]}>
-            vs {theme.villain.name}
+          <Text style={[styles.name, { color: palette.bone }]}>{universe.name}</Text>
+          <Text style={[styles.tag, { color: palette.fog }]}>{universe.tagline}</Text>
+          <Text style={[styles.villain, { color: palette.villainGlow }]}>
+            {availableSagas} saga unlocked
           </Text>
         </View>
         {selected && (
-          <View style={[styles.check, { backgroundColor: colors.primary }]}>
-            <Text style={[styles.checkText, { color: colors.bone }]}>✓</Text>
+          <View style={[styles.check, { backgroundColor: palette.primary }]}>
+            <Text style={[styles.checkText, { color: palette.bone }]}>✓</Text>
           </View>
         )}
       </Pressable>

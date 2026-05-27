@@ -22,8 +22,8 @@ export function DialoguePanel({
   animate = true,
   onTypingComplete,
 }: DialoguePanelProps) {
-  const { theme } = useGame();
-  const { colors, mentorName } = theme;
+  const { activeUniverse } = useGame();
+  const { palette, mentorName } = activeUniverse;
   const [visibleText, setVisibleText] = useState(animate ? '' : line);
 
   useEffect(() => {
@@ -46,19 +46,19 @@ export function DialoguePanel({
 
   return (
     <Animated.View entering={FadeInLeft.duration(400)} style={styles.wrapper}>
-      <View style={[styles.panel, { backgroundColor: colors.panel, borderColor: colors.panelBorder }]}>
-        <View style={[styles.accent, { backgroundColor: colors.primary }]} />
+      <View style={[styles.panel, { backgroundColor: palette.panel, borderColor: palette.panelBorder }]}>
+        <View style={[styles.accent, { backgroundColor: palette.primary }]} />
         <View style={styles.content}>
           <View style={styles.headerRow}>
-            <Text style={[styles.speaker, { color: colors.gold }]}>{speaker ?? mentorName}</Text>
-            <View style={[styles.badge, { backgroundColor: colors.primary }]}>
-              <Text style={[styles.badgeText, { color: colors.bone }]}>{badge}</Text>
+            <Text style={[styles.speaker, { color: palette.gold }]}>{speaker ?? mentorName}</Text>
+            <View style={[styles.badge, { backgroundColor: palette.primary }]}>
+              <Text style={[styles.badgeText, { color: palette.bone }]}>{badge}</Text>
             </View>
           </View>
-          <Animated.Text entering={FadeIn.duration(300)} key={line} style={[styles.line, { color: colors.bone }]}>
+          <Animated.Text entering={FadeIn.duration(300)} key={line} style={[styles.line, { color: palette.bone }]}>
             {visibleText}
             {animate && visibleText.length < line.length && (
-              <Text style={{ color: colors.accent }}>▌</Text>
+              <Text style={{ color: palette.accent }}>▌</Text>
             )}
           </Animated.Text>
         </View>

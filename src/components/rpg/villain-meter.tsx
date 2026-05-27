@@ -6,9 +6,9 @@ import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
 
 export function VillainMeter() {
-  const { theme, themeProgress } = useGame();
-  const { colors, villain } = theme;
-  const clamped = Math.min(100, Math.max(0, themeProgress.villainInfluence));
+  const { activeUniverse, activeSaga, villainInfluence } = useGame();
+  const { palette } = activeUniverse;
+  const clamped = Math.min(100, Math.max(0, villainInfluence));
   const fill = useSharedValue(clamped / 100);
 
   useEffect(() => {
@@ -25,15 +25,15 @@ export function VillainMeter() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={[styles.label, { color: colors.villainGlow }]}>
-          {villain.name} · INFLUENCE
+        <Text style={[styles.label, { color: palette.villainGlow }]}>
+          {activeSaga.villainName} · INFLUENCE
         </Text>
-        <Text style={[styles.value, { color: colors.bone }]}>{clamped}%</Text>
+        <Text style={[styles.value, { color: palette.bone }]}>{clamped}%</Text>
       </View>
-      <View style={[styles.track, { backgroundColor: `${colors.villain}88`, borderColor: `${colors.villainGlow}66` }]}>
-        <Animated.View style={[styles.fill, fillStyle, { backgroundColor: colors.villainGlow }]} />
+      <View style={[styles.track, { backgroundColor: `${palette.villain}88`, borderColor: `${palette.villainGlow}66` }]}>
+        <Animated.View style={[styles.fill, fillStyle, { backgroundColor: palette.villainGlow }]} />
       </View>
-      <Text style={[styles.status, { color: colors.fog }]}>{status}</Text>
+      <Text style={[styles.status, { color: palette.fog }]}>{status}</Text>
     </View>
   );
 }

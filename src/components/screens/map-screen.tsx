@@ -4,31 +4,30 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { MapNode } from '@/components/rpg/map-node';
 import { ScreenShell } from '@/components/rpg/screen-shell';
 import { SectionHeader } from '@/components/rpg/section-header';
-import { THEME_LIST } from '@/data/themes';
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
-import type { ThemeId } from '@/types/theme';
 
 export function MapScreen() {
-  const { activeThemeId, switchTheme, themeProgressMap } = useGame();
+  const { activeUniverse, activeSaga, playerProgress, selectSaga } = useGame();
 
   return (
     <ScreenShell edges={['top']} padded={false}>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <Animated.View entering={FadeInDown.duration(500)} style={styles.pad}>
-          <SectionHeader eyebrow="MULTIVERSE" title="WORLD MAP" />
+          <SectionHeader eyebrow="SAGA MAP" title="FRONTIER INTELLIGENCE" />
           <Text style={styles.hint}>
-            Tap a region to deploy. Each world has its own villain and bounties.
+            Tap a saga to deploy your focus for the next chapter push.
           </Text>
-          {THEME_LIST.map((t) => {
-            const progress = themeProgressMap[t.id as ThemeId];
+          {activeUniverse.sagas.map((saga) => {
+            const influence = playerProgress.villainInfluenceBySaga[saga.id] ?? 100;
             return (
               <MapNode
-                key={t.id}
-                themeId={t.id}
-                active={activeThemeId === t.id}
-                influence={progress?.villainInfluence ?? 100}
-                onPress={() => switchTheme(t.id)}
+                key={saga.id}
+                saga={saga}
+                palette={activeUniverse.palette}
+                active={activeSaga.id === saga.id}
+                influence={influence}
+                onPress={() => selectSaga(saga.id)}
               />
             );
           })}

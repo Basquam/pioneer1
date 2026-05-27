@@ -1,8 +1,11 @@
+import { useEffect } from 'react';
 import { ScrollView, StyleSheet, Text } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
+import { CharacterDialoguePanel } from '@/components/rpg/character-dialogue-panel';
 import { DialoguePanel } from '@/components/rpg/dialogue-panel';
 import { GameHud } from '@/components/rpg/game-hud';
+import { NarrativeMomentOverlay } from '@/components/rpg/narrative-moment-overlay';
 import { QuestCard } from '@/components/rpg/quest-card';
 import { ScreenShell } from '@/components/rpg/screen-shell';
 import { SectionHeader } from '@/components/rpg/section-header';
@@ -12,8 +15,13 @@ import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
 
 export function QuestsScreen() {
-  const { theme, quests, allQuestsComplete, themeProgress } = useGame();
-  const storyLine = allQuestsComplete ? theme.victoryLine : themeProgress.storyLine;
+  const { activeUniverse, currentChapter, quests, storyLine, maybeShowVillainTaunt } = useGame();
+
+  useEffect(() => {
+    maybeShowVillainTaunt();
+  }, [currentChapter.id, maybeShowVillainTaunt]);
+
+  const leadBeat = currentChapter.introScene[0];
 
   return (
     <ScreenShell edges={['top']} padded={false}>
@@ -22,7 +30,8 @@ export function QuestsScreen() {
           <SectionHeader eyebrow="BOUNTY BOARD" title="ACTIVE QUESTS" />
           <GameHud compact />
           <VillainMeter />
-          <Text style={[styles.hint, { color: theme.colors.fog }]}>
+          {leadBeat && <CharacterDialoguePanel beat={leadBeat} animate={false} />}
+          <Text style={[styles.hint, { color: activeUniverse.palette.fog }]}>
             Real tasks disguised as story missions. Tap to complete.
           </Text>
           {quests.map((q, i) => (
@@ -31,6 +40,7 @@ export function QuestsScreen() {
           <DialoguePanel line={storyLine} badge="AFTERMATH" animate={false} />
         </Animated.View>
       </ScrollView>
+      <NarrativeMomentOverlay />
       <XpPopup />
     </ScreenShell>
   );

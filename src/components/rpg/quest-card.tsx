@@ -9,25 +9,29 @@ import Animated, {
 
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
-import type { QuestState } from '@/types/quest';
+import type { QuestTemplateState } from '@/context/game-context';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-const CATEGORY_LABEL: Record<QuestState['category'], string> = {
-  chore: 'BOUNTY',
+const CATEGORY_LABEL: Record<QuestTemplateState['category'], string> = {
+  cleaning: 'BOUNTY',
+  fitness: 'TRAINING',
   study: 'INTEL',
   work: 'CONTRACT',
-  exercise: 'TRAINING',
+  health: 'SURVIVAL',
+  social: 'ALLIANCE',
+  creative: 'LEGEND',
+  errand: 'SUPPLY',
 };
 
 type QuestCardProps = {
-  quest: QuestState;
+  quest: QuestTemplateState;
   index: number;
 };
 
 export function QuestCard({ quest, index }: QuestCardProps) {
-  const { theme, completeQuest } = useGame();
-  const { colors } = theme;
+  const { activeUniverse, completeQuest } = useGame();
+  const { palette } = activeUniverse;
   const scale = useSharedValue(1);
 
   const cardStyle = useAnimatedStyle(() => ({
@@ -38,9 +42,9 @@ export function QuestCard({ quest, index }: QuestCardProps) {
     return (
       <Animated.View
         entering={FadeInDown.delay(index * 100).springify()}
-        style={[styles.wrapper, { borderColor: colors.gold, backgroundColor: `${colors.primary}22` }]}>
-        <Text style={[styles.stamp, { color: colors.gold }]}>CLEARED</Text>
-        <Text style={[styles.doneTitle, { color: colors.fog }]}>{quest.questTitle}</Text>
+        style={[styles.wrapper, { borderColor: palette.gold, backgroundColor: `${palette.primary}22` }]}>
+        <Text style={[styles.stamp, { color: palette.gold }]}>CLEARED</Text>
+        <Text style={[styles.doneTitle, { color: palette.fog }]}>{quest.title}</Text>
       </Animated.View>
     );
   }
@@ -60,23 +64,23 @@ export function QuestCard({ quest, index }: QuestCardProps) {
       style={[
         styles.wrapper,
         cardStyle,
-        { backgroundColor: colors.panel, borderColor: colors.panelBorder },
+        { backgroundColor: palette.panel, borderColor: palette.panelBorder },
       ]}>
-      <View style={[styles.accent, { backgroundColor: colors.primary }]} />
+      <View style={[styles.accent, { backgroundColor: palette.primary }]} />
       <View style={styles.inner}>
         <View style={styles.topRow}>
-          <View style={[styles.badge, { backgroundColor: colors.primary }]}>
-            <Text style={[styles.badgeText, { color: colors.bone }]}>{CATEGORY_LABEL[quest.category]}</Text>
+          <View style={[styles.badge, { backgroundColor: palette.primary }]}>
+            <Text style={[styles.badgeText, { color: palette.bone }]}>{CATEGORY_LABEL[quest.category]}</Text>
           </View>
-          <Text style={[styles.xp, { color: colors.gold }]}>+{quest.xpReward} XP</Text>
+          <Text style={[styles.xp, { color: palette.gold }]}>+{quest.xpReward} XP</Text>
         </View>
-        <Text style={[styles.title, { color: colors.bone }]}>{quest.questTitle}</Text>
-        <Text style={[styles.sub, { color: colors.fog }]}>{quest.questSubtitle}</Text>
+        <Text style={[styles.title, { color: palette.bone }]}>{quest.title}</Text>
+        <Text style={[styles.sub, { color: palette.fog }]}>{quest.dramaticHook}</Text>
         <View style={styles.realRow}>
-          <Text style={[styles.realLabel, { color: colors.fog }]}>REAL TASK</Text>
-          <Text style={[styles.realTask, { color: colors.gold }]}>{quest.realTask}</Text>
+          <Text style={[styles.realLabel, { color: palette.fog }]}>OBJECTIVE</Text>
+          <Text style={[styles.realTask, { color: palette.gold }]}>{quest.objective}</Text>
         </View>
-        <Text style={[styles.tap, { color: colors.accent }]}>TAP TO COMPLETE ›</Text>
+        <Text style={[styles.tap, { color: palette.accent }]}>TAP TO COMPLETE ›</Text>
       </View>
     </AnimatedPressable>
   );

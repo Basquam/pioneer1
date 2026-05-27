@@ -1,14 +1,14 @@
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
+import { CharacterCard } from '@/components/rpg/character-card';
 import { ScreenShell } from '@/components/rpg/screen-shell';
 import { SectionHeader } from '@/components/rpg/section-header';
 import { GameFonts } from '@/constants/typography';
-import { THEME_LIST } from '@/data/themes';
 import { useGame } from '@/hooks/use-game';
 
 export function ProfileScreen() {
-  const { theme, player, completedQuestCount, quests } = useGame();
+  const { activeUniverse, activeSaga, player, characters, playerProgress, completedQuestCount, quests } = useGame();
 
   return (
     <ScreenShell edges={['top']} padded={false}>
@@ -16,41 +16,52 @@ export function ProfileScreen() {
         <Animated.View entering={FadeInDown.duration(500)} style={styles.pad}>
           <SectionHeader eyebrow="OPERATIVE FILE" title="PROFILE" />
 
-          <View style={[styles.card, { backgroundColor: theme.colors.panel, borderColor: theme.colors.gold }]}>
-            <Text style={styles.avatar}>{theme.icon}</Text>
-            <Text style={[styles.rank, { color: theme.colors.gold }]}>{player.rank.toUpperCase()}</Text>
-            <Text style={[styles.level, { color: theme.colors.bone }]}>
+          <View style={[styles.card, { backgroundColor: activeUniverse.palette.panel, borderColor: activeUniverse.palette.gold }]}>
+            <Text style={styles.avatar}>{activeUniverse.icon}</Text>
+            <Text style={[styles.rank, { color: activeUniverse.palette.gold }]}>{player.rank.toUpperCase()}</Text>
+            <Text style={[styles.level, { color: activeUniverse.palette.bone }]}>
               LEVEL {player.level}
             </Text>
-            <View style={[styles.xpBar, { backgroundColor: theme.colors.xpTrack }]}>
+            <View style={[styles.xpBar, { backgroundColor: activeUniverse.palette.xpTrack }]}>
               <View
                 style={[
                   styles.xpFill,
-                  { width: `${player.xpProgress * 100}%`, backgroundColor: theme.colors.xpFill },
+                  { width: `${player.xpProgress * 100}%`, backgroundColor: activeUniverse.palette.xpFill },
                 ]}
               />
             </View>
-            <Text style={[styles.xpText, { color: theme.colors.fog }]}>
+            <Text style={[styles.xpText, { color: activeUniverse.palette.fog }]}>
               {player.xpInLevel} / {player.xpToNext} XP to next level · {player.totalXp} total
             </Text>
           </View>
 
           <View style={styles.statsGrid}>
-            <StatBox label="GRIT" value={String(player.stats.grit)} colors={theme.colors} />
-            <StatBox label="FOCUS" value={String(player.stats.focus)} colors={theme.colors} />
-            <StatBox label="LEGEND" value={`${player.stats.legend}%`} colors={theme.colors} />
-            <StatBox label="BOUNTIES" value={`${completedQuestCount}/${quests.length}`} colors={theme.colors} />
+            <StatBox label="GRIT" value={String(player.stats.grit)} colors={activeUniverse.palette} />
+            <StatBox label="FOCUS" value={String(player.stats.focus)} colors={activeUniverse.palette} />
+            <StatBox label="LEGEND" value={`${player.stats.legend}%`} colors={activeUniverse.palette} />
+            <StatBox label="BOUNTIES" value={`${completedQuestCount}/${quests.length}`} colors={activeUniverse.palette} />
+            <StatBox label="REPUTATION" value={`${player.reputation}`} colors={activeUniverse.palette} />
           </View>
 
-          <Text style={[styles.section, { color: theme.colors.gold }]}>WORLDS UNLOCKED</Text>
-          {THEME_LIST.map((t) => (
+          <Text style={[styles.section, { color: activeUniverse.palette.gold }]}>ALLIES & ENEMIES</Text>
+          {characters.map((character, i) => (
+            <CharacterCard
+              key={character.id}
+              character={character}
+              index={i}
+              relationship={playerProgress.relationshipByCharacter[character.id]}
+            />
+          ))}
+
+          <Text style={[styles.section, { color: activeUniverse.palette.gold }]}>ACTIVE SAGA</Text>
+          {[activeSaga].map((saga) => (
             <View
-              key={t.id}
-              style={[styles.worldRow, { borderColor: theme.colors.panelBorder }]}>
-              <Text style={styles.worldIcon}>{t.icon}</Text>
-              <Text style={[styles.worldName, { color: theme.colors.bone }]}>{t.name}</Text>
-              <Text style={[styles.worldVillain, { color: theme.colors.fog }]}>
-                vs {t.villain.name}
+              key={saga.id}
+              style={[styles.worldRow, { borderColor: activeUniverse.palette.panelBorder }]}>
+              <Text style={styles.worldIcon}>{activeUniverse.icon}</Text>
+              <Text style={[styles.worldName, { color: activeUniverse.palette.bone }]}>{saga.title}</Text>
+              <Text style={[styles.worldVillain, { color: activeUniverse.palette.fog }]}>
+                vs {saga.villainName}
               </Text>
             </View>
           ))}
