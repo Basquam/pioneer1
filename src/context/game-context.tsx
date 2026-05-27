@@ -1,6 +1,6 @@
-import { createContext, useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 
-import { DUST_AND_IRON_UNIVERSE, getUniverse, UNIVERSES } from '@/data/narrative/wild-west-universe';
+import { getUniverse, UNIVERSES } from '@/data/narrative/wild-west-universe';
 import { convertTaskToUserQuest, createUserQuestId } from '@/lib/convert-task-to-quest';
 import {
   affinityToTier,
@@ -8,6 +8,12 @@ import {
   pickCharacterLine,
 } from '@/lib/narrative-helpers';
 import { computeLevel, rankForLevel } from '@/lib/level';
+import {
+  clearPlayerProgress,
+  createInitialProgress,
+  loadPlayerProgress,
+  savePlayerProgress,
+} from '@/lib/player-progress-storage';
 import { buildBoardQuests, countCompletedTemplates, findBoardQuest } from '@/lib/quest-board';
 import type {
   BoardQuest,
@@ -58,33 +64,11 @@ type GameContextValue = {
   markChapterIntroSeen: () => void;
   dismissNarrativeMoment: () => void;
   maybeShowVillainTaunt: () => void;
+  resetProgress: () => Promise<void>;
+  isHydrated: boolean;
 };
 
 export const GameContext = createContext<GameContextValue | null>(null);
-
-const defaultUniverseId = DUST_AND_IRON_UNIVERSE.id;
-const defaultSagaId = DUST_AND_IRON_UNIVERSE.sagas[0]?.id ?? '';
-const defaultChapterId = DUST_AND_IRON_UNIVERSE.sagas[0]?.chapters[0]?.id ?? '';
-
-const initialProgress: PlayerProgress = {
-  hasOnboarded: false,
-  selectedUniverseId: defaultUniverseId,
-  selectedSagaId: defaultSagaId,
-  currentChapterId: defaultChapterId,
-  totalXp: 0,
-  level: 1,
-  reputation: 0,
-  completedQuestIds: [],
-  userQuests: [],
-  villainInfluenceBySaga: {
-    [defaultSagaId]: 100,
-  },
-  chapterCompletions: {},
-  relationshipByCharacter: {},
-  characterAffinity: {},
-  seenChapterIntros: [],
-  dismissedTauntForChapterId: null,
-};
 
 function getSaga(universe: Universe, sagaId: string): Saga {
   return (
@@ -99,10 +83,30 @@ function getChapter(saga: Saga, chapterId: string): Chapter {
 }
 
 export function GameProvider({ children }: { children: ReactNode }) {
-  const [progress, setProgress] = useState<PlayerProgress>(initialProgress);
+  const [progress, setProgress] = useState<PlayerProgress>(createInitialProgress);
+  const [isHydrated, setIsHydrated] = useState(false);
   const [xpBurst, setXpBurst] = useState<XpBurst | null>(null);
   const [narrativeMoment, setNarrativeMoment] = useState<NarrativeMoment | null>(null);
   const pendingTransitionRef = useRef<NarrativeMoment | null>(null);
+
+  useEffect(() => {
+    let active = true;
+
+    loadPlayerProgress().then((saved) => {
+      if (!active) return;
+      if (saved) setProgress(saved);
+      setIsHydrated(true);
+    });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isHydrated) return;
+    void savePlayerProgress(progress);
+  }, [isHydrated, progress]);
 
   const activeUniverse = getUniverse(progress.selectedUniverseId);
   const activeSaga = getSaga(activeUniverse, progress.selectedSagaId);
@@ -351,6 +355,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   const dismissXpBurst = useCallback(() => setXpBurst(null), []);
 
+  const resetProgress = useCallback(async () => {
+    await clearPlayerProgress();
+    setProgress(createInitialProgress());
+    setXpBurst(null);
+    setNarrativeMoment(null);
+    pendingTransitionRef.current = null;
+  }, []);
+
   const value = useMemo<GameContextValue>(
     () => ({
       universes: UNIVERSES,
@@ -379,6 +391,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       markChapterIntroSeen,
       dismissNarrativeMoment,
       maybeShowVillainTaunt,
+      resetProgress,
+      isHydrated,
     }),
     [
       activeSaga,
@@ -393,12 +407,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
       currentChapter,
       dismissNarrativeMoment,
       dismissXpBurst,
+      isHydrated,
       markChapterIntroSeen,
       maybeShowVillainTaunt,
       narrativeMoment,
       player,
       progress,
       quests,
+      resetProgress,
       selectSaga,
       selectUniverse,
       showChapterIntro,
@@ -407,6 +423,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
       xpBurst,
     ],
   );
+
+  if (!isHydrated) {
+    return null;
+  }
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;
 }

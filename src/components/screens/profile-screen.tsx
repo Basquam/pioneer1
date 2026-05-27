@@ -1,4 +1,4 @@
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { CharacterCard } from '@/components/rpg/character-card';
@@ -8,7 +8,33 @@ import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
 
 export function ProfileScreen() {
-  const { activeUniverse, activeSaga, player, characters, playerProgress, completedQuestCount, quests } = useGame();
+  const {
+    activeUniverse,
+    activeSaga,
+    player,
+    characters,
+    playerProgress,
+    completedQuestCount,
+    quests,
+    resetProgress,
+  } = useGame();
+
+  const handleReset = () => {
+    Alert.alert(
+      'Reset Progress',
+      'Clear all saved XP, quests, and relationships? This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Reset',
+          style: 'destructive',
+          onPress: () => {
+            void resetProgress();
+          },
+        },
+      ],
+    );
+  };
 
   return (
     <ScreenShell edges={['top']} padded={false}>
@@ -65,6 +91,17 @@ export function ProfileScreen() {
               </Text>
             </View>
           ))}
+
+          <Pressable
+            onPress={handleReset}
+            style={[styles.resetButton, { borderColor: activeUniverse.palette.primary }]}>
+            <Text style={[styles.resetLabel, { color: activeUniverse.palette.primary }]}>
+              RESET PROGRESS
+            </Text>
+            <Text style={[styles.resetSub, { color: activeUniverse.palette.fog }]}>
+              Testing only — clears local save
+            </Text>
+          </Pressable>
         </Animated.View>
       </ScrollView>
     </ScreenShell>
@@ -125,4 +162,13 @@ const styles = StyleSheet.create({
   worldIcon: { fontSize: 22 },
   worldName: { fontFamily: GameFonts.ui, fontSize: 14, flex: 1, letterSpacing: 1 },
   worldVillain: { fontFamily: GameFonts.uiSemi, fontSize: 9, letterSpacing: 1 },
+  resetButton: {
+    borderWidth: 1,
+    padding: 14,
+    gap: 4,
+    marginTop: 12,
+    transform: [{ skewX: '-3deg' }],
+  },
+  resetLabel: { fontFamily: GameFonts.ui, fontSize: 13, letterSpacing: 2, textAlign: 'center' },
+  resetSub: { fontFamily: GameFonts.uiSemi, fontSize: 10, letterSpacing: 1, textAlign: 'center' },
 });
