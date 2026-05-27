@@ -15,6 +15,7 @@ import {
   savePlayerProgress,
 } from '@/lib/player-progress-storage';
 import { buildBoardQuests, countCompletedTemplates, findBoardQuest } from '@/lib/quest-board';
+import { getSagaEntryChapterId } from '@/lib/chapter-progress';
 import { sumChapterTemplateRewards } from '@/lib/chapter-rewards';
 import { isSagaUnlocked, unlockRewardIds } from '@/lib/reward-unlocks';
 import type {
@@ -61,6 +62,7 @@ type GameContextValue = {
   allQuestsComplete: boolean;
   selectUniverse: (universeId: string) => void;
   selectSaga: (sagaId: string) => void;
+  switchSaga: (sagaId: string, options?: { forceFirstChapter?: boolean }) => void;
   completeOnboarding: () => void;
   addUserQuest: (originalTitle: string, category: TaskCategory) => void;
   completeQuest: (questId: string) => void;
@@ -68,6 +70,7 @@ type GameContextValue = {
   markChapterIntroSeen: () => void;
   dismissNarrativeMoment: () => void;
   continueFromChapterComplete: () => void;
+  startUnlockedSagaFromChapterComplete: (sagaId: string, entryChapterId: string) => void;
   maybeShowVillainTaunt: () => void;
   resetProgress: () => Promise<void>;
   isHydrated: boolean;
@@ -191,6 +194,29 @@ export function GameProvider({ children }: { children: ReactNode }) {
       }));
     },
     [activeUniverse, progress.unlockedRewards],
+  );
+
+  const switchSaga = useCallback(
+    (sagaId: string, options?: { forceFirstChapter?: boolean }) => {
+      const saga = getSaga(activeUniverse, sagaId);
+      if (!saga || !isSagaUnlocked(saga, progress.unlockedRewards) || saga.chapters.length === 0) return;
+
+      const chapterId = options?.forceFirstChapter
+        ? saga.chapters[0].id
+        : getSagaEntryChapterId(saga, progress);
+
+      setProgress((prev) => ({
+        ...prev,
+        selectedSagaId: saga.id,
+        currentChapterId: chapterId,
+        dismissedTauntForChapterId: null,
+        villainInfluenceBySaga: {
+          ...prev.villainInfluenceBySaga,
+          [saga.id]: prev.villainInfluenceBySaga[saga.id] ?? 100,
+        },
+      }));
+    },
+    [activeUniverse, progress],
   );
 
   const completeOnboarding = useCallback(() => {
@@ -367,30 +393,62 @@ export function GameProvider({ children }: { children: ReactNode }) {
     });
   }, [currentChapter.id]);
 
-  const continueFromChapterComplete = useCallback(() => {
-    setChapterComplete((current) => {
-      if (!current) return null;
+  const finalizeChapterComplete = useCallback(
+    (options?: { switchToSagaId?: string; entryChapterId?: string }) => {
+      setChapterComplete((current) => {
+        if (!current) return null;
 
-      setProgress((prev) => {
-        const completedChapterIds = prev.completedChapterIds.includes(current.chapterId)
-          ? prev.completedChapterIds
-          : [...prev.completedChapterIds, current.chapterId];
+        setProgress((prev) => {
+          const completedChapterIds = prev.completedChapterIds.includes(current.chapterId)
+            ? prev.completedChapterIds
+            : [...prev.completedChapterIds, current.chapterId];
 
-        if (current.nextChapterId) {
-          return {
-            ...prev,
-            currentChapterId: current.nextChapterId,
-            completedChapterIds,
-            dismissedTauntForChapterId: null,
-          };
-        }
+          if (options?.switchToSagaId) {
+            const targetSaga = getSaga(activeUniverse, options.switchToSagaId);
+            const chapterId =
+              options.entryChapterId ?? targetSaga.chapters[0]?.id ?? prev.currentChapterId;
 
-        return { ...prev, completedChapterIds };
+            return {
+              ...prev,
+              selectedSagaId: targetSaga.id,
+              currentChapterId: chapterId,
+              completedChapterIds,
+              dismissedTauntForChapterId: null,
+              villainInfluenceBySaga: {
+                ...prev.villainInfluenceBySaga,
+                [targetSaga.id]: prev.villainInfluenceBySaga[targetSaga.id] ?? 100,
+              },
+            };
+          }
+
+          if (current.nextChapterId) {
+            return {
+              ...prev,
+              currentChapterId: current.nextChapterId,
+              completedChapterIds,
+              dismissedTauntForChapterId: null,
+            };
+          }
+
+          return { ...prev, completedChapterIds };
+        });
+
+        return null;
       });
+    },
+    [activeUniverse],
+  );
 
-      return null;
-    });
-  }, []);
+  const continueFromChapterComplete = useCallback(() => {
+    finalizeChapterComplete();
+  }, [finalizeChapterComplete]);
+
+  const startUnlockedSagaFromChapterComplete = useCallback(
+    (sagaId: string, entryChapterId: string) => {
+      finalizeChapterComplete({ switchToSagaId: sagaId, entryChapterId });
+    },
+    [finalizeChapterComplete],
+  );
 
   const dismissXpBurst = useCallback(() => setXpBurst(null), []);
 
@@ -427,6 +485,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       allQuestsComplete,
       selectUniverse,
       selectSaga,
+      switchSaga,
       completeOnboarding,
       addUserQuest,
       completeQuest,
@@ -434,6 +493,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       markChapterIntroSeen,
       dismissNarrativeMoment,
       continueFromChapterComplete,
+      startUnlockedSagaFromChapterComplete,
       maybeShowVillainTaunt,
       resetProgress,
       isHydrated,
@@ -464,7 +524,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
       selectSaga,
       selectUniverse,
       showChapterIntro,
+      startUnlockedSagaFromChapterComplete,
       storyLine,
+      switchSaga,
       villainInfluence,
       xpBurst,
     ],

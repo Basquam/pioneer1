@@ -1,3 +1,8 @@
+import { IRON_RAILWAY_CHAPTERS } from '@/data/narrative/iron-railway-chapters';
+import {
+  IRON_RAILWAY_CHARACTERS,
+  SILAS_VANE_ID,
+} from '@/data/narrative/iron-railway-characters';
 import { VULTURE_GANG_CHAPTERS } from '@/data/narrative/vulture-gang-chapters';
 import {
   ELIAS_CROW_ID,
@@ -21,32 +26,16 @@ const vultureGangSaga: Saga = {
 const ironRailwayCompanySaga: Saga = {
   id: 'iron-railway-company',
   title: 'Iron Railway Company',
-  villainName: 'Iron Railway Company',
-  villainTitle: 'Corporate Barons',
-  villainCharacterId: '',
+  villainName: 'Silas Vane',
+  villainTitle: 'Corrupt Railway Baron',
+  villainCharacterId: SILAS_VANE_ID,
   status: 'locked',
   requiredUnlockId: 'high-noon-story-unlock',
   unlockRequirementLabel: 'Complete High Noon',
-  summary: 'A ruthless rail monopoly squeezes towns dry through debt and force.',
-  rankTitles: ['Track Scout', 'Rail Ranger', 'Steelbreaker'],
-  characters: [],
-  chapters: [
-    {
-      id: 'steel-contract',
-      order: 1,
-      title: 'Steel Contract',
-      territoryName: 'Railyard Gate',
-      mapPosition: { x: 50, y: 50 },
-      summary: 'Corporate rails tighten around Dustfall. A new saga begins.',
-      dramaticPurpose: 'Open the Iron Railway conflict.',
-      introDialogue: 'Sheriff Ada Mercer: The rails are moving again — and this time the enemy wears a ledger, not a bandana.',
-      introScene: [],
-      successDialogue: 'Sheriff Ada Mercer: First contract secured. The rails won’t own us without a fight.',
-      failureDialogue: 'Sheriff Ada Mercer: They bought another mile of silence. Push back before the tracks swallow us.',
-      questTemplates: [],
-      chapterReward: { id: 'steel-contract-badge', type: 'badge', name: 'Rail Scout' },
-    },
-  ],
+  summary: 'Build and protect a frontier railway logistics network against corporate sabotage.',
+  rankTitles: ['Junior Logistics Manager', 'Route Marshal', 'Network Warden'],
+  characters: IRON_RAILWAY_CHARACTERS,
+  chapters: IRON_RAILWAY_CHAPTERS,
 };
 
 const honestBusinessmanSaga: Saga = {

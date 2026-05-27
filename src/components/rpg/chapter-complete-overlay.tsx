@@ -1,21 +1,41 @@
-import { Modal, StyleSheet, Text, View } from 'react-native';
+import { type Href, router } from 'expo-router';
+import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown, FadeInUp, ZoomIn } from 'react-native-reanimated';
 
 import { DialoguePanel } from '@/components/rpg/dialogue-panel';
 import { GlowButton } from '@/components/rpg/glow-button';
 import { GameFonts } from '@/constants/typography';
 import { parseDialogueLine } from '@/lib/narrative-helpers';
-import { REWARD_TYPE_LABELS } from '@/lib/reward-unlocks';
+import {
+  getStartSagaCtaLabel,
+  REWARD_TYPE_LABELS,
+  resolveStoryUnlockSaga,
+} from '@/lib/reward-unlocks';
 import { useGame } from '@/hooks/use-game';
 
 export function ChapterCompleteOverlay() {
-  const { activeUniverse, chapterComplete, continueFromChapterComplete } = useGame();
+  const {
+    activeUniverse,
+    chapterComplete,
+    continueFromChapterComplete,
+    startUnlockedSagaFromChapterComplete,
+  } = useGame();
   const { palette } = activeUniverse;
 
   if (!chapterComplete) return null;
 
   const dialogue = parseDialogueLine(chapterComplete.successDialogue);
   const hasNextChapter = chapterComplete.nextChapterId !== null;
+  const unlockedSaga = chapterComplete.newReward
+    ? resolveStoryUnlockSaga(activeUniverse, chapterComplete.newReward)
+    : undefined;
+  const unlockedSagaFirstChapterId = unlockedSaga?.chapters[0]?.id;
+
+  const handleStartUnlockedSaga = () => {
+    if (!unlockedSaga || !unlockedSagaFirstChapterId) return;
+    startUnlockedSagaFromChapterComplete(unlockedSaga.id, unlockedSagaFirstChapterId);
+    router.replace('/(game)/hq' as Href);
+  };
 
   return (
     <Modal visible transparent animationType="fade" statusBarTranslucent>
@@ -73,15 +93,56 @@ export function ChapterCompleteOverlay() {
           )}
 
           <Animated.View entering={FadeInUp.duration(500).delay(640)} style={styles.buttonWrap}>
-            <GlowButton
-              label="CONTINUE"
-              hint={hasNextChapter ? 'RIDE INTO THE NEXT CHAPTER' : 'RETURN TO DUSTFALL'}
-              onPress={continueFromChapterComplete}
-            />
+            {unlockedSaga && unlockedSagaFirstChapterId ? (
+              <>
+                <GlowButton
+                  label={getStartSagaCtaLabel(unlockedSaga)}
+                  hint={`BEGIN ${unlockedSaga.rankTitles[0].toUpperCase()}`}
+                  onPress={handleStartUnlockedSaga}
+                />
+                <SecondaryButton
+                  label="STAY IN CURRENT SAGA"
+                  hint={
+                    hasNextChapter
+                      ? 'RIDE INTO THE NEXT CHAPTER'
+                      : 'RETURN TO HQ AND KEEP YOUR POST'
+                  }
+                  palette={palette}
+                  onPress={continueFromChapterComplete}
+                />
+              </>
+            ) : (
+              <GlowButton
+                label="CONTINUE"
+                hint={hasNextChapter ? 'RIDE INTO THE NEXT CHAPTER' : 'RETURN TO DUSTFALL'}
+                onPress={continueFromChapterComplete}
+              />
+            )}
           </Animated.View>
         </Animated.View>
       </View>
     </Modal>
+  );
+}
+
+function SecondaryButton({
+  label,
+  hint,
+  palette,
+  onPress,
+}: {
+  label: string;
+  hint?: string;
+  palette: { panelBorder: string; fog: string; bone: string };
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      style={[styles.secondaryButton, { borderColor: palette.panelBorder }]}>
+      <Text style={[styles.secondaryLabel, { color: palette.bone }]}>{label}</Text>
+      {hint ? <Text style={[styles.secondaryHint, { color: palette.fog }]}>{hint}</Text> : null}
+    </Pressable>
   );
 }
 
@@ -170,5 +231,15 @@ const styles = StyleSheet.create({
   unlockEyebrow: { fontFamily: GameFonts.ui, fontSize: 10, letterSpacing: 3 },
   unlockType: { fontFamily: GameFonts.uiSemi, fontSize: 9, letterSpacing: 2 },
   unlockName: { fontFamily: GameFonts.display, fontSize: 22, letterSpacing: 1, textAlign: 'center' },
-  buttonWrap: { marginTop: 8 },
+  buttonWrap: { marginTop: 8, gap: 4 },
+  secondaryButton: {
+    width: '100%',
+    paddingVertical: 14,
+    alignItems: 'center',
+    borderWidth: 1,
+    transform: [{ skewX: '-6deg' }],
+    marginTop: 4,
+  },
+  secondaryLabel: { fontFamily: GameFonts.ui, fontSize: 14, letterSpacing: 2 },
+  secondaryHint: { fontFamily: GameFonts.uiSemi, fontSize: 9, letterSpacing: 1.5, marginTop: 4 },
 });

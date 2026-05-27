@@ -34,6 +34,28 @@ export function findRewardById(universe: Universe, rewardId: string): ChapterRew
   return getUniverseRewards(universe).find((reward) => reward.id === rewardId);
 }
 
+export function getStoryUnlockSagaId(reward: ChapterReward): string | undefined {
+  if (reward.type !== 'storyUnlock' || !reward.unlockTargetId) return undefined;
+  return reward.unlockTargetId;
+}
+
+export function findSagaInUniverse(universe: Universe, sagaId: string): Saga | undefined {
+  return universe.sagas.find((saga) => saga.id === sagaId);
+}
+
+export function resolveStoryUnlockSaga(
+  universe: Universe,
+  reward: ChapterReward,
+): Saga | undefined {
+  const sagaId = getStoryUnlockSagaId(reward);
+  if (!sagaId) return undefined;
+  return findSagaInUniverse(universe, sagaId);
+}
+
+export function getStartSagaCtaLabel(saga: Saga): string {
+  return `START ${saga.title.toUpperCase()}`;
+}
+
 export function getUnlockedRewardEntries(
   universe: Universe,
   unlockedRewardIds: string[],

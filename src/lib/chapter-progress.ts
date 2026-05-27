@@ -1,4 +1,4 @@
-import type { Chapter, PlayerProgress } from '@/types/narrative';
+import type { Chapter, PlayerProgress, Saga } from '@/types/narrative';
 
 export type ChapterStatus = 'completed' | 'active' | 'locked';
 
@@ -25,4 +25,19 @@ export function getChapterStatus(
   if (!activeChapter) return chapter.order === 1 ? 'active' : 'locked';
 
   return chapter.order > activeChapter.order ? 'locked' : 'locked';
+}
+
+export function getSagaEntryChapterId(saga: Saga, progress: PlayerProgress): string {
+  if (saga.chapters.length === 0) return progress.currentChapterId;
+
+  const nextChapter = saga.chapters.find(
+    (chapter) => !progress.completedChapterIds.includes(chapter.id),
+  );
+
+  return nextChapter?.id ?? saga.chapters[saga.chapters.length - 1]!.id;
+}
+
+export function getCompletedChapterCountForSaga(saga: Saga, progress: PlayerProgress): number {
+  const sagaChapterIds = new Set(saga.chapters.map((chapter) => chapter.id));
+  return progress.completedChapterIds.filter((id) => sagaChapterIds.has(id)).length;
 }

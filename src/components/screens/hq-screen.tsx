@@ -1,5 +1,5 @@
 import { type Href, router } from 'expo-router';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
@@ -7,8 +7,10 @@ import { DailyOperationsBriefing } from '@/components/rpg/daily-operations-brief
 import { DialoguePanel } from '@/components/rpg/dialogue-panel';
 import { NarrativeMomentOverlay } from '@/components/rpg/narrative-moment-overlay';
 import { QuestCard } from '@/components/rpg/quest-card';
+import { SagaSwitcherSheet } from '@/components/rpg/saga-switcher-sheet';
 import { ScreenShell } from '@/components/rpg/screen-shell';
 import { SectionHeader } from '@/components/rpg/section-header';
+import { StorylinesSection } from '@/components/rpg/storylines-section';
 import { XpPopup } from '@/components/rpg/xp-popup';
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
@@ -23,6 +25,7 @@ export function HqScreen() {
     completedQuestCount,
     maybeShowVillainTaunt,
   } = useGame();
+  const [sagaSwitcherVisible, setSagaSwitcherVisible] = useState(false);
 
   useEffect(() => {
     maybeShowVillainTaunt();
@@ -44,6 +47,8 @@ export function HqScreen() {
           </Animated.View>
 
           <DailyOperationsBriefing />
+
+          <StorylinesSection onOpenSwitcher={() => setSagaSwitcherVisible(true)} />
 
           <DialoguePanel line={storyLine} badge="FIELD REPORT" animate={false} />
 
@@ -77,6 +82,10 @@ export function HqScreen() {
       </ScrollView>
       <NarrativeMomentOverlay />
       <XpPopup />
+      <SagaSwitcherSheet
+        visible={sagaSwitcherVisible}
+        onClose={() => setSagaSwitcherVisible(false)}
+      />
     </ScreenShell>
   );
 }

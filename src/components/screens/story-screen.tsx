@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { ChapterCard } from '@/components/rpg/chapter-card';
 import { ChapterDetailSheet } from '@/components/rpg/chapter-detail-sheet';
+import { SagaSwitcherSheet } from '@/components/rpg/saga-switcher-sheet';
 import { ScreenShell } from '@/components/rpg/screen-shell';
 import { SectionHeader } from '@/components/rpg/section-header';
 import { VillainMeter } from '@/components/rpg/villain-meter';
@@ -17,6 +18,7 @@ export function StoryScreen() {
   const { palette } = activeUniverse;
   const [selectedChapter, setSelectedChapter] = useState<Chapter | null>(null);
   const [detailMode, setDetailMode] = useState<ChapterStatus | null>(null);
+  const [sagaSwitcherVisible, setSagaSwitcherVisible] = useState(false);
 
   const activeChapterId = getActiveChapterId(playerProgress);
 
@@ -54,11 +56,20 @@ export function StoryScreen() {
     <ScreenShell edges={['top']} padded={false}>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <Animated.View entering={FadeInDown.duration(500)} style={styles.pad}>
-          <SectionHeader
-            eyebrow={`${activeSaga.title.toUpperCase()} · SAGA TRAIL`}
-            title="CHAPTER PROGRESS"
-            right={activeUniverse.locationName}
-          />
+          <View style={styles.titleRow}>
+            <View style={styles.titleBlock}>
+              <SectionHeader
+                eyebrow={`${activeSaga.title.toUpperCase()} · SAGA TRAIL`}
+                title="CHAPTER PROGRESS"
+                right={activeUniverse.locationName}
+              />
+            </View>
+            <Pressable
+              onPress={() => setSagaSwitcherVisible(true)}
+              style={[styles.switchButton, { borderColor: palette.gold }]}>
+              <Text style={[styles.switchLabel, { color: palette.gold }]}>SWITCH SAGA</Text>
+            </Pressable>
+          </View>
 
           <VillainMeter />
 
@@ -129,6 +140,10 @@ export function StoryScreen() {
         mode={detailMode}
         onClose={closeDetail}
       />
+      <SagaSwitcherSheet
+        visible={sagaSwitcherVisible}
+        onClose={() => setSagaSwitcherVisible(false)}
+      />
     </ScreenShell>
   );
 }
@@ -136,6 +151,16 @@ export function StoryScreen() {
 const styles = StyleSheet.create({
   scroll: { paddingBottom: 100 },
   pad: { paddingHorizontal: 20, gap: 12, paddingTop: 8 },
+  titleRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
+  titleBlock: { flex: 1 },
+  switchButton: {
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    marginTop: 8,
+    transform: [{ skewX: '-6deg' }],
+  },
+  switchLabel: { fontFamily: GameFonts.ui, fontSize: 9, letterSpacing: 1.5 },
   progressCard: {
     borderWidth: 1,
     padding: 16,
