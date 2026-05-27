@@ -1,10 +1,11 @@
 import { type Href, router } from 'expo-router';
 import { useMemo } from 'react';
-import { Alert, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { CharacterCard } from '@/components/rpg/character-card';
 import { CinematicEmptyState } from '@/components/rpg/cinematic-empty-state';
+import { DevToolsPanel } from '@/components/rpg/dev-tools-panel';
 import { ScreenShell } from '@/components/rpg/screen-shell';
 import { SectionHeader } from '@/components/rpg/section-header';
 import { GameFonts } from '@/constants/typography';
@@ -12,16 +13,6 @@ import { useGame } from '@/hooks/use-game';
 import { getCompletedChapterCountForSaga } from '@/lib/chapter-progress';
 import { getUnlockedRewardEntries, isSagaUnlocked, REWARD_TYPE_LABELS } from '@/lib/reward-unlocks';
 import { getSagaActiveChapter } from '@/lib/saga-progress';
-
-const RESET_CONFIRM_MESSAGE =
-  'This will erase all local save data and return you to onboarding:\n\n' +
-  '• XP, level, and reputation\n' +
-  '• Completed quests and chapters\n' +
-  '• User-created quests\n' +
-  '• Character relationships\n' +
-  '• Villain influence\n' +
-  '• Unlocked rewards\n\n' +
-  'This cannot be undone.';
 
 export function ProfileScreen() {
   const {
@@ -32,7 +23,6 @@ export function ProfileScreen() {
     playerProgress,
     completedQuestCount,
     quests,
-    resetProgress,
   } = useGame();
 
   const unlockedSagas = useMemo(
@@ -47,38 +37,6 @@ export function ProfileScreen() {
     () => getUnlockedRewardEntries(activeUniverse, playerProgress.unlockedRewards),
     [activeUniverse, playerProgress.unlockedRewards],
   );
-
-  const performReset = async () => {
-    console.log('[ResetProgress] confirmed, calling resetProgress()');
-    await resetProgress();
-    console.log('[ResetProgress] resetProgress() complete');
-    router.replace('/onboarding' as Href);
-  };
-
-  const handleReset = () => {
-    console.log('[ResetProgress] button pressed, showing confirmation');
-
-    if (Platform.OS === 'web') {
-      const confirmed = window.confirm(`Reset Progress\n\n${RESET_CONFIRM_MESSAGE}`);
-      console.log('[ResetProgress] confirmation result:', confirmed);
-      if (confirmed) {
-        void performReset();
-      }
-      return;
-    }
-
-    Alert.alert('Reset Progress', RESET_CONFIRM_MESSAGE, [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Reset',
-        style: 'destructive',
-        onPress: () => {
-          console.log('[ResetProgress] confirmation result: true');
-          void performReset();
-        },
-      },
-    ]);
-  };
 
   return (
     <ScreenShell edges={['top']} padded={false}>
@@ -184,17 +142,7 @@ export function ProfileScreen() {
             />
           ))}
 
-          <Text style={[styles.section, { color: activeUniverse.palette.fog }]}>DEV / TESTING</Text>
-          <Pressable
-            onPress={handleReset}
-            style={[styles.resetButton, { borderColor: activeUniverse.palette.primary, backgroundColor: `${activeUniverse.palette.primary}18` }]}>
-            <Text style={[styles.resetLabel, { color: activeUniverse.palette.primary }]}>
-              RESET PROGRESS
-            </Text>
-            <Text style={[styles.resetSub, { color: activeUniverse.palette.fog }]}>
-              Clears AsyncStorage and restores Dust & Iron · Chapter I
-            </Text>
-          </Pressable>
+          <DevToolsPanel />
         </Animated.View>
       </ScrollView>
     </ScreenShell>
@@ -270,23 +218,4 @@ const styles = StyleSheet.create({
   sagaProgressTitle: { fontFamily: GameFonts.ui, fontSize: 14, letterSpacing: 1, flex: 1 },
   sagaProgressActive: { fontFamily: GameFonts.uiSemi, fontSize: 9, letterSpacing: 1.5 },
   sagaProgressMeta: { fontFamily: GameFonts.uiSemi, fontSize: 10, letterSpacing: 0.5, lineHeight: 15 },
-  worldRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-  },
-  worldIcon: { fontSize: 22 },
-  worldName: { fontFamily: GameFonts.ui, fontSize: 14, flex: 1, letterSpacing: 1 },
-  worldVillain: { fontFamily: GameFonts.uiSemi, fontSize: 9, letterSpacing: 1 },
-  resetButton: {
-    borderWidth: 1,
-    padding: 14,
-    gap: 4,
-    marginTop: 12,
-    transform: [{ skewX: '-3deg' }],
-  },
-  resetLabel: { fontFamily: GameFonts.ui, fontSize: 13, letterSpacing: 2, textAlign: 'center' },
-  resetSub: { fontFamily: GameFonts.uiSemi, fontSize: 10, letterSpacing: 1, textAlign: 'center' },
 });

@@ -37,12 +37,6 @@ export function QuestCompleteOverlay() {
       withSpring(1, { damping: 12, stiffness: 180 }),
     );
     stampRotate.value = withTiming(0, { duration: 500 });
-
-    const timer = setTimeout(() => {
-      setPhase('reaction');
-    }, 1500);
-
-    return () => clearTimeout(timer);
   }, [questComplete?.questId, stampRotate, stampScale]);
 
   const stampStyle = useAnimatedStyle(() => ({
@@ -66,9 +60,9 @@ export function QuestCompleteOverlay() {
     <Modal visible transparent animationType="fade" statusBarTranslucent>
       <Pressable
         style={[styles.backdrop, { backgroundColor: `${palette.void}ee` }]}
-        onPress={phase === 'stamp' ? advanceToReaction : dismissQuestComplete}>
-        <Pressable style={styles.content} onPress={(event) => event.stopPropagation()}>
-          {phase === 'stamp' ? (
+        onPress={phase === 'reaction' ? dismissQuestComplete : advanceToReaction}>
+        {phase === 'stamp' ? (
+          <Pressable style={styles.content} onPress={advanceToReaction}>
             <Animated.View entering={FadeIn.duration(300)} style={styles.stampPhase}>
               <Animated.View
                 style={[
@@ -101,15 +95,15 @@ export function QuestCompleteOverlay() {
                 />
               </Animated.View>
 
-              <Pressable onPress={advanceToReaction}>
-                <Animated.Text
-                  entering={FadeInUp.duration(400).delay(480)}
-                  style={[styles.tapHint, { color: palette.accent }]}>
-                  TAP TO CONTINUE ›
-                </Animated.Text>
-              </Pressable>
+              <Animated.Text
+                entering={FadeInUp.duration(400).delay(480)}
+                style={[styles.tapHint, { color: palette.accent }]}>
+                TAP TO CONTINUE ›
+              </Animated.Text>
             </Animated.View>
-          ) : (
+          </Pressable>
+        ) : (
+          <Pressable style={styles.content} onPress={(event) => event.stopPropagation()}>
             <Animated.View entering={ZoomIn.duration(400)} style={styles.reactionPhase}>
               <Pressable
                 onPress={dismissQuestComplete}
@@ -133,8 +127,8 @@ export function QuestCompleteOverlay() {
                 </View>
               </Pressable>
             </Animated.View>
-          )}
-        </Pressable>
+          </Pressable>
+        )}
       </Pressable>
     </Modal>
   );

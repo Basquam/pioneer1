@@ -92,6 +92,10 @@ type GameContextValue = {
   startUnlockedSagaFromChapterComplete: (sagaId: string, entryChapterId: string) => void;
   maybeShowVillainTaunt: () => void;
   resetProgress: () => Promise<void>;
+  devAddXp: (amount: number) => void;
+  devCompleteCurrentChapter: () => void;
+  devUnlockVultureGangChapters: () => void;
+  devUnlockIronRailwayCompany: () => void;
   isHydrated: boolean;
 };
 
@@ -541,6 +545,102 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   const dismissXpBurst = useCallback(() => setXpBurst(null), []);
 
+  const devAddXp = useCallback((amount: number) => {
+    if (!__DEV__) return;
+    setProgress((prev) => {
+      const nextTotalXp = prev.totalXp + amount;
+      return { ...prev, totalXp: nextTotalXp, level: computeLevel(nextTotalXp).level };
+    });
+  }, []);
+
+  const devCompleteCurrentChapter = useCallback(() => {
+    if (!__DEV__) return;
+
+    const templateIds = currentChapter.questTemplates.map((template) => template.id);
+    const nextChapter = activeSaga.chapters.find(
+      (chapter) => chapter.order === currentChapter.order + 1,
+    );
+
+    setProgress((prev) => {
+      let next = appendSagaCompletedChapter(prev, activeSaga.id, currentChapter.id);
+      const sagaQuestIds = new Set([
+        ...(next.completedQuestIdsBySagaId[activeSaga.id] ?? []),
+        ...templateIds,
+      ]);
+
+      next = {
+        ...next,
+        completedQuestIdsBySagaId: {
+          ...next.completedQuestIdsBySagaId,
+          [activeSaga.id]: [...sagaQuestIds],
+        },
+        unlockedRewards: unlockRewardIds(next.unlockedRewards, currentChapter.chapterReward.id),
+        seenChapterIntros: next.seenChapterIntros.includes(currentChapter.id)
+          ? next.seenChapterIntros
+          : [...next.seenChapterIntros, currentChapter.id],
+        chapterCompletions: {
+          ...next.chapterCompletions,
+          [currentChapter.id]: currentChapter.questTemplates.length,
+        },
+      };
+
+      if (nextChapter) {
+        next = setSagaActiveChapter(next, activeSaga.id, nextChapter.id);
+      }
+
+      return next;
+    });
+  }, [activeSaga, currentChapter]);
+
+  const devUnlockVultureGangChapters = useCallback(() => {
+    if (!__DEV__) return;
+
+    const vultureSaga = activeUniverse.sagas.find((saga) => saga.id === 'vulture-gang');
+    if (!vultureSaga || vultureSaga.chapters.length === 0) return;
+
+    const allChapterIds = vultureSaga.chapters.map((chapter) => chapter.id);
+    const allQuestIds = vultureSaga.chapters.flatMap((chapter) =>
+      chapter.questTemplates.map((template) => template.id),
+    );
+    const lastChapterId = vultureSaga.chapters[vultureSaga.chapters.length - 1]!.id;
+
+    setProgress((prev) => {
+      let unlockedRewards = prev.unlockedRewards;
+      for (const chapter of vultureSaga.chapters) {
+        unlockedRewards = unlockRewardIds(unlockedRewards, chapter.chapterReward.id);
+      }
+
+      const next: PlayerProgress = {
+        ...prev,
+        completedChapterIdsBySagaId: {
+          ...prev.completedChapterIdsBySagaId,
+          'vulture-gang': allChapterIds,
+        },
+        completedQuestIdsBySagaId: {
+          ...prev.completedQuestIdsBySagaId,
+          'vulture-gang': allQuestIds,
+        },
+        unlockedRewards,
+        activeChapterBySagaId: {
+          ...prev.activeChapterBySagaId,
+          'vulture-gang': lastChapterId,
+        },
+      };
+
+      return activeSaga.id === 'vulture-gang'
+        ? setSagaActiveChapter(next, 'vulture-gang', lastChapterId)
+        : next;
+    });
+  }, [activeSaga.id, activeUniverse.sagas]);
+
+  const devUnlockIronRailwayCompany = useCallback(() => {
+    if (!__DEV__) return;
+    setProgress((prev) => ({
+      ...prev,
+      unlockedRewards: unlockRewardIds(prev.unlockedRewards, 'high-noon-story-unlock'),
+    }));
+  }, []);
+
   const resetProgress = useCallback(async () => {
     await clearPlayerProgress();
     const fresh = createInitialProgress();
@@ -596,6 +696,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
       startUnlockedSagaFromChapterComplete,
       maybeShowVillainTaunt,
       resetProgress,
+      devAddXp,
+      devCompleteCurrentChapter,
+      devUnlockVultureGangChapters,
+      devUnlockIronRailwayCompany,
       isHydrated,
     }),
     [
@@ -614,6 +718,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
       completedQuestCount,
       continueFromChapterComplete,
       currentChapter,
+      devAddXp,
+      devCompleteCurrentChapter,
+      devUnlockIronRailwayCompany,
+      devUnlockVultureGangChapters,
       dismissNarrativeMoment,
       dismissQuestComplete,
       dismissXpBurst,
