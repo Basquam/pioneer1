@@ -1,4 +1,5 @@
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { type Href, router } from 'expo-router';
+import { Alert, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { CharacterCard } from '@/components/rpg/character-card';
@@ -6,6 +7,15 @@ import { ScreenShell } from '@/components/rpg/screen-shell';
 import { SectionHeader } from '@/components/rpg/section-header';
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
+
+const RESET_CONFIRM_MESSAGE =
+  'This will erase all local save data and return you to onboarding:\n\n' +
+  '• XP, level, and reputation\n' +
+  '• Completed quests and chapters\n' +
+  '• User-created quests\n' +
+  '• Character relationships\n' +
+  '• Villain influence\n\n' +
+  'This cannot be undone.';
 
 export function ProfileScreen() {
   const {
@@ -19,21 +29,36 @@ export function ProfileScreen() {
     resetProgress,
   } = useGame();
 
+  const performReset = async () => {
+    console.log('[ResetProgress] confirmed, calling resetProgress()');
+    await resetProgress();
+    console.log('[ResetProgress] resetProgress() complete');
+    router.replace('/onboarding' as Href);
+  };
+
   const handleReset = () => {
-    Alert.alert(
-      'Reset Progress',
-      'Clear all saved XP, quests, and relationships? This cannot be undone.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Reset',
-          style: 'destructive',
-          onPress: () => {
-            void resetProgress();
-          },
+    console.log('[ResetProgress] button pressed, showing confirmation');
+
+    if (Platform.OS === 'web') {
+      const confirmed = window.confirm(`Reset Progress\n\n${RESET_CONFIRM_MESSAGE}`);
+      console.log('[ResetProgress] confirmation result:', confirmed);
+      if (confirmed) {
+        void performReset();
+      }
+      return;
+    }
+
+    Alert.alert('Reset Progress', RESET_CONFIRM_MESSAGE, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Reset',
+        style: 'destructive',
+        onPress: () => {
+          console.log('[ResetProgress] confirmation result: true');
+          void performReset();
         },
-      ],
-    );
+      },
+    ]);
   };
 
   return (
@@ -92,14 +117,15 @@ export function ProfileScreen() {
             </View>
           ))}
 
+          <Text style={[styles.section, { color: activeUniverse.palette.fog }]}>DEV / TESTING</Text>
           <Pressable
             onPress={handleReset}
-            style={[styles.resetButton, { borderColor: activeUniverse.palette.primary }]}>
+            style={[styles.resetButton, { borderColor: activeUniverse.palette.primary, backgroundColor: `${activeUniverse.palette.primary}18` }]}>
             <Text style={[styles.resetLabel, { color: activeUniverse.palette.primary }]}>
               RESET PROGRESS
             </Text>
             <Text style={[styles.resetSub, { color: activeUniverse.palette.fog }]}>
-              Testing only — clears local save
+              Clears AsyncStorage and restores Dust & Iron · Chapter I
             </Text>
           </Pressable>
         </Animated.View>

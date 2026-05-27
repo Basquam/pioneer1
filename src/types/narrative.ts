@@ -151,6 +151,7 @@ export type PlayerProgress = {
   level: number;
   reputation: number;
   completedQuestIds: string[];
+  completedChapterIds: string[];
   userQuests: UserQuest[];
   villainInfluenceBySaga: Record<string, number>;
   chapterCompletions: Record<string, number>;

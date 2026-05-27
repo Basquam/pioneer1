@@ -361,13 +361,22 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setChapterComplete((current) => {
       if (!current) return null;
 
-      if (current.nextChapterId) {
-        setProgress((prev) => ({
-          ...prev,
-          currentChapterId: current.nextChapterId!,
-          dismissedTauntForChapterId: null,
-        }));
-      }
+      setProgress((prev) => {
+        const completedChapterIds = prev.completedChapterIds.includes(current.chapterId)
+          ? prev.completedChapterIds
+          : [...prev.completedChapterIds, current.chapterId];
+
+        if (current.nextChapterId) {
+          return {
+            ...prev,
+            currentChapterId: current.nextChapterId,
+            completedChapterIds,
+            dismissedTauntForChapterId: null,
+          };
+        }
+
+        return { ...prev, completedChapterIds };
+      });
 
       return null;
     });
@@ -377,11 +386,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   const resetProgress = useCallback(async () => {
     await clearPlayerProgress();
-    setProgress(createInitialProgress());
+    const fresh = createInitialProgress();
+    setProgress(fresh);
     setXpBurst(null);
     setNarrativeMoment(null);
     setChapterComplete(null);
     pendingChapterCompleteRef.current = null;
+    await savePlayerProgress(fresh);
   }, []);
 
   const value = useMemo<GameContextValue>(

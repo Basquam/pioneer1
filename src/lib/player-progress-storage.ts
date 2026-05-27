@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { DUST_AND_IRON_UNIVERSE, getUniverse } from '@/data/narrative/wild-west-universe';
+import { deriveCompletedChapterIds } from '@/lib/chapter-progress';
 import type { Chapter, PlayerProgress, Saga, Universe } from '@/types/narrative';
 
 const STORAGE_KEY = '@pioneer/player-progress';
@@ -31,6 +32,7 @@ export function createInitialProgress(): PlayerProgress {
     level: 1,
     reputation: 0,
     completedQuestIds: [],
+    completedChapterIds: [],
     userQuests: [],
     villainInfluenceBySaga: {
       [defaultSagaId]: 100,
@@ -49,6 +51,7 @@ function normalizeProgress(raw: Partial<PlayerProgress>): PlayerProgress {
     ...base,
     ...raw,
     completedQuestIds: raw.completedQuestIds ?? base.completedQuestIds,
+    completedChapterIds: raw.completedChapterIds ?? base.completedChapterIds,
     userQuests: raw.userQuests ?? base.userQuests,
     villainInfluenceBySaga: raw.villainInfluenceBySaga ?? base.villainInfluenceBySaga,
     chapterCompletions: raw.chapterCompletions ?? base.chapterCompletions,
@@ -66,6 +69,8 @@ function normalizeProgress(raw: Partial<PlayerProgress>): PlayerProgress {
     selectedUniverseId: universe.id,
     selectedSagaId: saga.id,
     currentChapterId: chapter.id,
+    completedChapterIds:
+      raw.completedChapterIds ?? deriveCompletedChapterIds(saga.chapters, chapter.id),
     villainInfluenceBySaga: {
       ...merged.villainInfluenceBySaga,
       [saga.id]: merged.villainInfluenceBySaga[saga.id] ?? 100,
