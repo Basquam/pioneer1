@@ -105,6 +105,34 @@ export type NarrativeMoment =
   | { type: 'villain_taunt'; characterId: string; line: string }
   | { type: 'chapter_transition'; fromChapterId: string; toChapterId: string; title: string };
 
+export type UserQuest = {
+  id: string;
+  originalTitle: string;
+  category: TaskCategory;
+  narrativeTitle: string;
+  narrativeDescription: string;
+  sourceUniverseId: string;
+  sourceSagaId: string;
+  sourceChapterId: string;
+  isCompleted: boolean;
+  xpReward: number;
+  reputationReward: number;
+  reactionCharacterId: string;
+};
+
+export type BoardQuest = {
+  id: string;
+  source: 'template' | 'user';
+  category: TaskCategory;
+  originalTitle: string;
+  narrativeTitle: string;
+  narrativeDescription: string;
+  xpReward: number;
+  reputationReward: number;
+  reactionCharacterId: string;
+  completed: boolean;
+};
+
 export type PlayerProgress = {
   hasOnboarded: boolean;
   selectedUniverseId: string;
@@ -114,6 +142,7 @@ export type PlayerProgress = {
   level: number;
   reputation: number;
   completedQuestIds: string[];
+  userQuests: UserQuest[];
   villainInfluenceBySaga: Record<string, number>;
   chapterCompletions: Record<string, number>;
   relationshipByCharacter: Record<string, RelationshipTier>;

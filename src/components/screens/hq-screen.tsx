@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
+import { AddQuestTrigger } from '@/components/rpg/add-quest-trigger';
 import { ChapterIntroScene } from '@/components/rpg/chapter-intro-scene';
 import { DialoguePanel } from '@/components/rpg/dialogue-panel';
 import { GameHud } from '@/components/rpg/game-hud';
@@ -88,6 +89,7 @@ export function HqScreen() {
           )}
         </View>
       </ScrollView>
+      <AddQuestTrigger variant="fab" />
       <ChapterIntroScene
         visible={introVisible}
         onComplete={() => {

@@ -9,11 +9,11 @@ import Animated, {
 
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
-import type { QuestTemplateState } from '@/context/game-context';
+import type { BoardQuest, TaskCategory } from '@/types/narrative';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-const CATEGORY_LABEL: Record<QuestTemplateState['category'], string> = {
+const CATEGORY_LABEL: Record<TaskCategory, string> = {
   cleaning: 'BOUNTY',
   fitness: 'TRAINING',
   study: 'INTEL',
@@ -25,7 +25,7 @@ const CATEGORY_LABEL: Record<QuestTemplateState['category'], string> = {
 };
 
 type QuestCardProps = {
-  quest: QuestTemplateState;
+  quest: BoardQuest;
   index: number;
 };
 
@@ -44,7 +44,10 @@ export function QuestCard({ quest, index }: QuestCardProps) {
         entering={FadeInDown.delay(index * 100).springify()}
         style={[styles.wrapper, { borderColor: palette.gold, backgroundColor: `${palette.primary}22` }]}>
         <Text style={[styles.stamp, { color: palette.gold }]}>CLEARED</Text>
-        <Text style={[styles.doneTitle, { color: palette.fog }]}>{quest.title}</Text>
+        <Text style={[styles.doneTitle, { color: palette.fog }]}>{quest.narrativeTitle}</Text>
+        {quest.source === 'user' && (
+          <Text style={[styles.doneReal, { color: palette.fog }]}>{quest.originalTitle}</Text>
+        )}
       </Animated.View>
     );
   }
@@ -69,16 +72,27 @@ export function QuestCard({ quest, index }: QuestCardProps) {
       <View style={[styles.accent, { backgroundColor: palette.primary }]} />
       <View style={styles.inner}>
         <View style={styles.topRow}>
-          <View style={[styles.badge, { backgroundColor: palette.primary }]}>
-            <Text style={[styles.badgeText, { color: palette.bone }]}>{CATEGORY_LABEL[quest.category]}</Text>
+          <View style={styles.badges}>
+            <View style={[styles.badge, { backgroundColor: palette.primary }]}>
+              <Text style={[styles.badgeText, { color: palette.bone }]}>
+                {CATEGORY_LABEL[quest.category]}
+              </Text>
+            </View>
+            {quest.source === 'user' && (
+              <View style={[styles.badge, { backgroundColor: palette.accent }]}>
+                <Text style={[styles.badgeText, { color: palette.bone }]}>YOUR QUEST</Text>
+              </View>
+            )}
           </View>
           <Text style={[styles.xp, { color: palette.gold }]}>+{quest.xpReward} XP</Text>
         </View>
-        <Text style={[styles.title, { color: palette.bone }]}>{quest.title}</Text>
-        <Text style={[styles.sub, { color: palette.fog }]}>{quest.dramaticHook}</Text>
+        <Text style={[styles.title, { color: palette.bone }]}>{quest.narrativeTitle}</Text>
+        <Text style={[styles.sub, { color: palette.fog }]}>{quest.narrativeDescription}</Text>
         <View style={styles.realRow}>
-          <Text style={[styles.realLabel, { color: palette.fog }]}>OBJECTIVE</Text>
-          <Text style={[styles.realTask, { color: palette.gold }]}>{quest.objective}</Text>
+          <Text style={[styles.realLabel, { color: palette.fog }]}>
+            {quest.source === 'user' ? 'REAL TASK' : 'OBJECTIVE'}
+          </Text>
+          <Text style={[styles.realTask, { color: palette.gold }]}>{quest.originalTitle}</Text>
         </View>
         <Text style={[styles.tap, { color: palette.accent }]}>TAP TO COMPLETE ›</Text>
       </View>
@@ -97,15 +111,24 @@ const styles = StyleSheet.create({
   accent: { position: 'absolute', left: 0, top: 0, bottom: 0, width: 4 },
   inner: { paddingLeft: 8, gap: 8, transform: [{ skewX: '2deg' }] },
   topRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  badges: { flexDirection: 'row', gap: 6, flexShrink: 1 },
   badge: { paddingHorizontal: 8, paddingVertical: 3, transform: [{ skewX: '-8deg' }] },
   badgeText: { fontFamily: GameFonts.uiSemi, fontSize: 9, letterSpacing: 2 },
   xp: { fontFamily: GameFonts.ui, fontSize: 13, letterSpacing: 2 },
   title: { fontFamily: GameFonts.display, fontSize: 18, lineHeight: 24 },
   sub: { fontFamily: GameFonts.displayRegular, fontSize: 13, lineHeight: 19, fontStyle: 'italic' },
-  realRow: { flexDirection: 'row', gap: 8, alignItems: 'center', paddingTop: 6, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.08)' },
+  realRow: {
+    flexDirection: 'row',
+    gap: 8,
+    alignItems: 'center',
+    paddingTop: 6,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.08)',
+  },
   realLabel: { fontFamily: GameFonts.uiSemi, fontSize: 9, letterSpacing: 2 },
-  realTask: { fontFamily: GameFonts.ui, fontSize: 13, letterSpacing: 1 },
+  realTask: { fontFamily: GameFonts.ui, fontSize: 13, letterSpacing: 1, flex: 1 },
   tap: { fontFamily: GameFonts.ui, fontSize: 11, letterSpacing: 2, textAlign: 'right' },
   stamp: { fontFamily: GameFonts.ui, fontSize: 11, letterSpacing: 3 },
   doneTitle: { fontFamily: GameFonts.displayRegular, fontSize: 14, fontStyle: 'italic', marginTop: 4 },
+  doneReal: { fontFamily: GameFonts.uiSemi, fontSize: 11, marginTop: 2, letterSpacing: 0.5 },
 });

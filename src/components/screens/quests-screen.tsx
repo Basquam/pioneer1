@@ -1,7 +1,8 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { ScrollView, StyleSheet, Text } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
+import { AddQuestTrigger } from '@/components/rpg/add-quest-trigger';
 import { CharacterDialoguePanel } from '@/components/rpg/character-dialogue-panel';
 import { DialoguePanel } from '@/components/rpg/dialogue-panel';
 import { GameHud } from '@/components/rpg/game-hud';
@@ -21,6 +22,14 @@ export function QuestsScreen() {
     maybeShowVillainTaunt();
   }, [currentChapter.id, maybeShowVillainTaunt]);
 
+  const { chapterBounties, userQuests } = useMemo(
+    () => ({
+      chapterBounties: quests.filter((q) => q.source === 'template'),
+      userQuests: quests.filter((q) => q.source === 'user'),
+    }),
+    [quests],
+  );
+
   const leadBeat = currentChapter.introScene[0];
 
   return (
@@ -34,9 +43,23 @@ export function QuestsScreen() {
           <Text style={[styles.hint, { color: activeUniverse.palette.fog }]}>
             Real tasks disguised as story missions. Tap to complete.
           </Text>
-          {quests.map((q, i) => (
-            <QuestCard key={q.id} quest={q} index={i} />
+
+          <AddQuestTrigger variant="banner" />
+
+          {userQuests.length > 0 && (
+            <>
+              <Text style={[styles.section, { color: activeUniverse.palette.gold }]}>YOUR QUESTS</Text>
+              {userQuests.map((q, i) => (
+                <QuestCard key={q.id} quest={q} index={i} />
+              ))}
+            </>
+          )}
+
+          <Text style={[styles.section, { color: activeUniverse.palette.gold }]}>CHAPTER BOUNTIES</Text>
+          {chapterBounties.map((q, i) => (
+            <QuestCard key={q.id} quest={q} index={i + userQuests.length} />
           ))}
+
           <DialoguePanel line={storyLine} badge="AFTERMATH" animate={false} />
         </Animated.View>
       </ScrollView>
@@ -55,4 +78,5 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     marginBottom: 4,
   },
+  section: { fontFamily: GameFonts.ui, fontSize: 11, letterSpacing: 3, marginTop: 4 },
 });

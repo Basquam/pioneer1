@@ -1,24 +1,26 @@
 import { createContext, useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
 
 import { DUST_AND_IRON_UNIVERSE, getUniverse, UNIVERSES } from '@/data/narrative/wild-west-universe';
+import { convertTaskToUserQuest, createUserQuestId } from '@/lib/convert-task-to-quest';
 import {
   affinityToTier,
   getCharacter,
   pickCharacterLine,
 } from '@/lib/narrative-helpers';
 import { computeLevel, rankForLevel } from '@/lib/level';
+import { buildBoardQuests, countCompletedTemplates, findBoardQuest } from '@/lib/quest-board';
 import type {
+  BoardQuest,
   Chapter,
   NarrativeCharacter,
   NarrativeMoment,
   PlayerProgress,
-  QuestTemplate,
   Saga,
+  TaskCategory,
   Universe,
 } from '@/types/narrative';
 
 export type XpBurst = { id: string; amount: number };
-export type QuestTemplateState = QuestTemplate & { completed: boolean };
 
 type GameContextValue = {
   universes: Universe[];
@@ -27,7 +29,7 @@ type GameContextValue = {
   characters: NarrativeCharacter[];
   currentChapter: Chapter;
   chapters: Chapter[];
-  quests: QuestTemplateState[];
+  quests: BoardQuest[];
   hasOnboarded: boolean;
   playerProgress: PlayerProgress;
   player: {
@@ -50,7 +52,8 @@ type GameContextValue = {
   selectUniverse: (universeId: string) => void;
   selectSaga: (sagaId: string) => void;
   completeOnboarding: () => void;
-  completeQuest: (questTemplateId: string) => void;
+  addUserQuest: (originalTitle: string, category: TaskCategory) => void;
+  completeQuest: (questId: string) => void;
   dismissXpBurst: () => void;
   markChapterIntroSeen: () => void;
   dismissNarrativeMoment: () => void;
@@ -72,6 +75,7 @@ const initialProgress: PlayerProgress = {
   level: 1,
   reputation: 0,
   completedQuestIds: [],
+  userQuests: [],
   villainInfluenceBySaga: {
     [defaultSagaId]: 100,
   },
@@ -107,16 +111,15 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const characters = activeSaga.characters;
 
   const quests = useMemo(
-    () =>
-      currentChapter.questTemplates.map((quest) => ({
-        ...quest,
-        completed: progress.completedQuestIds.includes(quest.id),
-      })),
-    [currentChapter.questTemplates, progress.completedQuestIds],
+    () => buildBoardQuests(currentChapter, activeSaga.id, progress),
+    [activeSaga.id, currentChapter, progress],
   );
 
   const completedQuestCount = quests.filter((q) => q.completed).length;
-  const allQuestsComplete = quests.length > 0 && completedQuestCount === quests.length;
+  const completedTemplateCount = countCompletedTemplates(currentChapter, progress.completedQuestIds);
+  const allQuestsComplete =
+    currentChapter.questTemplates.length > 0 &&
+    completedTemplateCount === currentChapter.questTemplates.length;
 
   const levelInfo = computeLevel(progress.totalXp);
   const rank = rankForLevel(activeSaga.rankTitles, levelInfo.level);
@@ -181,6 +184,30 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setProgress((prev) => ({ ...prev, hasOnboarded: true }));
   }, []);
 
+  const addUserQuest = useCallback(
+    (originalTitle: string, category: TaskCategory) => {
+      const trimmed = originalTitle.trim();
+      if (!trimmed) return;
+
+      const converted = convertTaskToUserQuest(
+        trimmed,
+        category,
+        activeUniverse,
+        activeSaga,
+        currentChapter,
+      );
+
+      setProgress((prev) => ({
+        ...prev,
+        userQuests: [
+          ...prev.userQuests,
+          { ...converted, id: createUserQuestId(), isCompleted: false },
+        ],
+      }));
+    },
+    [activeSaga, activeUniverse, currentChapter],
+  );
+
   const markChapterIntroSeen = useCallback(() => {
     setProgress((prev) => ({
       ...prev,
@@ -215,29 +242,35 @@ export function GameProvider({ children }: { children: ReactNode }) {
   ]);
 
   const completeQuest = useCallback(
-    (questTemplateId: string) => {
-      const quest = currentChapter.questTemplates.find((q) => q.id === questTemplateId);
-      if (!quest || progress.completedQuestIds.includes(questTemplateId)) return;
+    (questId: string) => {
+      const boardQuest = findBoardQuest(quests, questId);
+      if (!boardQuest || boardQuest.completed) return;
 
-      const updatedCompletedIds = [...progress.completedQuestIds, questTemplateId];
       const updatedInfluence = Math.max(
         0,
-        (progress.villainInfluenceBySaga[activeSaga.id] ?? 100) - quest.reputationImpact * 2,
+        (progress.villainInfluenceBySaga[activeSaga.id] ?? 100) - boardQuest.reputationReward * 2,
       );
-      const nextTotalXp = progress.totalXp + quest.xpReward;
-      const nextReputation = progress.reputation + quest.reputationImpact;
+      const nextTotalXp = progress.totalXp + boardQuest.xpReward;
+      const nextReputation = progress.reputation + boardQuest.reputationReward;
       const nextLevel = computeLevel(nextTotalXp).level;
 
-      const chapterDoneCount = currentChapter.questTemplates.filter((template) =>
-        updatedCompletedIds.includes(template.id),
-      ).length;
-
-      const charId = quest.reactionCharacterId;
+      const charId = boardQuest.reactionCharacterId;
       const nextAffinity = (progress.characterAffinity[charId] ?? 0) + 1;
+
+      const updatedCompletedIds =
+        boardQuest.source === 'template'
+          ? [...progress.completedQuestIds, questId]
+          : progress.completedQuestIds;
+
+      const chapterDoneCount = countCompletedTemplates(currentChapter, updatedCompletedIds);
 
       setProgress((prev) => ({
         ...prev,
         completedQuestIds: updatedCompletedIds,
+        userQuests:
+          boardQuest.source === 'user'
+            ? prev.userQuests.map((q) => (q.id === questId ? { ...q, isCompleted: true } : q))
+            : prev.userQuests,
         totalXp: nextTotalXp,
         level: nextLevel,
         reputation: nextReputation,
@@ -270,7 +303,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         };
       }
 
-      setXpBurst({ id: `${questTemplateId}-${Date.now()}`, amount: quest.xpReward });
+      setXpBurst({ id: `${questId}-${Date.now()}`, amount: boardQuest.xpReward });
 
       const reactor = getCharacter(activeSaga, charId);
       if (reactor) {
@@ -278,11 +311,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
           type: 'quest_complete',
           characterId: charId,
           line: pickCharacterLine(reactor, 'questComplete', updatedCompletedIds.length),
-          questTitle: quest.title,
+          questTitle: boardQuest.narrativeTitle,
         });
       }
     },
-    [activeSaga, currentChapter.id, currentChapter.questTemplates, progress],
+    [activeSaga, currentChapter, progress, quests],
   );
 
   const dismissNarrativeMoment = useCallback(() => {
@@ -340,6 +373,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       selectUniverse,
       selectSaga,
       completeOnboarding,
+      addUserQuest,
       completeQuest,
       dismissXpBurst,
       markChapterIntroSeen,
@@ -353,6 +387,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       chapters,
       characters,
       completeOnboarding,
+      addUserQuest,
       completeQuest,
       completedQuestCount,
       currentChapter,
