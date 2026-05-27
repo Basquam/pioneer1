@@ -102,8 +102,17 @@ export type Universe = {
 
 export type NarrativeMoment =
   | { type: 'quest_complete'; characterId: string; line: string; questTitle: string }
-  | { type: 'villain_taunt'; characterId: string; line: string }
-  | { type: 'chapter_transition'; fromChapterId: string; toChapterId: string; title: string };
+  | { type: 'villain_taunt'; characterId: string; line: string };
+
+export type ChapterCompleteState = {
+  chapterId: string;
+  chapterOrder: number;
+  chapterTitle: string;
+  successDialogue: string;
+  earnedXp: number;
+  earnedReputation: number;
+  nextChapterId: string | null;
+};
 
 export type UserQuest = {
   id: string;

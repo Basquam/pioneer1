@@ -15,9 +15,11 @@ import {
   savePlayerProgress,
 } from '@/lib/player-progress-storage';
 import { buildBoardQuests, countCompletedTemplates, findBoardQuest } from '@/lib/quest-board';
+import { sumChapterTemplateRewards } from '@/lib/chapter-rewards';
 import type {
   BoardQuest,
   Chapter,
+  ChapterCompleteState,
   NarrativeCharacter,
   NarrativeMoment,
   PlayerProgress,
@@ -52,6 +54,7 @@ type GameContextValue = {
   villainInfluence: number;
   xpBurst: XpBurst | null;
   narrativeMoment: NarrativeMoment | null;
+  chapterComplete: ChapterCompleteState | null;
   showChapterIntro: boolean;
   completedQuestCount: number;
   allQuestsComplete: boolean;
@@ -63,6 +66,7 @@ type GameContextValue = {
   dismissXpBurst: () => void;
   markChapterIntroSeen: () => void;
   dismissNarrativeMoment: () => void;
+  continueFromChapterComplete: () => void;
   maybeShowVillainTaunt: () => void;
   resetProgress: () => Promise<void>;
   isHydrated: boolean;
@@ -87,7 +91,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [isHydrated, setIsHydrated] = useState(false);
   const [xpBurst, setXpBurst] = useState<XpBurst | null>(null);
   const [narrativeMoment, setNarrativeMoment] = useState<NarrativeMoment | null>(null);
-  const pendingTransitionRef = useRef<NarrativeMoment | null>(null);
+  const [chapterComplete, setChapterComplete] = useState<ChapterCompleteState | null>(null);
+  const pendingChapterCompleteRef = useRef<ChapterCompleteState | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -130,7 +135,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const villainInfluence = progress.villainInfluenceBySaga[activeSaga.id] ?? 100;
 
   const storyLine = allQuestsComplete ? currentChapter.successDialogue : currentChapter.introDialogue;
-  const showChapterIntro = !progress.seenChapterIntros.includes(currentChapter.id);
+  const showChapterIntro =
+    !progress.seenChapterIntros.includes(currentChapter.id) && chapterComplete === null;
 
   const player = useMemo(
     () => ({
@@ -298,12 +304,16 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
       const chapterAllDone = chapterDoneCount === currentChapter.questTemplates.length;
       const nextChapter = activeSaga.chapters.find((c) => c.order === currentChapter.order + 1);
-      if (chapterAllDone && nextChapter) {
-        pendingTransitionRef.current = {
-          type: 'chapter_transition',
-          fromChapterId: currentChapter.id,
-          toChapterId: nextChapter.id,
-          title: nextChapter.title,
+      if (chapterAllDone) {
+        const rewards = sumChapterTemplateRewards(currentChapter);
+        pendingChapterCompleteRef.current = {
+          chapterId: currentChapter.id,
+          chapterOrder: currentChapter.order,
+          chapterTitle: currentChapter.title,
+          successDialogue: currentChapter.successDialogue,
+          earnedXp: rewards.xp,
+          earnedReputation: rewards.reputation,
+          nextChapterId: nextChapter?.id ?? null,
         };
       }
 
@@ -335,23 +345,33 @@ export function GameProvider({ children }: { children: ReactNode }) {
       }
 
       if (moment.type === 'quest_complete') {
-        const pending = pendingTransitionRef.current;
-        pendingTransitionRef.current = null;
-        return pending;
-      }
-
-      if (moment.type === 'chapter_transition') {
-        setProgress((prev) => ({
-          ...prev,
-          currentChapterId: moment.toChapterId,
-          dismissedTauntForChapterId: null,
-        }));
+        const pendingChapter = pendingChapterCompleteRef.current;
+        pendingChapterCompleteRef.current = null;
+        if (pendingChapter) {
+          setChapterComplete(pendingChapter);
+        }
         return null;
       }
 
       return null;
     });
   }, [currentChapter.id]);
+
+  const continueFromChapterComplete = useCallback(() => {
+    setChapterComplete((current) => {
+      if (!current) return null;
+
+      if (current.nextChapterId) {
+        setProgress((prev) => ({
+          ...prev,
+          currentChapterId: current.nextChapterId!,
+          dismissedTauntForChapterId: null,
+        }));
+      }
+
+      return null;
+    });
+  }, []);
 
   const dismissXpBurst = useCallback(() => setXpBurst(null), []);
 
@@ -360,7 +380,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setProgress(createInitialProgress());
     setXpBurst(null);
     setNarrativeMoment(null);
-    pendingTransitionRef.current = null;
+    setChapterComplete(null);
+    pendingChapterCompleteRef.current = null;
   }, []);
 
   const value = useMemo<GameContextValue>(
@@ -379,6 +400,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       villainInfluence,
       xpBurst,
       narrativeMoment,
+      chapterComplete,
       showChapterIntro,
       completedQuestCount,
       allQuestsComplete,
@@ -390,6 +412,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       dismissXpBurst,
       markChapterIntroSeen,
       dismissNarrativeMoment,
+      continueFromChapterComplete,
       maybeShowVillainTaunt,
       resetProgress,
       isHydrated,
@@ -400,10 +423,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
       allQuestsComplete,
       chapters,
       characters,
+      chapterComplete,
       completeOnboarding,
       addUserQuest,
       completeQuest,
       completedQuestCount,
+      continueFromChapterComplete,
       currentChapter,
       dismissNarrativeMoment,
       dismissXpBurst,

@@ -1,5 +1,5 @@
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
-import Animated, { FadeIn, FadeInDown, FadeOut, ZoomIn } from 'react-native-reanimated';
+import Animated, { FadeInDown, FadeOut } from 'react-native-reanimated';
 
 import { CharacterPortrait } from '@/components/rpg/character-portrait';
 import { GameFonts } from '@/constants/typography';
@@ -11,24 +11,6 @@ export function NarrativeMomentOverlay() {
   const { palette } = activeUniverse;
 
   if (!narrativeMoment) return null;
-
-  if (narrativeMoment.type === 'chapter_transition') {
-    return (
-      <Modal visible transparent animationType="fade" statusBarTranslucent>
-        <Pressable
-          style={[styles.backdrop, { backgroundColor: palette.void }]}
-          onPress={dismissNarrativeMoment}>
-          <Animated.View entering={ZoomIn.duration(700)} style={styles.transitionWrap}>
-            <Text style={[styles.transitionEyebrow, { color: palette.accent }]}>CHAPTER COMPLETE</Text>
-            <Text style={[styles.transitionTitle, { color: palette.bone }]}>
-              {narrativeMoment.title}
-            </Text>
-            <Text style={[styles.transitionHint, { color: palette.fog }]}>TAP TO CONTINUE</Text>
-          </Animated.View>
-        </Pressable>
-      </Modal>
-    );
-  }
 
   const character = getCharacter(activeSaga, narrativeMoment.characterId);
   if (!character) return null;
@@ -87,8 +69,4 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   dismiss: { fontFamily: GameFonts.uiSemi, fontSize: 9, letterSpacing: 2, marginTop: 8 },
-  transitionWrap: { alignItems: 'center', gap: 12 },
-  transitionEyebrow: { fontFamily: GameFonts.ui, fontSize: 12, letterSpacing: 4 },
-  transitionTitle: { fontFamily: GameFonts.display, fontSize: 36, letterSpacing: 4, textAlign: 'center' },
-  transitionHint: { fontFamily: GameFonts.uiSemi, fontSize: 10, letterSpacing: 2, marginTop: 24 },
 });

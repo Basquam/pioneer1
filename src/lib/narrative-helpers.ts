@@ -37,3 +37,12 @@ export function pickCharacterLine(
 ): string {
   return pickLine(character.lines[kind], seed);
 }
+
+export function parseDialogueLine(line: string): { speaker?: string; text: string } {
+  const separator = line.indexOf(':');
+  if (separator === -1) return { text: line };
+  return {
+    speaker: line.slice(0, separator).trim(),
+    text: line.slice(separator + 1).trim(),
+  };
+}

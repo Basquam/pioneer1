@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 
@@ -18,6 +18,12 @@ export function ChapterIntroScene({ visible, onComplete }: ChapterIntroSceneProp
   const beats = currentChapter.introScene;
   const [beatIndex, setBeatIndex] = useState(0);
   const [typingDone, setTypingDone] = useState(false);
+
+  useEffect(() => {
+    if (!visible) return;
+    setBeatIndex(0);
+    setTypingDone(false);
+  }, [visible, currentChapter.id]);
 
   const beat = beats[beatIndex];
   const isLast = beatIndex >= beats.length - 1;

@@ -1,10 +1,9 @@
 import { type Href, router } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { AddQuestTrigger } from '@/components/rpg/add-quest-trigger';
-import { ChapterIntroScene } from '@/components/rpg/chapter-intro-scene';
 import { DialoguePanel } from '@/components/rpg/dialogue-panel';
 import { GameHud } from '@/components/rpg/game-hud';
 import { NarrativeMomentOverlay } from '@/components/rpg/narrative-moment-overlay';
@@ -24,16 +23,8 @@ export function HqScreen() {
     storyLine,
     quests,
     completedQuestCount,
-    showChapterIntro,
-    markChapterIntroSeen,
     maybeShowVillainTaunt,
   } = useGame();
-
-  const [introVisible, setIntroVisible] = useState(showChapterIntro);
-
-  useEffect(() => {
-    setIntroVisible(showChapterIntro);
-  }, [showChapterIntro, currentChapter.id]);
 
   useEffect(() => {
     maybeShowVillainTaunt();
@@ -90,13 +81,6 @@ export function HqScreen() {
         </View>
       </ScrollView>
       <AddQuestTrigger variant="fab" />
-      <ChapterIntroScene
-        visible={introVisible}
-        onComplete={() => {
-          setIntroVisible(false);
-          markChapterIntroSeen();
-        }}
-      />
       <NarrativeMomentOverlay />
       <XpPopup />
     </ScreenShell>
