@@ -16,6 +16,7 @@ import {
 } from '@/lib/player-progress-storage';
 import { buildBoardQuests, countCompletedTemplates, findBoardQuest } from '@/lib/quest-board';
 import { sumChapterTemplateRewards } from '@/lib/chapter-rewards';
+import { isSagaUnlocked, unlockRewardIds } from '@/lib/reward-unlocks';
 import type {
   BoardQuest,
   Chapter,
@@ -158,6 +159,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   const selectUniverse = useCallback((universeId: string) => {
     const universe = getUniverse(universeId);
+    if (universe.status === 'locked') return;
+
     const availableSaga = universe.sagas.find((s) => s.status === 'available') ?? universe.sagas[0];
     const firstChapter = availableSaga?.chapters[0];
 
@@ -176,7 +179,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const selectSaga = useCallback(
     (sagaId: string) => {
       const saga = getSaga(activeUniverse, sagaId);
-      if (!saga || saga.status === 'locked' || saga.chapters.length === 0) return;
+      if (!saga || !isSagaUnlocked(saga, progress.unlockedRewards) || saga.chapters.length === 0) return;
       setProgress((prev) => ({
         ...prev,
         selectedSagaId: saga.id,
@@ -187,7 +190,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         },
       }));
     },
-    [activeUniverse],
+    [activeUniverse, progress.unlockedRewards],
   );
 
   const completeOnboarding = useCallback(() => {
@@ -314,6 +317,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
           earnedXp: rewards.xp,
           earnedReputation: rewards.reputation,
           nextChapterId: nextChapter?.id ?? null,
+          newReward: currentChapter.chapterReward,
         };
       }
 
@@ -348,6 +352,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
         const pendingChapter = pendingChapterCompleteRef.current;
         pendingChapterCompleteRef.current = null;
         if (pendingChapter) {
+          if (pendingChapter.newReward) {
+            setProgress((prev) => ({
+              ...prev,
+              unlockedRewards: unlockRewardIds(prev.unlockedRewards, pendingChapter.newReward!.id),
+            }));
+          }
           setChapterComplete(pendingChapter);
         }
         return null;

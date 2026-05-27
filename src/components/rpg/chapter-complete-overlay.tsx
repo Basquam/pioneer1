@@ -5,6 +5,7 @@ import { DialoguePanel } from '@/components/rpg/dialogue-panel';
 import { GlowButton } from '@/components/rpg/glow-button';
 import { GameFonts } from '@/constants/typography';
 import { parseDialogueLine } from '@/lib/narrative-helpers';
+import { REWARD_TYPE_LABELS } from '@/lib/reward-unlocks';
 import { useGame } from '@/hooks/use-game';
 
 export function ChapterCompleteOverlay() {
@@ -56,6 +57,20 @@ export function ChapterCompleteOverlay() {
               palette={palette}
             />
           </Animated.View>
+
+          {chapterComplete.newReward && (
+            <Animated.View
+              entering={FadeInUp.duration(500).delay(600)}
+              style={[styles.unlockCard, { backgroundColor: palette.panel, borderColor: palette.gold }]}>
+              <Text style={[styles.unlockEyebrow, { color: palette.gold }]}>NEW REWARD</Text>
+              <Text style={[styles.unlockType, { color: palette.accent }]}>
+                {REWARD_TYPE_LABELS[chapterComplete.newReward.type]}
+              </Text>
+              <Text style={[styles.unlockName, { color: palette.bone }]}>
+                {chapterComplete.newReward.name}
+              </Text>
+            </Animated.View>
+          )}
 
           <Animated.View entering={FadeInUp.duration(500).delay(640)} style={styles.buttonWrap}>
             <GlowButton
@@ -145,5 +160,15 @@ const styles = StyleSheet.create({
   rewardLabel: { fontFamily: GameFonts.uiSemi, fontSize: 9, letterSpacing: 2 },
   rewardValue: { fontFamily: GameFonts.ui, fontSize: 24, letterSpacing: 2 },
   rewardDivider: { width: 1, height: 36 },
+  unlockCard: {
+    borderWidth: 1,
+    padding: 14,
+    gap: 4,
+    alignItems: 'center',
+    transform: [{ skewX: '-3deg' }],
+  },
+  unlockEyebrow: { fontFamily: GameFonts.ui, fontSize: 10, letterSpacing: 3 },
+  unlockType: { fontFamily: GameFonts.uiSemi, fontSize: 9, letterSpacing: 2 },
+  unlockName: { fontFamily: GameFonts.display, fontSize: 22, letterSpacing: 1, textAlign: 'center' },
   buttonWrap: { marginTop: 8 },
 });

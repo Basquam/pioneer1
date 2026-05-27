@@ -62,10 +62,22 @@ export type QuestTemplate = {
   reactionCharacterId: string;
 };
 
+export type ChapterRewardType = 'badge' | 'title' | 'cosmetic' | 'storyUnlock';
+
+export type ChapterReward = {
+  id: string;
+  type: ChapterRewardType;
+  name: string;
+  /** Saga id unlocked when type is storyUnlock. */
+  unlockTargetId?: string;
+};
+
 export type Chapter = {
   id: string;
   order: number;
   title: string;
+  territoryName: string;
+  mapPosition: { x: number; y: number };
   summary: string;
   dramaticPurpose: string;
   introDialogue: string;
@@ -73,6 +85,7 @@ export type Chapter = {
   successDialogue: string;
   failureDialogue: string;
   questTemplates: QuestTemplate[];
+  chapterReward: ChapterReward;
 };
 
 export type Saga = {
@@ -82,6 +95,9 @@ export type Saga = {
   villainTitle: string;
   villainCharacterId: string;
   status: 'available' | 'locked';
+  /** Reward id required to unlock this saga when status is locked. */
+  requiredUnlockId?: string;
+  unlockRequirementLabel?: string;
   summary: string;
   rankTitles: [string, string, string];
   characters: NarrativeCharacter[];
@@ -96,6 +112,8 @@ export type Universe = {
   mentorName: string;
   locationName: string;
   mood: string;
+  coreProgressionName: string;
+  status: 'available' | 'locked';
   palette: UniversePalette;
   sagas: Saga[];
 };
@@ -112,6 +130,7 @@ export type ChapterCompleteState = {
   earnedXp: number;
   earnedReputation: number;
   nextChapterId: string | null;
+  newReward?: ChapterReward;
 };
 
 export type UserQuest = {
@@ -153,6 +172,7 @@ export type PlayerProgress = {
   reputation: number;
   completedQuestIds: string[];
   completedChapterIds: string[];
+  unlockedRewards: string[];
   userQuests: UserQuest[];
   villainInfluenceBySaga: Record<string, number>;
   chapterCompletions: Record<string, number>;

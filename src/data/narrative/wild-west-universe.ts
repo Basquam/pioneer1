@@ -25,10 +25,28 @@ const ironRailwayCompanySaga: Saga = {
   villainTitle: 'Corporate Barons',
   villainCharacterId: '',
   status: 'locked',
+  requiredUnlockId: 'high-noon-story-unlock',
+  unlockRequirementLabel: 'Complete High Noon',
   summary: 'A ruthless rail monopoly squeezes towns dry through debt and force.',
   rankTitles: ['Track Scout', 'Rail Ranger', 'Steelbreaker'],
   characters: [],
-  chapters: [],
+  chapters: [
+    {
+      id: 'steel-contract',
+      order: 1,
+      title: 'Steel Contract',
+      territoryName: 'Railyard Gate',
+      mapPosition: { x: 50, y: 50 },
+      summary: 'Corporate rails tighten around Dustfall. A new saga begins.',
+      dramaticPurpose: 'Open the Iron Railway conflict.',
+      introDialogue: 'Sheriff Ada Mercer: The rails are moving again — and this time the enemy wears a ledger, not a bandana.',
+      introScene: [],
+      successDialogue: 'Sheriff Ada Mercer: First contract secured. The rails won’t own us without a fight.',
+      failureDialogue: 'Sheriff Ada Mercer: They bought another mile of silence. Push back before the tracks swallow us.',
+      questTemplates: [],
+      chapterReward: { id: 'steel-contract-badge', type: 'badge', name: 'Rail Scout' },
+    },
+  ],
 };
 
 const honestBusinessmanSaga: Saga = {
@@ -52,6 +70,8 @@ export const DUST_AND_IRON_UNIVERSE: Universe = {
   mentorName: 'Sheriff Ada Mercer',
   locationName: 'Dustfall',
   mood: 'Dusty, dark, dramatic, and unforgiving.',
+  coreProgressionName: 'Deputy Campaign',
+  status: 'available',
   palette: {
     void: '#050308',
     night: '#0c0610',

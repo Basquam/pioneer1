@@ -12,13 +12,11 @@ import { useGame } from '@/hooks/use-game';
 import { getActiveChapterId, getChapterStatus, type ChapterStatus } from '@/lib/chapter-progress';
 import type { Chapter } from '@/types/narrative';
 
-type DetailMode = 'completed' | 'locked';
-
 export function StoryScreen() {
   const { activeUniverse, activeSaga, chapters, playerProgress } = useGame();
   const { palette } = activeUniverse;
   const [selectedChapter, setSelectedChapter] = useState<Chapter | null>(null);
-  const [detailMode, setDetailMode] = useState<DetailMode | null>(null);
+  const [detailMode, setDetailMode] = useState<ChapterStatus | null>(null);
 
   const activeChapterId = getActiveChapterId(playerProgress);
 

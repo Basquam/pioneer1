@@ -33,6 +33,7 @@ export function createInitialProgress(): PlayerProgress {
     reputation: 0,
     completedQuestIds: [],
     completedChapterIds: [],
+    unlockedRewards: [],
     userQuests: [],
     villainInfluenceBySaga: {
       [defaultSagaId]: 100,
@@ -52,6 +53,7 @@ function normalizeProgress(raw: Partial<PlayerProgress>): PlayerProgress {
     ...raw,
     completedQuestIds: raw.completedQuestIds ?? base.completedQuestIds,
     completedChapterIds: raw.completedChapterIds ?? base.completedChapterIds,
+    unlockedRewards: raw.unlockedRewards ?? base.unlockedRewards,
     userQuests: raw.userQuests ?? base.userQuests,
     villainInfluenceBySaga: raw.villainInfluenceBySaga ?? base.villainInfluenceBySaga,
     chapterCompletions: raw.chapterCompletions ?? base.chapterCompletions,

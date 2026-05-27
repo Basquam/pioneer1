@@ -1,4 +1,5 @@
 import { type Href, router } from 'expo-router';
+import { useMemo } from 'react';
 import { Alert, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
@@ -7,6 +8,7 @@ import { ScreenShell } from '@/components/rpg/screen-shell';
 import { SectionHeader } from '@/components/rpg/section-header';
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
+import { getUnlockedRewardEntries, REWARD_TYPE_LABELS } from '@/lib/reward-unlocks';
 
 const RESET_CONFIRM_MESSAGE =
   'This will erase all local save data and return you to onboarding:\n\n' +
@@ -14,7 +16,8 @@ const RESET_CONFIRM_MESSAGE =
   '• Completed quests and chapters\n' +
   '• User-created quests\n' +
   '• Character relationships\n' +
-  '• Villain influence\n\n' +
+  '• Villain influence\n' +
+  '• Unlocked rewards\n\n' +
   'This cannot be undone.';
 
 export function ProfileScreen() {
@@ -28,6 +31,11 @@ export function ProfileScreen() {
     quests,
     resetProgress,
   } = useGame();
+
+  const unlockedRewards = useMemo(
+    () => getUnlockedRewardEntries(activeUniverse, playerProgress.unlockedRewards),
+    [activeUniverse, playerProgress.unlockedRewards],
+  );
 
   const performReset = async () => {
     console.log('[ResetProgress] confirmed, calling resetProgress()');
@@ -93,6 +101,27 @@ export function ProfileScreen() {
             <StatBox label="BOUNTIES" value={`${completedQuestCount}/${quests.length}`} colors={activeUniverse.palette} />
             <StatBox label="REPUTATION" value={`${player.reputation}`} colors={activeUniverse.palette} />
           </View>
+
+          <Text style={[styles.section, { color: activeUniverse.palette.gold }]}>UNLOCKS / REWARDS</Text>
+          {unlockedRewards.length === 0 ? (
+            <Text style={[styles.emptyRewards, { color: activeUniverse.palette.fog }]}>
+              Complete chapters to earn badges, titles, and story unlocks.
+            </Text>
+          ) : (
+            unlockedRewards.map((reward) => (
+              <View
+                key={reward.id}
+                style={[
+                  styles.rewardRow,
+                  { backgroundColor: activeUniverse.palette.panel, borderColor: activeUniverse.palette.panelBorder },
+                ]}>
+                <Text style={[styles.rewardType, { color: activeUniverse.palette.accent }]}>
+                  {REWARD_TYPE_LABELS[reward.type]}
+                </Text>
+                <Text style={[styles.rewardName, { color: activeUniverse.palette.bone }]}>{reward.name}</Text>
+              </View>
+            ))
+          )}
 
           <Text style={[styles.section, { color: activeUniverse.palette.gold }]}>ALLIES & ENEMIES</Text>
           {characters.map((character, i) => (
@@ -178,6 +207,21 @@ const styles = StyleSheet.create({
   statLabel: { fontFamily: GameFonts.uiSemi, fontSize: 10, letterSpacing: 2 },
   statValue: { fontFamily: GameFonts.ui, fontSize: 22 },
   section: { fontFamily: GameFonts.ui, fontSize: 11, letterSpacing: 3, marginTop: 8 },
+  emptyRewards: {
+    fontFamily: GameFonts.displayRegular,
+    fontSize: 13,
+    fontStyle: 'italic',
+    lineHeight: 19,
+  },
+  rewardRow: {
+    borderWidth: 1,
+    padding: 12,
+    gap: 4,
+    marginBottom: 8,
+    transform: [{ skewX: '-2deg' }],
+  },
+  rewardType: { fontFamily: GameFonts.uiSemi, fontSize: 9, letterSpacing: 2 },
+  rewardName: { fontFamily: GameFonts.ui, fontSize: 15, letterSpacing: 1 },
   worldRow: {
     flexDirection: 'row',
     alignItems: 'center',

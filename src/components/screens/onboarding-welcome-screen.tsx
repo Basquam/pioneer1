@@ -1,5 +1,5 @@
 import { type Href, router } from 'expo-router';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { GlowButton } from '@/components/rpg/glow-button';
@@ -14,23 +14,15 @@ export function OnboardingWelcomeScreen() {
   return (
     <ScreenShell edges={['top', 'bottom']}>
       <Animated.View entering={FadeInDown.duration(600)} style={styles.content}>
-        <SectionHeader eyebrow="WELCOME" title="YOUR TASKS\nBECOME LEGENDS" />
+        <SectionHeader eyebrow="PIONEER" title="YOUR TASKS\nBECOME LEGENDS" />
         <Text style={[styles.body, { color: activeUniverse.palette.fog }]}>
-          Pioneer transforms real-life chores into cinematic story quests. Complete missions,
-          earn XP, raise reputation, and push back villains chapter by chapter.
+          Turn real life into a cinematic RPG. Every chore is a bounty. Every habit is a chapter.
         </Text>
-        <View style={styles.features}>
-          {['Story-driven quests', 'XP & leveling', 'Villain influence'].map((f) => (
-            <Text key={f} style={[styles.feature, { color: activeUniverse.palette.gold }]}>
-              ◆ {f}
-            </Text>
-          ))}
-        </View>
       </Animated.View>
       <GlowButton
-        label="BEGIN SAGA"
-        hint="CHOOSE YOUR UNIVERSE"
-        onPress={() => router.push('/onboarding/theme' as Href)}
+        label="BEGIN"
+        hint="SEE HOW IT WORKS"
+        onPress={() => router.push('/onboarding/premise' as Href)}
       />
     </ScreenShell>
   );
@@ -44,6 +36,4 @@ const styles = StyleSheet.create({
     lineHeight: 26,
     fontStyle: 'italic',
   },
-  features: { gap: 10, marginTop: 8 },
-  feature: { fontFamily: GameFonts.ui, fontSize: 14, letterSpacing: 2 },
 });
