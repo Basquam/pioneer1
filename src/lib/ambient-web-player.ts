@@ -37,6 +37,16 @@ export function createWebAmbientPlayer(audio: HTMLAudioElement): AmbientPlayerAd
         paused: audio.paused,
       });
     },
+    hardStop: () => {
+      audio.pause();
+      audio.volume = 0;
+      audio.currentTime = 0;
+      ambientDebug('player hard stopped', {
+        backend: 'web-html',
+        paused: audio.paused,
+        currentTime: audio.currentTime,
+      });
+    },
     isPlaying: () => !audio.paused && !audio.ended,
     isPaused: () => audio.paused,
     isLoaded: () => audio.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA,

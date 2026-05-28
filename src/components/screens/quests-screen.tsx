@@ -19,8 +19,10 @@ import { VillainMeter } from '@/components/rpg/villain-meter';
 import { XpPopup } from '@/components/rpg/xp-popup';
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
+import { useUniverseUiCopy } from '@/lib/universe-ui-copy';
 
 export function QuestsScreen() {
+  const ui = useUniverseUiCopy();
   const {
     activeUniverse,
     activeSaga,
@@ -57,14 +59,14 @@ export function QuestsScreen() {
     return (
       <ScreenShell edges={['top']} padded={false}>
         <ScreenScroll>
-          <SectionHeader eyebrow="QUEST BOARD" title="ACTIVE MISSIONS" />
+          <SectionHeader eyebrow={ui.questBoardEyebrow} title={ui.questBoardTitle} />
           {isSagaPreview ? (
             <SagaPreviewEmptyState />
           ) : (
             <CinematicEmptyState
-              title="No active chapter."
-              message="This saga has no active chapter right now. Restore the default saga to pick up where the trail begins."
-              primaryLabel="Restore Default Saga"
+              title={ui.noActiveChapterTitle}
+              message={ui.noActiveChapterEmptyMessage}
+              primaryLabel={ui.restoreDefaultSagaLabel}
               onPrimaryPress={restoreDefaultStory}
             />
           )}
@@ -79,35 +81,35 @@ export function QuestsScreen() {
     <ScreenShell edges={['top']} padded={false}>
       <ScreenScroll>
         <Animated.View entering={FadeInDown.duration(500)}>
-          <SectionHeader eyebrow="QUEST BOARD" title="ACTIVE MISSIONS" />
+          <SectionHeader eyebrow={ui.questBoardEyebrow} title={ui.questBoardTitle} />
         </Animated.View>
         <GameHud compact />
         <VillainMeter />
         {leadBeat && <CharacterDialoguePanel beat={leadBeat} animate={false} />}
         <Text style={[styles.hint, { color: activeUniverse.palette.fog }]}>
-          Complete bounties and quests to advance the chapter. Tap to mark done.
+          {ui.questsBoardHint}
         </Text>
 
         <AddQuestTrigger variant="banner" />
 
-        <SectionLabel>YOUR QUESTS</SectionLabel>
+        <SectionLabel>{ui.userQuestsLabel}</SectionLabel>
         {!hasPersonalQuests ? (
           <CinematicEmptyState
-            title="No quests yet."
-            message="Turn a real task into a quest for today's chapter."
-            primaryLabel="ADD QUEST"
+            title={ui.noQuestsYetTitle}
+            message={ui.noQuestsYetMessage}
+            primaryLabel={ui.addQuestButtonLabel}
             onPrimaryPress={openAddQuestSheet}
           />
         ) : (
           userQuests.map((quest, index) => <QuestCard key={quest.id} quest={quest} index={index} />)
         )}
 
-        <SectionLabel>CHAPTER BOUNTIES</SectionLabel>
+        <SectionLabel>{ui.chapterTemplatesLabel}</SectionLabel>
         {allChapterBountiesComplete ? (
           <CinematicEmptyState
-            title="Chapter bounties cleared."
-            message="Continue the saga from HQ."
-            primaryLabel="RETURN TO HQ"
+            title={ui.chapterTemplatesClearedTitle}
+            message={ui.chapterTemplatesClearedContinueMessage}
+            primaryLabel={ui.hqReturnLabel}
             onPrimaryPress={() => router.push('/(game)/hq' as Href)}
             index={1}
           />

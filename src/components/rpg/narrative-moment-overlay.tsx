@@ -6,8 +6,10 @@ import { GameLayout } from '@/constants/layout';
 import { GameFonts } from '@/constants/typography';
 import { getCharacter } from '@/lib/narrative-helpers';
 import { useGame } from '@/hooks/use-game';
+import { useUniverseUiCopy } from '@/lib/universe-ui-copy';
 
 export function NarrativeMomentOverlay() {
+  const ui = useUniverseUiCopy();
   const { activeUniverse, activeSaga, narrativeMoment, dismissNarrativeMoment } = useGame();
   const { palette } = activeUniverse;
 
@@ -35,7 +37,7 @@ export function NarrativeMomentOverlay() {
             ]}>
             <CharacterPortrait character={character} />
             <View style={styles.momentBody}>
-              <Text style={[styles.momentBadge, { color: palette.villainGlow }]}>VILLAIN TAUNT</Text>
+              <Text style={[styles.momentBadge, { color: palette.villainGlow }]}>{ui.antagonistTauntBadge}</Text>
               <Text style={[styles.momentName, { color: palette.bone }]}>{character.name}</Text>
               <Text style={[styles.momentLine, { color: palette.bone }]}>{narrativeMoment.line}</Text>
               <Text style={[styles.dismiss, { color: palette.fog }]}>TAP TO DISMISS</Text>

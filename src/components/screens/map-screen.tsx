@@ -14,11 +14,13 @@ import { TerritoryMap } from '@/components/rpg/territory-map';
 import { VillainMeter } from '@/components/rpg/villain-meter';
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
+import { useUniverseUiCopy } from '@/lib/universe-ui-copy';
 import type { ChapterStatus } from '@/lib/chapter-progress';
 import { buildTerritoryNodes, type TerritoryNode } from '@/lib/territory-map';
 import type { Chapter } from '@/types/narrative';
 
 export function MapScreen() {
+  const ui = useUniverseUiCopy();
   const { activeUniverse, activeSaga, chapters, playerProgress } = useGame();
   const [selectedChapter, setSelectedChapter] = useState<Chapter | null>(null);
   const [detailMode, setDetailMode] = useState<ChapterStatus | null>(null);
@@ -48,8 +50,8 @@ export function MapScreen() {
       <ScreenScroll>
         <Animated.View entering={FadeInDown.duration(500)}>
           <SectionHeader
-            eyebrow={`${activeUniverse.name.toUpperCase()} · TERRITORY MAP`}
-            title="FRONTIER PROGRESS"
+            eyebrow={ui.mapEyebrow(activeUniverse.name)}
+            title={ui.mapTitle}
             right={activeSaga.title}
           />
         </Animated.View>
@@ -57,7 +59,7 @@ export function MapScreen() {
         <VillainMeter />
 
         <Text style={[styles.hint, { color: activeUniverse.palette.fog }]}>
-          {reclaimedCount}/{chapters.length} territories reclaimed. Your discipline reshapes Dustfall.
+          {ui.mapProgressHint(reclaimedCount, chapters.length, activeUniverse.locationName)}
         </Text>
 
         {territoryNodes.length > 0 ? (
@@ -68,14 +70,14 @@ export function MapScreen() {
           />
         ) : (
           <Text style={[styles.empty, { color: activeUniverse.palette.fog }]}>
-            No territory data for this saga yet.
+            {ui.mapEmptyMessage}
           </Text>
         )}
 
         {allTerritoriesReclaimed && (
           <CinematicEmptyState
-            title="Territory reclaimed."
-            message={`Every frontier on the ${activeSaga.title} map flies your colors. Collect your spoils or ride a new trail.`}
+            title={ui.mapReclaimedTitle}
+            message={ui.mapReclaimedMessage(activeSaga.title)}
             primaryLabel="SWITCH SAGA"
             onPrimaryPress={() => setSagaSwitcherVisible(true)}
             secondaryLabel="VIEW REWARDS"
@@ -85,7 +87,7 @@ export function MapScreen() {
 
         <SectionLabel>MAP LEGEND</SectionLabel>
         <Text style={[styles.legendItem, { color: activeUniverse.palette.fog }]}>
-          RECLAIMED — chapter cleared · ACTIVE — current front · THREAT — locked territory
+          {ui.mapLegend}
         </Text>
       </ScreenScroll>
 

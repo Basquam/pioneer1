@@ -14,10 +14,12 @@ import { SectionLabel } from '@/components/rpg/section-label';
 import { VillainMeter } from '@/components/rpg/villain-meter';
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
+import { useUniverseUiCopy } from '@/lib/universe-ui-copy';
 import { getActiveChapterId, getChapterStatus, type ChapterStatus } from '@/lib/chapter-progress';
 import type { Chapter } from '@/types/narrative';
 
 export function StoryScreen() {
+  const ui = useUniverseUiCopy();
   const { activeUniverse, activeSaga, chapters, isSagaPreview, playerProgress } = useGame();
   const { palette } = activeUniverse;
   const [selectedChapter, setSelectedChapter] = useState<Chapter | null>(null);
@@ -65,7 +67,7 @@ export function StoryScreen() {
             <View style={styles.titleBlock}>
               <SectionHeader
                 eyebrow={`${activeSaga.title.toUpperCase()} · SAGA TRAIL`}
-                title="CHAPTER PROGRESS"
+                title={ui.storyTitle}
                 right={activeUniverse.locationName}
               />
             </View>
@@ -85,11 +87,11 @@ export function StoryScreen() {
             { backgroundColor: palette.panel, borderColor: palette.panelBorder },
           ]}>
           <Text style={[styles.progressEyebrow, { color: palette.gold }]}>
-            {completedCount}/{chapters.length} CHAPTERS CLEARED
+            {ui.sectorsClearedLabel(completedCount, chapters.length)}
           </Text>
           {activeChapter && (
             <Text style={[styles.progressActive, { color: palette.bone }]} numberOfLines={2}>
-              Now riding through: {activeChapter.title}
+              {ui.activeSectorLine(activeChapter.title)}
             </Text>
           )}
           <Text style={[styles.progressSub, { color: palette.fog }]}>{activeSaga.summary}</Text>
@@ -97,20 +99,20 @@ export function StoryScreen() {
 
         {sagaComplete && (
           <CinematicEmptyState
-            title="Saga complete."
-            message={`You rode every chapter of ${activeSaga.title}. The trail ends here — for now. Choose your next saga.`}
+            title={ui.sagaCompleteTitle}
+            message={ui.sagaCompleteMessage(activeSaga.title)}
             primaryLabel="SWITCH SAGA"
             onPrimaryPress={() => setSagaSwitcherVisible(true)}
           />
         )}
 
-        <SectionLabel>SAGA CHAPTERS</SectionLabel>
+        <SectionLabel>{ui.sagaSectorsLabel}</SectionLabel>
         {isSagaPreview ? (
           <SagaPreviewEmptyState />
         ) : chapters.length === 0 ? (
           <CinematicEmptyState
-            title="No chapters available."
-            message={`${activeSaga.title} doesn't have playable chapters yet. Switch to an unlocked saga or restore the default saga.`}
+            title={ui.noChaptersTitle}
+            message={`${activeSaga.title} ${ui.noChaptersMessage}`}
             primaryLabel="SWITCH SAGA"
             onPrimaryPress={() => setSagaSwitcherVisible(true)}
           />

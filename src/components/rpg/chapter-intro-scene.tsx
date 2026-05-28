@@ -6,6 +6,7 @@ import { CharacterDialoguePanel } from '@/components/rpg/character-dialogue-pane
 import { GlowButton } from '@/components/rpg/glow-button';
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
+import { useUniverseUiCopy } from '@/lib/universe-ui-copy';
 
 type ChapterIntroSceneProps = {
   visible: boolean;
@@ -13,6 +14,7 @@ type ChapterIntroSceneProps = {
 };
 
 export function ChapterIntroScene({ visible, onComplete }: ChapterIntroSceneProps) {
+  const ui = useUniverseUiCopy();
   const { activeUniverse, currentChapter } = useGame();
   const { palette } = activeUniverse;
   const beats = currentChapter?.introScene ?? [];
@@ -47,7 +49,7 @@ export function ChapterIntroScene({ visible, onComplete }: ChapterIntroSceneProp
       <View style={[styles.backdrop, { backgroundColor: `${palette.void}ee` }]}>
         <Animated.View entering={FadeIn.duration(400)} exiting={FadeOut.duration(300)} style={styles.content}>
           <Text style={[styles.chapterLabel, { color: palette.accent }]}>
-            CHAPTER {currentChapter.order} · {currentChapter.title.toUpperCase()}
+            {ui.sectorIntroLabel(currentChapter.order, currentChapter.title)}
           </Text>
           <Text style={[styles.summary, { color: palette.fog }]}>{currentChapter.summary}</Text>
 
@@ -64,7 +66,7 @@ export function ChapterIntroScene({ visible, onComplete }: ChapterIntroSceneProp
           )}
 
           {typingDone && isLast && (
-            <GlowButton label="BEGIN CHAPTER" hint="VIEW CHAPTER BOUNTIES" onPress={handleAdvance} />
+            <GlowButton label={ui.beginSectorLabel} hint={ui.beginSectorHint} onPress={handleAdvance} />
           )}
         </Animated.View>
       </View>

@@ -4,8 +4,10 @@ import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-na
 
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
+import { useUniverseUiCopy } from '@/lib/universe-ui-copy';
 
 export function VillainMeter() {
+  const ui = useUniverseUiCopy();
   const { activeUniverse, activeSaga, villainInfluence } = useGame();
   const { palette } = activeUniverse;
   const clamped = Math.min(100, Math.max(0, villainInfluence));
@@ -19,14 +21,15 @@ export function VillainMeter() {
     transform: [{ scaleX: fill.value }],
   }));
 
-  const status =
-    clamped > 66 ? 'CRITICAL THREAT' : clamped > 33 ? 'HOLDING GROUND' : 'RETREATING';
+  const status = ui.villainMeterStatus(
+    clamped > 66 ? 'high' : clamped > 33 ? 'mid' : 'low',
+  );
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={[styles.label, { color: palette.villainGlow }]}>
-          {activeSaga.villainName} · INFLUENCE
+          {ui.villainInfluenceLabel(activeSaga.villainName)}
         </Text>
         <Text style={[styles.value, { color: palette.bone }]}>{clamped}%</Text>
       </View>

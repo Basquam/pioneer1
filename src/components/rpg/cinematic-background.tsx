@@ -11,7 +11,12 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
+import {
+  GridDotOverlay,
+  ScanlineOverlay,
+} from '@/components/rpg/visual-theme-overlay';
 import { useGame } from '@/hooks/use-game';
+import { useUniverseVisualTheme } from '@/hooks/use-universe-visual-theme';
 
 const { width, height } = Dimensions.get('window');
 const STAR_COUNT = 40;
@@ -65,8 +70,10 @@ function Star({
 
 export function CinematicBackground() {
   const { activeUniverse } = useGame();
+  const visualTheme = useUniverseVisualTheme();
   const { palette } = activeUniverse;
   const pulse = useSharedValue(0);
+  const glitch = useSharedValue(0);
 
   useEffect(() => {
     pulse.value = withRepeat(
@@ -79,22 +86,72 @@ export function CinematicBackground() {
     );
   }, [pulse]);
 
+  useEffect(() => {
+    if (!visualTheme.showScanlines) return;
+    glitch.value = withRepeat(
+      withSequence(
+        withTiming(1, { duration: 2200, easing: Easing.inOut(Easing.sin) }),
+        withTiming(0, { duration: 1800, easing: Easing.inOut(Easing.sin) }),
+      ),
+      -1,
+      true,
+    );
+  }, [glitch, visualTheme.showScanlines]);
+
   const glowStyle = useAnimatedStyle(() => ({
     opacity: interpolate(pulse.value, [0, 1], [0.15, 0.35]),
   }));
+
+  const glitchStyle = useAnimatedStyle(() => ({
+    opacity: visualTheme.showScanlines ? interpolate(glitch.value, [0, 1], [0.35, 0.65]) : 0,
+  }));
+
+  const isChrome = visualTheme.backgroundVariant === 'chrome';
 
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="none">
       <LinearGradient colors={palette.gradient} locations={[0, 0.5, 1]} style={StyleSheet.absoluteFill} />
       <LinearGradient
-        colors={['transparent', `${palette.primary}33`, `${palette.accent}18`]}
+        colors={
+          isChrome
+            ? ['transparent', `${palette.accent}22`, `${palette.primary}18`]
+            : ['transparent', `${palette.primary}33`, `${palette.accent}18`]
+        }
         locations={[0.5, 0.85, 1]}
         style={StyleSheet.absoluteFill}
       />
-      {stars.map((s) => (
-        <Star key={s.id} {...s} color={palette.bone} />
-      ))}
-      <Animated.View style={[styles.ambientGlow, glowStyle, { backgroundColor: palette.glow }]} />
+      {visualTheme.ambientParticles === 'stars' &&
+        stars.map((s) => <Star key={s.id} {...s} color={palette.bone} />)}
+      {visualTheme.showGridDots && (
+        <GridDotOverlay color={palette.accent} accentColor={palette.primary} />
+      )}
+      <Animated.View
+        style={[
+          styles.ambientGlow,
+          glowStyle,
+          {
+            backgroundColor: palette.glow,
+            top: isChrome ? height * 0.08 : height * 0.15,
+            right: isChrome ? -20 : -40,
+          },
+        ]}
+      />
+      {isChrome && (
+        <Animated.View
+          style={[
+            styles.ambientGlow,
+            glitchStyle,
+            {
+              backgroundColor: palette.primary,
+              top: height * 0.42,
+              left: -60,
+              width: 160,
+              height: 160,
+            },
+          ]}
+        />
+      )}
+      {visualTheme.showScanlines && <ScanlineOverlay color={palette.accent} />}
       <LinearGradient
         colors={['transparent', `${palette.void}99`, palette.void]}
         locations={[0.55, 0.88, 1]}
@@ -108,8 +165,6 @@ const styles = StyleSheet.create({
   star: { position: 'absolute' },
   ambientGlow: {
     position: 'absolute',
-    top: height * 0.15,
-    right: -40,
     width: 200,
     height: 200,
     borderRadius: 100,

@@ -6,18 +6,27 @@ import {
   countTodayUserQuests,
   getDailyFocusLimit,
 } from '@/lib/daily-focus';
+import { useUniverseUiCopy } from '@/lib/universe-ui-copy';
 
 type TodayFocusDisplayProps = {
   variant?: 'briefing' | 'profile' | 'inline';
 };
 
 export function TodayFocusDisplay({ variant = 'briefing' }: TodayFocusDisplayProps) {
+  const ui = useUniverseUiCopy();
   const { activeUniverse, playerProgress } = useGame();
   const { palette } = activeUniverse;
   const limit = getDailyFocusLimit(playerProgress);
   const count = countTodayUserQuests(playerProgress.userQuests);
   const isProfile = variant === 'profile';
   const isInline = variant === 'inline';
+
+  const hint =
+    count < limit
+      ? ui.focusQuestSlotsHint(limit - count)
+      : count === limit
+        ? ui.focusQuestFullHint
+        : ui.focusQuestOverHint;
 
   return (
     <View
@@ -31,18 +40,12 @@ export function TodayFocusDisplay({ variant = 'briefing' }: TodayFocusDisplayPro
         },
       ]}>
       <View style={styles.headerRow}>
-        <Text style={[styles.label, { color: palette.accent }]}>FOCUS QUESTS</Text>
+        <Text style={[styles.label, { color: palette.accent }]}>{ui.focusQuestsHeaderLabel}</Text>
         <Text style={[styles.value, { color: palette.gold }]}>
           {count} / {limit}
         </Text>
       </View>
-      <Text style={[styles.hint, { color: palette.fog }]}>
-        {count < limit
-          ? `${limit - count} Focus Quest ${limit - count === 1 ? 'slot' : 'slots'} left today.`
-          : count === limit
-            ? 'Focus Quests full — extra quests still count toward progress.'
-            : 'Beyond today\'s Focus Quests — the story still moves forward.'}
-      </Text>
+      <Text style={[styles.hint, { color: palette.fog }]}>{hint}</Text>
     </View>
   );
 }

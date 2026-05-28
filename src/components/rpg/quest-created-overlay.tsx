@@ -5,9 +5,11 @@ import { GlowButton } from '@/components/rpg/glow-button';
 import { GameLayout } from '@/constants/layout';
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
+import { useUniverseUiCopy } from '@/lib/universe-ui-copy';
 import { getTaskCategoryMeta } from '@/lib/task-categories';
 
 export function QuestCreatedOverlay() {
+  const ui = useUniverseUiCopy();
   const {
     activeUniverse,
     questCreated,
@@ -35,18 +37,18 @@ export function QuestCreatedOverlay() {
           <Animated.Text
             entering={ZoomIn.duration(650).delay(120)}
             style={[styles.stamp, { color: palette.gold, borderColor: palette.gold }]}>
-            NEW QUEST ADDED
+            {ui.newQuestAddedStamp}
           </Animated.Text>
 
           <Animated.View
             entering={FadeInDown.duration(550).delay(220)}
             style={[styles.questCard, { backgroundColor: palette.panel, borderColor: palette.gold }]}>
-            <Text style={[styles.realLabel, { color: palette.accent }]}>REAL TASK</Text>
+            <Text style={[styles.realLabel, { color: palette.accent }]}>{ui.realTaskLabel}</Text>
             <Text style={[styles.realTask, { color: palette.bone }]}>{questCreated.originalTitle}</Text>
 
             <View style={[styles.divider, { backgroundColor: palette.panelBorder }]} />
 
-            <Text style={[styles.narrativeLabel, { color: palette.gold }]}>SAGA QUEST</Text>
+            <Text style={[styles.narrativeLabel, { color: palette.gold }]}>{ui.sagaQuestLabel}</Text>
             <Text style={[styles.narrativeTitle, { color: palette.bone }]}>
               {questCreated.narrativeTitle}
             </Text>
@@ -69,7 +71,7 @@ export function QuestCreatedOverlay() {
             <RewardStat label="XP REWARD" value={`+${questCreated.xpReward}`} palette={palette} />
             <View style={[styles.rewardDivider, { backgroundColor: palette.panelBorder }]} />
             <RewardStat
-              label="REPUTATION"
+              label={ui.reputationLabel}
               value={`+${questCreated.reputationReward}`}
               palette={palette}
             />
@@ -77,13 +79,13 @@ export function QuestCreatedOverlay() {
 
           <Animated.View entering={FadeInUp.duration(500).delay(520)} style={styles.buttonWrap}>
             <GlowButton
-              label="VIEW ON QUEST BOARD"
-              hint="SEE YOUR QUEST"
+              label={ui.viewQuestBoardLabel}
+              hint={ui.viewQuestBoardHint}
               onPress={viewCreatedQuestOnBoard}
             />
             <SecondaryButton
-              label="ADD ANOTHER QUEST"
-              hint="ADD ANOTHER QUEST TODAY"
+              label={ui.addAnotherQuestLabel}
+              hint={ui.addAnotherQuestHint}
               palette={palette}
               onPress={addAnotherQuest}
             />

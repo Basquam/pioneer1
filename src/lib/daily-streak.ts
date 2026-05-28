@@ -26,7 +26,15 @@ export type StreakFlavor = {
 
 const IRON_RAILWAY_SAGA_ID = 'iron-railway-company';
 
-export function getStreakFlavor(selectedSagaId: string): StreakFlavor {
+export function getStreakFlavor(selectedSagaId: string, universeId = 'dust-and-iron'): StreakFlavor {
+  if (universeId === 'neuronet') {
+    return {
+      label: 'Signal Stability',
+      shortLabel: 'SIGNAL STABILITY',
+      encouragement: 'The grid holds steady when you return each day.',
+    };
+  }
+
   if (selectedSagaId === IRON_RAILWAY_SAGA_ID) {
     return {
       label: 'Route Reliability',

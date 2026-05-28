@@ -6,6 +6,7 @@ import { CinematicEmptyState } from '@/components/rpg/cinematic-empty-state';
 import { GameLayout } from '@/constants/layout';
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
+import { useUniverseUiCopy } from '@/lib/universe-ui-copy';
 import { useModalBottomInset } from '@/hooks/use-scroll-insets';
 import { getCompletedChapterCountForSaga } from '@/lib/chapter-progress';
 import { getSagaUnlockHint, isSagaUnlocked } from '@/lib/reward-unlocks';
@@ -16,6 +17,7 @@ type SagaSwitcherSheetProps = {
 };
 
 export function SagaSwitcherSheet({ visible, onClose }: SagaSwitcherSheetProps) {
+  const ui = useUniverseUiCopy();
   const { activeUniverse, activeSaga, playerProgress, switchSaga } = useGame();
   const { palette } = activeUniverse;
   const modalBottomInset = useModalBottomInset(32);
@@ -64,7 +66,7 @@ export function SagaSwitcherSheet({ visible, onClose }: SagaSwitcherSheetProps) 
             {unlockedSagas.length === 0 ? (
               <CinematicEmptyState
                 title="No unlocked sagas yet."
-                message="Complete the Vulture Gang saga to unlock more sagas across Dustfall."
+                message={ui.sagaSwitcherEmptyMessage}
                 primaryLabel="CLOSE"
                 onPrimaryPress={onClose}
               />
@@ -87,7 +89,7 @@ export function SagaSwitcherSheet({ visible, onClose }: SagaSwitcherSheetProps) 
                     />
                     {unlocked && totalChapters > 0 && (
                       <Text style={[styles.progressHint, { color: palette.fog }]}>
-                        {completedChapters}/{totalChapters} chapters cleared
+                        {ui.sagaProgressMeta(completedChapters, totalChapters)}
                       </Text>
                     )}
                   </View>

@@ -40,6 +40,16 @@ export function createExpoAmbientPlayer(player: AudioPlayer): AmbientPlayerAdapt
         paused: player.paused,
       });
     },
+    hardStop: () => {
+      player.pause();
+      player.volume = 0;
+      ambientDebug('player hard stopped', {
+        backend: 'expo-audio',
+        playing: player.playing,
+        paused: player.paused,
+        volume: player.volume,
+      });
+    },
     isPlaying: () => player.playing,
     isPaused: () => player.paused,
     isLoaded: () => player.isLoaded,

@@ -11,7 +11,9 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { GameFonts } from '@/constants/typography';
+import { skewTransform } from '@/constants/universe-visual-theme';
 import { useGame } from '@/hooks/use-game';
+import { useUniverseVisualTheme } from '@/hooks/use-universe-visual-theme';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -23,6 +25,7 @@ type GlowButtonProps = {
 
 export function GlowButton({ label, hint, onPress }: GlowButtonProps) {
   const { activeUniverse } = useGame();
+  const visualTheme = useUniverseVisualTheme();
   const { palette } = activeUniverse;
   const glow = useSharedValue(0);
   const scale = useSharedValue(1);
@@ -64,7 +67,14 @@ export function GlowButton({ label, hint, onPress }: GlowButtonProps) {
         style={[
           styles.button,
           btnStyle,
-          { backgroundColor: palette.primary, borderColor: palette.gold },
+          {
+            backgroundColor: visualTheme.panelUsesHolographic
+              ? `${palette.primary}cc`
+              : palette.primary,
+            borderColor: visualTheme.panelUsesHolographic ? palette.accent : palette.gold,
+            borderWidth: visualTheme.buttonBorderWidth,
+            transform: skewTransform(visualTheme.buttonSkew),
+          },
         ]}>
         <Text
           style={[styles.label, { color: palette.bone }]}
@@ -75,7 +85,7 @@ export function GlowButton({ label, hint, onPress }: GlowButtonProps) {
         </Text>
         {hint ? (
           <Text
-            style={[styles.hint, { color: palette.gold }]}
+            style={[styles.hint, { color: visualTheme.panelUsesHolographic ? palette.accent : palette.gold }]}
             numberOfLines={1}
             adjustsFontSizeToFit
             minimumFontScale={0.8}>
@@ -95,8 +105,6 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     paddingHorizontal: 12,
     alignItems: 'center',
-    borderWidth: 2,
-    transform: [{ skewX: '-6deg' }],
   },
   label: { fontFamily: GameFonts.ui, fontSize: 18, letterSpacing: 3, textAlign: 'center' },
   hint: {

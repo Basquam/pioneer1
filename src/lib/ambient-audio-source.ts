@@ -1,30 +1,25 @@
 import { Asset } from 'expo-asset';
 
-import { AMBIENT_AUDIO_MODULE } from '@/constants/audio';
+import { AMBIENT_AUDIO_BY_UNIVERSE_ID, getAmbientAudioModule } from '@/constants/audio';
 import { ambientDebug } from '@/lib/ambient-audio-debug';
 
-export async function resolveAmbientAudioUri(): Promise<string> {
+async function resolveModuleUri(module: number | string | { uri: string }): Promise<string> {
   ambientDebug('Asset load started', {
-    moduleType: typeof AMBIENT_AUDIO_MODULE,
-    module: AMBIENT_AUDIO_MODULE,
+    moduleType: typeof module,
+    module,
   });
 
-  if (typeof AMBIENT_AUDIO_MODULE === 'string') {
-    ambientDebug('Asset loaded (string module)', { uri: AMBIENT_AUDIO_MODULE });
-    return AMBIENT_AUDIO_MODULE;
+  if (typeof module === 'string') {
+    ambientDebug('Asset loaded (string module)', { uri: module });
+    return module;
   }
 
-  if (
-    AMBIENT_AUDIO_MODULE &&
-    typeof AMBIENT_AUDIO_MODULE === 'object' &&
-    'uri' in AMBIENT_AUDIO_MODULE &&
-    typeof AMBIENT_AUDIO_MODULE.uri === 'string'
-  ) {
-    ambientDebug('Asset loaded (object uri)', { uri: AMBIENT_AUDIO_MODULE.uri });
-    return AMBIENT_AUDIO_MODULE.uri;
+  if (module && typeof module === 'object' && 'uri' in module && typeof module.uri === 'string') {
+    ambientDebug('Asset loaded (object uri)', { uri: module.uri });
+    return module.uri;
   }
 
-  const asset = Asset.fromModule(AMBIENT_AUDIO_MODULE);
+  const asset = Asset.fromModule(module as number);
   if (!asset.downloaded) {
     await asset.downloadAsync();
   }
@@ -38,4 +33,19 @@ export async function resolveAmbientAudioUri(): Promise<string> {
   });
 
   return uri;
+}
+
+export async function resolveAmbientAudioUri(universeId: string): Promise<string> {
+  const module = getAmbientAudioModule(universeId);
+  if (!module) {
+    throw new Error(`No ambient audio module for universe: ${universeId}`);
+  }
+
+  return resolveModuleUri(module);
+}
+
+export function listAmbientUniverseIds(): string[] {
+  return Object.entries(AMBIENT_AUDIO_BY_UNIVERSE_ID)
+    .filter(([, module]) => module !== null)
+    .map(([universeId]) => universeId);
 }

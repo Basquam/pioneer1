@@ -17,8 +17,10 @@ import { StorylinesSection } from '@/components/rpg/storylines-section';
 import { XpPopup } from '@/components/rpg/xp-popup';
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
+import { useUniverseUiCopy } from '@/lib/universe-ui-copy';
 
 export function HqScreen() {
+  const ui = useUniverseUiCopy();
   const {
     activeUniverse,
     activeSaga,
@@ -36,9 +38,10 @@ export function HqScreen() {
     maybeShowVillainTaunt();
   }, [currentChapter?.id, maybeShowVillainTaunt]);
 
-  const chapterLabel = currentChapter
-    ? `${activeSaga.title.toUpperCase()} · CH ${currentChapter.order}`
-    : activeSaga.title.toUpperCase();
+  const chapterLabel = ui.hqChapterEyebrow(
+    activeSaga.title,
+    currentChapter?.order,
+  );
 
   return (
     <ScreenShell edges={['top']} padded={false}>
@@ -47,7 +50,7 @@ export function HqScreen() {
           <Text style={styles.icon}>{activeUniverse.icon}</Text>
           <SectionHeader
             eyebrow={chapterLabel}
-            title={`${activeUniverse.locationName} HQ`}
+            title={ui.hqTitle(activeUniverse.locationName)}
             right={activeUniverse.name}
           />
         </Animated.View>
@@ -63,12 +66,16 @@ export function HqScreen() {
         <View style={styles.quickRow}>
           <QuickLink
             label="STORY"
-            sub={currentChapter ? `Ch. ${currentChapter.order} progress` : 'Chapter unavailable'}
+            sub={
+              currentChapter
+                ? ui.activeSectorProgressSub(currentChapter.order)
+                : ui.sectorUnavailableSub
+            }
             color={activeUniverse.palette.gold}
             onPress={() => router.push('/(game)/story' as Href)}
           />
           <QuickLink
-            label="WORLD MAP"
+            label={ui.worldMapQuickLink}
             sub={activeUniverse.locationName}
             color={activeUniverse.palette.accent}
             onPress={() => router.push('/(game)/map' as Href)}
@@ -82,7 +89,7 @@ export function HqScreen() {
         {completedQuestCount < quests.length && (
           <Pressable onPress={() => router.push('/(game)/quests' as Href)}>
             <Text style={[styles.more, { color: activeUniverse.palette.accent }]}>
-              OPEN QUEST BOARD ›
+              {ui.openQuestBoardLabel}
             </Text>
           </Pressable>
         )}

@@ -51,6 +51,7 @@ import {
   type DevUniverseSnapshot,
 } from '@/lib/dev-universe-switch';
 import { isSagaUnlocked, isUniverseUnlocked, unlockRewardIds } from '@/lib/reward-unlocks';
+import { getUniverseUiCopy } from '@/lib/universe-ui-copy';
 import type {
   BoardQuest,
   Chapter,
@@ -462,6 +463,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       }
 
       const reactor = getCharacter(activeSaga, charId);
+      const ui = getUniverseUiCopy(activeUniverse);
       setQuestComplete({
         questId,
         source: boardQuest.source,
@@ -471,10 +473,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
         characterId: charId,
         characterLine: reactor
           ? pickCharacterLine(reactor, 'questComplete', updatedCompletedIds.length)
-          : 'The frontier remembers what you accomplished.',
+          : ui.questCompleteFallbackLine,
       });
     },
-    [activeSaga, chapterComplete, currentChapter, progress, questComplete, quests, sagaCompletedQuestIds],
+    [activeSaga, activeUniverse, chapterComplete, currentChapter, progress, questComplete, quests, sagaCompletedQuestIds],
   );
 
   const dismissQuestComplete = useCallback(() => {

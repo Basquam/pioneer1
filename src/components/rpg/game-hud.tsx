@@ -4,12 +4,14 @@ import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-na
 
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
+import { useUniverseUiCopy } from '@/lib/universe-ui-copy';
 
 type GameHudProps = {
   compact?: boolean;
 };
 
 export function GameHud({ compact }: GameHudProps) {
+  const ui = useUniverseUiCopy();
   const { activeUniverse, player, completedQuestCount, quests } = useGame();
   const { palette } = activeUniverse;
   const fill = useSharedValue(player.xpProgress);
@@ -32,7 +34,7 @@ export function GameHud({ compact }: GameHudProps) {
         <View style={styles.titleBlock}>
           <Text style={[styles.rank, { color: palette.bone }]}>{player.rank.toUpperCase()}</Text>
           <Text style={[styles.subtitle, { color: palette.fog }]}>
-            {player.totalXp} XP · {completedQuestCount}/{quests.length} MISSIONS
+            {player.totalXp} XP · {completedQuestCount}/{quests.length} {ui.hudMissionsLabel}
           </Text>
         </View>
       </View>

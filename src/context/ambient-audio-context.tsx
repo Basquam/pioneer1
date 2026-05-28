@@ -9,17 +9,30 @@ import {
   type ReactNode,
 } from 'react';
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
-import { setAudioModeAsync, useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
+import { setAudioModeAsync, useAudioPlayer } from 'expo-audio';
 
-import { AMBIENT_AUDIO_MODULE, AmbientAudioConfig } from '@/constants/audio';
+import {
+  AMBIENT_AUDIO_BY_UNIVERSE_ID,
+  AMBIENT_AUDIO_MODULE,
+  AmbientAudioConfig,
+  NEURONET_AMBIENT_AUDIO_MODULE,
+  getAmbientAudioModule,
+  universeHasAmbientAudio,
+} from '@/constants/audio';
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
 import { ambientDebug } from '@/lib/ambient-audio-debug';
 import { resolveAmbientAudioUri } from '@/lib/ambient-audio-source';
 import { createExpoAmbientPlayer } from '@/lib/ambient-expo-player';
 import type { AmbientPlayerAdapter } from '@/lib/ambient-player-adapter';
+import {
+  type AdapterRegistry,
+  pauseAllExcept,
+  startAmbientTrack,
+  stopAllAmbientTracks,
+  switchAmbientTrack,
+} from '@/lib/ambient-track-playback';
 import { createWebAmbientPlayer } from '@/lib/ambient-web-player';
-import { fadeVolume, createVolumeTarget } from '@/lib/audio-fade';
 import { loadAudioSettings, saveAudioSettings } from '@/lib/audio-settings-storage';
 
 const IS_WEB = Platform.OS === 'web';
@@ -37,240 +50,207 @@ type AmbientAudioContextValue = {
 
 const AmbientAudioContext = createContext<AmbientAudioContextValue | null>(null);
 
-type EngineProps = {
-  playerRef: React.MutableRefObject<AmbientPlayerAdapter | null>;
-  fadeCancelRef: React.MutableRefObject<(() => void) | null>;
-  shouldPlay: boolean;
-  playerReady: boolean;
-};
+function logResolvedAmbientModule(universeId: string, module: number) {
+  if (!__DEV__) return;
 
-function useAmbientPlayback({ playerRef, fadeCancelRef, shouldPlay, playerReady }: EngineProps) {
-  useEffect(() => {
-    fadeCancelRef.current?.();
-    fadeCancelRef.current = null;
-
-    const adapter = playerRef.current;
-    if (!playerReady || !adapter) {
-      if (__DEV__) {
-        ambientDebug('Playback skipped — player not ready', { shouldPlay, playerReady });
-      }
-      return;
-    }
-
-    if (!shouldPlay) {
-      const currentVolume = adapter.getVolume();
-      if (__DEV__) {
-        ambientDebug('Stopping ambient playback', {
-          volume: currentVolume,
-          playing: adapter.isPlaying(),
-          paused: adapter.isPaused(),
-          state: adapter.getDebugState(),
-        });
-      }
-
-      if (currentVolume <= 0.001) {
-        adapter.pause();
-        return;
-      }
-
-      fadeCancelRef.current = fadeVolume(
-        createVolumeTarget(
-          () => adapter.getVolume(),
-          (volume) => adapter.setVolume(volume),
-        ),
-        currentVolume,
-        0,
-        AmbientAudioConfig.fadeOutMs,
-        () => {
-          adapter.pause();
-        },
-      );
-      return;
-    }
-
-    if (__DEV__) {
-      ambientDebug('Starting ambient playback', adapter.getDebugState());
-    }
-
-    adapter.setVolume(0);
-    void adapter.playWithResult().then((result) => {
-      if (__DEV__) {
-        ambientDebug('Initial play attempt finished', {
-          result,
-          state: adapter.getDebugState(),
-        });
-      }
-    });
-
-    fadeCancelRef.current = fadeVolume(
-      createVolumeTarget(
-        () => adapter.getVolume(),
-        (volume) => adapter.setVolume(volume),
-      ),
-      0,
-      AmbientAudioConfig.targetVolume,
-      AmbientAudioConfig.fadeInMs,
-      () => {
-        if (__DEV__) {
-          ambientDebug('Ambient at target volume', {
-            volume: adapter.getVolume(),
-            playing: adapter.isPlaying(),
-            state: adapter.getDebugState(),
-          });
-        }
-      },
-    );
-
-    return () => {
-      fadeCancelRef.current?.();
-      fadeCancelRef.current = null;
-    };
-  }, [fadeCancelRef, playerReady, playerRef, shouldPlay]);
+  ambientDebug('Resolved ambient module', {
+    universeId,
+    module,
+    isDustModule: module === AMBIENT_AUDIO_MODULE,
+    isNeuronetModule: module === NEURONET_AMBIENT_AUDIO_MODULE,
+    neuronetLookup: getAmbientAudioModule('neuronet'),
+    dustLookup: getAmbientAudioModule('dust-and-iron'),
+    neuronetDistinctFromDust:
+      getAmbientAudioModule('neuronet') !== getAmbientAudioModule('dust-and-iron'),
+  });
 }
 
-function NativeAmbientEngine({ playerRef, fadeCancelRef, shouldPlay }: Omit<EngineProps, 'playerReady'>) {
-  const player = useAudioPlayer(AMBIENT_AUDIO_MODULE);
-  const status = useAudioPlayerStatus(player);
-  const [playerReady, setPlayerReady] = useState(false);
+function AmbientActiveUniverseLogger({
+  activeUniverseIdRef,
+  playingUniverseIdRef,
+}: {
+  activeUniverseIdRef: React.MutableRefObject<string>;
+  playingUniverseIdRef: React.MutableRefObject<string | null>;
+}) {
+  const { activeUniverse } = useGame();
 
   useEffect(() => {
-    ambientDebug('Native engine created (expo-audio)');
-  }, []);
+    activeUniverseIdRef.current = activeUniverse.id;
 
-  useEffect(() => {
-    player.loop = true;
-    playerRef.current = createExpoAmbientPlayer(player);
-    setPlayerReady(true);
-    ambientDebug('Native player adapter registered', playerRef.current.getDebugState());
-
-    return () => {
-      setPlayerReady(false);
-      playerRef.current = null;
-      ambientDebug('Native player adapter released');
-    };
-  }, [player, playerRef]);
-
-  useEffect(() => {
-    if (status.isLoaded) {
-      ambientDebug('Native asset loaded', {
-        duration: status.duration,
-        playing: status.playing,
+    if (__DEV__) {
+      ambientDebug('AmbientAudioProvider activeUniverse.id', {
+        activeUniverseId: activeUniverse.id,
+        currentlyPlayingUniverseId: playingUniverseIdRef.current,
+        ambientModule: getAmbientAudioModule(activeUniverse.id),
       });
     }
-  }, [status.duration, status.isLoaded, status.playing]);
-
-  useAmbientPlayback({ playerRef, fadeCancelRef, shouldPlay, playerReady });
+  }, [activeUniverse.id, activeUniverseIdRef, playingUniverseIdRef]);
 
   return null;
 }
 
-function WebAmbientEngine({ playerRef, fadeCancelRef, shouldPlay }: Omit<EngineProps, 'playerReady'>) {
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const [uri, setUri] = useState<string | null>(null);
-  const [loadError, setLoadError] = useState<string | null>(null);
-  const [playerReady, setPlayerReady] = useState(false);
+function NativeAmbientTrack({
+  universeId,
+  module,
+  adaptersRef,
+  onRegistryChange,
+}: {
+  universeId: string;
+  module: number;
+  adaptersRef: React.MutableRefObject<AdapterRegistry>;
+  onRegistryChange: () => void;
+}) {
+  const player = useAudioPlayer(module);
 
   useEffect(() => {
-    ambientDebug('Web engine created (HTMLAudioElement)');
-    void resolveAmbientAudioUri()
-      .then((resolvedUri) => {
-        setUri(resolvedUri);
-        setLoadError(null);
+    logResolvedAmbientModule(universeId, module);
+    player.loop = true;
+    adaptersRef.current[universeId] = createExpoAmbientPlayer(player);
+    onRegistryChange();
+    ambientDebug('Native track registered', {
+      universeId,
+      state: adaptersRef.current[universeId]?.getDebugState(),
+    });
+
+    return () => {
+      adaptersRef.current[universeId]?.hardStop();
+      adaptersRef.current[universeId] = null;
+      onRegistryChange();
+      ambientDebug('Native track released', { universeId });
+    };
+  }, [adaptersRef, module, onRegistryChange, player, universeId]);
+
+  return null;
+}
+
+function WebAmbientTrack({
+  universeId,
+  adaptersRef,
+  onRegistryChange,
+}: {
+  universeId: string;
+  adaptersRef: React.MutableRefObject<AdapterRegistry>;
+  onRegistryChange: () => void;
+}) {
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    let active = true;
+
+    void resolveAmbientAudioUri(universeId)
+      .then((uri) => {
+        if (!active) return;
+
+        if (__DEV__) {
+          ambientDebug('Resolved ambient URI', {
+            universeId,
+            uri,
+            module: getAmbientAudioModule(universeId),
+          });
+        }
+
+        ambientDebug('Web: creating HTMLAudioElement', { universeId, uri });
+        const audio = new Audio(uri);
+        audio.loop = true;
+        audio.preload = 'auto';
+        audio.volume = 0;
+        audioRef.current = audio;
+        adaptersRef.current[universeId] = createWebAmbientPlayer(audio);
+        onRegistryChange();
+        ambientDebug('Web track registered', {
+          universeId,
+          state: adaptersRef.current[universeId]?.getDebugState(),
+        });
       })
       .catch((error: unknown) => {
         const message = error instanceof Error ? error.message : String(error);
-        setLoadError(message);
-        ambientDebug('Web asset load failed', { error: message });
+        ambientDebug('Web track load failed', { universeId, error: message });
       });
-  }, []);
-
-  useEffect(() => {
-    if (!uri) return;
-
-    ambientDebug('Web: creating HTMLAudioElement', { uri });
-    const audio = new Audio(uri);
-    audio.loop = true;
-    audio.preload = 'auto';
-    audio.volume = 0;
-    audioRef.current = audio;
-
-    const onLoadStart = () => ambientDebug('Web audio loadstart');
-    const onCanPlay = () =>
-      ambientDebug('Web audio canplaythrough', {
-        duration: Number.isFinite(audio.duration) ? audio.duration : null,
-        readyState: audio.readyState,
-      });
-    const onPlaying = () =>
-      ambientDebug('Web audio playing event', {
-        volume: audio.volume,
-        paused: audio.paused,
-        currentTime: audio.currentTime,
-      });
-    const onPause = () =>
-      ambientDebug('Web audio pause event', {
-        volume: audio.volume,
-        paused: audio.paused,
-      });
-    const onError = () =>
-      ambientDebug('Web audio error event', {
-        code: audio.error?.code,
-        message: audio.error?.message,
-        src: audio.currentSrc || audio.src,
-      });
-
-    audio.addEventListener('loadstart', onLoadStart);
-    audio.addEventListener('canplaythrough', onCanPlay);
-    audio.addEventListener('playing', onPlaying);
-    audio.addEventListener('pause', onPause);
-    audio.addEventListener('error', onError);
-
-    playerRef.current = createWebAmbientPlayer(audio);
-    setPlayerReady(true);
-    ambientDebug('Web player adapter registered', playerRef.current.getDebugState());
 
     return () => {
-      audio.removeEventListener('loadstart', onLoadStart);
-      audio.removeEventListener('canplaythrough', onCanPlay);
-      audio.removeEventListener('playing', onPlaying);
-      audio.removeEventListener('pause', onPause);
-      audio.removeEventListener('error', onError);
-      audio.pause();
-      audio.src = '';
+      active = false;
+      const audio = audioRef.current;
+      if (audio) {
+        audio.pause();
+        audio.volume = 0;
+        audio.currentTime = 0;
+        audio.src = '';
+      }
       audioRef.current = null;
-      setPlayerReady(false);
-      playerRef.current = null;
-      ambientDebug('Web player adapter released');
+      adaptersRef.current[universeId] = null;
+      onRegistryChange();
+      ambientDebug('Web track released', { universeId });
     };
-  }, [playerRef, uri]);
-
-  useEffect(() => {
-    if (loadError) {
-      ambientDebug('Web engine idle due to load error', { loadError });
-    }
-  }, [loadError]);
-
-  useAmbientPlayback({ playerRef, fadeCancelRef, shouldPlay, playerReady });
+  }, [adaptersRef, onRegistryChange, universeId]);
 
   return null;
 }
 
-function AmbientAudioEngine({
-  playerRef,
-  fadeCancelRef,
+function AmbientTrackRegistry({
+  adaptersRef,
+  onRegistryChange,
 }: {
-  playerRef: React.MutableRefObject<AmbientPlayerAdapter | null>;
+  adaptersRef: React.MutableRefObject<AdapterRegistry>;
+  onRegistryChange: () => void;
+}) {
+  const entries = Object.entries(AMBIENT_AUDIO_BY_UNIVERSE_ID).filter(
+    (entry): entry is [string, number] => entry[1] !== null,
+  );
+
+  if (IS_WEB) {
+    return (
+      <>
+        {entries.map(([universeId]) => (
+          <WebAmbientTrack
+            key={universeId}
+            universeId={universeId}
+            adaptersRef={adaptersRef}
+            onRegistryChange={onRegistryChange}
+          />
+        ))}
+      </>
+    );
+  }
+
+  return (
+    <>
+      {entries.map(([universeId, module]) => (
+        <NativeAmbientTrack
+          key={universeId}
+          universeId={universeId}
+          module={module}
+          adaptersRef={adaptersRef}
+          onRegistryChange={onRegistryChange}
+        />
+      ))}
+    </>
+  );
+}
+
+function AmbientAudioEngine({
+  adaptersRef,
+  fadeCancelRef,
+  activeUniverseIdRef,
+  playingUniverseIdRef,
+}: {
+  adaptersRef: React.MutableRefObject<AdapterRegistry>;
   fadeCancelRef: React.MutableRefObject<(() => void) | null>;
+  activeUniverseIdRef: React.MutableRefObject<string>;
+  playingUniverseIdRef: React.MutableRefObject<string | null>;
 }) {
   const { activeUniverse, isHydrated: gameHydrated } = useGame();
   const { ambientEnabled, isHydrated: settingsHydrated, webPlaybackUnlocked } = useAmbientAudio();
+  const [registryVersion, setRegistryVersion] = useState(0);
 
+  const activeUniverseId = activeUniverse.id;
+  const hasTrack = universeHasAmbientAudio(activeUniverseId);
   const wantsAmbient =
-    settingsHydrated &&
-    gameHydrated &&
-    ambientEnabled &&
-    activeUniverse.id === AmbientAudioConfig.wildWestUniverseId;
-
+    settingsHydrated && gameHydrated && ambientEnabled && hasTrack;
   const shouldPlay = wantsAmbient && (!IS_WEB || webPlaybackUnlocked);
+
+  const bumpRegistry = useCallback(() => {
+    setRegistryVersion((version) => version + 1);
+  }, []);
 
   useEffect(() => {
     void setAudioModeAsync({
@@ -282,23 +262,95 @@ function AmbientAudioEngine({
   useEffect(() => {
     if (__DEV__) {
       ambientDebug('Engine state', {
+        activeUniverseId,
+        currentlyPlayingUniverseId: playingUniverseIdRef.current,
+        requestedNextUniverseId: shouldPlay ? activeUniverseId : null,
         wantsAmbient,
         shouldPlay,
         webPlaybackUnlocked,
         ambientEnabled,
-        universeId: activeUniverse.id,
+        registryVersion,
       });
     }
-  }, [activeUniverse.id, ambientEnabled, shouldPlay, wantsAmbient, webPlaybackUnlocked]);
+  }, [
+    activeUniverseId,
+    ambientEnabled,
+    playingUniverseIdRef,
+    registryVersion,
+    shouldPlay,
+    wantsAmbient,
+    webPlaybackUnlocked,
+  ]);
 
-  if (IS_WEB) {
-    return (
-      <WebAmbientEngine playerRef={playerRef} fadeCancelRef={fadeCancelRef} shouldPlay={shouldPlay} />
+  useEffect(() => {
+    const targetAdapter = hasTrack ? adaptersRef.current[activeUniverseId] ?? null : null;
+    const currentlyPlayingUniverseId = playingUniverseIdRef.current;
+
+    if (!shouldPlay) {
+      if (__DEV__) {
+        ambientDebug('Ambient playback disabled — stopping all tracks', {
+          activeUniverseId,
+          currentlyPlayingUniverseId,
+        });
+      }
+      stopAllAmbientTracks(adaptersRef.current, fadeCancelRef, playingUniverseIdRef);
+      return;
+    }
+
+    if (!targetAdapter) {
+      if (__DEV__) {
+        ambientDebug('Playback waiting for adapter', {
+          activeUniverseId,
+          currentlyPlayingUniverseId,
+        });
+      }
+      return;
+    }
+
+    if (
+      currentlyPlayingUniverseId === activeUniverseId &&
+      targetAdapter.isPlaying() &&
+      targetAdapter.getVolume() >= AmbientAudioConfig.targetVolume * 0.85
+    ) {
+      pauseAllExcept(adaptersRef.current, activeUniverseId);
+      return;
+    }
+
+    switchAmbientTrack(
+      adaptersRef.current,
+      currentlyPlayingUniverseId,
+      activeUniverseId,
+      fadeCancelRef,
+      playingUniverseIdRef,
     );
-  }
+  }, [
+    activeUniverseId,
+    adaptersRef,
+    fadeCancelRef,
+    hasTrack,
+    playingUniverseIdRef,
+    registryVersion,
+    shouldPlay,
+  ]);
+
+  useEffect(
+    () => () => {
+      fadeCancelRef.current?.();
+      fadeCancelRef.current = null;
+      pauseAllExcept(adaptersRef.current, null);
+      playingUniverseIdRef.current = null;
+    },
+    [adaptersRef, fadeCancelRef, playingUniverseIdRef],
+  );
 
   return (
-    <NativeAmbientEngine playerRef={playerRef} fadeCancelRef={fadeCancelRef} shouldPlay={shouldPlay} />
+    <>
+      <AmbientActiveUniverseLogger
+        activeUniverseIdRef={activeUniverseIdRef}
+        playingUniverseIdRef={playingUniverseIdRef}
+      />
+      <AmbientTrackRegistry adaptersRef={adaptersRef} onRegistryChange={bumpRegistry} />
+    </>
   );
 }
 
@@ -318,7 +370,7 @@ function AmbientWebUnlockPrompt() {
     return null;
   }
 
-  if (activeUniverse.id !== AmbientAudioConfig.wildWestUniverseId) {
+  if (!universeHasAmbientAudio(activeUniverse.id)) {
     return null;
   }
 
@@ -342,8 +394,10 @@ export function AmbientAudioProvider({ children }: { children: ReactNode }) {
   const [ambientEnabled, setAmbientEnabledState] = useState(true);
   const [isHydrated, setIsHydrated] = useState(false);
   const [webPlaybackUnlocked, setWebPlaybackUnlocked] = useState(!IS_WEB);
-  const playerRef = useRef<AmbientPlayerAdapter | null>(null);
+  const adaptersRef = useRef<AdapterRegistry>({});
   const fadeCancelRef = useRef<(() => void) | null>(null);
+  const activeUniverseIdRef = useRef('dust-and-iron');
+  const playingUniverseIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -358,6 +412,17 @@ export function AmbientAudioProvider({ children }: { children: ReactNode }) {
     return () => {
       mounted = false;
     };
+  }, []);
+
+  useEffect(() => {
+    if (!__DEV__) return;
+
+    ambientDebug('Ambient module registry check', {
+      neuronetModule: getAmbientAudioModule('neuronet'),
+      dustModule: getAmbientAudioModule('dust-and-iron'),
+      neuronetDistinctFromDust:
+        getAmbientAudioModule('neuronet') !== getAmbientAudioModule('dust-and-iron'),
+    });
   }, []);
 
   const unlockWebPlayback = useCallback(() => {
@@ -403,18 +468,26 @@ export function AmbientAudioProvider({ children }: { children: ReactNode }) {
     fadeCancelRef.current?.();
     fadeCancelRef.current = null;
 
-    const player = playerRef.current;
+    const universeId = activeUniverseIdRef.current;
+    const player = adaptersRef.current[universeId];
+
     ambientDebug('TEST AMBIENCE clicked', {
+      activeUniverseId: universeId,
+      currentlyPlayingUniverseId: playingUniverseIdRef.current,
       playerReady: Boolean(player),
+      ambientModule: getAmbientAudioModule(universeId),
       state: player?.getDebugState() ?? null,
     });
 
     if (!player) return;
 
+    pauseAllExcept(adaptersRef.current, universeId);
     player.setLoop(true);
     player.setVolume(AmbientAudioConfig.devTestVolume);
     void player.playWithResult().then((result) => {
+      playingUniverseIdRef.current = universeId;
       ambientDebug('TEST AMBIENCE result', {
+        universeId,
         result,
         state: player.getDebugState(),
       });
@@ -427,13 +500,17 @@ export function AmbientAudioProvider({ children }: { children: ReactNode }) {
     fadeCancelRef.current?.();
     fadeCancelRef.current = null;
 
-    const player = playerRef.current;
+    const universeId = activeUniverseIdRef.current;
+    const player = adaptersRef.current[universeId];
+
     ambientDebug('STOP AMBIENCE clicked', {
+      activeUniverseId: universeId,
+      currentlyPlayingUniverseId: playingUniverseIdRef.current,
       playerReady: Boolean(player),
       state: player?.getDebugState() ?? null,
     });
 
-    player?.pause();
+    stopAllAmbientTracks(adaptersRef.current, fadeCancelRef, playingUniverseIdRef);
   }, []);
 
   const needsWebUnlock = IS_WEB && ambientEnabled && !webPlaybackUnlocked;
@@ -464,7 +541,12 @@ export function AmbientAudioProvider({ children }: { children: ReactNode }) {
   return (
     <AmbientAudioContext.Provider value={value}>
       <View style={styles.root}>
-        <AmbientAudioEngine playerRef={playerRef} fadeCancelRef={fadeCancelRef} />
+        <AmbientAudioEngine
+          adaptersRef={adaptersRef}
+          fadeCancelRef={fadeCancelRef}
+          activeUniverseIdRef={activeUniverseIdRef}
+          playingUniverseIdRef={playingUniverseIdRef}
+        />
         <AmbientWebUnlockPrompt />
         {children}
       </View>

@@ -2,6 +2,9 @@ import { useState } from 'react';
 import { LayoutChangeEvent, StyleSheet, View } from 'react-native';
 
 import { TerritoryNode, TERRITORY_NODE_WIDTH } from '@/components/rpg/territory-node';
+import { ScanlineOverlay } from '@/components/rpg/visual-theme-overlay';
+import { skewTransform } from '@/constants/universe-visual-theme';
+import { useUniverseVisualTheme } from '@/hooks/use-universe-visual-theme';
 import type { TerritoryNode as TerritoryNodeData } from '@/lib/territory-map';
 import type { UniversePalette } from '@/types/narrative';
 
@@ -19,12 +22,14 @@ function Connector({
   mapWidth,
   palette,
   reclaimed,
+  holographic,
 }: {
   from: { x: number; y: number };
   to: { x: number; y: number };
   mapWidth: number;
   palette: UniversePalette;
   reclaimed: boolean;
+  holographic: boolean;
 }) {
   const x1 = (from.x / 100) * mapWidth;
   const y1 = (from.y / 100) * MAP_HEIGHT;
@@ -41,7 +46,9 @@ function Connector({
           left: x1,
           top: y1,
           width: distance,
-          backgroundColor: reclaimed ? `${palette.gold}88` : `${palette.villainGlow}55`,
+          backgroundColor: reclaimed
+            ? `${holographic ? palette.accent : palette.gold}88`
+            : `${holographic ? palette.primary : palette.villainGlow}55`,
           transform: [{ rotate: `${angle}deg` }],
         },
       ]}
@@ -50,6 +57,7 @@ function Connector({
 }
 
 export function TerritoryMap({ nodes, palette, onNodePress }: TerritoryMapProps) {
+  const visualTheme = useUniverseVisualTheme();
   const [mapWidth, setMapWidth] = useState(0);
   const sorted = [...nodes].sort((a, b) => a.chapter.order - b.chapter.order);
 
@@ -60,7 +68,35 @@ export function TerritoryMap({ nodes, palette, onNodePress }: TerritoryMapProps)
   return (
     <View
       onLayout={handleLayout}
-      style={[styles.canvas, { borderColor: palette.panelBorder, backgroundColor: `${palette.night}cc` }]}>
+      style={[
+        styles.canvas,
+        {
+          borderColor: visualTheme.panelUsesHolographic ? palette.accent : palette.panelBorder,
+          backgroundColor: visualTheme.panelUsesHolographic ? `${palette.void}ee` : `${palette.night}cc`,
+          transform: skewTransform(visualTheme.mapSkew),
+        },
+      ]}>
+      {visualTheme.mapShowGrid && (
+        <View style={StyleSheet.absoluteFill} pointerEvents="none">
+          {Array.from({ length: 12 }, (_, row) =>
+            Array.from({ length: 8 }, (_, col) => (
+              <View
+                key={`${row}-${col}`}
+                style={{
+                  position: 'absolute',
+                  left: `${col * 14}%`,
+                  top: `${row * 9}%`,
+                  width: 1,
+                  height: 1,
+                  backgroundColor: palette.accent,
+                  opacity: 0.12,
+                }}
+              />
+            )),
+          )}
+        </View>
+      )}
+      {visualTheme.showScanlines && <ScanlineOverlay color={palette.accent} lineCount={24} />}
       {mapWidth > 0 &&
         sorted.slice(0, -1).map((node, index) => {
           const next = sorted[index + 1];
@@ -72,6 +108,7 @@ export function TerritoryMap({ nodes, palette, onNodePress }: TerritoryMapProps)
               mapWidth={mapWidth}
               palette={palette}
               reclaimed={node.status === 'completed'}
+              holographic={visualTheme.panelUsesHolographic}
             />
           );
         })}
@@ -106,7 +143,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     position: 'relative',
     overflow: 'hidden',
-    transform: [{ skewX: '-1deg' }],
   },
   connector: {
     position: 'absolute',

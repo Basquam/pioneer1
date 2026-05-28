@@ -16,12 +16,14 @@ import { CharacterPortrait } from '@/components/rpg/character-portrait';
 import { GameLayout } from '@/constants/layout';
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
+import { useUniverseUiCopy } from '@/lib/universe-ui-copy';
 import { getCharacter } from '@/lib/narrative-helpers';
 import { formatAffinityGain } from '@/lib/relationship-progress';
 
 type QuestCompletePhase = 'stamp' | 'reaction';
 
 export function QuestCompleteOverlay() {
+  const ui = useUniverseUiCopy();
   const { activeUniverse, activeSaga, questComplete, dismissQuestComplete } = useGame();
   const { palette } = activeUniverse;
   const [phase, setPhase] = useState<QuestCompletePhase>('stamp');
@@ -49,12 +51,12 @@ export function QuestCompleteOverlay() {
 
   const character = getCharacter(activeSaga, questComplete.characterId);
   const isUserQuest = questComplete.source === 'user';
-  const stampLabel = isUserQuest ? 'QUEST CLEARED' : 'BOUNTY CLEARED';
+  const stampLabel = isUserQuest ? ui.userQuestClearedLabel : ui.templateQuestClearedLabel;
   const progressMessage = isUserQuest
-    ? 'Your quest moved the story forward.'
-    : 'This bounty advanced the chapter.';
+    ? ui.userQuestCompleteMessage
+    : ui.templateQuestCompleteMessage;
   const affinityGainLabel = character ? formatAffinityGain(character) : null;
-  const reactionBadge = character?.isVillain ? 'VILLAIN REACTION' : 'ALLY RESPONSE';
+  const reactionBadge = character?.isVillain ? ui.antagonistReactionBadge : ui.allyReactionBadge;
 
   const advanceToReaction = () => {
     if (phase === 'stamp') setPhase('reaction');
@@ -98,7 +100,7 @@ export function QuestCompleteOverlay() {
                 <RewardStat label="XP EARNED" value={`+${questComplete.earnedXp}`} palette={palette} />
                 <View style={[styles.rewardDivider, { backgroundColor: palette.panelBorder }]} />
                 <RewardStat
-                  label="REPUTATION"
+                  label={ui.reputationLabel}
                   value={`+${questComplete.earnedReputation}`}
                   palette={palette}
                 />

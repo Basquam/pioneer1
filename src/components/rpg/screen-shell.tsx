@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { CinematicBackground } from '@/components/rpg/cinematic-background';
 import { GameLayout } from '@/constants/layout';
 import { useGame } from '@/hooks/use-game';
+import { useUniverseVisualTheme } from '@/hooks/use-universe-visual-theme';
 
 type ScreenShellProps = {
   children: ReactNode;
@@ -15,11 +16,19 @@ type ScreenShellProps = {
 
 export function ScreenShell({ children, edges = ['top'], padded = true }: ScreenShellProps) {
   const { activeUniverse } = useGame();
+  const visualTheme = useUniverseVisualTheme();
+  const { palette } = activeUniverse;
 
   return (
-    <View style={[styles.root, { backgroundColor: activeUniverse.palette.void }]}>
+    <View style={[styles.root, { backgroundColor: palette.void }]}>
       <StatusBar style="light" />
       <CinematicBackground />
+      {visualTheme.backgroundVariant === 'chrome' && (
+        <View
+          pointerEvents="none"
+          style={[styles.chromeFrame, { borderColor: `${palette.accent}33` }]}
+        />
+      )}
       <SafeAreaView
         style={[styles.safe, padded && styles.padded]}
         edges={edges}>
@@ -31,6 +40,14 @@ export function ScreenShell({ children, edges = ['top'], padded = true }: Screen
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
+  chromeFrame: {
+    position: 'absolute',
+    top: 6,
+    left: 6,
+    right: 6,
+    bottom: 6,
+    borderWidth: 1,
+  },
   safe: { flex: 1 },
   padded: { paddingHorizontal: GameLayout.screenPaddingHorizontal },
 });

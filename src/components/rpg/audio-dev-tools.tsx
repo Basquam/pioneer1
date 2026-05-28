@@ -28,7 +28,7 @@ export function AudioDevTools() {
         style={[styles.toolButton, { borderColor: palette.gold, backgroundColor: palette.panel }]}>
         <Text style={[styles.toolLabel, { color: palette.bone }]}>TEST AMBIENCE</Text>
         <Text style={[styles.toolHint, { color: palette.fog }]}>
-          Unlock web playback, set volume to 0.8, and play with console logs.
+          Play the {activeUniverse.name} ambient track at 0.8 volume with console logs.
         </Text>
       </Pressable>
 

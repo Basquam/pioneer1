@@ -4,16 +4,18 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
+import { useUniverseUiCopy } from '@/lib/universe-ui-copy';
 import { formatStreakDays } from '@/lib/daily-streak';
 import { computeWeeklyRecap } from '@/lib/weekly-recap';
 
 export function WeeklyRecapCard() {
+  const ui = useUniverseUiCopy();
   const { activeUniverse, activeSaga, playerProgress } = useGame();
   const { palette } = activeUniverse;
 
   const recap = useMemo(
-    () => computeWeeklyRecap(playerProgress, activeSaga.id),
-    [activeSaga.id, playerProgress],
+    () => computeWeeklyRecap(playerProgress, activeSaga.id, new Date(), activeUniverse.id),
+    [activeSaga.id, activeUniverse.id, playerProgress],
   );
 
   const isQuietWeek =
@@ -38,18 +40,18 @@ export function WeeklyRecapCard() {
 
         {isQuietWeek ? (
           <Text style={[styles.quietHint, { color: palette.fog }]}>
-            No quests or bounties cleared yet this week — the frontier waits for your first move.
+            {ui.weeklyRecapQuietHint}
           </Text>
         ) : (
           <View style={styles.statsGrid}>
             <RecapStat label="CLEARED" value={String(recap.questsCompleted)} palette={palette} />
             <RecapStat label="XP EARNED" value={`+${recap.xpEarned}`} palette={palette} />
             <RecapStat
-              label="REPUTATION"
+              label={ui.reputationLabel}
               value={`+${recap.reputationEarned}`}
               palette={palette}
             />
-            <RecapStat label="CHAPTERS" value={String(recap.chaptersCompleted)} palette={palette} />
+            <RecapStat label={ui.weeklyRecapSectorsLabel} value={String(recap.chaptersCompleted)} palette={palette} />
           </View>
         )}
 

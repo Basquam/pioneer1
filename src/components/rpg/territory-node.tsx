@@ -12,6 +12,8 @@ import Animated, {
 import { useEffect } from 'react';
 
 import { GameFonts } from '@/constants/typography';
+import { skewTransform } from '@/constants/universe-visual-theme';
+import { useUniverseVisualTheme } from '@/hooks/use-universe-visual-theme';
 import type { ChapterStatus } from '@/lib/chapter-progress';
 import type { Chapter, UniversePalette } from '@/types/narrative';
 
@@ -25,6 +27,7 @@ type TerritoryNodeProps = {
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 export function TerritoryNode({ chapter, status, palette, onPress }: TerritoryNodeProps) {
+  const visualTheme = useUniverseVisualTheme();
   const glow = useSharedValue(0);
   const isActive = status === 'active';
   const isCompleted = status === 'completed';
@@ -62,18 +65,20 @@ export function TerritoryNode({ chapter, status, palette, onPress }: TerritoryNo
         styles.node,
         {
           backgroundColor: isCompleted
-            ? `${palette.gold}22`
+            ? `${palette.accent}22`
             : isLocked
               ? `${palette.villain}55`
               : `${palette.primary}33`,
           borderColor: isCompleted
-            ? palette.gold
+            ? palette.accent
             : isActive
-              ? palette.gold
+              ? palette.primary
               : isLocked
                 ? palette.villainGlow
                 : palette.panelBorder,
+          borderRadius: visualTheme.nodeBorderRadius,
           opacity: isLocked ? 0.65 : 1,
+          transform: skewTransform(visualTheme.nodeSkew),
         },
       ]}>
       {isActive && (
@@ -81,17 +86,17 @@ export function TerritoryNode({ chapter, status, palette, onPress }: TerritoryNo
           style={[styles.glow, glowStyle, { backgroundColor: palette.accent, shadowColor: palette.accent }]}
         />
       )}
-      <Text style={[styles.order, { color: isLocked ? palette.fog : palette.gold }]}>
+      <Text style={[styles.order, { color: isLocked ? palette.fog : palette.accent }]}>
         {isLocked ? '🔒' : chapter.order}
       </Text>
       <Text style={[styles.name, { color: palette.bone }]} numberOfLines={2}>
         {chapter.territoryName}
       </Text>
       {isCompleted && (
-        <Text style={[styles.stamp, { color: palette.gold }]}>RECLAIMED</Text>
+        <Text style={[styles.stamp, { color: palette.accent }]}>{visualTheme.completedStamp}</Text>
       )}
-      {isActive && <Text style={[styles.stamp, { color: palette.accent }]}>ACTIVE</Text>}
-      {isLocked && <Text style={[styles.stamp, { color: palette.villainGlow }]}>THREAT</Text>}
+      {isActive && <Text style={[styles.stamp, { color: palette.primary }]}>{visualTheme.activeStamp}</Text>}
+      {isLocked && <Text style={[styles.stamp, { color: palette.villainGlow }]}>{visualTheme.lockedStamp}</Text>}
     </AnimatedPressable>
   );
 }
@@ -107,7 +112,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 4,
-    transform: [{ skewX: '-4deg' }],
   },
   glow: {
     position: 'absolute',

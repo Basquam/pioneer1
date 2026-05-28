@@ -10,6 +10,8 @@ export type AmbientPlayerAdapter = {
   setLoop: (loop: boolean) => void;
   playWithResult: () => Promise<PlayResult>;
   pause: () => void;
+  /** Pause, mute, and reset playback position where supported. */
+  hardStop: () => void;
   isPlaying: () => boolean;
   isPaused: () => boolean;
   isLoaded: () => boolean;

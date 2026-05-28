@@ -2,6 +2,7 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
+import { useUniverseVisualTheme } from '@/hooks/use-universe-visual-theme';
 
 type SectionHeaderProps = {
   eyebrow?: string;
@@ -11,6 +12,7 @@ type SectionHeaderProps = {
 
 export function SectionHeader({ eyebrow, title, right }: SectionHeaderProps) {
   const { activeUniverse } = useGame();
+  const visualTheme = useUniverseVisualTheme();
   const { palette } = activeUniverse;
 
   return (
@@ -24,10 +26,15 @@ export function SectionHeader({ eyebrow, title, right }: SectionHeaderProps) {
         <Text style={[styles.title, { color: palette.bone }]} numberOfLines={3} adjustsFontSizeToFit minimumFontScale={0.82}>
           {title}
         </Text>
+        {visualTheme.headerUnderline && (
+          <View style={[styles.underline, { backgroundColor: palette.accent }]}>
+            <View style={[styles.underlineAccent, { backgroundColor: palette.primary }]} />
+          </View>
+        )}
       </View>
       {right ? (
         <Text
-          style={[styles.right, { color: palette.gold }]}
+          style={[styles.right, { color: visualTheme.panelUsesHolographic ? palette.primary : palette.gold }]}
           numberOfLines={3}
           adjustsFontSizeToFit
           minimumFontScale={0.8}>
@@ -58,6 +65,21 @@ const styles = StyleSheet.create({
     letterSpacing: 1.5,
     lineHeight: 32,
     flexShrink: 1,
+  },
+  underline: {
+    height: 2,
+    width: '100%',
+    maxWidth: 180,
+    marginTop: 6,
+    overflow: 'hidden',
+  },
+  underlineAccent: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    width: '38%',
+    height: '100%',
+    opacity: 0.85,
   },
   right: {
     fontFamily: GameFonts.ui,

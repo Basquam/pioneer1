@@ -3,10 +3,18 @@ import { StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeIn, FadeInLeft } from 'react-native-reanimated';
 
 import { CharacterPortrait } from '@/components/rpg/character-portrait';
+import { HolographicPanelChrome } from '@/components/rpg/visual-theme-overlay';
 import { GameFonts } from '@/constants/typography';
+import {
+  getHolographicShadow,
+  getPanelAccentColor,
+  getPanelBorderColor,
+  skewTransform,
+} from '@/constants/universe-visual-theme';
 import { getCharacter } from '@/lib/narrative-helpers';
 import { formatRelationshipHeader, getRelationshipProgress } from '@/lib/relationship-progress';
 import { useGame } from '@/hooks/use-game';
+import { useUniverseVisualTheme } from '@/hooks/use-universe-visual-theme';
 import type { DialogueBeat } from '@/types/narrative';
 
 const CHAR_DELAY_MS = 22;
@@ -23,7 +31,11 @@ export function CharacterDialoguePanel({
   onTypingComplete,
 }: CharacterDialoguePanelProps) {
   const { activeUniverse, activeSaga, playerProgress } = useGame();
+  const visualTheme = useUniverseVisualTheme();
   const { palette } = activeUniverse;
+  const panelBorder = getPanelBorderColor(palette, visualTheme);
+  const accentColor = getPanelAccentColor(palette, visualTheme);
+  const goldAccent = getPanelAccentColor(palette, visualTheme, 'gold');
   const character = getCharacter(activeSaga, beat.characterId);
   const [visibleText, setVisibleText] = useState(animate ? '' : beat.line);
 
@@ -58,16 +70,30 @@ export function CharacterDialoguePanel({
           styles.panel,
           {
             backgroundColor: palette.panel,
-            borderColor: character.isVillain ? palette.villainGlow : palette.panelBorder,
+            borderColor: character.isVillain ? palette.villainGlow : panelBorder,
+            borderWidth: visualTheme.panelBorderWidth,
+            transform: skewTransform(visualTheme.cardSkew),
           },
+          getHolographicShadow(palette, visualTheme),
         ]}>
-        <View style={[styles.accent, { backgroundColor: character.isVillain ? palette.villainGlow : palette.primary }]} />
+        {visualTheme.panelTopHighlight && !character.isVillain && (
+          <HolographicPanelChrome accentColor={palette.accent} secondaryColor={palette.primary} />
+        )}
+        <View
+          style={[
+            styles.accent,
+            {
+              backgroundColor: character.isVillain ? palette.villainGlow : accentColor,
+              width: visualTheme.accentLineWidth,
+            },
+          ]}
+        />
         <View style={styles.row}>
           <CharacterPortrait character={character} size="md" />
           <View style={styles.body}>
             <View style={styles.headerRow}>
               <View style={styles.nameBlock}>
-                <Text style={[styles.speaker, { color: palette.gold }]}>{character.name.toUpperCase()}</Text>
+                <Text style={[styles.speaker, { color: goldAccent }]}>{character.name.toUpperCase()}</Text>
                 <Text style={[styles.role, { color: palette.fog }]}>{character.role}</Text>
               </View>
               {beat.badge && (
@@ -94,8 +120,8 @@ export function CharacterDialoguePanel({
 
 const styles = StyleSheet.create({
   wrapper: { alignSelf: 'stretch' },
-  panel: { borderWidth: 1, overflow: 'hidden', transform: [{ skewX: '-2deg' }] },
-  accent: { position: 'absolute', left: 0, top: 0, bottom: 0, width: 4 },
+  panel: { borderWidth: 1, overflow: 'hidden' },
+  accent: { position: 'absolute', left: 0, top: 0, bottom: 0 },
   row: { flexDirection: 'row', padding: 14, paddingLeft: 18, gap: 12 },
   body: { flex: 1, gap: 6 },
   headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 },

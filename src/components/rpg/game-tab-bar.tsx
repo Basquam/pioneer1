@@ -3,15 +3,10 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { GameFonts } from '@/constants/typography';
+import { getPanelAccentColor } from '@/constants/universe-visual-theme';
 import { useGame } from '@/hooks/use-game';
-
-const TAB_META: Record<string, { label: string; icon: string }> = {
-  hq: { label: 'HQ', icon: '⌂' },
-  quests: { label: 'BOARD', icon: '⚔' },
-  story: { label: 'STORY', icon: '📜' },
-  map: { label: 'MAP', icon: '◎' },
-  profile: { label: 'PROFILE', icon: '★' },
-};
+import { useUniverseVisualTheme } from '@/hooks/use-universe-visual-theme';
+import { getUniverseTabMeta } from '@/lib/universe-ui-copy';
 
 export function GameTabBar(props: {
   state: { index: number; routes: { key: string; name: string }[] };
@@ -25,7 +20,10 @@ export function GameTabBar(props: {
   const { state, navigation } = props;
   const insets = useSafeAreaInsets();
   const { activeUniverse } = useGame();
+  const visualTheme = useUniverseVisualTheme();
   const { palette } = activeUniverse;
+  const tabMeta = getUniverseTabMeta(activeUniverse.id);
+  const focusColor = getPanelAccentColor(palette, visualTheme, 'gold');
 
   return (
     <View
@@ -39,7 +37,7 @@ export function GameTabBar(props: {
       ]}>
       {state.routes.map((route, index) => {
         const focused = state.index === index;
-        const meta = TAB_META[route.name] ?? { label: route.name, icon: '•' };
+        const meta = tabMeta[route.name] ?? { label: route.name, icon: '•' };
 
         const onPress = () => {
           void Haptics.selectionAsync();
@@ -55,13 +53,13 @@ export function GameTabBar(props: {
 
         return (
           <Pressable key={route.key} onPress={onPress} style={styles.tab}>
-            <Text style={[styles.icon, { color: focused ? palette.gold : palette.fog }]}>
+            <Text style={[styles.icon, { color: focused ? focusColor : palette.fog }]}>
               {meta.icon}
             </Text>
             <Text
               style={[
                 styles.label,
-                { color: focused ? palette.gold : palette.fog },
+                { color: focused ? focusColor : palette.fog },
               ]}
               numberOfLines={1}
               adjustsFontSizeToFit
@@ -69,7 +67,7 @@ export function GameTabBar(props: {
               {meta.label}
             </Text>
             {focused && (
-              <View style={[styles.indicator, { backgroundColor: palette.primary }]} />
+              <View style={[styles.indicator, { backgroundColor: palette.accent }]} />
             )}
           </Pressable>
         );

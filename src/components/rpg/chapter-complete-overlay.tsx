@@ -4,8 +4,15 @@ import Animated, { FadeIn, FadeInDown, FadeInUp, ZoomIn } from 'react-native-rea
 
 import { DialoguePanel } from '@/components/rpg/dialogue-panel';
 import { GlowButton } from '@/components/rpg/glow-button';
+import { HolographicPanelChrome, ScanlineOverlay } from '@/components/rpg/visual-theme-overlay';
 import { GameLayout } from '@/constants/layout';
 import { GameFonts } from '@/constants/typography';
+import {
+  getPanelAccentColor,
+  getPanelBorderColor,
+  skewTransform,
+  type UniverseVisualTheme,
+} from '@/constants/universe-visual-theme';
 import { parseDialogueLine } from '@/lib/narrative-helpers';
 import { findStoryUnlockReward } from '@/lib/chapter-rewards';
 import {
@@ -14,15 +21,21 @@ import {
   resolveStoryUnlockSaga,
 } from '@/lib/reward-unlocks';
 import { useGame } from '@/hooks/use-game';
+import { useUniverseVisualTheme } from '@/hooks/use-universe-visual-theme';
+import { useUniverseUiCopy } from '@/lib/universe-ui-copy';
 
 export function ChapterCompleteOverlay() {
+  const ui = useUniverseUiCopy();
   const {
     activeUniverse,
     chapterComplete,
     continueFromChapterComplete,
     startUnlockedSagaFromChapterComplete,
   } = useGame();
+  const visualTheme = useUniverseVisualTheme();
   const { palette } = activeUniverse;
+  const panelBorder = getPanelBorderColor(palette, visualTheme);
+  const goldAccent = getPanelAccentColor(palette, visualTheme, 'gold');
 
   if (!chapterComplete) return null;
 
@@ -45,8 +58,9 @@ export function ChapterCompleteOverlay() {
   return (
     <Modal visible transparent animationType="fade" statusBarTranslucent>
       <View style={[styles.backdrop, { backgroundColor: `${palette.void}f2` }]}>
-        <View style={[styles.vignetteTop, { backgroundColor: palette.primary }]} />
-        <View style={[styles.vignetteBottom, { backgroundColor: palette.accent }]} />
+        {visualTheme.showScanlines && <ScanlineOverlay color={palette.accent} lineCount={36} />}
+        <View style={[styles.vignetteTop, { backgroundColor: visualTheme.panelUsesHolographic ? palette.accent : palette.primary }]} />
+        <View style={[styles.vignetteBottom, { backgroundColor: visualTheme.panelUsesHolographic ? palette.primary : palette.accent }]} />
 
         <ScrollView
           contentContainerStyle={styles.scrollContent}
@@ -56,13 +70,14 @@ export function ChapterCompleteOverlay() {
           <Animated.View entering={FadeIn.duration(500)} style={styles.content}>
           <Animated.Text
             entering={ZoomIn.duration(650).delay(120)}
-            style={[styles.stamp, { color: palette.gold, borderColor: palette.gold }]}>
-            CHAPTER COMPLETE
+            style={[styles.stamp, { color: goldAccent, borderColor: goldAccent, transform: skewTransform(visualTheme.buttonSkew) }]}
+          >
+            {ui.chapterCompleteStamp}
           </Animated.Text>
 
           <Animated.View entering={FadeInDown.duration(550).delay(220)} style={styles.titleBlock}>
             <Text style={[styles.chapterEyebrow, { color: palette.accent }]}>
-              CHAPTER {chapterComplete.chapterOrder}
+              {ui.sectorEyebrow(chapterComplete.chapterOrder)}
             </Text>
             <Text style={[styles.chapterTitle, { color: palette.bone }]} numberOfLines={3}>
               {chapterComplete.chapterTitle.toUpperCase()}
@@ -79,12 +94,13 @@ export function ChapterCompleteOverlay() {
           </Animated.View>
 
           <Animated.View entering={FadeInUp.duration(500).delay(520)} style={styles.rewardsRow}>
-            <RewardStat label="XP EARNED" value={`+${chapterComplete.earnedXp}`} palette={palette} />
-            <View style={[styles.rewardDivider, { backgroundColor: palette.panelBorder }]} />
+            <RewardStat label="XP EARNED" value={`+${chapterComplete.earnedXp}`} palette={palette} goldAccent={goldAccent} />
+            <View style={[styles.rewardDivider, { backgroundColor: panelBorder }]} />
             <RewardStat
-              label="REPUTATION"
+              label={ui.reputationLabel}
               value={`+${chapterComplete.earnedReputation}`}
               palette={palette}
+              goldAccent={goldAccent}
             />
           </Animated.View>
 
@@ -92,8 +108,18 @@ export function ChapterCompleteOverlay() {
             <Animated.View
               key={reward.id}
               entering={FadeInUp.duration(500).delay(600 + index * 80)}
-              style={[styles.unlockCard, { backgroundColor: palette.panel, borderColor: palette.gold }]}>
-              <Text style={[styles.unlockEyebrow, { color: palette.gold }]}>
+              style={[
+                styles.unlockCard,
+                {
+                  backgroundColor: palette.panel,
+                  borderColor: goldAccent,
+                  transform: skewTransform(visualTheme.cardSkew),
+                },
+              ]}>
+              {visualTheme.panelTopHighlight && (
+                <HolographicPanelChrome accentColor={palette.accent} secondaryColor={palette.primary} />
+              )}
+              <Text style={[styles.unlockEyebrow, { color: goldAccent }]}>
                 {reward.type === 'storyUnlock' ? 'STORY UNLOCKED' : 'NEW REWARD'}
               </Text>
               <Text style={[styles.unlockType, { color: palette.accent }]}>
@@ -117,17 +143,18 @@ export function ChapterCompleteOverlay() {
                   label="STAY IN CURRENT SAGA"
                   hint={
                     hasNextChapter
-                      ? 'RIDE INTO THE NEXT CHAPTER'
-                      : 'RETURN TO HQ AND KEEP YOUR POST'
+                      ? ui.stayInSagaHint
+                      : ui.stayInSagaHintHome
                   }
                   palette={palette}
+                  visualTheme={visualTheme}
                   onPress={continueFromChapterComplete}
                 />
               </>
             ) : (
               <GlowButton
                 label="CONTINUE"
-                hint={hasNextChapter ? 'RIDE INTO THE NEXT CHAPTER' : 'RETURN TO DUSTFALL'}
+                hint={hasNextChapter ? ui.continueHintNext : ui.continueHintHome}
                 onPress={continueFromChapterComplete}
               />
             )}
@@ -143,17 +170,25 @@ function SecondaryButton({
   label,
   hint,
   palette,
+  visualTheme,
   onPress,
 }: {
   label: string;
   hint?: string;
   palette: { panelBorder: string; fog: string; bone: string };
+  visualTheme: UniverseVisualTheme;
   onPress: () => void;
 }) {
   return (
     <Pressable
       onPress={onPress}
-      style={[styles.secondaryButton, { borderColor: palette.panelBorder }]}>
+      style={[
+        styles.secondaryButton,
+        {
+          borderColor: palette.panelBorder,
+          transform: skewTransform(visualTheme.buttonSkew),
+        },
+      ]}>
       <Text style={[styles.secondaryLabel, { color: palette.bone }]}>{label}</Text>
       {hint ? <Text style={[styles.secondaryHint, { color: palette.fog }]}>{hint}</Text> : null}
     </Pressable>
@@ -164,15 +199,17 @@ function RewardStat({
   label,
   value,
   palette,
+  goldAccent,
 }: {
   label: string;
   value: string;
-  palette: { gold: string; fog: string; bone: string };
+  palette: { fog: string; bone: string };
+  goldAccent: string;
 }) {
   return (
     <View style={styles.rewardStat}>
       <Text style={[styles.rewardLabel, { color: palette.fog }]}>{label}</Text>
-      <Text style={[styles.rewardValue, { color: palette.gold }]}>{value}</Text>
+      <Text style={[styles.rewardValue, { color: goldAccent }]}>{value}</Text>
     </View>
   );
 }
@@ -212,7 +249,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     paddingHorizontal: 14,
     paddingVertical: 6,
-    transform: [{ skewX: '-8deg' }],
   },
   titleBlock: { alignItems: 'center', gap: 6 },
   chapterEyebrow: { fontFamily: GameFonts.ui, fontSize: 11, letterSpacing: 3 },
@@ -230,7 +266,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 20,
     paddingVertical: 8,
-    transform: [{ skewX: '-2deg' }],
   },
   rewardStat: { alignItems: 'center', gap: 4, minWidth: 120 },
   rewardLabel: { fontFamily: GameFonts.uiSemi, fontSize: 9, letterSpacing: 2 },
@@ -241,7 +276,7 @@ const styles = StyleSheet.create({
     padding: 14,
     gap: 4,
     alignItems: 'center',
-    transform: [{ skewX: '-3deg' }],
+    overflow: 'hidden',
   },
   unlockEyebrow: { fontFamily: GameFonts.ui, fontSize: 10, letterSpacing: 3 },
   unlockType: { fontFamily: GameFonts.uiSemi, fontSize: 9, letterSpacing: 2 },
@@ -252,7 +287,6 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     alignItems: 'center',
     borderWidth: 1,
-    transform: [{ skewX: '-6deg' }],
     marginTop: 4,
   },
   secondaryLabel: { fontFamily: GameFonts.ui, fontSize: 14, letterSpacing: 2, textAlign: 'center' },

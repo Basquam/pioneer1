@@ -6,9 +6,9 @@ import { GlowButton } from '@/components/rpg/glow-button';
 import { GameLayout } from '@/constants/layout';
 import { GameFonts } from '@/constants/typography';
 import { parseDialogueLine } from '@/lib/narrative-helpers';
-import { territoryStatusLabel } from '@/lib/territory-map';
 import type { ChapterStatus } from '@/lib/chapter-progress';
 import { useGame } from '@/hooks/use-game';
+import { useUniverseUiCopy } from '@/lib/universe-ui-copy';
 import { useModalBottomInset } from '@/hooks/use-scroll-insets';
 import type { Chapter } from '@/types/narrative';
 
@@ -20,6 +20,7 @@ type ChapterDetailSheetProps = {
 };
 
 export function ChapterDetailSheet({ visible, chapter, mode, onClose }: ChapterDetailSheetProps) {
+  const ui = useUniverseUiCopy();
   const { activeUniverse } = useGame();
   const { palette } = activeUniverse;
   const modalBottomInset = useModalBottomInset(36);
@@ -27,7 +28,7 @@ export function ChapterDetailSheet({ visible, chapter, mode, onClose }: ChapterD
   if (!visible || !mode || !chapter) return null;
 
   const successDialogue = parseDialogueLine(chapter.successDialogue);
-  const statusLabel = territoryStatusLabel(mode);
+  const statusLabel = ui.territoryStatusLabel(mode);
 
   return (
     <Modal visible transparent animationType="fade" onRequestClose={onClose}>
@@ -59,12 +60,12 @@ export function ChapterDetailSheet({ visible, chapter, mode, onClose }: ChapterD
                   {chapter.territoryName.toUpperCase()}
                 </Animated.Text>
                 <Animated.Text entering={FadeInUp.duration(450).delay(120)} style={[styles.chapterRef, { color: palette.fog }]}>
-                  Chapter {chapter.order} · {chapter.title}
+                  {ui.sectorRef(chapter.order, chapter.title)}
                 </Animated.Text>
                 <Animated.Text
                   entering={FadeInUp.duration(450).delay(140)}
                   style={[styles.lockedMessage, { color: palette.fog }]}>
-                  Complete previous chapters to unlock.
+                  {ui.lockedSectorMessage}
                 </Animated.Text>
               </>
             ) : mode === 'active' ? (
@@ -79,7 +80,7 @@ export function ChapterDetailSheet({ visible, chapter, mode, onClose }: ChapterD
                   {chapter.territoryName.toUpperCase()}
                 </Animated.Text>
                 <Animated.Text entering={FadeInUp.duration(450).delay(120)} style={[styles.chapterRef, { color: palette.fog }]}>
-                  Chapter {chapter.order} · {chapter.title}
+                  {ui.sectorRef(chapter.order, chapter.title)}
                 </Animated.Text>
                 <Animated.Text
                   entering={FadeInUp.duration(450).delay(140)}
@@ -104,7 +105,7 @@ export function ChapterDetailSheet({ visible, chapter, mode, onClose }: ChapterD
                   {chapter.territoryName.toUpperCase()}
                 </Animated.Text>
                 <Animated.Text entering={FadeInUp.duration(450).delay(120)} style={[styles.chapterRef, { color: palette.fog }]}>
-                  Chapter {chapter.order} · {chapter.title}
+                  {ui.sectorRef(chapter.order, chapter.title)}
                 </Animated.Text>
                 <Animated.Text
                   entering={FadeInUp.duration(450).delay(140)}

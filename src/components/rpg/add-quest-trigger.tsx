@@ -13,6 +13,7 @@ import Animated, {
 
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
+import { useUniverseUiCopy } from '@/lib/universe-ui-copy';
 
 type AddQuestTriggerProps = {
   variant: 'banner' | 'fab';
@@ -21,6 +22,7 @@ type AddQuestTriggerProps = {
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 export function AddQuestTrigger({ variant }: AddQuestTriggerProps) {
+  const ui = useUniverseUiCopy();
   const { activeUniverse, openAddQuestSheet } = useGame();
   const { palette } = activeUniverse;
   const glow = useSharedValue(0);
@@ -51,9 +53,9 @@ export function AddQuestTrigger({ variant }: AddQuestTriggerProps) {
         <Pressable
           onPress={open}
           style={[styles.banner, { borderColor: palette.accent, backgroundColor: `${palette.panel}cc` }]}>
-          <Text style={[styles.bannerLabel, { color: palette.accent }]}>+ ADD QUEST</Text>
+          <Text style={[styles.bannerLabel, { color: palette.accent }]}>{ui.addQuestTriggerBanner}</Text>
           <Text style={[styles.bannerSub, { color: palette.fog }]} numberOfLines={2}>
-            Turn a real task into a quest
+            {ui.addQuestTriggerSub}
           </Text>
         </Pressable>
       ) : (
@@ -62,7 +64,7 @@ export function AddQuestTrigger({ variant }: AddQuestTriggerProps) {
           onPress={open}
           style={[styles.fabWrap, styles.fabPosition]}
           accessibilityRole="button"
-          accessibilityLabel="Add Quest">
+          accessibilityLabel={ui.addQuestAccessibilityLabel}>
           <Animated.View
             style={[
               styles.fabGlow,
@@ -76,7 +78,7 @@ export function AddQuestTrigger({ variant }: AddQuestTriggerProps) {
               { backgroundColor: palette.primary, borderColor: palette.gold },
             ]}>
             <Text style={[styles.fabPlus, { color: palette.gold }]}>+</Text>
-            <Text style={[styles.fabLabel, { color: palette.bone }]}>ADD QUEST</Text>
+            <Text style={[styles.fabLabel, { color: palette.bone }]}>{ui.addQuestButtonLabel}</Text>
           </View>
         </AnimatedPressable>
       )}

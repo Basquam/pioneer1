@@ -6,8 +6,17 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 
+import { HolographicPanelChrome } from '@/components/rpg/visual-theme-overlay';
 import { GameFonts } from '@/constants/typography';
+import {
+  getHolographicShadow,
+  getPanelAccentColor,
+  getPanelBorderColor,
+  skewTransform,
+} from '@/constants/universe-visual-theme';
 import { useGame } from '@/hooks/use-game';
+import { useUniverseVisualTheme } from '@/hooks/use-universe-visual-theme';
+import { useUniverseUiCopy } from '@/lib/universe-ui-copy';
 import { getTaskCategoryMeta } from '@/lib/task-categories';
 import type { BoardQuest } from '@/types/narrative';
 
@@ -19,9 +28,14 @@ type QuestCardProps = {
 };
 
 export function QuestCard({ quest, index }: QuestCardProps) {
+  const ui = useUniverseUiCopy();
   const { activeUniverse, completeQuest } = useGame();
+  const visualTheme = useUniverseVisualTheme();
   const { palette } = activeUniverse;
   const scale = useSharedValue(1);
+  const panelBorder = getPanelBorderColor(palette, visualTheme);
+  const accentColor = getPanelAccentColor(palette, visualTheme);
+  const goldAccent = getPanelAccentColor(palette, visualTheme, 'gold');
 
   const cardStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
@@ -31,10 +45,18 @@ export function QuestCard({ quest, index }: QuestCardProps) {
     return (
       <Animated.View
         entering={FadeInDown.delay(index * 100).springify()}
-        style={[styles.wrapper, { borderColor: palette.gold, backgroundColor: `${palette.primary}22` }]}>
-        <Text style={[styles.stamp, { color: palette.gold }]}>CLEARED</Text>
+        style={[
+          styles.wrapper,
+          {
+            borderColor: goldAccent,
+            backgroundColor: `${accentColor}22`,
+            transform: skewTransform(visualTheme.cardSkew),
+          },
+          getHolographicShadow(palette, visualTheme),
+        ]}>
+        <Text style={[styles.stamp, { color: goldAccent }]}>CLEARED</Text>
         {quest.source === 'user' && quest.isDailyFocus && (
-          <Text style={[styles.focusStamp, { color: palette.gold }]}>FOCUS QUEST</Text>
+          <Text style={[styles.focusStamp, { color: goldAccent }]}>{ui.focusQuestLabel}</Text>
         )}
         <Text style={[styles.doneTitle, { color: palette.fog }]}>{quest.narrativeTitle}</Text>
         {quest.source === 'user' && (
@@ -60,10 +82,19 @@ export function QuestCard({ quest, index }: QuestCardProps) {
       style={[
         styles.wrapper,
         cardStyle,
-        { backgroundColor: palette.panel, borderColor: palette.panelBorder },
+        {
+          backgroundColor: palette.panel,
+          borderColor: panelBorder,
+          borderWidth: visualTheme.panelBorderWidth,
+          transform: skewTransform(visualTheme.cardSkew),
+        },
+        getHolographicShadow(palette, visualTheme),
       ]}>
-      <View style={[styles.accent, { backgroundColor: palette.primary }]} />
-      <View style={styles.inner}>
+      {visualTheme.panelTopHighlight && (
+        <HolographicPanelChrome accentColor={palette.accent} secondaryColor={palette.primary} />
+      )}
+      <View style={[styles.accent, { backgroundColor: accentColor, width: visualTheme.accentLineWidth }]} />
+      <View style={[styles.inner, visualTheme.cardSkew !== 0 && styles.innerUnskew]}>
         <View style={styles.topRow}>
           <View style={styles.badges}>
             <View style={[styles.badge, { backgroundColor: palette.primary }]}>
@@ -72,21 +103,21 @@ export function QuestCard({ quest, index }: QuestCardProps) {
               </Text>
             </View>
             {quest.source === 'user' && quest.isDailyFocus && (
-              <View style={[styles.badge, { backgroundColor: palette.gold }]}>
+              <View style={[styles.badge, { backgroundColor: goldAccent }]}>
                 <Text style={[styles.badgeText, { color: palette.void }]} numberOfLines={1}>
-                  FOCUS QUEST
+                  {ui.focusQuestLabel}
                 </Text>
               </View>
             )}
             {quest.source === 'user' && (
               <View style={[styles.badge, { backgroundColor: palette.accent }]}>
                 <Text style={[styles.badgeText, { color: palette.bone }]} numberOfLines={1}>
-                  YOUR QUEST
+                  {ui.yourQuestLabel}
                 </Text>
               </View>
             )}
           </View>
-          <Text style={[styles.xp, { color: palette.gold }]} numberOfLines={1}>
+          <Text style={[styles.xp, { color: goldAccent }]} numberOfLines={1}>
             +{quest.xpReward} XP
           </Text>
         </View>
@@ -101,9 +132,9 @@ export function QuestCard({ quest, index }: QuestCardProps) {
         </Text>
         <View style={styles.realRow}>
           <Text style={[styles.realLabel, { color: palette.fog }]}>
-            {quest.source === 'user' ? 'REAL TASK' : 'BOUNTY'}
+            {quest.source === 'user' ? ui.realTaskLabel : ui.templateQuestLabel}
           </Text>
-          <Text style={[styles.realTask, { color: palette.gold }]} numberOfLines={2}>
+          <Text style={[styles.realTask, { color: goldAccent }]} numberOfLines={2}>
             {quest.originalTitle}
           </Text>
         </View>
@@ -119,10 +150,10 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     marginBottom: 12,
     padding: 16,
-    transform: [{ skewX: '-2deg' }],
   },
-  accent: { position: 'absolute', left: 0, top: 0, bottom: 0, width: 4 },
-  inner: { paddingLeft: 8, gap: 8, transform: [{ skewX: '2deg' }], minWidth: 0 },
+  accent: { position: 'absolute', left: 0, top: 0, bottom: 0 },
+  inner: { paddingLeft: 8, gap: 8, minWidth: 0 },
+  innerUnskew: { transform: [{ skewX: '2deg' }] },
   topRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 },
   badges: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, flex: 1, minWidth: 0 },
   badge: { paddingHorizontal: 8, paddingVertical: 3, transform: [{ skewX: '-8deg' }], maxWidth: '100%' },

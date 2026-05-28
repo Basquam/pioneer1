@@ -3,7 +3,16 @@ import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { GameFonts } from '@/constants/typography';
+import {
+  getHolographicShadow,
+  getPanelAccentColor,
+  getPanelBorderColor,
+  skewTransform,
+} from '@/constants/universe-visual-theme';
 import { useGame } from '@/hooks/use-game';
+import { useUniverseVisualTheme } from '@/hooks/use-universe-visual-theme';
+import { useUniverseUiCopy } from '@/lib/universe-ui-copy';
+import { HolographicPanelChrome } from '@/components/rpg/visual-theme-overlay';
 import type { ChapterStatus } from '@/lib/chapter-progress';
 import type { Chapter } from '@/types/narrative';
 
@@ -17,8 +26,13 @@ type ChapterCardProps = {
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 export function ChapterCard({ chapter, status, index, onPress }: ChapterCardProps) {
+  const ui = useUniverseUiCopy();
   const { activeUniverse } = useGame();
+  const visualTheme = useUniverseVisualTheme();
   const { palette } = activeUniverse;
+  const panelBorder = getPanelBorderColor(palette, visualTheme);
+  const accentColor = getPanelAccentColor(palette, visualTheme);
+  const goldAccent = getPanelAccentColor(palette, visualTheme, 'gold');
   const isActive = status === 'active';
   const isCompleted = status === 'completed';
   const isLocked = status === 'locked';
@@ -37,18 +51,25 @@ export function ChapterCard({ chapter, status, index, onPress }: ChapterCardProp
       style={[
         styles.card,
         {
-          backgroundColor: isActive ? `${palette.primary}22` : palette.panel,
-          borderColor: isActive ? palette.gold : isCompleted ? palette.accent : palette.panelBorder,
+          backgroundColor: isActive ? `${accentColor}22` : palette.panel,
+          borderColor: isActive ? goldAccent : isCompleted ? palette.accent : panelBorder,
+          borderWidth: visualTheme.panelBorderWidth,
           opacity: isLocked ? 0.45 : 1,
+          transform: skewTransform(visualTheme.cardSkew),
         },
+        getHolographicShadow(palette, visualTheme),
       ]}>
+      {visualTheme.panelTopHighlight && (
+        <HolographicPanelChrome accentColor={palette.accent} secondaryColor={palette.primary} />
+      )}
       <View
         style={[
           styles.index,
           {
-            backgroundColor: isLocked ? palette.ink : isCompleted ? palette.accent : palette.primary,
-            borderColor: isActive ? palette.gold : 'transparent',
+            backgroundColor: isLocked ? palette.ink : isCompleted ? palette.accent : accentColor,
+            borderColor: isActive ? goldAccent : 'transparent',
             borderWidth: isActive ? 1 : 0,
+            borderRadius: visualTheme.nodeBorderRadius,
           },
         ]}>
         <Text style={[styles.indexText, { color: palette.bone }]}>
@@ -62,18 +83,18 @@ export function ChapterCard({ chapter, status, index, onPress }: ChapterCardProp
             {chapter.title}
           </Text>
           {isCompleted && (
-            <View style={[styles.stamp, { borderColor: palette.gold }]}>
-              <Text style={[styles.stampText, { color: palette.gold }]}>CLEARED</Text>
+            <View style={[styles.stamp, { borderColor: goldAccent }]}>
+              <Text style={[styles.stampText, { color: goldAccent }]}>{visualTheme.completedStamp}</Text>
             </View>
           )}
           {isActive && (
             <View style={[styles.stamp, { borderColor: palette.accent, backgroundColor: `${palette.accent}22` }]}>
-              <Text style={[styles.stampText, { color: palette.accent }]}>ACTIVE</Text>
+              <Text style={[styles.stampText, { color: palette.accent }]}>{visualTheme.activeStamp}</Text>
             </View>
           )}
         </View>
         <Text style={[styles.summary, { color: palette.fog }]} numberOfLines={isLocked ? 2 : 3}>
-          {isLocked ? 'Complete previous chapters to unlock this trail.' : chapter.summary}
+          {isLocked ? ui.lockedSectorCardMessage : chapter.summary}
         </Text>
         {isActive && (
           <Text style={[styles.purpose, { color: palette.accent }]}>{chapter.dramaticPurpose}</Text>
@@ -90,14 +111,13 @@ const styles = StyleSheet.create({
     padding: 14,
     marginBottom: 12,
     gap: 12,
-    transform: [{ skewX: '-1deg' }],
+    overflow: 'hidden',
   },
   index: {
     width: 36,
     height: 36,
     alignItems: 'center',
     justifyContent: 'center',
-    transform: [{ skewX: '-6deg' }],
   },
   indexText: { fontFamily: GameFonts.ui, fontSize: 16 },
   body: { flex: 1, gap: 6, minWidth: 0 },

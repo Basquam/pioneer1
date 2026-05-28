@@ -16,6 +16,7 @@ import { GlowButton } from '@/components/rpg/glow-button';
 import { GameLayout } from '@/constants/layout';
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
+import { useUniverseUiCopy } from '@/lib/universe-ui-copy';
 import { useModalBottomInset } from '@/hooks/use-scroll-insets';
 import {
   countTodayUserQuests,
@@ -32,6 +33,7 @@ type AddQuestSheetProps = {
 };
 
 export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
+  const ui = useUniverseUiCopy();
   const { activeUniverse, currentChapter, playerProgress, addUserQuest } = useGame();
   const { palette } = activeUniverse;
   const [title, setTitle] = useState('');
@@ -92,17 +94,15 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
             keyboardShouldPersistTaps="handled"
             contentContainerStyle={[styles.sheetScroll, { paddingBottom: modalBottomInset }]}>
             <View style={styles.header}>
-              <Text style={[styles.eyebrow, { color: palette.gold }]}>NEW QUEST</Text>
+              <Text style={[styles.eyebrow, { color: palette.gold }]}>{ui.addQuestSheetEyebrow}</Text>
               <Pressable onPress={handleClose} hitSlop={12}>
                 <Text style={[styles.close, { color: palette.fog }]}>✕</Text>
               </Pressable>
             </View>
 
-            <Text style={[styles.title, { color: palette.bone }]}>Add Quest</Text>
+            <Text style={[styles.title, { color: palette.bone }]}>{ui.addQuestSheetTitle}</Text>
             <Text style={[styles.sub, { color: palette.fog }]} numberOfLines={2}>
-              {currentChapter
-                ? `Turn a real task into a quest for ${currentChapter.title}.`
-                : 'Turn a real task into a frontier quest.'}
+              {ui.addQuestSubtitle(currentChapter?.title)}
             </Text>
 
             <View style={[styles.focusRow, { borderColor: palette.panelBorder }]}>
@@ -111,8 +111,8 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
               </Text>
               <Text style={[styles.focusHint, { color: palette.fog }]}>
                 {todayFocusCount < focusLimit
-                  ? 'First three quests today become Focus Quests on the board.'
-                  : 'You can still add more — they just won’t be marked as Focus Quests.'}
+                  ? ui.addQuestFocusHintUnder
+                  : ui.addQuestFocusHintOver}
               </Text>
             </View>
 
@@ -124,7 +124,7 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
               </View>
             )}
 
-            <Text style={[styles.label, { color: palette.gold }]}>REAL TASK</Text>
+            <Text style={[styles.label, { color: palette.gold }]}>{ui.realTaskLabel}</Text>
             <TextInput
               value={title}
               onChangeText={setTitle}
@@ -137,7 +137,7 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
               autoFocus
             />
 
-            <Text style={[styles.label, { color: palette.gold }]}>QUEST TYPE</Text>
+            <Text style={[styles.label, { color: palette.gold }]}>{ui.addQuestTypeLabel}</Text>
             <Text style={[styles.categoryHelper, { color: palette.fog }]}>
               Pick a type. We&apos;ll weave it into the saga.
             </Text>
@@ -182,8 +182,8 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
             <Text style={[styles.categoryHint, { color: palette.fog }]}>{selectedMeta.description}</Text>
 
             <GlowButton
-              label={confirmOverLimit ? 'CONTINUE ANYWAY' : 'CREATE QUEST'}
-              hint={confirmOverLimit ? 'Add beyond today\'s Focus Quests' : 'Add to the Quest Board'}
+              label={confirmOverLimit ? 'CONTINUE ANYWAY' : ui.addQuestCreateLabel}
+              hint={confirmOverLimit ? ui.addQuestConfirmOverLimitHint : ui.addQuestCreateHint}
               onPress={handleCreate}
             />
             {confirmOverLimit && (

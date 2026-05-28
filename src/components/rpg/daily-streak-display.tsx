@@ -11,7 +11,7 @@ type DailyStreakDisplayProps = {
 export function DailyStreakDisplay({ variant = 'briefing' }: DailyStreakDisplayProps) {
   const { activeUniverse, activeSaga, playerProgress } = useGame();
   const { palette } = activeUniverse;
-  const flavor = getStreakFlavor(activeSaga.id);
+  const flavor = getStreakFlavor(activeSaga.id, activeUniverse.id);
   const streak = playerProgress.dailyStreak;
   const isProfile = variant === 'profile';
 

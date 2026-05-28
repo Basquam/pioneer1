@@ -7,12 +7,26 @@ import { AddQuestTrigger } from '@/components/rpg/add-quest-trigger';
 import { DailyStreakDisplay } from '@/components/rpg/daily-streak-display';
 import { TodayFocusDisplay } from '@/components/rpg/today-focus-display';
 import { GlowButton } from '@/components/rpg/glow-button';
+import { HolographicPanelChrome } from '@/components/rpg/visual-theme-overlay';
 import { GameFonts } from '@/constants/typography';
+import {
+  getHolographicShadow,
+  getPanelAccentColor,
+  getPanelBorderColor,
+  skewTransform,
+} from '@/constants/universe-visual-theme';
 import { useGame } from '@/hooks/use-game';
+import { useUniverseVisualTheme } from '@/hooks/use-universe-visual-theme';
+import { useUniverseUiCopy } from '@/lib/universe-ui-copy';
 
 export function DailyOperationsBriefing() {
+  const ui = useUniverseUiCopy();
   const { activeUniverse, activeSaga, currentChapter, player, quests, villainInfluence } = useGame();
+  const visualTheme = useUniverseVisualTheme();
   const { palette } = activeUniverse;
+  const panelBorder = getPanelBorderColor(palette, visualTheme);
+  const accentColor = getPanelAccentColor(palette, visualTheme);
+  const goldAccent = getPanelAccentColor(palette, visualTheme, 'gold');
 
   const { remainingBounties, userQuestCount } = useMemo(() => {
     const templates = quests.filter((quest) => quest.source === 'template');
@@ -27,11 +41,23 @@ export function DailyOperationsBriefing() {
   return (
     <Animated.View
       entering={FadeInDown.duration(500).delay(120)}
-      style={[styles.panel, { backgroundColor: palette.panel, borderColor: palette.gold }]}>
-      <View style={[styles.accent, { backgroundColor: palette.primary }]} />
+      style={[
+        styles.panel,
+        {
+          backgroundColor: palette.panel,
+          borderColor: visualTheme.panelUsesHolographic ? palette.accent : goldAccent,
+          borderWidth: visualTheme.panelBorderWidth,
+          transform: skewTransform(visualTheme.cardSkew),
+        },
+        getHolographicShadow(palette, visualTheme),
+      ]}>
+      {visualTheme.panelTopHighlight && (
+        <HolographicPanelChrome accentColor={palette.accent} secondaryColor={palette.primary} />
+      )}
+      <View style={[styles.accent, { backgroundColor: accentColor, width: visualTheme.accentLineWidth }]} />
 
-      <View style={styles.inner}>
-        <Text style={[styles.eyebrow, { color: palette.gold }]}>DAILY OPERATIONS</Text>
+      <View style={[styles.inner, visualTheme.cardSkew !== 0 && styles.innerUnskew]}>
+        <Text style={[styles.eyebrow, { color: goldAccent }]}>DAILY OPERATIONS</Text>
         <Text style={[styles.title, { color: palette.bone }]}>MISSION BRIEFING</Text>
         <Text style={[styles.subtitle, { color: palette.fog }]}>
           {activeUniverse.locationName} · {activeSaga.title}
@@ -41,31 +67,32 @@ export function DailyOperationsBriefing() {
 
         <TodayFocusDisplay variant="briefing" />
 
-        <View style={[styles.chapterBlock, { borderColor: palette.panelBorder }]}>
-          <Text style={[styles.chapterLabel, { color: palette.accent }]}>TODAY&apos;S CHAPTER</Text>
+        <View style={[styles.chapterBlock, { borderColor: panelBorder }]}>
+          <Text style={[styles.chapterLabel, { color: palette.accent }]}>{ui.todaySectorLabel}</Text>
           <Text style={[styles.chapterTitle, { color: palette.bone }]}>
             {currentChapter
-              ? `Ch. ${currentChapter.order} — ${currentChapter.title}`
-              : 'No active chapter'}
+              ? ui.todaySectorLine(currentChapter.order, currentChapter.title)
+              : ui.noActiveChapterBriefing}
           </Text>
         </View>
 
         <View style={styles.statsGrid}>
           <StatCell
-            label="BOUNTIES LEFT"
+            label={ui.operationsLeftLabel}
             value={String(remainingBounties)}
             palette={palette}
+            goldAccent={goldAccent}
           />
-          <StatCell label="QUESTS LEFT" value={String(userQuestCount)} palette={palette} />
-          <StatCell label="LEVEL" value={String(player.level)} palette={palette} />
-          <StatCell label="XP" value={String(player.totalXp)} palette={palette} />
-          <StatCell label="REPUTATION" value={String(player.reputation)} palette={palette} />
-          <StatCell label="VILLAIN" value={`${villainInfluence}%`} palette={palette} danger />
+          <StatCell label={ui.personalOpsLeftLabel} value={String(userQuestCount)} palette={palette} goldAccent={goldAccent} />
+          <StatCell label="LEVEL" value={String(player.level)} palette={palette} goldAccent={goldAccent} />
+          <StatCell label="XP" value={String(player.totalXp)} palette={palette} goldAccent={goldAccent} />
+          <StatCell label={ui.reputationLabel} value={String(player.reputation)} palette={palette} goldAccent={goldAccent} />
+          <StatCell label={ui.villainStatLabel} value={`${villainInfluence}%`} palette={palette} goldAccent={goldAccent} danger />
         </View>
 
         <GlowButton
-          label="GO TO QUEST BOARD"
-          hint="VIEW BOUNTIES & QUESTS"
+          label={ui.goToQuestBoardLabel}
+          hint={ui.goToQuestBoardHint}
           onPress={() => router.push('/(game)/quests' as Href)}
         />
 
@@ -79,17 +106,19 @@ function StatCell({
   label,
   value,
   palette,
+  goldAccent,
   danger,
 }: {
   label: string;
   value: string;
-  palette: { gold: string; fog: string; bone: string; villainGlow: string };
+  palette: { fog: string; bone: string; villainGlow: string };
+  goldAccent: string;
   danger?: boolean;
 }) {
   return (
     <View style={styles.statCell}>
       <Text style={[styles.statLabel, { color: palette.fog }]}>{label}</Text>
-      <Text style={[styles.statValue, { color: danger ? palette.villainGlow : palette.gold }]}>
+      <Text style={[styles.statValue, { color: danger ? palette.villainGlow : goldAccent }]}>
         {value}
       </Text>
     </View>
@@ -100,10 +129,10 @@ const styles = StyleSheet.create({
   panel: {
     borderWidth: 2,
     overflow: 'hidden',
-    transform: [{ skewX: '-2deg' }],
   },
-  accent: { position: 'absolute', left: 0, top: 0, bottom: 0, width: 5 },
-  inner: { padding: 18, paddingLeft: 22, gap: 12, transform: [{ skewX: '2deg' }] },
+  accent: { position: 'absolute', left: 0, top: 0, bottom: 0 },
+  inner: { padding: 18, paddingLeft: 22, gap: 12 },
+  innerUnskew: { transform: [{ skewX: '2deg' }] },
   eyebrow: { fontFamily: GameFonts.ui, fontSize: 10, letterSpacing: 3 },
   title: { fontFamily: GameFonts.display, fontSize: 28, letterSpacing: 2, lineHeight: 34 },
   subtitle: { fontFamily: GameFonts.uiSemi, fontSize: 11, letterSpacing: 1 },

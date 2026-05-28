@@ -1,6 +1,7 @@
 import * as Haptics from 'expo-haptics';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { universeHasAmbientAudio } from '@/constants/audio';
 import { GameLayout } from '@/constants/layout';
 import { GameFonts } from '@/constants/typography';
 import { useAmbientAudio } from '@/context/ambient-audio-context';
@@ -16,6 +17,15 @@ export function AmbientAudioToggle() {
     setAmbientEnabled(!ambientEnabled);
   };
 
+  const ambientHint =
+    activeUniverse.id === 'neuronet'
+      ? 'Neon rain, synth hum, electric buzz, and distant city drone across the Spire.'
+      : 'Distant wind, saloon murmur, and creaking wood across Dustfall.';
+
+  if (!universeHasAmbientAudio(activeUniverse.id)) {
+    return null;
+  }
+
   return (
     <Pressable
       onPress={handleToggle}
@@ -29,9 +39,7 @@ export function AmbientAudioToggle() {
       <View style={styles.row}>
         <View style={styles.copy}>
           <Text style={[styles.label, { color: palette.gold }]}>AMBIENT AUDIO</Text>
-          <Text style={[styles.hint, { color: palette.fog }]}>
-            Distant wind, saloon murmur, and creaking wood across Dustfall.
-          </Text>
+          <Text style={[styles.hint, { color: palette.fog }]}>{ambientHint}</Text>
         </View>
         <View
           style={[

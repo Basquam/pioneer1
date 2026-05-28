@@ -2,6 +2,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { GameFonts } from '@/constants/typography';
+import { useUniverseUiCopy } from '@/lib/universe-ui-copy';
 import type { Saga, UniversePalette } from '@/types/narrative';
 
 type SagaCardProps = {
@@ -23,6 +24,7 @@ export function SagaCard({
   index,
   onPress,
 }: SagaCardProps) {
+  const ui = useUniverseUiCopy();
   const playerRole = saga.rankTitles[0];
 
   return (
@@ -73,7 +75,7 @@ export function SagaCard({
 
         {saga.villainName ? (
           <>
-            <Text style={[styles.label, { color: palette.accent }]}>VILLAIN</Text>
+            <Text style={[styles.label, { color: palette.accent }]}>{ui.villainLabel}</Text>
             <Text style={[styles.villain, { color: palette.villainGlow }]}>
               {saga.villainName} · {saga.villainTitle}
             </Text>

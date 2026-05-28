@@ -45,7 +45,11 @@ export function formatWeekRange(startKey: string, endKey: string): string {
   return `${start} – ${end}`;
 }
 
-export function getWeeklyRecapFlavor(selectedSagaId: string): string {
+export function getWeeklyRecapFlavor(selectedSagaId: string, universeId = 'dust-and-iron'): string {
+  if (universeId === 'neuronet') {
+    return 'This week, the Neon Spire held because you kept the signal alive.';
+  }
+
   if (selectedSagaId === IRON_RAILWAY_SAGA_ID) {
     return 'This week, the line kept moving because you kept moving.';
   }
@@ -111,6 +115,7 @@ export function computeWeeklyRecap(
   progress: PlayerProgress,
   selectedSagaId: string,
   date = new Date(),
+  universeId = 'dust-and-iron',
 ): WeeklyRecapStats {
   const weekKeys = getCurrentWeekDateKeys(date);
   const activity = progress.activityByDate ?? {};
@@ -136,6 +141,6 @@ export function computeWeeklyRecap(
     reputationEarned,
     chaptersCompleted,
     dailyStreak: progress.dailyStreak,
-    flavorLine: getWeeklyRecapFlavor(selectedSagaId),
+    flavorLine: getWeeklyRecapFlavor(selectedSagaId, universeId),
   };
 }

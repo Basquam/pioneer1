@@ -17,11 +17,13 @@ import { SectionHeader } from '@/components/rpg/section-header';
 import { SectionLabel } from '@/components/rpg/section-label';
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
+import { useUniverseUiCopy } from '@/lib/universe-ui-copy';
 import { getCompletedChapterCountForSaga } from '@/lib/chapter-progress';
 import { getUnlockedRewardEntries, isSagaUnlocked, REWARD_TYPE_LABELS } from '@/lib/reward-unlocks';
 import { getSagaActiveChapter } from '@/lib/saga-progress';
 
 export function ProfileScreen() {
+  const ui = useUniverseUiCopy();
   const {
     activeUniverse,
     activeSaga,
@@ -49,7 +51,7 @@ export function ProfileScreen() {
     <ScreenShell edges={['top']} padded={false}>
       <ScreenScroll>
         <Animated.View entering={FadeInDown.duration(500)}>
-          <SectionHeader eyebrow="OPERATIVE FILE" title="PROFILE" />
+          <SectionHeader eyebrow={ui.operativeFileEyebrow} title="PROFILE" />
         </Animated.View>
 
         <View style={[styles.card, { backgroundColor: activeUniverse.palette.panel, borderColor: activeUniverse.palette.gold }]}>
@@ -82,7 +84,7 @@ export function ProfileScreen() {
           <StatBox label="FOCUS" value={String(player.stats.focus)} colors={activeUniverse.palette} />
           <StatBox label="LEGEND" value={`${player.stats.legend}%`} colors={activeUniverse.palette} />
           <StatBox label="MISSIONS" value={`${completedQuestCount}/${quests.length}`} colors={activeUniverse.palette} />
-          <StatBox label="REPUTATION" value={`${player.reputation}`} colors={activeUniverse.palette} />
+          <StatBox label={ui.reputationLabel} value={`${player.reputation}`} colors={activeUniverse.palette} />
         </View>
 
         <SectionLabel>AUDIO</SectionLabel>
@@ -93,8 +95,8 @@ export function ProfileScreen() {
         {unlockedRewards.length === 0 ? (
           <CinematicEmptyState
             title="No rewards unlocked yet."
-            message="Complete chapters to earn badges, titles, and story unlocks."
-            primaryLabel="VIEW STORY TRAIL"
+            message={ui.unlockRewardsEmptyMessage}
+            primaryLabel={ui.viewStoryTrailLabel}
             onPrimaryPress={() => router.push('/(game)/story' as Href)}
           />
         ) : (
@@ -147,8 +149,7 @@ export function ProfileScreen() {
                 )}
               </View>
               <Text style={[styles.sagaProgressMeta, { color: activeUniverse.palette.fog }]} numberOfLines={2}>
-                {completedChapters}/{totalChapters} chapters cleared
-                {activeChapter ? ` · riding ${activeChapter.title}` : ''}
+                {ui.sagaProgressMeta(completedChapters, totalChapters, activeChapter?.title)}
               </Text>
             </View>
           );
