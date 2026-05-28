@@ -1,3 +1,8 @@
+import { JAZZ_CLUB_SECRETS_CHAPTERS } from '@/data/narrative/jazz-club-secrets-chapters';
+import {
+  JAZZ_CLUB_SECRETS_CHARACTERS,
+  VINCENT_NOIR_ID,
+} from '@/data/narrative/jazz-club-secrets-characters';
 import { CAMPUS_MURDERS_CHAPTERS } from '@/data/narrative/campus-murders-chapters';
 import {
   CAMPUS_MURDERS_CHARACTERS,
@@ -86,15 +91,15 @@ const jazzClubSecretsSaga: Saga = {
   allyName: 'Rosa Bell',
   villainName: 'Vincent Noir',
   villainTitle: 'Club Proprietor',
-  villainCharacterId: '',
+  villainCharacterId: VINCENT_NOIR_ID,
   status: 'locked',
   requiredUnlockId: 'jazz-club-secrets-story-unlock',
   unlockRequirementLabel: 'Complete Campus Murders',
   summary:
     'Patrol the after-hours city as a night detective and uncover secrets buried beneath smoke, saxophone, and silence.',
   rankTitles: ['Night Detective', 'After-Hours Sleuth', 'City Confessor'],
-  characters: [],
-  chapters: [],
+  characters: JAZZ_CLUB_SECRETS_CHARACTERS,
+  chapters: JAZZ_CLUB_SECRETS_CHAPTERS,
 };
 
 export const NEON_ASHES_UNIVERSE: Universe = {
