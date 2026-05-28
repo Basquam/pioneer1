@@ -8,6 +8,11 @@ import {
   EXECUTIVE_HELIX_ID,
   ZENITH_CORPORATION_CHARACTERS,
 } from '@/data/narrative/zenith-corporation-characters';
+import { NEON_DELIVERY_CHAPTERS } from '@/data/narrative/neon-delivery-chapters';
+import {
+  NEON_DELIVERY_CHARACTERS,
+  RAZOR_JACKAL_ID,
+} from '@/data/narrative/neon-delivery-characters';
 import type { Saga, Universe, UniverseFaction, UniverseTerminology } from '@/types/narrative';
 
 export const NEURONET_UNIVERSE_UNLOCK_ID = 'neuronet-universe-unlock';
@@ -85,16 +90,16 @@ const neonDeliverySaga: Saga = {
   title: 'Neon Delivery',
   allyName: 'Juno Vale',
   villainName: 'Razor Jackal',
-  villainTitle: 'Street Syndicate Boss',
-  villainCharacterId: '',
+  villainTitle: 'Courier Gang Leader',
+  villainCharacterId: RAZOR_JACKAL_ID,
   status: 'locked',
   requiredUnlockId: 'neon-delivery-story-unlock',
   unlockRequirementLabel: 'Complete Zenith Corporation',
   summary:
-    'Survive neon-soaked courier runs through district nodes while conspiracies chase every delivery manifest.',
+    'Survive high-risk deliveries across the neon city while discovering that every package carries someone’s secret.',
   rankTitles: ['Courier Rider', 'Route Phantom', 'Neon Legend'],
-  characters: [],
-  chapters: [],
+  characters: NEON_DELIVERY_CHARACTERS,
+  chapters: NEON_DELIVERY_CHAPTERS,
 };
 
 export const NEURONET_UNIVERSE: Universe = {
