@@ -50,7 +50,7 @@ export const JAZZ_CLUB_SECRETS_CHARACTERS: NarrativeCharacter[] = [
         'Club watchers love delay. Shake it off and re-enter the case.',
         'Everyone tells the truth differently when detectives go quiet. Get back on the line.',
         'I’m not angry. I’m reviewing the setlist. There’s a difference in Grayhaven.',
-        'Re-sync and work. The Case Board is counting on you whether the city knows it or not.',
+        'Re-sync and work. The Case Board is counting on you whether the club knows it or not.',
       ],
     },
   },

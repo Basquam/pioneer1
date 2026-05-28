@@ -2,11 +2,20 @@ import { BRIGGS_ID } from '@/data/narrative/vulture-gang-characters';
 import { SILAS_VANE_ID } from '@/data/narrative/iron-railway-characters';
 import type { Chapter, QuestTemplate } from '@/types/narrative';
 
-type IronCategory = 'cleaning' | 'work' | 'study' | 'errand' | 'health';
+const categories = [
+  'cleaning',
+  'fitness',
+  'study',
+  'work',
+  'health',
+  'social',
+  'creative',
+  'errand',
+] as const;
 
 function template(
   chapterId: string,
-  category: IronCategory,
+  category: (typeof categories)[number],
   title: string,
   objective: string,
   hook: string,
@@ -61,10 +70,13 @@ export const IRON_RAILWAY_CHAPTERS: Chapter[] = [
       'Station Master Briggs: Vane’s men are smiling. Fix the backlog before the next bell — hunger downline doesn’t negotiate.',
     questTemplates: [
       template('first-shipment', 'cleaning', 'Sweep the Loading Dock', 'Clean kitchen and counters', 'Spilled grain hides sabotage under the planks.', 115, 8, BRIGGS_ID),
+      template('first-shipment', 'fitness', 'Platform Strength Drill', 'Do a quick bodyweight routine', 'A sluggish crew drops cargo before the bell.', 120, 10, BRIGGS_ID),
       template('first-shipment', 'work', 'Sign the Manifest', 'Complete one deep work block', 'One unsigned page stops a whole train.', 120, 9, BRIGGS_ID),
       template('first-shipment', 'study', 'Read the Route Ledger', 'Study session with focused notes', 'Vane’s fees hide in the footnotes.', 125, 9, BRIGGS_ID),
-      template('first-shipment', 'errand', 'Fetch the Seal Stamp', 'Complete one pending errand', 'No stamp, no shipment — simple as steel.', 110, 8, BRIGGS_ID),
       template('first-shipment', 'health', 'Platform Break', 'Hydrate, meds, and a short recovery break', 'Exhausted crews drop cargo.', 100, 7, BRIGGS_ID),
+      template('first-shipment', 'social', 'Brief the Yard Crew', 'Send one meaningful check-in message', 'Fear spreads when nobody confirms the run.', 105, 7, BRIGGS_ID),
+      template('first-shipment', 'creative', 'Sketch the Route Map', 'Create a short design or writing piece', 'Your map keeps the next crew from guessing.', 115, 8, BRIGGS_ID),
+      template('first-shipment', 'errand', 'Fetch the Seal Stamp', 'Complete one pending errand', 'No stamp, no shipment — simple as steel.', 110, 8, BRIGGS_ID),
     ],
     chapterRewards: [{ id: 'first-shipment-badge', type: 'badge', name: 'First Shipment Cleared' }],
   },
@@ -102,10 +114,13 @@ export const IRON_RAILWAY_CHAPTERS: Chapter[] = [
       'Station Master Briggs: Hold Six is still locked. People downline are going hungry — and Vane’s lawyers are already drafting the blame.',
     questTemplates: [
       template('delayed-cargo', 'cleaning', 'Clear Hold Six', 'Deep clean one neglected area', 'Clutter slows every handoff between cars.', 120, 9, BRIGGS_ID),
+      template('delayed-cargo', 'fitness', 'Outrun the Inspection Clock', 'Cardio sprint or brisk walk session', 'Delays win when crews move slow.', 130, 10, BRIGGS_ID),
       template('delayed-cargo', 'work', 'Override the Delay Order', 'Complete one important work item', 'One cleared form unlocks a dozen crates.', 125, 10, BRIGGS_ID),
       template('delayed-cargo', 'study', 'Decode Inspection Codes', 'Focused study block', 'Their codes repeat — learn the pattern, beat the stall.', 130, 10, BRIGGS_ID),
-      template('delayed-cargo', 'errand', 'Run the Release Slip', 'Finish one practical chore outside', 'The slip is in town. The train is here. Close the gap.', 115, 8, BRIGGS_ID),
       template('delayed-cargo', 'health', 'Night Shift Recovery', 'Breathing routine and water reset', 'Tired crews sign bad manifests.', 105, 8, BRIGGS_ID),
+      template('delayed-cargo', 'social', 'Warn Downline Stations', 'Reach out to someone who needs support', 'A telegram of hope beats Vane’s stall tactics.', 110, 8, BRIGGS_ID),
+      template('delayed-cargo', 'creative', 'Hold Six Manifest Anthem', 'Create a short audio/text/art piece', 'Morale moves cargo when lawyers stall.', 115, 8, BRIGGS_ID),
+      template('delayed-cargo', 'errand', 'Run the Release Slip', 'Finish one practical chore outside', 'The slip is in town. The train is here. Close the gap.', 115, 8, BRIGGS_ID),
     ],
     chapterRewards: [{ id: 'delayed-cargo-title', type: 'title', name: 'Cargo Clerk' }],
   },
@@ -143,10 +158,13 @@ export const IRON_RAILWAY_CHAPTERS: Chapter[] = [
       'Station Master Briggs: The pass is still closed. Downline stations are rationing — and Vane’s men are handing out leases.',
     questTemplates: [
       template('broken-tracks', 'cleaning', 'Clear the Ballast Pit', 'Declutter one messy zone', 'Loose stone hides snapped spikes.', 130, 10, BRIGGS_ID),
+      template('broken-tracks', 'fitness', 'Track Repair Drill', 'Strength routine', 'Steel bends for crews that show up strong.', 140, 11, BRIGGS_ID),
       template('broken-tracks', 'work', 'Repair Schedule Dispatch', 'Finish one admin or work item', 'Crews move on orders, not hope.', 130, 10, BRIGGS_ID),
       template('broken-tracks', 'study', 'Survey the Damage Map', 'Study or planning session', 'Measure twice, repair once, run forever.', 135, 10, BRIGGS_ID),
-      template('broken-tracks', 'errand', 'Fetch Rail Spikes', 'Complete a practical pickup errand', 'The forge is ten miles. The train is today.', 120, 9, BRIGGS_ID),
       template('broken-tracks', 'health', 'Crew Meal Rotation', 'Meal + rest hygiene block', 'Hungry track hands miss a cracked tie.', 110, 8, BRIGGS_ID),
+      template('broken-tracks', 'social', 'Coordinate the Repair Crew', 'Coordinate one shared errand', 'No tie gets replaced alone on this pass.', 115, 9, BRIGGS_ID),
+      template('broken-tracks', 'creative', 'Paint the Line Crest', 'Create/update something expressive', 'Symbols remind crews what the pass protects.', 120, 9, BRIGGS_ID),
+      template('broken-tracks', 'errand', 'Fetch Rail Spikes', 'Complete a practical pickup errand', 'The forge is ten miles. The train is today.', 120, 9, BRIGGS_ID),
     ],
     chapterRewards: [{ id: 'broken-tracks-cosmetic', type: 'cosmetic', name: 'Brass Switch Key' }],
   },
@@ -184,10 +202,13 @@ export const IRON_RAILWAY_CHAPTERS: Chapter[] = [
       'Station Master Briggs: We lost two contracts today. Win tomorrow or the line goes dark — and Dustfall eats last.',
     questTemplates: [
       template('freight-war', 'cleaning', 'Polish the Junction Switches', 'Night reset of your key area', 'Grime jams a switch — one jam loses a war.', 140, 11, BRIGGS_ID),
+      template('freight-war', 'fitness', 'Junction Patrol Sprint', 'Evening movement session', 'If your body quits, the contract goes to Vane.', 145, 12, BRIGGS_ID),
       template('freight-war', 'work', 'Counter-Offer Ledger', 'Finish one hard work deliverable', 'Numbers win freight wars as surely as gunfire.', 140, 11, BRIGGS_ID),
       template('freight-war', 'study', 'Analyze Vane Tariffs', 'Deep focus study block', 'Know his rates before he changes them again.', 145, 11, BRIGGS_ID),
-      template('freight-war', 'errand', 'Deliver the Loyalty Contracts', 'Complete a practical checklist errand', 'Ink on paper keeps carriers on our side.', 125, 10, BRIGGS_ID),
       template('freight-war', 'health', 'Switchyard Stamina', 'Sleep prep / mindfulness reset', 'Clear head, clean routing.', 120, 9, BRIGGS_ID),
+      template('freight-war', 'social', 'Rally Loyal Carriers', 'Support one teammate/friend', 'Courage travels contract to contract.', 120, 9, BRIGGS_ID),
+      template('freight-war', 'creative', 'Junction War Poster', 'Creative micro-session', 'In darkness, even small symbols hold the line.', 125, 9, BRIGGS_ID),
+      template('freight-war', 'errand', 'Deliver the Loyalty Contracts', 'Complete a practical checklist errand', 'Ink on paper keeps carriers on our side.', 125, 10, BRIGGS_ID),
     ],
     chapterRewards: [{ id: 'freight-war-badge', type: 'badge', name: 'Junction Defender' }],
   },
@@ -225,10 +246,13 @@ export const IRON_RAILWAY_CHAPTERS: Chapter[] = [
       'Station Master Briggs: We lost the terminal today. The war for the rails isn’t over — and the bill still comes due.',
     questTemplates: [
       template('golden-route', 'cleaning', 'Shine the Terminal Floor', 'Complete full cleaning sweep', 'The world watches this platform at noon.', 150, 12, BRIGGS_ID),
+      template('golden-route', 'fitness', 'Final Sprint Protocol', 'High-intensity movement session', 'Vane catches managers who slow at the finish.', 155, 12, BRIGGS_ID),
       template('golden-route', 'work', 'Final Network Audit', 'Complete one priority work item', 'One clean audit proves the line is ours.', 155, 12, BRIGGS_ID),
       template('golden-route', 'study', 'Golden Route Charter', 'Focused study and recap', 'Know the law that keeps the route public.', 150, 12, BRIGGS_ID),
-      template('golden-route', 'errand', 'Deliver the Route Seal', 'Finish critical practical errand', 'The seal reaches the terminal or Vane wins by default.', 140, 11, BRIGGS_ID),
       template('golden-route', 'health', 'Noon Stamina Protocol', 'Health routine and recovery', 'Steady hands sign freedom into law.', 130, 10, BRIGGS_ID),
+      template('golden-route', 'social', 'Rally the Line Workers', 'Reach out to your network', 'Collective resolve beats a lone deed.', 135, 11, BRIGGS_ID),
+      template('golden-route', 'creative', 'Route Freedom Seal', 'Creative micro-session', 'Art outlasts leases — if you finish it.', 140, 11, BRIGGS_ID),
+      template('golden-route', 'errand', 'Deliver the Route Seal', 'Finish critical practical errand', 'The seal reaches the terminal or Vane wins by default.', 140, 11, BRIGGS_ID),
     ],
     chapterRewards: [
       { id: 'golden-route-title', type: 'title', name: 'Golden Route Master' },

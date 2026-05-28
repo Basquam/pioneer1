@@ -49,6 +49,7 @@ export const DUST_AND_IRON_FACTIONS: UniverseFaction[] = [
 const vultureGangSaga: Saga = {
   id: 'vulture-gang',
   title: 'Vulture Gang',
+  allyName: 'Sheriff Ada Mercer',
   villainName: 'Elias Crow',
   villainTitle: 'Black Vulture Leader',
   villainCharacterId: ELIAS_CROW_ID,
@@ -63,12 +64,13 @@ const vultureGangSaga: Saga = {
 const ironRailwayCompanySaga: Saga = {
   id: 'iron-railway-company',
   title: 'Iron Railway Company',
+  allyName: 'Station Master Briggs',
   villainName: 'Silas Vane',
   villainTitle: 'Corrupt Railway Baron',
   villainCharacterId: SILAS_VANE_ID,
   status: 'locked',
   requiredUnlockId: 'high-noon-story-unlock',
-  unlockRequirementLabel: 'Complete High Noon',
+  unlockRequirementLabel: 'Complete Vulture Gang',
   summary:
     'Build and defend a railway lifeline knowing progress always costs something — steel, sweat, and the compromises no one puts on the manifest.',
   rankTitles: ['Junior Logistics Manager', 'Route Marshal', 'Network Warden'],
@@ -79,12 +81,13 @@ const ironRailwayCompanySaga: Saga = {
 const honestBusinessmanSaga: Saga = {
   id: 'honest-businessman',
   title: 'Honest Businessman',
+  allyName: 'Mara Bell',
   villainName: 'Victor Crane',
   villainTitle: 'Corrupt Merchant Prince',
   villainCharacterId: VICTOR_CRANE_ID,
   status: 'locked',
   requiredUnlockId: 'honest-businessman-story-unlock',
-  unlockRequirementLabel: 'Complete The Golden Route',
+  unlockRequirementLabel: 'Complete Iron Railway Company',
   summary:
     'Build a legitimate business in Dustfall while gangs, corrupt officials, and railway monopolies squeeze every honest coin — because honesty is expensive.',
   rankTitles: ['Frontier Shop Owner', 'Young Entrepreneur', 'Honest Businessman'],
