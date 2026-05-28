@@ -2,7 +2,12 @@ import {
   EXECUTIVE_HELIX_ID,
   MIRA_KADE_ID,
 } from '@/data/narrative/zenith-corporation-characters';
-import type { Chapter, QuestTemplate } from '@/types/narrative';
+import { FIRST_LOGIN_QUEST_VARIATIONS } from '@/data/narrative/quest-variations/first-login-variations';
+import {
+  enrichSagaChapters,
+  NEURONET_VARIATION_PROFILE,
+} from '@/lib/quest-variation-builders';
+import type { Chapter, QuestTemplate, QuestTemplateVariation } from '@/types/narrative';
 
 const categories = [
   'cleaning',
@@ -24,6 +29,7 @@ function template(
   xpReward: number,
   reputationImpact: number,
   reactionCharacterId: string,
+  variations?: QuestTemplateVariation[],
 ): QuestTemplate {
   return {
     id: `${chapterId}-${category}`,
@@ -34,10 +40,11 @@ function template(
     xpReward,
     reputationImpact,
     reactionCharacterId,
+    variations,
   };
 }
 
-export const ZENITH_CORPORATION_CHAPTERS: Chapter[] = [
+const ZENITH_CORPORATION_CHAPTERS_RAW: Chapter[] = [
   {
     id: 'first-login',
     order: 1,
@@ -71,14 +78,14 @@ export const ZENITH_CORPORATION_CHAPTERS: Chapter[] = [
     failureDialogue:
       'Mira Kade: Compliance sensors caught hesitation. Metrics rewrite memory when analysts stall — re-sync and run before the tower locks your sector.',
     questTemplates: [
-      template('first-login', 'cleaning', 'Purge Lobby Cache', 'Clean kitchen and counters', 'Cluttered nodes broadcast sloppy habits to every crawler.', 110, 8, MIRA_KADE_ID),
-      template('first-login', 'fitness', 'Neural Warm-Up Drill', 'Do a quick bodyweight routine', 'A sluggish analyst broadcasts location to every dashboard.', 120, 10, MIRA_KADE_ID),
-      template('first-login', 'study', 'Decode the Login Signature', 'Study session with focused notes', 'Helix writes in patterns. Knowledge is your encryption key.', 125, 9, MIRA_KADE_ID),
-      template('first-login', 'work', 'Fortify the Access Ledger', 'Complete one deep work block', 'The tower decides who gets routed and who gets archived.', 120, 9, MIRA_KADE_ID),
-      template('first-login', 'health', 'Recovery at the Safehouse', 'Hydrate, meds, and a short recovery break', 'A fragmented analyst is easy to mirror.', 100, 7, MIRA_KADE_ID),
-      template('first-login', 'social', 'Ping the Analyst Network', 'Send one meaningful check-in message', 'Fear spreads through open channels unless someone encrypts hope.', 105, 7, MIRA_KADE_ID),
-      template('first-login', 'creative', 'Draft an Access Manifest', 'Create a short design or writing piece', 'Your words shape the analysts who follow your route.', 115, 8, MIRA_KADE_ID),
-      template('first-login', 'errand', 'Midnight Supply Run', 'Complete one pending errand', 'Clearance chips and power cells vanish fast under review.', 110, 8, MIRA_KADE_ID),
+      template('first-login', 'cleaning', 'Purge Lobby Cache', 'Clean kitchen and counters', 'Cluttered nodes broadcast sloppy habits to every crawler.', 110, 8, MIRA_KADE_ID, FIRST_LOGIN_QUEST_VARIATIONS.cleaning),
+      template('first-login', 'fitness', 'Neural Warm-Up Drill', 'Do a quick bodyweight routine', 'A sluggish analyst broadcasts location to every dashboard.', 120, 10, MIRA_KADE_ID, FIRST_LOGIN_QUEST_VARIATIONS.fitness),
+      template('first-login', 'study', 'Decode the Login Signature', 'Study session with focused notes', 'Helix writes in patterns. Knowledge is your encryption key.', 125, 9, MIRA_KADE_ID, FIRST_LOGIN_QUEST_VARIATIONS.study),
+      template('first-login', 'work', 'Fortify the Access Ledger', 'Complete one deep work block', 'The tower decides who gets routed and who gets archived.', 120, 9, MIRA_KADE_ID, FIRST_LOGIN_QUEST_VARIATIONS.work),
+      template('first-login', 'health', 'Recovery at the Safehouse', 'Hydrate, meds, and a short recovery break', 'A fragmented analyst is easy to mirror.', 100, 7, MIRA_KADE_ID, FIRST_LOGIN_QUEST_VARIATIONS.health),
+      template('first-login', 'social', 'Ping the Analyst Network', 'Send one meaningful check-in message', 'Fear spreads through open channels unless someone encrypts hope.', 105, 7, MIRA_KADE_ID, FIRST_LOGIN_QUEST_VARIATIONS.social),
+      template('first-login', 'creative', 'Draft an Access Manifest', 'Create a short design or writing piece', 'Your words shape the analysts who follow your route.', 115, 8, MIRA_KADE_ID, FIRST_LOGIN_QUEST_VARIATIONS.creative),
+      template('first-login', 'errand', 'Midnight Supply Run', 'Complete one pending errand', 'Clearance chips and power cells vanish fast under review.', 110, 8, MIRA_KADE_ID, FIRST_LOGIN_QUEST_VARIATIONS.errand),
     ],
     chapterRewards: [{ id: 'first-login-badge', type: 'badge', name: 'First Login' }],
   },
@@ -266,3 +273,8 @@ export const ZENITH_CORPORATION_CHAPTERS: Chapter[] = [
     ],
   },
 ];
+
+export const ZENITH_CORPORATION_CHAPTERS = enrichSagaChapters(ZENITH_CORPORATION_CHAPTERS_RAW, {
+  ...NEURONET_VARIATION_PROFILE,
+  villainName: 'Executive Helix',
+});

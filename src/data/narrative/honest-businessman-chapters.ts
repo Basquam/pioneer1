@@ -2,7 +2,12 @@ import {
   MARA_BELL_ID,
   VICTOR_CRANE_ID,
 } from '@/data/narrative/honest-businessman-characters';
-import type { Chapter, QuestTemplate } from '@/types/narrative';
+import { OPEN_FOR_BUSINESS_QUEST_VARIATIONS } from '@/data/narrative/quest-variations/open-for-business-variations';
+import {
+  enrichSagaChapters,
+  WILD_WEST_VARIATION_PROFILE,
+} from '@/lib/quest-variation-builders';
+import type { Chapter, QuestTemplate, QuestTemplateVariation } from '@/types/narrative';
 
 const categories = [
   'cleaning',
@@ -24,6 +29,7 @@ function template(
   xpReward: number,
   reputationImpact: number,
   reactionCharacterId: string,
+  variations?: QuestTemplateVariation[],
 ): QuestTemplate {
   return {
     id: `${chapterId}-${category}`,
@@ -34,10 +40,11 @@ function template(
     xpReward,
     reputationImpact,
     reactionCharacterId,
+    variations,
   };
 }
 
-export const HONEST_BUSINESSMAN_CHAPTERS: Chapter[] = [
+const HONEST_BUSINESSMAN_CHAPTERS_RAW: Chapter[] = [
   {
     id: 'open-for-business',
     order: 1,
@@ -71,14 +78,14 @@ export const HONEST_BUSINESSMAN_CHAPTERS: Chapter[] = [
     failureDialogue:
       'Mara Bell: The shutters stayed closed too long. Crane’s already telling merchants you won’t last the week. Open tomorrow like your name depends on it.',
     questTemplates: [
-      template('open-for-business', 'cleaning', 'Sweep the Shop Floor', 'Clean kitchen and counters', 'Dust on the boards looks like neglect to passing buyers.', 110, 8, MARA_BELL_ID),
-      template('open-for-business', 'fitness', 'Stockroom Stamina', 'Do a quick bodyweight routine', 'Heavy crates don’t wait for a second wind.', 115, 9, MARA_BELL_ID),
-      template('open-for-business', 'study', 'Read the Trade Ordinance', 'Study session with focused notes', 'Crane’s edge hides in clauses you haven’t read yet.', 120, 9, MARA_BELL_ID),
-      template('open-for-business', 'work', 'Price the Opening Inventory', 'Complete one deep work block', 'Fair margins today prevent panic discounts tomorrow.', 120, 9, MARA_BELL_ID),
-      template('open-for-business', 'health', 'Merchant’s Rest', 'Hydrate, meds, and a short recovery break', 'A dizzy shopkeeper mislabels every shelf.', 100, 7, MARA_BELL_ID),
-      template('open-for-business', 'social', 'Word on Main Street', 'Send one meaningful check-in message', 'Trust spreads by mouth before it spreads by ledger.', 105, 7, MARA_BELL_ID),
-      template('open-for-business', 'creative', 'Hand-Painted Open Sign', 'Create a short design or writing piece', 'Your sign is the first promise the town reads.', 115, 8, MARA_BELL_ID),
-      template('open-for-business', 'errand', 'Fetch Opening Stock', 'Complete one pending errand', 'Empty shelves invite Crane’s “rescue” shipment.', 110, 8, MARA_BELL_ID),
+      template('open-for-business', 'cleaning', 'Sweep the Shop Floor', 'Clean kitchen and counters', 'Dust on the boards looks like neglect to passing buyers.', 110, 8, MARA_BELL_ID, OPEN_FOR_BUSINESS_QUEST_VARIATIONS.cleaning),
+      template('open-for-business', 'fitness', 'Stockroom Stamina', 'Do a quick bodyweight routine', 'Heavy crates don’t wait for a second wind.', 115, 9, MARA_BELL_ID, OPEN_FOR_BUSINESS_QUEST_VARIATIONS.fitness),
+      template('open-for-business', 'study', 'Read the Trade Ordinance', 'Study session with focused notes', 'Crane’s edge hides in clauses you haven’t read yet.', 120, 9, MARA_BELL_ID, OPEN_FOR_BUSINESS_QUEST_VARIATIONS.study),
+      template('open-for-business', 'work', 'Price the Opening Inventory', 'Complete one deep work block', 'Fair margins today prevent panic discounts tomorrow.', 120, 9, MARA_BELL_ID, OPEN_FOR_BUSINESS_QUEST_VARIATIONS.work),
+      template('open-for-business', 'health', 'Merchant’s Rest', 'Hydrate, meds, and a short recovery break', 'A dizzy shopkeeper mislabels every shelf.', 100, 7, MARA_BELL_ID, OPEN_FOR_BUSINESS_QUEST_VARIATIONS.health),
+      template('open-for-business', 'social', 'Word on Main Street', 'Send one meaningful check-in message', 'Trust spreads by mouth before it spreads by ledger.', 105, 7, MARA_BELL_ID, OPEN_FOR_BUSINESS_QUEST_VARIATIONS.social),
+      template('open-for-business', 'creative', 'Hand-Painted Open Sign', 'Create a short design or writing piece', 'Your sign is the first promise the town reads.', 115, 8, MARA_BELL_ID, OPEN_FOR_BUSINESS_QUEST_VARIATIONS.creative),
+      template('open-for-business', 'errand', 'Fetch Opening Stock', 'Complete one pending errand', 'Empty shelves invite Crane’s “rescue” shipment.', 110, 8, MARA_BELL_ID, OPEN_FOR_BUSINESS_QUEST_VARIATIONS.errand),
     ],
     chapterRewards: [{ id: 'open-for-business-badge', type: 'badge', name: 'First Honest Sale' }],
   },
@@ -259,3 +266,8 @@ export const HONEST_BUSINESSMAN_CHAPTERS: Chapter[] = [
     chapterRewards: [{ id: 'honest-coin-title', type: 'title', name: 'Honest Businessman' }],
   },
 ];
+
+export const HONEST_BUSINESSMAN_CHAPTERS = enrichSagaChapters(HONEST_BUSINESSMAN_CHAPTERS_RAW, {
+  ...WILD_WEST_VARIATION_PROFILE,
+  villainName: 'Victor Crane',
+});

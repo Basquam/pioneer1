@@ -68,6 +68,26 @@ export type DialogueBeat = {
   badge?: string;
 };
 
+export type QuestVariationIntensity = 'calm' | 'normal' | 'urgent';
+
+export type QuestVariationTag =
+  | 'cleaning'
+  | 'preparation'
+  | 'investigation'
+  | 'delivery'
+  | 'training'
+  | 'recovery'
+  | 'outreach'
+  | 'craft';
+
+export type QuestTemplateVariation = {
+  id: string;
+  narrativeTitlePattern: string;
+  narrativeDescriptionPattern: string;
+  intensity?: QuestVariationIntensity;
+  tags?: QuestVariationTag[];
+};
+
 export type QuestTemplate = {
   id: string;
   category: TaskCategory;
@@ -77,6 +97,8 @@ export type QuestTemplate = {
   xpReward: number;
   reputationImpact: number;
   reactionCharacterId: string;
+  /** Rule-based narrative variants for user-created quest conversion. */
+  variations?: QuestTemplateVariation[];
 };
 
 export type ChapterRewardType = 'badge' | 'title' | 'cosmetic' | 'storyUnlock';
@@ -178,6 +200,8 @@ export type UserQuest = {
   category: TaskCategory;
   narrativeTitle: string;
   narrativeDescription: string;
+  /** Id of the QuestTemplateVariation applied during conversion, if any. */
+  usedVariationId?: string;
   sourceUniverseId: string;
   sourceSagaId: string;
   sourceChapterId: string;

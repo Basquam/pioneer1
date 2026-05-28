@@ -2,7 +2,12 @@ import {
   JUNO_VALE_ID,
   RAZOR_JACKAL_ID,
 } from '@/data/narrative/neon-delivery-characters';
-import type { Chapter, QuestTemplate } from '@/types/narrative';
+import { FIRST_ROUTE_QUEST_VARIATIONS } from '@/data/narrative/quest-variations/first-route-variations';
+import {
+  enrichSagaChapters,
+  NEURONET_VARIATION_PROFILE,
+} from '@/lib/quest-variation-builders';
+import type { Chapter, QuestTemplate, QuestTemplateVariation } from '@/types/narrative';
 
 const categories = [
   'cleaning',
@@ -24,6 +29,7 @@ function template(
   xpReward: number,
   reputationImpact: number,
   reactionCharacterId: string,
+  variations?: QuestTemplateVariation[],
 ): QuestTemplate {
   return {
     id: `${chapterId}-${category}`,
@@ -34,10 +40,11 @@ function template(
     xpReward,
     reputationImpact,
     reactionCharacterId,
+    variations,
   };
 }
 
-export const NEON_DELIVERY_CHAPTERS: Chapter[] = [
+const NEON_DELIVERY_CHAPTERS_RAW: Chapter[] = [
   {
     id: 'first-route',
     order: 1,
@@ -71,14 +78,14 @@ export const NEON_DELIVERY_CHAPTERS: Chapter[] = [
     failureDialogue:
       'Juno Vale: Syndicate sensors caught hesitation. Secrets spill when riders stall — re-sync and run before the grid locks your sector.',
     questTemplates: [
-      template('first-route', 'cleaning', 'Purge Dispatch Cache', 'Clean kitchen and counters', 'Cluttered nodes broadcast sloppy habits to every crawler.', 110, 8, JUNO_VALE_ID),
-      template('first-route', 'fitness', 'Neural Warm-Up Drill', 'Do a quick bodyweight routine', 'A sluggish rider broadcasts location to every hijacker.', 120, 10, JUNO_VALE_ID),
-      template('first-route', 'study', 'Decode the Route Signature', 'Study session with focused notes', 'Jackal writes in patterns. Knowledge is your encryption key.', 125, 9, JUNO_VALE_ID),
-      template('first-route', 'work', 'Fortify the Manifest Ledger', 'Complete one deep work block', 'The rainline decides who gets routed and who gets robbed.', 120, 9, JUNO_VALE_ID),
-      template('first-route', 'health', 'Recovery at the Safehouse', 'Hydrate, meds, and a short recovery break', 'A fragmented rider is easy to hijack.', 100, 7, JUNO_VALE_ID),
-      template('first-route', 'social', 'Ping the Courier Network', 'Send one meaningful check-in message', 'Fear spreads through open channels unless someone encrypts hope.', 105, 7, JUNO_VALE_ID),
-      template('first-route', 'creative', 'Draft a Route Manifest', 'Create a short design or writing piece', 'Your words shape the riders who follow your trail.', 115, 8, JUNO_VALE_ID),
-      template('first-route', 'errand', 'Midnight Supply Run', 'Complete one pending errand', 'Spoof chips and rain seals vanish fast under siege.', 110, 8, JUNO_VALE_ID),
+      template('first-route', 'cleaning', 'Purge Dispatch Cache', 'Clean kitchen and counters', 'Cluttered nodes broadcast sloppy habits to every crawler.', 110, 8, JUNO_VALE_ID, FIRST_ROUTE_QUEST_VARIATIONS.cleaning),
+      template('first-route', 'fitness', 'Neural Warm-Up Drill', 'Do a quick bodyweight routine', 'A sluggish rider broadcasts location to every hijacker.', 120, 10, JUNO_VALE_ID, FIRST_ROUTE_QUEST_VARIATIONS.fitness),
+      template('first-route', 'study', 'Decode the Route Signature', 'Study session with focused notes', 'Jackal writes in patterns. Knowledge is your encryption key.', 125, 9, JUNO_VALE_ID, FIRST_ROUTE_QUEST_VARIATIONS.study),
+      template('first-route', 'work', 'Fortify the Manifest Ledger', 'Complete one deep work block', 'The rainline decides who gets routed and who gets robbed.', 120, 9, JUNO_VALE_ID, FIRST_ROUTE_QUEST_VARIATIONS.work),
+      template('first-route', 'health', 'Recovery at the Safehouse', 'Hydrate, meds, and a short recovery break', 'A fragmented rider is easy to hijack.', 100, 7, JUNO_VALE_ID, FIRST_ROUTE_QUEST_VARIATIONS.health),
+      template('first-route', 'social', 'Ping the Courier Network', 'Send one meaningful check-in message', 'Fear spreads through open channels unless someone encrypts hope.', 105, 7, JUNO_VALE_ID, FIRST_ROUTE_QUEST_VARIATIONS.social),
+      template('first-route', 'creative', 'Draft a Route Manifest', 'Create a short design or writing piece', 'Your words shape the riders who follow your trail.', 115, 8, JUNO_VALE_ID, FIRST_ROUTE_QUEST_VARIATIONS.creative),
+      template('first-route', 'errand', 'Midnight Supply Run', 'Complete one pending errand', 'Spoof chips and rain seals vanish fast under siege.', 110, 8, JUNO_VALE_ID, FIRST_ROUTE_QUEST_VARIATIONS.errand),
     ],
     chapterRewards: [{ id: 'first-route-cleared-badge', type: 'badge', name: 'First Route Cleared' }],
   },
@@ -259,3 +266,8 @@ export const NEON_DELIVERY_CHAPTERS: Chapter[] = [
     chapterRewards: [{ id: 'final-runner-title', type: 'title', name: 'Final Runner' }],
   },
 ];
+
+export const NEON_DELIVERY_CHAPTERS = enrichSagaChapters(NEON_DELIVERY_CHAPTERS_RAW, {
+  ...NEURONET_VARIATION_PROFILE,
+  villainName: 'Razor Jackal',
+});

@@ -2,7 +2,12 @@ import {
   ROSA_BELL_ID,
   VINCENT_NOIR_ID,
 } from '@/data/narrative/jazz-club-secrets-characters';
-import type { Chapter, QuestTemplate } from '@/types/narrative';
+import { BLUE_NOTE_CONFESSION_QUEST_VARIATIONS } from '@/data/narrative/quest-variations/blue-note-confession-variations';
+import {
+  enrichSagaChapters,
+  NOIR_VARIATION_PROFILE,
+} from '@/lib/quest-variation-builders';
+import type { Chapter, QuestTemplate, QuestTemplateVariation } from '@/types/narrative';
 
 const categories = [
   'cleaning',
@@ -24,6 +29,7 @@ function template(
   xpReward: number,
   reputationImpact: number,
   reactionCharacterId: string,
+  variations?: QuestTemplateVariation[],
 ): QuestTemplate {
   return {
     id: `${chapterId}-${category}`,
@@ -34,10 +40,11 @@ function template(
     xpReward,
     reputationImpact,
     reactionCharacterId,
+    variations,
   };
 }
 
-export const JAZZ_CLUB_SECRETS_CHAPTERS: Chapter[] = [
+const JAZZ_CLUB_SECRETS_CHAPTERS_RAW: Chapter[] = [
   {
     id: 'blue-note-confession',
     order: 1,
@@ -71,14 +78,14 @@ export const JAZZ_CLUB_SECRETS_CHAPTERS: Chapter[] = [
     failureDialogue:
       'Rosa Bell: Club watchers caught hesitation. Everyone tells the truth differently when detectives stall — re-sync and work before the Blue Note locks your case.',
     questTemplates: [
-      template('blue-note-confession', 'cleaning', 'Clear the Booth Table', 'Clean kitchen and counters', 'Ash hides witness notes in cluttered booths.', 110, 8, ROSA_BELL_ID),
-      template('blue-note-confession', 'fitness', 'Night Shift Warm-Up', 'Do a quick bodyweight routine', 'A sluggish detective broadcasts location to every bouncer.', 120, 10, ROSA_BELL_ID),
-      template('blue-note-confession', 'study', 'Decode the Setlist', 'Study session with focused notes', 'Noir writes in patterns. Knowledge is your subpoena key.', 125, 9, ROSA_BELL_ID),
-      template('blue-note-confession', 'work', 'Fortify the Case Ledger', 'Complete one deep work block', 'The Red Room decides who gets heard and who gets silenced.', 120, 9, ROSA_BELL_ID),
-      template('blue-note-confession', 'health', 'Recovery at the Dressing Room', 'Hydrate, meds, and a short recovery break', 'An exhausted detective is easy to discredit between sets.', 100, 7, ROSA_BELL_ID),
-      template('blue-note-confession', 'social', 'Ping the Band Network', 'Send one meaningful check-in message', 'Fear spreads through green rooms unless someone files hope.', 105, 7, ROSA_BELL_ID),
-      template('blue-note-confession', 'creative', 'Draft a Confession Summary', 'Create a short design or writing piece', 'Your words shape the detectives who follow your trail.', 115, 8, ROSA_BELL_ID),
-      template('blue-note-confession', 'errand', 'Midnight Evidence Run', 'Complete one pending errand', 'Sealed envelopes vanish fast when the house panics.', 110, 8, ROSA_BELL_ID),
+      template('blue-note-confession', 'cleaning', 'Clear the Booth Table', 'Clean kitchen and counters', 'Ash hides witness notes in cluttered booths.', 110, 8, ROSA_BELL_ID, BLUE_NOTE_CONFESSION_QUEST_VARIATIONS.cleaning),
+      template('blue-note-confession', 'fitness', 'Night Shift Warm-Up', 'Do a quick bodyweight routine', 'A sluggish detective broadcasts location to every bouncer.', 120, 10, ROSA_BELL_ID, BLUE_NOTE_CONFESSION_QUEST_VARIATIONS.fitness),
+      template('blue-note-confession', 'study', 'Decode the Setlist', 'Study session with focused notes', 'Noir writes in patterns. Knowledge is your subpoena key.', 125, 9, ROSA_BELL_ID, BLUE_NOTE_CONFESSION_QUEST_VARIATIONS.study),
+      template('blue-note-confession', 'work', 'Fortify the Case Ledger', 'Complete one deep work block', 'The Red Room decides who gets heard and who gets silenced.', 120, 9, ROSA_BELL_ID, BLUE_NOTE_CONFESSION_QUEST_VARIATIONS.work),
+      template('blue-note-confession', 'health', 'Recovery at the Dressing Room', 'Hydrate, meds, and a short recovery break', 'An exhausted detective is easy to discredit between sets.', 100, 7, ROSA_BELL_ID, BLUE_NOTE_CONFESSION_QUEST_VARIATIONS.health),
+      template('blue-note-confession', 'social', 'Ping the Band Network', 'Send one meaningful check-in message', 'Fear spreads through green rooms unless someone files hope.', 105, 7, ROSA_BELL_ID, BLUE_NOTE_CONFESSION_QUEST_VARIATIONS.social),
+      template('blue-note-confession', 'creative', 'Draft a Confession Summary', 'Create a short design or writing piece', 'Your words shape the detectives who follow your trail.', 115, 8, ROSA_BELL_ID, BLUE_NOTE_CONFESSION_QUEST_VARIATIONS.creative),
+      template('blue-note-confession', 'errand', 'Midnight Evidence Run', 'Complete one pending errand', 'Sealed envelopes vanish fast when the house panics.', 110, 8, ROSA_BELL_ID, BLUE_NOTE_CONFESSION_QUEST_VARIATIONS.errand),
     ],
     chapterRewards: [{ id: 'first-blue-note-badge', type: 'badge', name: 'First Blue Note' }],
   },
@@ -259,3 +266,8 @@ export const JAZZ_CLUB_SECRETS_CHAPTERS: Chapter[] = [
     chapterRewards: [{ id: 'night-detective-title', type: 'title', name: 'Night Detective' }],
   },
 ];
+
+export const JAZZ_CLUB_SECRETS_CHAPTERS = enrichSagaChapters(JAZZ_CLUB_SECRETS_CHAPTERS_RAW, {
+  ...NOIR_VARIATION_PROFILE,
+  villainName: 'Vincent Noir',
+});

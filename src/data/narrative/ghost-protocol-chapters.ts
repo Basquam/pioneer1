@@ -2,7 +2,12 @@ import {
   DIRECTOR_CAIN_ID,
   LYRA_VOSS_ID,
 } from '@/data/narrative/ghost-protocol-characters';
-import type { Chapter, QuestTemplate } from '@/types/narrative';
+import { SIGNAL_LEAK_QUEST_VARIATIONS } from '@/data/narrative/quest-variations/signal-leak-variations';
+import {
+  enrichSagaChapters,
+  NEURONET_VARIATION_PROFILE,
+} from '@/lib/quest-variation-builders';
+import type { Chapter, QuestTemplate, QuestTemplateVariation } from '@/types/narrative';
 
 const categories = [
   'cleaning',
@@ -24,6 +29,7 @@ function template(
   xpReward: number,
   reputationImpact: number,
   reactionCharacterId: string,
+  variations?: QuestTemplateVariation[],
 ): QuestTemplate {
   return {
     id: `${chapterId}-${category}`,
@@ -34,10 +40,11 @@ function template(
     xpReward,
     reputationImpact,
     reactionCharacterId,
+    variations,
   };
 }
 
-export const GHOST_PROTOCOL_CHAPTERS: Chapter[] = [
+const GHOST_PROTOCOL_CHAPTERS_RAW: Chapter[] = [
   {
     id: 'signal-leak',
     order: 1,
@@ -71,14 +78,14 @@ export const GHOST_PROTOCOL_CHAPTERS: Chapter[] = [
     failureDialogue:
       'Lyra Voss: Ministry sensors caught hesitation. Memories can be edited when runners stall — re-sync and run before the grid locks your sector.',
     questTemplates: [
-      template('signal-leak', 'cleaning', 'Purge Relay Cache', 'Clean kitchen and counters', 'Corrupted packets hide in cluttered nodes.', 110, 8, LYRA_VOSS_ID),
-      template('signal-leak', 'fitness', 'Neural Warm-Up Drill', 'Do a quick bodyweight routine', 'A sluggish runner broadcasts location to every crawler.', 120, 10, LYRA_VOSS_ID),
-      template('signal-leak', 'study', 'Decode the Leak Signature', 'Study session with focused notes', 'Cain writes in patterns. Knowledge is your encryption key.', 125, 9, LYRA_VOSS_ID),
-      template('signal-leak', 'work', 'Fortify the Route Ledger', 'Complete one deep work block', 'The blackline decides who gets routed and who gets erased.', 120, 9, LYRA_VOSS_ID),
-      template('signal-leak', 'health', 'Recovery at the Safehouse', 'Hydrate, meds, and a short recovery break', 'A fragmented runner is easy to mirror.', 100, 7, LYRA_VOSS_ID),
-      template('signal-leak', 'social', 'Ping the Ghost Network', 'Send one meaningful check-in message', 'Fear spreads through open channels unless someone encrypts hope.', 105, 7, LYRA_VOSS_ID),
-      template('signal-leak', 'creative', 'Draft a Ghost Manifest', 'Create a short design or writing piece', 'Your words shape the runners who follow your route.', 115, 8, LYRA_VOSS_ID),
-      template('signal-leak', 'errand', 'Midnight Supply Run', 'Complete one pending errand', 'Spoof chips and power cells vanish fast under siege.', 110, 8, LYRA_VOSS_ID),
+      template('signal-leak', 'cleaning', 'Purge Relay Cache', 'Clean kitchen and counters', 'Corrupted packets hide in cluttered nodes.', 110, 8, LYRA_VOSS_ID, SIGNAL_LEAK_QUEST_VARIATIONS.cleaning),
+      template('signal-leak', 'fitness', 'Neural Warm-Up Drill', 'Do a quick bodyweight routine', 'A sluggish runner broadcasts location to every crawler.', 120, 10, LYRA_VOSS_ID, SIGNAL_LEAK_QUEST_VARIATIONS.fitness),
+      template('signal-leak', 'study', 'Decode the Leak Signature', 'Study session with focused notes', 'Cain writes in patterns. Knowledge is your encryption key.', 125, 9, LYRA_VOSS_ID, SIGNAL_LEAK_QUEST_VARIATIONS.study),
+      template('signal-leak', 'work', 'Fortify the Route Ledger', 'Complete one deep work block', 'The blackline decides who gets routed and who gets erased.', 120, 9, LYRA_VOSS_ID, SIGNAL_LEAK_QUEST_VARIATIONS.work),
+      template('signal-leak', 'health', 'Recovery at the Safehouse', 'Hydrate, meds, and a short recovery break', 'A fragmented runner is easy to mirror.', 100, 7, LYRA_VOSS_ID, SIGNAL_LEAK_QUEST_VARIATIONS.health),
+      template('signal-leak', 'social', 'Ping the Ghost Network', 'Send one meaningful check-in message', 'Fear spreads through open channels unless someone encrypts hope.', 105, 7, LYRA_VOSS_ID, SIGNAL_LEAK_QUEST_VARIATIONS.social),
+      template('signal-leak', 'creative', 'Draft a Ghost Manifest', 'Create a short design or writing piece', 'Your words shape the runners who follow your route.', 115, 8, LYRA_VOSS_ID, SIGNAL_LEAK_QUEST_VARIATIONS.creative),
+      template('signal-leak', 'errand', 'Midnight Supply Run', 'Complete one pending errand', 'Spoof chips and power cells vanish fast under siege.', 110, 8, LYRA_VOSS_ID, SIGNAL_LEAK_QUEST_VARIATIONS.errand),
     ],
     chapterRewards: [{ id: 'signal-carrier-badge', type: 'badge', name: 'Signal Carrier' }],
   },
@@ -266,3 +273,8 @@ export const GHOST_PROTOCOL_CHAPTERS: Chapter[] = [
     ],
   },
 ];
+
+export const GHOST_PROTOCOL_CHAPTERS = enrichSagaChapters(GHOST_PROTOCOL_CHAPTERS_RAW, {
+  ...NEURONET_VARIATION_PROFILE,
+  villainName: 'Director Cain',
+});

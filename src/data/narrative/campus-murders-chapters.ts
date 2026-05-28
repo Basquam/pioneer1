@@ -2,7 +2,12 @@ import {
   PROFESSOR_LENA_WARD_ID,
   THE_GLASS_STUDENT_ID,
 } from '@/data/narrative/campus-murders-characters';
-import type { Chapter, QuestTemplate } from '@/types/narrative';
+import { ORIENTATION_OF_BLOOD_QUEST_VARIATIONS } from '@/data/narrative/quest-variations/orientation-of-blood-variations';
+import {
+  enrichSagaChapters,
+  NOIR_VARIATION_PROFILE,
+} from '@/lib/quest-variation-builders';
+import type { Chapter, QuestTemplate, QuestTemplateVariation } from '@/types/narrative';
 
 const categories = [
   'cleaning',
@@ -24,6 +29,7 @@ function template(
   xpReward: number,
   reputationImpact: number,
   reactionCharacterId: string,
+  variations?: QuestTemplateVariation[],
 ): QuestTemplate {
   return {
     id: `${chapterId}-${category}`,
@@ -34,10 +40,11 @@ function template(
     xpReward,
     reputationImpact,
     reactionCharacterId,
+    variations,
   };
 }
 
-export const CAMPUS_MURDERS_CHAPTERS: Chapter[] = [
+const CAMPUS_MURDERS_CHAPTERS_RAW: Chapter[] = [
   {
     id: 'orientation-of-blood',
     order: 1,
@@ -71,14 +78,14 @@ export const CAMPUS_MURDERS_CHAPTERS: Chapter[] = [
     failureDialogue:
       'Professor Lena Ward: Campus security caught hesitation. Knowledge has a body count when investigators stall — re-sync and work before Whitmore locks your case.',
     questTemplates: [
-      template('orientation-of-blood', 'cleaning', 'Clear the Quad Evidence', 'Clean kitchen and counters', 'Polished floors hide blood spatter in plain sight.', 110, 8, PROFESSOR_LENA_WARD_ID),
-      template('orientation-of-blood', 'fitness', 'Campus Patrol Warm-Up', 'Do a quick bodyweight routine', 'A sluggish investigator broadcasts location across open quads.', 120, 10, PROFESSOR_LENA_WARD_ID),
-      template('orientation-of-blood', 'study', 'Decode the Roster', 'Study session with focused notes', 'The Glass Student writes in patterns. Knowledge is your subpoena key.', 125, 9, PROFESSOR_LENA_WARD_ID),
-      template('orientation-of-blood', 'work', 'Fortify the Case File', 'Complete one deep work block', 'Whitmore decides who gets heard and who gets expunged.', 120, 9, PROFESSOR_LENA_WARD_ID),
-      template('orientation-of-blood', 'health', 'Recovery at the Faculty Office', 'Hydrate, meds, and a short recovery break', 'An exhausted investigator is easy to discredit on donor tours.', 100, 7, PROFESSOR_LENA_WARD_ID),
-      template('orientation-of-blood', 'social', 'Ping the Graduate Network', 'Send one meaningful check-in message', 'Fear spreads through group chats unless someone files hope.', 105, 7, PROFESSOR_LENA_WARD_ID),
-      template('orientation-of-blood', 'creative', 'Draft an Incident Summary', 'Create a short design or writing piece', 'Your words shape the investigators who follow your trail.', 115, 8, PROFESSOR_LENA_WARD_ID),
-      template('orientation-of-blood', 'errand', 'Midnight Evidence Run', 'Complete one pending errand', 'Sealed envelopes vanish fast when administration panics.', 110, 8, PROFESSOR_LENA_WARD_ID),
+      template('orientation-of-blood', 'cleaning', 'Clear the Quad Evidence', 'Clean kitchen and counters', 'Polished floors hide blood spatter in plain sight.', 110, 8, PROFESSOR_LENA_WARD_ID, ORIENTATION_OF_BLOOD_QUEST_VARIATIONS.cleaning),
+      template('orientation-of-blood', 'fitness', 'Campus Patrol Warm-Up', 'Do a quick bodyweight routine', 'A sluggish investigator broadcasts location across open quads.', 120, 10, PROFESSOR_LENA_WARD_ID, ORIENTATION_OF_BLOOD_QUEST_VARIATIONS.fitness),
+      template('orientation-of-blood', 'study', 'Decode the Roster', 'Study session with focused notes', 'The Glass Student writes in patterns. Knowledge is your subpoena key.', 125, 9, PROFESSOR_LENA_WARD_ID, ORIENTATION_OF_BLOOD_QUEST_VARIATIONS.study),
+      template('orientation-of-blood', 'work', 'Fortify the Case File', 'Complete one deep work block', 'Whitmore decides who gets heard and who gets expunged.', 120, 9, PROFESSOR_LENA_WARD_ID, ORIENTATION_OF_BLOOD_QUEST_VARIATIONS.work),
+      template('orientation-of-blood', 'health', 'Recovery at the Faculty Office', 'Hydrate, meds, and a short recovery break', 'An exhausted investigator is easy to discredit on donor tours.', 100, 7, PROFESSOR_LENA_WARD_ID, ORIENTATION_OF_BLOOD_QUEST_VARIATIONS.health),
+      template('orientation-of-blood', 'social', 'Ping the Graduate Network', 'Send one meaningful check-in message', 'Fear spreads through group chats unless someone files hope.', 105, 7, PROFESSOR_LENA_WARD_ID, ORIENTATION_OF_BLOOD_QUEST_VARIATIONS.social),
+      template('orientation-of-blood', 'creative', 'Draft an Incident Summary', 'Create a short design or writing piece', 'Your words shape the investigators who follow your trail.', 115, 8, PROFESSOR_LENA_WARD_ID, ORIENTATION_OF_BLOOD_QUEST_VARIATIONS.creative),
+      template('orientation-of-blood', 'errand', 'Midnight Evidence Run', 'Complete one pending errand', 'Sealed envelopes vanish fast when administration panics.', 110, 8, PROFESSOR_LENA_WARD_ID, ORIENTATION_OF_BLOOD_QUEST_VARIATIONS.errand),
     ],
     chapterRewards: [{ id: 'first-campus-lead-badge', type: 'badge', name: 'First Campus Lead' }],
   },
@@ -266,3 +273,8 @@ export const CAMPUS_MURDERS_CHAPTERS: Chapter[] = [
     ],
   },
 ];
+
+export const CAMPUS_MURDERS_CHAPTERS = enrichSagaChapters(CAMPUS_MURDERS_CHAPTERS_RAW, {
+  ...NOIR_VARIATION_PROFILE,
+  villainName: 'The Glass Student',
+});

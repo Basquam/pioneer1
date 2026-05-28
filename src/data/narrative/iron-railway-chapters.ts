@@ -1,6 +1,11 @@
 import { BRIGGS_ID } from '@/data/narrative/vulture-gang-characters';
 import { SILAS_VANE_ID } from '@/data/narrative/iron-railway-characters';
-import type { Chapter, QuestTemplate } from '@/types/narrative';
+import { FIRST_SHIPMENT_QUEST_VARIATIONS } from '@/data/narrative/quest-variations/first-shipment-variations';
+import {
+  enrichSagaChapters,
+  WILD_WEST_VARIATION_PROFILE,
+} from '@/lib/quest-variation-builders';
+import type { Chapter, QuestTemplate, QuestTemplateVariation } from '@/types/narrative';
 
 const categories = [
   'cleaning',
@@ -22,6 +27,7 @@ function template(
   xpReward: number,
   reputationImpact: number,
   reactionCharacterId: string,
+  variations?: QuestTemplateVariation[],
 ): QuestTemplate {
   return {
     id: `${chapterId}-${category}`,
@@ -32,10 +38,11 @@ function template(
     xpReward,
     reputationImpact,
     reactionCharacterId,
+    variations,
   };
 }
 
-export const IRON_RAILWAY_CHAPTERS: Chapter[] = [
+const IRON_RAILWAY_CHAPTERS_RAW: Chapter[] = [
   {
     id: 'first-shipment',
     order: 1,
@@ -69,14 +76,14 @@ export const IRON_RAILWAY_CHAPTERS: Chapter[] = [
     failureDialogue:
       'Station Master Briggs: Vane’s men are smiling. Fix the backlog before the next bell — hunger downline doesn’t negotiate.',
     questTemplates: [
-      template('first-shipment', 'cleaning', 'Sweep the Loading Dock', 'Clean kitchen and counters', 'Spilled grain hides sabotage under the planks.', 115, 8, BRIGGS_ID),
-      template('first-shipment', 'fitness', 'Platform Strength Drill', 'Do a quick bodyweight routine', 'A sluggish crew drops cargo before the bell.', 120, 10, BRIGGS_ID),
-      template('first-shipment', 'work', 'Sign the Manifest', 'Complete one deep work block', 'One unsigned page stops a whole train.', 120, 9, BRIGGS_ID),
-      template('first-shipment', 'study', 'Read the Route Ledger', 'Study session with focused notes', 'Vane’s fees hide in the footnotes.', 125, 9, BRIGGS_ID),
-      template('first-shipment', 'health', 'Platform Break', 'Hydrate, meds, and a short recovery break', 'Exhausted crews drop cargo.', 100, 7, BRIGGS_ID),
-      template('first-shipment', 'social', 'Brief the Yard Crew', 'Send one meaningful check-in message', 'Fear spreads when nobody confirms the run.', 105, 7, BRIGGS_ID),
-      template('first-shipment', 'creative', 'Sketch the Route Map', 'Create a short design or writing piece', 'Your map keeps the next crew from guessing.', 115, 8, BRIGGS_ID),
-      template('first-shipment', 'errand', 'Fetch the Seal Stamp', 'Complete one pending errand', 'No stamp, no shipment — simple as steel.', 110, 8, BRIGGS_ID),
+      template('first-shipment', 'cleaning', 'Sweep the Loading Dock', 'Clean kitchen and counters', 'Spilled grain hides sabotage under the planks.', 115, 8, BRIGGS_ID, FIRST_SHIPMENT_QUEST_VARIATIONS.cleaning),
+      template('first-shipment', 'fitness', 'Platform Strength Drill', 'Do a quick bodyweight routine', 'A sluggish crew drops cargo before the bell.', 120, 10, BRIGGS_ID, FIRST_SHIPMENT_QUEST_VARIATIONS.fitness),
+      template('first-shipment', 'work', 'Sign the Manifest', 'Complete one deep work block', 'One unsigned page stops a whole train.', 120, 9, BRIGGS_ID, FIRST_SHIPMENT_QUEST_VARIATIONS.work),
+      template('first-shipment', 'study', 'Read the Route Ledger', 'Study session with focused notes', 'Vane’s fees hide in the footnotes.', 125, 9, BRIGGS_ID, FIRST_SHIPMENT_QUEST_VARIATIONS.study),
+      template('first-shipment', 'health', 'Platform Break', 'Hydrate, meds, and a short recovery break', 'Exhausted crews drop cargo.', 100, 7, BRIGGS_ID, FIRST_SHIPMENT_QUEST_VARIATIONS.health),
+      template('first-shipment', 'social', 'Brief the Yard Crew', 'Send one meaningful check-in message', 'Fear spreads when nobody confirms the run.', 105, 7, BRIGGS_ID, FIRST_SHIPMENT_QUEST_VARIATIONS.social),
+      template('first-shipment', 'creative', 'Sketch the Route Map', 'Create a short design or writing piece', 'Your map keeps the next crew from guessing.', 115, 8, BRIGGS_ID, FIRST_SHIPMENT_QUEST_VARIATIONS.creative),
+      template('first-shipment', 'errand', 'Fetch the Seal Stamp', 'Complete one pending errand', 'No stamp, no shipment — simple as steel.', 110, 8, BRIGGS_ID, FIRST_SHIPMENT_QUEST_VARIATIONS.errand),
     ],
     chapterRewards: [{ id: 'first-shipment-badge', type: 'badge', name: 'First Shipment Cleared' }],
   },
@@ -265,3 +272,8 @@ export const IRON_RAILWAY_CHAPTERS: Chapter[] = [
     ],
   },
 ];
+
+export const IRON_RAILWAY_CHAPTERS = enrichSagaChapters(IRON_RAILWAY_CHAPTERS_RAW, {
+  ...WILD_WEST_VARIATION_PROFILE,
+  villainName: 'Silas Vane',
+});

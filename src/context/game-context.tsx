@@ -296,27 +296,31 @@ export function GameProvider({ children }: { children: ReactNode }) {
       const trimmed = originalTitle.trim();
       if (!trimmed || !currentChapter) return;
 
-      const converted = convertTaskToUserQuest(
-        trimmed,
-        category,
-        activeUniverse,
-        activeSaga,
-        currentChapter,
-      );
+      setProgress((prev) => {
+        const converted = convertTaskToUserQuest(
+          trimmed,
+          category,
+          activeUniverse,
+          activeSaga,
+          currentChapter,
+          prev.userQuests,
+        );
 
-      const quest: UserQuest = {
-        ...converted,
-        id: createUserQuestId(),
-        isCompleted: false,
-        createdOnDate: getLocalDateKey(),
-      };
+        const quest: UserQuest = {
+          ...converted,
+          id: createUserQuestId(),
+          isCompleted: false,
+          createdOnDate: getLocalDateKey(),
+        };
 
-      setProgress((prev) => ({
-        ...prev,
-        userQuests: [...prev.userQuests, quest],
-      }));
-      setAddQuestSheetOpen(false);
-      setQuestCreated(quest);
+        setAddQuestSheetOpen(false);
+        setQuestCreated(quest);
+
+        return {
+          ...prev,
+          userQuests: [...prev.userQuests, quest],
+        };
+      });
     },
     [activeSaga, activeUniverse, currentChapter],
   );

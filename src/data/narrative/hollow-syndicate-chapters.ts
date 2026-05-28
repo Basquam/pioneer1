@@ -2,7 +2,12 @@ import {
   EVELYN_CROSS_ID,
   MARCUS_VALE_ID,
 } from '@/data/narrative/hollow-syndicate-characters';
-import type { Chapter, QuestTemplate } from '@/types/narrative';
+import { COLD_FILE_QUEST_VARIATIONS } from '@/data/narrative/quest-variations/cold-file-variations';
+import {
+  enrichSagaChapters,
+  NOIR_VARIATION_PROFILE,
+} from '@/lib/quest-variation-builders';
+import type { Chapter, QuestTemplate, QuestTemplateVariation } from '@/types/narrative';
 
 const categories = [
   'cleaning',
@@ -24,6 +29,7 @@ function template(
   xpReward: number,
   reputationImpact: number,
   reactionCharacterId: string,
+  variations?: QuestTemplateVariation[],
 ): QuestTemplate {
   return {
     id: `${chapterId}-${category}`,
@@ -34,10 +40,11 @@ function template(
     xpReward,
     reputationImpact,
     reactionCharacterId,
+    variations,
   };
 }
 
-export const HOLLOW_SYNDICATE_CHAPTERS: Chapter[] = [
+const HOLLOW_SYNDICATE_CHAPTERS_RAW: Chapter[] = [
   {
     id: 'cold-file',
     order: 1,
@@ -71,14 +78,14 @@ export const HOLLOW_SYNDICATE_CHAPTERS: Chapter[] = [
     failureDialogue:
       'Evelyn Cross: Syndicate watchers caught hesitation. Every truth leaves a shadow when investigators stall — re-sync and work before the archive locks your case.',
     questTemplates: [
-      template('cold-file', 'cleaning', 'Purge the Archive Desk', 'Clean kitchen and counters', 'Dust hides redacted pages in cluttered offices.', 110, 8, EVELYN_CROSS_ID),
-      template('cold-file', 'fitness', 'Night Shift Warm-Up', 'Do a quick bodyweight routine', 'A sluggish investigator broadcasts location to every watcher.', 120, 10, EVELYN_CROSS_ID),
-      template('cold-file', 'study', 'Decode the File Index', 'Study session with focused notes', 'Vale writes in patterns. Knowledge is your subpoena key.', 125, 9, EVELYN_CROSS_ID),
-      template('cold-file', 'work', 'Fortify the Case Ledger', 'Complete one deep work block', 'The Syndicate decides who gets heard and who gets erased.', 120, 9, EVELYN_CROSS_ID),
-      template('cold-file', 'health', 'Recovery at the Office', 'Hydrate, meds, and a short recovery break', 'An exhausted investigator is easy to discredit.', 100, 7, EVELYN_CROSS_ID),
-      template('cold-file', 'social', 'Ping the Witness Network', 'Send one meaningful check-in message', 'Fear spreads through open channels unless someone files hope.', 105, 7, EVELYN_CROSS_ID),
-      template('cold-file', 'creative', 'Draft a Case Summary', 'Create a short design or writing piece', 'Your words shape the investigators who follow your trail.', 115, 8, EVELYN_CROSS_ID),
-      template('cold-file', 'errand', 'Midnight Evidence Run', 'Complete one pending errand', 'Sealed envelopes and tape vanish fast under siege.', 110, 8, EVELYN_CROSS_ID),
+      template('cold-file', 'cleaning', 'Purge the Archive Desk', 'Clean kitchen and counters', 'Dust hides redacted pages in cluttered offices.', 110, 8, EVELYN_CROSS_ID, COLD_FILE_QUEST_VARIATIONS.cleaning),
+      template('cold-file', 'fitness', 'Night Shift Warm-Up', 'Do a quick bodyweight routine', 'A sluggish investigator broadcasts location to every watcher.', 120, 10, EVELYN_CROSS_ID, COLD_FILE_QUEST_VARIATIONS.fitness),
+      template('cold-file', 'study', 'Decode the File Index', 'Study session with focused notes', 'Vale writes in patterns. Knowledge is your subpoena key.', 125, 9, EVELYN_CROSS_ID, COLD_FILE_QUEST_VARIATIONS.study),
+      template('cold-file', 'work', 'Fortify the Case Ledger', 'Complete one deep work block', 'The Syndicate decides who gets heard and who gets erased.', 120, 9, EVELYN_CROSS_ID, COLD_FILE_QUEST_VARIATIONS.work),
+      template('cold-file', 'health', 'Recovery at the Office', 'Hydrate, meds, and a short recovery break', 'An exhausted investigator is easy to discredit.', 100, 7, EVELYN_CROSS_ID, COLD_FILE_QUEST_VARIATIONS.health),
+      template('cold-file', 'social', 'Ping the Witness Network', 'Send one meaningful check-in message', 'Fear spreads through open channels unless someone files hope.', 105, 7, EVELYN_CROSS_ID, COLD_FILE_QUEST_VARIATIONS.social),
+      template('cold-file', 'creative', 'Draft a Case Summary', 'Create a short design or writing piece', 'Your words shape the investigators who follow your trail.', 115, 8, EVELYN_CROSS_ID, COLD_FILE_QUEST_VARIATIONS.creative),
+      template('cold-file', 'errand', 'Midnight Evidence Run', 'Complete one pending errand', 'Sealed envelopes and tape vanish fast under siege.', 110, 8, EVELYN_CROSS_ID, COLD_FILE_QUEST_VARIATIONS.errand),
     ],
     chapterRewards: [{ id: 'cold-file-opened-badge', type: 'badge', name: 'Cold File Opened' }],
   },
@@ -266,3 +273,8 @@ export const HOLLOW_SYNDICATE_CHAPTERS: Chapter[] = [
     ],
   },
 ];
+
+export const HOLLOW_SYNDICATE_CHAPTERS = enrichSagaChapters(HOLLOW_SYNDICATE_CHAPTERS_RAW, {
+  ...NOIR_VARIATION_PROFILE,
+  villainName: 'Marcus Vale',
+});

@@ -3,7 +3,12 @@ import {
   BRIGGS_ID,
   ELIAS_CROW_ID,
 } from '@/data/narrative/vulture-gang-characters';
-import type { Chapter, QuestTemplate } from '@/types/narrative';
+import { FIRST_WARNING_QUEST_VARIATIONS } from '@/data/narrative/quest-variations/first-warning-variations';
+import {
+  enrichSagaChapters,
+  WILD_WEST_VARIATION_PROFILE,
+} from '@/lib/quest-variation-builders';
+import type { Chapter, QuestTemplate, QuestTemplateVariation } from '@/types/narrative';
 
 const categories = [
   'cleaning',
@@ -25,6 +30,7 @@ function template(
   xpReward: number,
   reputationImpact: number,
   reactionCharacterId: string,
+  variations?: QuestTemplateVariation[],
 ): QuestTemplate {
   return {
     id: `${chapterId}-${category}`,
@@ -35,10 +41,11 @@ function template(
     xpReward,
     reputationImpact,
     reactionCharacterId,
+    variations,
   };
 }
 
-export const VULTURE_GANG_CHAPTERS: Chapter[] = [
+const VULTURE_GANG_CHAPTERS_RAW: Chapter[] = [
   {
     id: 'first-warning',
     order: 1,
@@ -72,14 +79,14 @@ export const VULTURE_GANG_CHAPTERS: Chapter[] = [
     failureDialogue:
       'Sheriff Ada Mercer: They smell hesitation. Order is fragile, deputy — get back in the saddle before dusk.',
     questTemplates: [
-      template('first-warning', 'cleaning', 'Sweep the Saloon Floor', 'Clean kitchen and counters', 'Glass and dust hide a message from the gang.', 110, 8, BRIGGS_ID),
-      template('first-warning', 'fitness', 'Stable Drill', 'Do a quick bodyweight routine', 'A tired deputy cannot outrun an ambush.', 120, 10, ADA_MERCER_ID),
-      template('first-warning', 'study', 'Decode the Warning Note', 'Study session with focused notes', 'The gang writes in riddles. Knowledge is your trigger finger.', 125, 9, ADA_MERCER_ID),
-      template('first-warning', 'work', 'Fortify the Ledger', 'Complete one deep work block', 'The town books decide who gets fed and who gets desperate.', 120, 9, ADA_MERCER_ID),
-      template('first-warning', 'health', 'Patch Up at the Clinic', 'Hydrate, meds, and a short recovery break', 'A wounded deputy is easy prey.', 100, 7, BRIGGS_ID),
-      template('first-warning', 'social', 'Rally the Townfolk', 'Send one meaningful check-in message', 'Fear spreads faster than bullets unless someone speaks up.', 105, 7, ADA_MERCER_ID),
-      template('first-warning', 'creative', 'Wanted Poster Draft', 'Create a short design or writing piece', 'Your words shape the town’s courage.', 115, 8, ADA_MERCER_ID),
-      template('first-warning', 'errand', 'Supply Run at Sundown', 'Complete one pending errand', 'Ammo and bread vanish fast under siege.', 110, 8, BRIGGS_ID),
+      template('first-warning', 'cleaning', 'Sweep the Saloon Floor', 'Clean kitchen and counters', 'Glass and dust hide a message from the gang.', 110, 8, BRIGGS_ID, FIRST_WARNING_QUEST_VARIATIONS.cleaning),
+      template('first-warning', 'fitness', 'Stable Drill', 'Do a quick bodyweight routine', 'A tired deputy cannot outrun an ambush.', 120, 10, ADA_MERCER_ID, FIRST_WARNING_QUEST_VARIATIONS.fitness),
+      template('first-warning', 'study', 'Decode the Warning Note', 'Study session with focused notes', 'The gang writes in riddles. Knowledge is your trigger finger.', 125, 9, ADA_MERCER_ID, FIRST_WARNING_QUEST_VARIATIONS.study),
+      template('first-warning', 'work', 'Fortify the Ledger', 'Complete one deep work block', 'The town books decide who gets fed and who gets desperate.', 120, 9, ADA_MERCER_ID, FIRST_WARNING_QUEST_VARIATIONS.work),
+      template('first-warning', 'health', 'Patch Up at the Clinic', 'Hydrate, meds, and a short recovery break', 'A wounded deputy is easy prey.', 100, 7, BRIGGS_ID, FIRST_WARNING_QUEST_VARIATIONS.health),
+      template('first-warning', 'social', 'Rally the Townfolk', 'Send one meaningful check-in message', 'Fear spreads faster than bullets unless someone speaks up.', 105, 7, ADA_MERCER_ID, FIRST_WARNING_QUEST_VARIATIONS.social),
+      template('first-warning', 'creative', 'Wanted Poster Draft', 'Create a short design or writing piece', 'Your words shape the town’s courage.', 115, 8, ADA_MERCER_ID, FIRST_WARNING_QUEST_VARIATIONS.creative),
+      template('first-warning', 'errand', 'Supply Run at Sundown', 'Complete one pending errand', 'Ammo and bread vanish fast under siege.', 110, 8, BRIGGS_ID, FIRST_WARNING_QUEST_VARIATIONS.errand),
     ],
     chapterRewards: [{ id: 'first-warning-badge', type: 'badge', name: 'First Dustfall Patrol' }],
   },
@@ -269,3 +276,8 @@ export const VULTURE_GANG_CHAPTERS: Chapter[] = [
     ],
   },
 ];
+
+export const VULTURE_GANG_CHAPTERS = enrichSagaChapters(VULTURE_GANG_CHAPTERS_RAW, {
+  ...WILD_WEST_VARIATION_PROFILE,
+  villainName: 'Elias Crow',
+});
