@@ -31,7 +31,9 @@ export function ThemeCard({ universe, selected, index, onPress }: ThemeCardProps
         <Text style={styles.icon}>{universe.icon}</Text>
         <View style={styles.text}>
           <View style={styles.titleRow}>
-            <Text style={[styles.name, { color: palette.bone }]}>{universe.name}</Text>
+            <Text style={[styles.name, { color: palette.bone }]} numberOfLines={2}>
+              {universe.name}
+            </Text>
             <View
               style={[
                 styles.statusBadge,
@@ -46,10 +48,14 @@ export function ThemeCard({ universe, selected, index, onPress }: ThemeCardProps
             </View>
           </View>
           <Text style={[styles.moodLabel, { color: palette.accent }]}>MOOD</Text>
-          <Text style={[styles.mood, { color: palette.fog }]}>{universe.mood}</Text>
+          <Text style={[styles.mood, { color: palette.fog }]} numberOfLines={3}>
+            {universe.mood}
+          </Text>
           <Text style={[styles.moodLabel, { color: palette.accent }]}>CORE PROGRESSION</Text>
           <Text style={[styles.progression, { color: palette.bone }]}>{universe.coreProgressionName}</Text>
-          <Text style={[styles.tag, { color: palette.fog }]}>{universe.tagline}</Text>
+          <Text style={[styles.tag, { color: palette.fog }]} numberOfLines={2}>
+            {universe.tagline}
+          </Text>
         </View>
         {selected && !locked && (
           <View style={[styles.check, { backgroundColor: palette.primary }]}>
@@ -72,9 +78,9 @@ const styles = StyleSheet.create({
     transform: [{ skewX: '-2deg' }],
   },
   icon: { fontSize: 36, marginTop: 2 },
-  text: { flex: 1, gap: 4 },
-  titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
-  name: { fontFamily: GameFonts.ui, fontSize: 18, letterSpacing: 2, flex: 1 },
+  text: { flex: 1, gap: 4, minWidth: 0 },
+  titleRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },
+  name: { fontFamily: GameFonts.ui, fontSize: 18, letterSpacing: 2, flex: 1, minWidth: 120 },
   statusBadge: {
     borderWidth: 1,
     paddingHorizontal: 6,

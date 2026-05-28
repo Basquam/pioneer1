@@ -3,6 +3,7 @@ import { StyleSheet, Text } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { GlowButton } from '@/components/rpg/glow-button';
+import { OnboardingScroll } from '@/components/rpg/onboarding-scroll';
 import { ScreenShell } from '@/components/rpg/screen-shell';
 import { SectionHeader } from '@/components/rpg/section-header';
 import { GameLayout } from '@/constants/layout';
@@ -14,23 +15,27 @@ export function OnboardingWelcomeScreen() {
 
   return (
     <ScreenShell edges={['top', 'bottom']}>
-      <Animated.View entering={FadeInDown.duration(600)} style={styles.content}>
-        <SectionHeader eyebrow="PIONEER" title="YOUR TASKS\nBECOME LEGENDS" />
-        <Text style={[styles.body, { color: activeUniverse.palette.fog }]}>
-          Turn real life into a cinematic RPG. Every chore is a bounty. Every habit is a chapter.
-        </Text>
-      </Animated.View>
-      <GlowButton
-        label="BEGIN"
-        hint="SEE HOW IT WORKS"
-        onPress={() => router.push('/onboarding/premise' as Href)}
-      />
+      <OnboardingScroll
+        footer={
+          <GlowButton
+            label="BEGIN"
+            hint="SEE HOW IT WORKS"
+            onPress={() => router.push('/onboarding/premise' as Href)}
+          />
+        }>
+        <Animated.View entering={FadeInDown.duration(600)} style={styles.content}>
+          <SectionHeader eyebrow="PIONEER" title="YOUR TASKS\nBECOME LEGENDS" />
+          <Text style={[styles.body, { color: activeUniverse.palette.fog }]}>
+            Turn real life into a cinematic RPG. Every chore is a bounty. Every habit is a chapter.
+          </Text>
+        </Animated.View>
+      </OnboardingScroll>
     </ScreenShell>
   );
 }
 
 const styles = StyleSheet.create({
-  content: { flex: 1, gap: GameLayout.screenContentGap, paddingTop: 24 },
+  content: { gap: GameLayout.screenContentGap, paddingTop: 24, minHeight: 280 },
   body: {
     fontFamily: GameFonts.displayRegular,
     fontSize: 16,

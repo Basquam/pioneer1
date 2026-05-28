@@ -62,7 +62,10 @@ export function GameTabBar(props: {
               style={[
                 styles.label,
                 { color: focused ? palette.gold : palette.fog },
-              ]}>
+              ]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.8}>
               {meta.label}
             </Text>
             {focused && (
@@ -87,9 +90,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 2,
     paddingVertical: 4,
+    minWidth: 0,
   },
   icon: { fontSize: 18 },
-  label: { fontFamily: GameFonts.uiSemi, fontSize: 9, letterSpacing: 1 },
+  label: { fontFamily: GameFonts.uiSemi, fontSize: 9, letterSpacing: 1, textAlign: 'center' },
   indicator: {
     width: 20,
     height: 2,

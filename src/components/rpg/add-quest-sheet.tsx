@@ -16,6 +16,7 @@ import { GlowButton } from '@/components/rpg/glow-button';
 import { GameLayout } from '@/constants/layout';
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
+import { useModalBottomInset } from '@/hooks/use-scroll-insets';
 import { getTaskCategoryMeta, TASK_CATEGORIES } from '@/lib/task-categories';
 import type { TaskCategory } from '@/types/narrative';
 
@@ -31,6 +32,7 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
   const [category, setCategory] = useState<TaskCategory>('cleaning');
 
   const selectedMeta = getTaskCategoryMeta(category);
+  const modalBottomInset = useModalBottomInset(32);
 
   const handleClose = () => {
     setTitle('');
@@ -66,7 +68,7 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
           <ScrollView
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
-            contentContainerStyle={styles.sheetScroll}>
+            contentContainerStyle={[styles.sheetScroll, { paddingBottom: modalBottomInset }]}>
             <View style={styles.header}>
               <Text style={[styles.eyebrow, { color: palette.gold }]}>NEW BOUNTY</Text>
               <Pressable onPress={handleClose} hitSlop={12}>
@@ -75,7 +77,7 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
             </View>
 
             <Text style={[styles.title, { color: palette.bone }]}>Add Quest</Text>
-            <Text style={[styles.sub, { color: palette.fog }]}>
+            <Text style={[styles.sub, { color: palette.fog }]} numberOfLines={2}>
               Turn a real task into a {currentChapter.title} mission.
             </Text>
 
@@ -158,7 +160,6 @@ const styles = StyleSheet.create({
   sheetScroll: {
     paddingHorizontal: GameLayout.screenPaddingHorizontal,
     paddingTop: 16,
-    paddingBottom: 32,
     gap: 12,
   },
   header: {

@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown, FadeOut } from 'react-native-reanimated';
 
 import { GlowButton } from '@/components/rpg/glow-button';
+import { OnboardingScroll } from '@/components/rpg/onboarding-scroll';
 import { ScreenShell } from '@/components/rpg/screen-shell';
 import { SectionHeader } from '@/components/rpg/section-header';
 import { ONBOARDING_PREMISE_BEATS } from '@/data/narrative/onboarding-premise';
@@ -28,64 +29,65 @@ export function OnboardingPremiseScreen() {
 
   return (
     <ScreenShell edges={['top', 'bottom']}>
-      <Animated.View entering={FadeInDown.duration(500)} style={styles.header}>
-        <SectionHeader eyebrow="THE PREMISE" title="HOW PIONEER\nWORKS" />
-      </Animated.View>
-
-      <View style={styles.beatArea}>
-        <Animated.View
-          key={beat.badge}
-          entering={FadeIn.duration(450)}
-          exiting={FadeOut.duration(200)}
-          style={[styles.beatCard, { backgroundColor: palette.panel, borderColor: palette.gold }]}>
-          <View style={[styles.accent, { backgroundColor: palette.primary }]} />
-          <View style={styles.beatInner}>
-            <Text style={[styles.beatBadge, { color: palette.accent }]}>BEAT {beat.badge}</Text>
-            <Text style={[styles.beatTitle, { color: palette.bone }]} numberOfLines={3}>
-              {beat.title}
-            </Text>
-            <Text style={[styles.beatLine, { color: palette.fog }]}>{beat.line}</Text>
-          </View>
+      <OnboardingScroll
+        footer={
+          isLast ? (
+            <GlowButton
+              label="CHOOSE YOUR UNIVERSE"
+              hint="BEGIN YOUR SAGA"
+              onPress={() => router.push('/onboarding/theme' as Href)}
+            />
+          ) : (
+            <Pressable onPress={advance} style={styles.tapZone}>
+              <Animated.Text entering={FadeIn} style={[styles.tapHint, { color: palette.gold }]}>
+                TAP TO CONTINUE ›
+              </Animated.Text>
+            </Pressable>
+          )
+        }>
+        <Animated.View entering={FadeInDown.duration(500)} style={styles.header}>
+          <SectionHeader eyebrow="THE PREMISE" title="HOW PIONEER\nWORKS" />
         </Animated.View>
 
-        <View style={styles.dots}>
-          {ONBOARDING_PREMISE_BEATS.map((item, index) => (
-            <View
-              key={item.badge}
-              style={[
-                styles.dot,
-                {
-                  backgroundColor: index <= beatIndex ? palette.gold : palette.panelBorder,
-                  width: index === beatIndex ? 22 : 8,
-                },
-              ]}
-            />
-          ))}
+        <View style={styles.beatArea}>
+          <Animated.View
+            key={beat.badge}
+            entering={FadeIn.duration(450)}
+            exiting={FadeOut.duration(200)}
+            style={[styles.beatCard, { backgroundColor: palette.panel, borderColor: palette.gold }]}>
+            <View style={[styles.accent, { backgroundColor: palette.primary }]} />
+            <View style={styles.beatInner}>
+              <Text style={[styles.beatBadge, { color: palette.accent }]}>BEAT {beat.badge}</Text>
+              <Text style={[styles.beatTitle, { color: palette.bone }]} numberOfLines={3}>
+                {beat.title}
+              </Text>
+              <Text style={[styles.beatLine, { color: palette.fog }]}>{beat.line}</Text>
+            </View>
+          </Animated.View>
+
+          <View style={styles.dots}>
+            {ONBOARDING_PREMISE_BEATS.map((item, index) => (
+              <View
+                key={item.badge}
+                style={[
+                  styles.dot,
+                  {
+                    backgroundColor: index <= beatIndex ? palette.gold : palette.panelBorder,
+                    width: index === beatIndex ? 22 : 8,
+                  },
+                ]}
+              />
+            ))}
+          </View>
         </View>
-      </View>
-
-      {!isLast && (
-        <Pressable onPress={advance} style={styles.tapZone}>
-          <Animated.Text entering={FadeIn} style={[styles.tapHint, { color: palette.gold }]}>
-            TAP TO CONTINUE ›
-          </Animated.Text>
-        </Pressable>
-      )}
-
-      {isLast && (
-        <GlowButton
-          label="CHOOSE YOUR UNIVERSE"
-          hint="BEGIN YOUR SAGA"
-          onPress={() => router.push('/onboarding/theme' as Href)}
-        />
-      )}
+      </OnboardingScroll>
     </ScreenShell>
   );
 }
 
 const styles = StyleSheet.create({
   header: { paddingTop: 24 },
-  beatArea: { flex: 1, justifyContent: 'center', gap: GameLayout.screenContentGap },
+  beatArea: { justifyContent: 'center', gap: GameLayout.screenContentGap, minHeight: 280 },
   beatCard: {
     borderWidth: 2,
     overflow: 'hidden',
@@ -103,6 +105,6 @@ const styles = StyleSheet.create({
   },
   dots: { flexDirection: 'row', justifyContent: 'center', gap: 6, alignItems: 'center' },
   dot: { height: 8, borderRadius: 1 },
-  tapZone: { alignItems: 'flex-end', paddingBottom: 8 },
+  tapZone: { alignItems: 'flex-end', paddingBottom: 4 },
   tapHint: { fontFamily: GameFonts.ui, fontSize: 11, letterSpacing: 2 },
 });

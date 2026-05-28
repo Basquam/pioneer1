@@ -5,6 +5,7 @@ import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 
 import { CharacterDialoguePanel } from '@/components/rpg/character-dialogue-panel';
 import { GlowButton } from '@/components/rpg/glow-button';
+import { OnboardingScroll } from '@/components/rpg/onboarding-scroll';
 import { ScreenShell } from '@/components/rpg/screen-shell';
 import { SectionHeader } from '@/components/rpg/section-header';
 import { VillainMeter } from '@/components/rpg/villain-meter';
@@ -44,33 +45,35 @@ export function OnboardingIntroScreen() {
 
   return (
     <ScreenShell edges={['top', 'bottom']}>
-      <SectionHeader
-        eyebrow={`PROLOGUE · ${activeSaga.title.toUpperCase()}`}
-        title={activeUniverse.locationName.toUpperCase()}
-      />
-      <VillainMeter />
+      <OnboardingScroll
+        footer={showStart ? <GlowButton label="ENTER HQ" hint="CLAIM YOUR FIRST BOUNTIES" onPress={handleStart} /> : undefined}>
+        <SectionHeader
+          eyebrow={`PROLOGUE · ${activeSaga.title.toUpperCase()}`}
+          title={activeUniverse.locationName.toUpperCase()}
+        />
+        <VillainMeter />
 
-      <View style={styles.dialogueArea}>
-        {beat && (
-          <CharacterDialoguePanel
-            key={beatIndex}
-            beat={beat}
-            onTypingComplete={() => setTypingDone(true)}
-          />
-        )}
-        {typingDone && !showStart && !isLast && (
-          <Animated.Text entering={FadeIn} exiting={FadeOut} style={[styles.tap, { color: activeUniverse.palette.gold }]}>
-            TAP TO CONTINUE ›
-          </Animated.Text>
-        )}
-      </View>
+        <View style={styles.dialogueArea}>
+          {beat && (
+            <CharacterDialoguePanel
+              key={beatIndex}
+              beat={beat}
+              onTypingComplete={() => setTypingDone(true)}
+            />
+          )}
+          {typingDone && !showStart && !isLast && (
+            <Animated.Text
+              entering={FadeIn}
+              exiting={FadeOut}
+              style={[styles.tap, { color: activeUniverse.palette.gold }]}>
+              TAP TO CONTINUE ›
+            </Animated.Text>
+          )}
+        </View>
+      </OnboardingScroll>
 
       {typingDone && !showStart && !isLast && (
         <View style={StyleSheet.absoluteFill} onStartShouldSetResponder={() => true} onResponderRelease={advance} />
-      )}
-
-      {showStart && (
-        <GlowButton label="ENTER HQ" hint="CLAIM YOUR FIRST BOUNTIES" onPress={handleStart} />
       )}
     </ScreenShell>
   );
@@ -78,10 +81,11 @@ export function OnboardingIntroScreen() {
 
 const styles = StyleSheet.create({
   dialogueArea: {
-    flex: 1,
+    flexGrow: 1,
     justifyContent: 'flex-end',
-    paddingBottom: GameLayout.screenContentGap,
     gap: GameLayout.screenContentGap,
+    minHeight: 240,
+    paddingBottom: GameLayout.screenContentGap,
   },
   tap: {
     fontFamily: GameFonts.ui,

@@ -52,7 +52,7 @@ export function AddQuestTrigger({ variant }: AddQuestTriggerProps) {
           onPress={open}
           style={[styles.banner, { borderColor: palette.accent, backgroundColor: `${palette.panel}cc` }]}>
           <Text style={[styles.bannerLabel, { color: palette.accent }]}>+ ADD QUEST</Text>
-          <Text style={[styles.bannerSub, { color: palette.fog }]}>
+          <Text style={[styles.bannerSub, { color: palette.fog }]} numberOfLines={2}>
             Turn your real task into a story mission
           </Text>
         </Pressable>

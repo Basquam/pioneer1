@@ -2,25 +2,39 @@ import { type ReactNode } from 'react';
 import { ScrollView, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { GameLayout } from '@/constants/layout';
+import { useTabBarScrollInset } from '@/hooks/use-scroll-insets';
 
 type ScreenScrollProps = {
   children: ReactNode;
   contentContainerStyle?: StyleProp<ViewStyle>;
+  /** Set false for non-tab screens that manage their own bottom inset. */
+  includeTabBarInset?: boolean;
 };
 
-export function ScreenScroll({ children, contentContainerStyle }: ScreenScrollProps) {
+export function ScreenScroll({
+  children,
+  contentContainerStyle,
+  includeTabBarInset = true,
+}: ScreenScrollProps) {
+  const tabBarInset = useTabBarScrollInset();
+
   return (
     <ScrollView
-      contentContainerStyle={[styles.scroll, contentContainerStyle]}
+      style={styles.scroll}
+      contentContainerStyle={[
+        includeTabBarInset && { paddingBottom: tabBarInset },
+        contentContainerStyle,
+      ]}
       showsVerticalScrollIndicator={false}
-      keyboardShouldPersistTaps="handled">
+      keyboardShouldPersistTaps="handled"
+      nestedScrollEnabled>
       <View style={styles.pad}>{children}</View>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  scroll: { paddingBottom: GameLayout.scrollBottomInset },
+  scroll: { flex: 1 },
   pad: {
     paddingHorizontal: GameLayout.screenPaddingHorizontal,
     paddingTop: GameLayout.screenPaddingTop,

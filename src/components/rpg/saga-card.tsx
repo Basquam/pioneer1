@@ -39,7 +39,9 @@ export function SagaCard({
           },
         ]}>
         <View style={styles.headerRow}>
-          <Text style={[styles.title, { color: palette.bone }]}>{saga.title}</Text>
+          <Text style={[styles.title, { color: palette.bone }]} numberOfLines={2}>
+            {saga.title}
+          </Text>
           <View
             style={[
               styles.statusBadge,
@@ -58,7 +60,9 @@ export function SagaCard({
         <Text style={[styles.value, { color: palette.bone }]}>{playerRole}</Text>
 
         <Text style={[styles.label, { color: palette.accent }]}>STORY FANTASY</Text>
-        <Text style={[styles.summary, { color: palette.fog }]}>{saga.summary}</Text>
+        <Text style={[styles.summary, { color: palette.fog }]} numberOfLines={4}>
+          {saga.summary}
+        </Text>
 
         {saga.villainName ? (
           <>
@@ -91,8 +95,8 @@ const styles = StyleSheet.create({
     gap: 4,
     transform: [{ skewX: '-2deg' }],
   },
-  headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
-  title: { fontFamily: GameFonts.ui, fontSize: 18, letterSpacing: 2, flex: 1 },
+  headerRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },
+  title: { fontFamily: GameFonts.ui, fontSize: 18, letterSpacing: 2, flex: 1, minWidth: 120 },
   statusBadge: {
     borderWidth: 1,
     paddingHorizontal: 6,

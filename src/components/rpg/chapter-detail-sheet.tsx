@@ -9,6 +9,7 @@ import { parseDialogueLine } from '@/lib/narrative-helpers';
 import { territoryStatusLabel } from '@/lib/territory-map';
 import type { ChapterStatus } from '@/lib/chapter-progress';
 import { useGame } from '@/hooks/use-game';
+import { useModalBottomInset } from '@/hooks/use-scroll-insets';
 import type { Chapter } from '@/types/narrative';
 
 type ChapterDetailSheetProps = {
@@ -21,6 +22,7 @@ type ChapterDetailSheetProps = {
 export function ChapterDetailSheet({ visible, chapter, mode, onClose }: ChapterDetailSheetProps) {
   const { activeUniverse } = useGame();
   const { palette } = activeUniverse;
+  const modalBottomInset = useModalBottomInset(36);
 
   if (!visible || !mode || !chapter) return null;
 
@@ -37,6 +39,7 @@ export function ChapterDetailSheet({ visible, chapter, mode, onClose }: ChapterD
               backgroundColor: palette.night,
               borderColor: palette.panelBorder,
               maxHeight: GameLayout.modalMaxHeight,
+              paddingBottom: modalBottomInset,
             },
           ]}
           onPress={(event) => event.stopPropagation()}>
@@ -136,7 +139,6 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: GameLayout.screenPaddingHorizontal,
     paddingTop: 24,
-    paddingBottom: 36,
     gap: 14,
   },
   eyebrow: { fontFamily: GameFonts.ui, fontSize: 11, letterSpacing: 3 },

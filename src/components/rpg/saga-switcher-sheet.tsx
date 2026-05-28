@@ -5,6 +5,7 @@ import { SagaCard } from '@/components/rpg/saga-card';
 import { GameLayout } from '@/constants/layout';
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
+import { useModalBottomInset } from '@/hooks/use-scroll-insets';
 import { getCompletedChapterCountForSaga } from '@/lib/chapter-progress';
 import { getSagaUnlockHint, isSagaUnlocked } from '@/lib/reward-unlocks';
 
@@ -16,6 +17,7 @@ type SagaSwitcherSheetProps = {
 export function SagaSwitcherSheet({ visible, onClose }: SagaSwitcherSheetProps) {
   const { activeUniverse, activeSaga, playerProgress, switchSaga } = useGame();
   const { palette } = activeUniverse;
+  const modalBottomInset = useModalBottomInset(32);
 
   if (!visible) return null;
 
@@ -39,12 +41,15 @@ export function SagaSwitcherSheet({ visible, onClose }: SagaSwitcherSheetProps) 
               backgroundColor: palette.night,
               borderColor: palette.panelBorder,
               maxHeight: GameLayout.modalMaxHeight,
+              paddingBottom: modalBottomInset,
             },
           ]}
           onPress={(event) => event.stopPropagation()}>
           <Animated.View entering={FadeInUp.duration(400)} style={styles.header}>
             <Text style={[styles.eyebrow, { color: palette.accent }]}>STORYLINES</Text>
-            <Text style={[styles.title, { color: palette.bone }]}>CHOOSE YOUR SAGA</Text>
+            <Text style={[styles.title, { color: palette.bone }]} numberOfLines={2}>
+              CHOOSE YOUR SAGA
+            </Text>
             <Text style={[styles.subtitle, { color: palette.fog }]}>
               Switch between unlocked campaigns. Progress is saved per storyline.
             </Text>
@@ -95,7 +100,6 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     paddingHorizontal: GameLayout.screenPaddingHorizontal,
     paddingTop: 24,
-    paddingBottom: 32,
     gap: 12,
   },
   header: { gap: 6 },

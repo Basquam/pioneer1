@@ -18,6 +18,10 @@ import { GameProvider } from '@/context/game-context';
 import { AmbientAudioProvider } from '@/context/ambient-audio-context';
 
 SplashScreen.preventAutoHideAsync();
+SplashScreen.setOptions({
+  duration: 500,
+  fade: true,
+});
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();

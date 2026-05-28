@@ -21,7 +21,7 @@ export function SectionHeader({ eyebrow, title, right }: SectionHeaderProps) {
             {eyebrow}
           </Text>
         ) : null}
-        <Text style={[styles.title, { color: palette.bone }]} numberOfLines={3}>
+        <Text style={[styles.title, { color: palette.bone }]} numberOfLines={3} adjustsFontSizeToFit minimumFontScale={0.82}>
           {title}
         </Text>
       </View>
