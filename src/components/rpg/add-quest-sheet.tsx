@@ -78,7 +78,9 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
 
             <Text style={[styles.title, { color: palette.bone }]}>Add Quest</Text>
             <Text style={[styles.sub, { color: palette.fog }]} numberOfLines={2}>
-              Turn a real task into a {currentChapter.title} mission.
+              {currentChapter
+                ? `Turn a real task into a ${currentChapter.title} mission.`
+                : 'Turn a real task into a frontier mission.'}
             </Text>
 
             <Text style={[styles.label, { color: palette.gold }]}>REAL TASK</Text>

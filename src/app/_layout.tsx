@@ -16,6 +16,7 @@ import { useColorScheme } from 'react-native';
 
 import { GameProvider } from '@/context/game-context';
 import { AmbientAudioProvider } from '@/context/ambient-audio-context';
+import { NarrativeRecoveryGate } from '@/components/rpg/narrative-recovery-gate';
 
 SplashScreen.preventAutoHideAsync();
 SplashScreen.setOptions({
@@ -50,16 +51,18 @@ export default function RootLayout() {
     <GameProvider>
       <AmbientAudioProvider>
         <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-          <Stack
-            screenOptions={{
-              headerShown: false,
-              animation: 'fade',
-              contentStyle: { backgroundColor: '#050308' },
-            }}>
-            <Stack.Screen name="index" />
-            <Stack.Screen name="onboarding" options={{ animation: 'slide_from_right' }} />
-            <Stack.Screen name="(game)" options={{ animation: 'fade_from_bottom' }} />
-          </Stack>
+          <NarrativeRecoveryGate>
+            <Stack
+              screenOptions={{
+                headerShown: false,
+                animation: 'fade',
+                contentStyle: { backgroundColor: '#050308' },
+              }}>
+              <Stack.Screen name="index" />
+              <Stack.Screen name="onboarding" options={{ animation: 'slide_from_right' }} />
+              <Stack.Screen name="(game)" options={{ animation: 'fade_from_bottom' }} />
+            </Stack>
+          </NarrativeRecoveryGate>
         </ThemeProvider>
       </AmbientAudioProvider>
     </GameProvider>

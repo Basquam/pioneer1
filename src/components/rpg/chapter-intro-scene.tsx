@@ -15,15 +15,15 @@ type ChapterIntroSceneProps = {
 export function ChapterIntroScene({ visible, onComplete }: ChapterIntroSceneProps) {
   const { activeUniverse, currentChapter } = useGame();
   const { palette } = activeUniverse;
-  const beats = currentChapter.introScene;
+  const beats = currentChapter?.introScene ?? [];
   const [beatIndex, setBeatIndex] = useState(0);
   const [typingDone, setTypingDone] = useState(false);
 
   useEffect(() => {
-    if (!visible) return;
+    if (!visible || !currentChapter) return;
     setBeatIndex(0);
     setTypingDone(false);
-  }, [visible, currentChapter.id]);
+  }, [visible, currentChapter?.id, currentChapter]);
 
   const beat = beats[beatIndex];
   const isLast = beatIndex >= beats.length - 1;
@@ -40,7 +40,7 @@ export function ChapterIntroScene({ visible, onComplete }: ChapterIntroSceneProp
     setTypingDone(false);
   }, [isLast, onComplete, typingDone]);
 
-  if (!visible || !beat) return null;
+  if (!visible || !currentChapter || !beat) return null;
 
   return (
     <Modal visible transparent animationType="fade" statusBarTranslucent>

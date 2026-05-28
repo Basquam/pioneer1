@@ -19,6 +19,7 @@ export function StorylinesSection({ onOpenSwitcher }: StorylinesSectionProps) {
   );
   const completedChapters = getCompletedChapterCountForSaga(activeSaga, playerProgress);
   const totalChapters = activeSaga.chapters.length;
+  const hasUnlockedSagas = unlockedSagas.length > 0;
 
   return (
     <View
@@ -43,11 +44,19 @@ export function StorylinesSection({ onOpenSwitcher }: StorylinesSectionProps) {
       </Text>
 
       <Pressable
-        onPress={onOpenSwitcher}
-        style={[styles.switchButton, { borderColor: palette.gold }]}>
-        <Text style={[styles.switchLabel, { color: palette.gold }]}>CHANGE SAGA</Text>
+        onPress={hasUnlockedSagas ? onOpenSwitcher : undefined}
+        disabled={!hasUnlockedSagas}
+        style={[
+          styles.switchButton,
+          { borderColor: palette.gold, opacity: hasUnlockedSagas ? 1 : 0.55 },
+        ]}>
+        <Text style={[styles.switchLabel, { color: palette.gold }]}>
+          {hasUnlockedSagas ? 'CHANGE SAGA' : 'NO SAGAS UNLOCKED'}
+        </Text>
         <Text style={[styles.switchHint, { color: palette.fog }]}>
-          View unlocked storylines and switch campaigns
+          {hasUnlockedSagas
+            ? 'View unlocked storylines and switch campaigns'
+            : 'Complete the default saga to unlock more storylines'}
         </Text>
       </Pressable>
     </View>

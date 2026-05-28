@@ -38,7 +38,9 @@ export function DailyOperationsBriefing() {
         <View style={[styles.chapterBlock, { borderColor: palette.panelBorder }]}>
           <Text style={[styles.chapterLabel, { color: palette.accent }]}>TODAY&apos;S CHAPTER</Text>
           <Text style={[styles.chapterTitle, { color: palette.bone }]}>
-            Ch. {currentChapter.order} — {currentChapter.title}
+            {currentChapter
+              ? `Ch. ${currentChapter.order} — ${currentChapter.title}`
+              : 'No active chapter'}
           </Text>
         </View>
 

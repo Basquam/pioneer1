@@ -29,11 +29,13 @@ export function QuestsScreen() {
     storyLine,
     openAddQuestSheet,
     maybeShowVillainTaunt,
+    restoreDefaultStory,
   } = useGame();
 
   useEffect(() => {
+    if (!currentChapter) return;
     maybeShowVillainTaunt();
-  }, [currentChapter.id, maybeShowVillainTaunt]);
+  }, [currentChapter?.id, maybeShowVillainTaunt]);
 
   const { chapterBounties, userQuests } = useMemo(
     () => ({
@@ -48,6 +50,22 @@ export function QuestsScreen() {
   );
   const allChapterBountiesComplete =
     chapterBounties.length > 0 && chapterBounties.every((quest) => quest.completed);
+
+  if (!currentChapter) {
+    return (
+      <ScreenShell edges={['top']} padded={false}>
+        <ScreenScroll>
+          <SectionHeader eyebrow="BOUNTY BOARD" title="ACTIVE QUESTS" />
+          <CinematicEmptyState
+            title="No active chapter."
+            message="This saga has no active chapter right now. Restore the default storyline to pick up where the trail begins."
+            primaryLabel="Restore Default Story"
+            onPrimaryPress={restoreDefaultStory}
+          />
+        </ScreenScroll>
+      </ScreenShell>
+    );
+  }
 
   const leadBeat = currentChapter.introScene[0];
 

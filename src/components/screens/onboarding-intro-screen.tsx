@@ -14,8 +14,10 @@ import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
 
 export function OnboardingIntroScreen() {
-  const { activeUniverse, activeSaga, currentChapter, completeOnboarding, markChapterIntroSeen } = useGame();
-  const beats = currentChapter.introScene;
+  const { activeUniverse, activeSaga, currentChapter, completeOnboarding, markChapterIntroSeen } =
+    useGame();
+
+  const beats = currentChapter?.introScene ?? [];
   const [beatIndex, setBeatIndex] = useState(0);
   const [typingDone, setTypingDone] = useState(false);
   const [showStart, setShowStart] = useState(false);
@@ -24,12 +26,13 @@ export function OnboardingIntroScreen() {
   const isLast = beatIndex >= beats.length - 1;
 
   useEffect(() => {
+    if (!currentChapter) return;
     if (isLast && typingDone) {
       const t = setTimeout(() => setShowStart(true), 500);
       return () => clearTimeout(t);
     }
     setShowStart(false);
-  }, [isLast, typingDone]);
+  }, [currentChapter, isLast, typingDone]);
 
   const advance = useCallback(() => {
     if (!typingDone || isLast) return;
@@ -42,6 +45,10 @@ export function OnboardingIntroScreen() {
     completeOnboarding();
     router.replace('/(game)/hq' as Href);
   };
+
+  if (!currentChapter) {
+    return null;
+  }
 
   return (
     <ScreenShell edges={['top', 'bottom']}>

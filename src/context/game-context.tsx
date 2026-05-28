@@ -1,7 +1,15 @@
 import { createContext, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { type Href, router } from 'expo-router';
 
-import { getUniverse, UNIVERSES } from '@/data/narrative/wild-west-universe';
+import { UNIVERSES } from '@/data/narrative/wild-west-universe';
+import {
+  findUniverse,
+  getDefaultSaga,
+  getDefaultUniverse,
+  resolveNarrativeState,
+  restoreDefaultStoryProgress,
+} from '@/lib/narrative-state';
+import { narrativeWarn } from '@/lib/narrative-state-debug';
 import { convertTaskToUserQuest, createUserQuestId } from '@/lib/convert-task-to-quest';
 import {
   affinityToTier,
@@ -48,9 +56,10 @@ type GameContextValue = {
   activeUniverse: Universe;
   activeSaga: Saga;
   characters: NarrativeCharacter[];
-  currentChapter: Chapter;
+  currentChapter: Chapter | null;
   chapters: Chapter[];
   quests: BoardQuest[];
+  narrativeStateValid: boolean;
   hasOnboarded: boolean;
   playerProgress: PlayerProgress;
   player: {
@@ -92,6 +101,7 @@ type GameContextValue = {
   startUnlockedSagaFromChapterComplete: (sagaId: string, entryChapterId: string) => void;
   maybeShowVillainTaunt: () => void;
   resetProgress: () => Promise<void>;
+  restoreDefaultStory: () => void;
   devAddXp: (amount: number) => void;
   devCompleteCurrentChapter: () => void;
   devUnlockVultureGangChapters: () => void;
@@ -107,10 +117,6 @@ function getSaga(universe: Universe, sagaId: string): Saga {
     universe.sagas.find((s) => s.status === 'available') ??
     universe.sagas[0]
   );
-}
-
-function getChapter(saga: Saga, chapterId: string): Chapter {
-  return saga.chapters.find((c) => c.id === chapterId) ?? saga.chapters[0];
 }
 
 export function GameProvider({ children }: { children: ReactNode }) {
@@ -143,22 +149,32 @@ export function GameProvider({ children }: { children: ReactNode }) {
     void savePlayerProgress(progress);
   }, [isHydrated, progress]);
 
-  const activeUniverse = getUniverse(progress.selectedUniverseId);
-  const activeSaga = getSaga(activeUniverse, progress.selectedSagaId);
+  const resolvedNarrative = useMemo(() => resolveNarrativeState(progress), [progress]);
+  const narrativeStateValid = resolvedNarrative.isValid;
+  const activeUniverse = resolvedNarrative.universe ?? getDefaultUniverse();
+  const activeSaga = resolvedNarrative.saga ?? getDefaultSaga();
+  const currentChapter = resolvedNarrative.chapter;
   const chapters = activeSaga.chapters;
-  const activeChapterId = getSagaActiveChapterId(activeSaga, progress);
-  const currentChapter = getChapter(activeSaga, activeChapterId);
   const characters = activeSaga.characters;
   const sagaCompletedQuestIds = getSagaCompletedQuestIds(activeSaga, progress);
 
+  useEffect(() => {
+    if (!isHydrated || narrativeStateValid) return;
+    narrativeWarn('Narrative state invalid after hydrate', resolvedNarrative.issues);
+  }, [isHydrated, narrativeStateValid, resolvedNarrative.issues]);
+
   const quests = useMemo(
-    () => buildBoardQuests(currentChapter, activeSaga, progress),
+    () =>
+      currentChapter ? buildBoardQuests(currentChapter, activeSaga, progress) : [],
     [activeSaga, currentChapter, progress],
   );
 
   const completedQuestCount = quests.filter((q) => q.completed).length;
-  const completedTemplateCount = countCompletedTemplates(currentChapter, sagaCompletedQuestIds);
+  const completedTemplateCount = currentChapter
+    ? countCompletedTemplates(currentChapter, sagaCompletedQuestIds)
+    : 0;
   const allQuestsComplete =
+    currentChapter !== null &&
     currentChapter.questTemplates.length > 0 &&
     completedTemplateCount === currentChapter.questTemplates.length;
 
@@ -166,9 +182,15 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const rank = rankForLevel(activeSaga.rankTitles, levelInfo.level);
   const villainInfluence = progress.villainInfluenceBySaga[activeSaga.id] ?? 100;
 
-  const storyLine = allQuestsComplete ? currentChapter.successDialogue : currentChapter.introDialogue;
+  const storyLine = currentChapter
+    ? allQuestsComplete
+      ? currentChapter.successDialogue
+      : currentChapter.introDialogue
+    : '';
   const showChapterIntro =
-    !progress.seenChapterIntros.includes(currentChapter.id) && chapterComplete === null;
+    currentChapter !== null &&
+    !progress.seenChapterIntros.includes(currentChapter.id) &&
+    chapterComplete === null;
 
   const player = useMemo(
     () => ({
@@ -189,8 +211,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
   );
 
   const selectUniverse = useCallback((universeId: string) => {
-    const universe = getUniverse(universeId);
-    if (universe.status === 'locked') return;
+    const universe = findUniverse(universeId);
+    if (!universe || universe.status === 'locked') return;
 
     const availableSaga = universe.sagas.find((s) => s.status === 'available') ?? universe.sagas[0];
     const firstChapter = availableSaga?.chapters[0];
@@ -272,7 +294,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const addUserQuest = useCallback(
     (originalTitle: string, category: TaskCategory) => {
       const trimmed = originalTitle.trim();
-      if (!trimmed) return;
+      if (!trimmed || !currentChapter) return;
 
       const converted = convertTaskToUserQuest(
         trimmed,
@@ -317,15 +339,18 @@ export function GameProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const markChapterIntroSeen = useCallback(() => {
+    if (!currentChapter) return;
+
     setProgress((prev) => ({
       ...prev,
       seenChapterIntros: prev.seenChapterIntros.includes(currentChapter.id)
         ? prev.seenChapterIntros
         : [...prev.seenChapterIntros, currentChapter.id],
     }));
-  }, [currentChapter.id]);
+  }, [currentChapter]);
 
   const maybeShowVillainTaunt = useCallback(() => {
+    if (!currentChapter) return;
     if (narrativeMoment) return;
     if (allQuestsComplete) return;
     if (getSagaDismissedTauntChapterId(activeSaga.id, progress) === currentChapter.id) return;
@@ -343,14 +368,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
     activeSaga,
     allQuestsComplete,
     completedQuestCount,
-    currentChapter.id,
-    currentChapter.order,
+    currentChapter,
     narrativeMoment,
     progress.dismissedTauntBySagaId,
   ]);
 
   const completeQuest = useCallback(
     (questId: string) => {
+      if (!currentChapter) return;
       if (questComplete || chapterComplete) return;
 
       const boardQuest = findBoardQuest(quests, questId);
@@ -468,7 +493,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setNarrativeMoment((moment) => {
       if (!moment) return null;
 
-      if (moment.type === 'villain_taunt') {
+      if (moment.type === 'villain_taunt' && currentChapter) {
         setProgress((prev) => ({
           ...prev,
           dismissedTauntBySagaId: {
@@ -480,7 +505,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
       return null;
     });
-  }, [activeSaga.id, currentChapter.id]);
+  }, [activeSaga.id, currentChapter]);
 
   const finalizeChapterComplete = useCallback(
     (options?: { switchToSagaId?: string; entryChapterId?: string }) => {
@@ -554,7 +579,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const devCompleteCurrentChapter = useCallback(() => {
-    if (!__DEV__) return;
+    if (!__DEV__ || !currentChapter) return;
 
     const templateIds = currentChapter.questTemplates.map((template) => template.id);
     const nextChapter = activeSaga.chapters.find(
@@ -641,6 +666,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
     }));
   }, []);
 
+  const restoreDefaultStory = useCallback(() => {
+    setProgress((prev) => restoreDefaultStoryProgress(prev));
+    setNarrativeMoment(null);
+    setChapterComplete(null);
+    setQuestComplete(null);
+    pendingChapterCompleteRef.current = null;
+  }, []);
+
   const resetProgress = useCallback(async () => {
     await clearPlayerProgress();
     const fresh = createInitialProgress();
@@ -665,6 +698,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       chapters,
       quests,
       hasOnboarded: progress.hasOnboarded,
+      narrativeStateValid,
       playerProgress: progress,
       player,
       storyLine,
@@ -696,6 +730,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       startUnlockedSagaFromChapterComplete,
       maybeShowVillainTaunt,
       resetProgress,
+      restoreDefaultStory,
       devAddXp,
       devCompleteCurrentChapter,
       devUnlockVultureGangChapters,
@@ -731,11 +766,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
       narrativeMoment,
       openAddQuestSheet,
       player,
+      narrativeStateValid,
       progress,
       questComplete,
       questCreated,
       quests,
       resetProgress,
+      restoreDefaultStory,
       selectSaga,
       selectUniverse,
       showChapterIntro,

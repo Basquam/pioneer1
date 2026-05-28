@@ -30,8 +30,13 @@ export function HqScreen() {
   const [sagaSwitcherVisible, setSagaSwitcherVisible] = useState(false);
 
   useEffect(() => {
+    if (!currentChapter) return;
     maybeShowVillainTaunt();
-  }, [currentChapter.id, maybeShowVillainTaunt]);
+  }, [currentChapter?.id, maybeShowVillainTaunt]);
+
+  const chapterLabel = currentChapter
+    ? `${activeSaga.title.toUpperCase()} · CH ${currentChapter.order}`
+    : activeSaga.title.toUpperCase();
 
   return (
     <ScreenShell edges={['top']} padded={false}>
@@ -39,7 +44,7 @@ export function HqScreen() {
         <Animated.View entering={FadeInDown.duration(500)}>
           <Text style={styles.icon}>{activeUniverse.icon}</Text>
           <SectionHeader
-            eyebrow={`${activeSaga.title.toUpperCase()} · CH ${currentChapter.order}`}
+            eyebrow={chapterLabel}
             title={`${activeUniverse.locationName} HQ`}
             right={activeUniverse.name}
           />
@@ -54,7 +59,7 @@ export function HqScreen() {
         <View style={styles.quickRow}>
           <QuickLink
             label="STORY"
-            sub={`Ch. ${currentChapter.order} progress`}
+            sub={currentChapter ? `Ch. ${currentChapter.order} progress` : 'Chapter unavailable'}
             color={activeUniverse.palette.gold}
             onPress={() => router.push('/(game)/story' as Href)}
           />

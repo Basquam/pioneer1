@@ -1,7 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import { DUST_AND_IRON_UNIVERSE, getUniverse } from '@/data/narrative/wild-west-universe';
-import type { Chapter, PlayerProgress, Saga, Universe } from '@/types/narrative';
+import { DUST_AND_IRON_UNIVERSE } from '@/data/narrative/wild-west-universe';
+import { findUniverse } from '@/lib/narrative-state';
+import { narrativeWarn } from '@/lib/narrative-state-debug';
+import type { PlayerProgress, Universe } from '@/types/narrative';
 import { migrateLegacyProgress } from '@/lib/saga-progress';
 
 const STORAGE_KEY = '@pioneer/player-progress';
@@ -9,18 +11,6 @@ const STORAGE_KEY = '@pioneer/player-progress';
 const defaultUniverseId = DUST_AND_IRON_UNIVERSE.id;
 const defaultSagaId = DUST_AND_IRON_UNIVERSE.sagas[0]?.id ?? '';
 const defaultChapterId = DUST_AND_IRON_UNIVERSE.sagas[0]?.chapters[0]?.id ?? '';
-
-function getSaga(universe: Universe, sagaId: string): Saga {
-  return (
-    universe.sagas.find((s) => s.id === sagaId) ??
-    universe.sagas.find((s) => s.status === 'available') ??
-    universe.sagas[0]
-  );
-}
-
-function getChapter(saga: Saga, chapterId: string): Chapter {
-  return saga.chapters.find((c) => c.id === chapterId) ?? saga.chapters[0];
-}
 
 function createDefaultSagaMaps(universe: Universe): Pick<
   PlayerProgress,
@@ -89,24 +79,26 @@ function normalizeProgress(raw: Partial<PlayerProgress> & Record<string, unknown
     seenChapterIntros: raw.seenChapterIntros ?? base.seenChapterIntros,
   };
 
-  const universe = getUniverse(merged.selectedUniverseId);
-  const sagaMaps = migrateLegacyProgress(raw, universe, merged.selectedSagaId);
-  const saga = getSaga(universe, merged.selectedSagaId);
-  const chapter = getChapter(saga, sagaMaps.currentChapterId);
+  const universeForMigration = findUniverse(merged.selectedUniverseId) ?? DUST_AND_IRON_UNIVERSE;
+  if (!findUniverse(merged.selectedUniverseId)) {
+    narrativeWarn('Stored universe id not found during normalize', merged.selectedUniverseId);
+  }
+
+  const sagaMaps = migrateLegacyProgress(raw, universeForMigration, merged.selectedSagaId);
 
   return {
     ...merged,
     ...sagaMaps,
-    selectedUniverseId: universe.id,
-    selectedSagaId: saga.id,
-    currentChapterId: chapter.id,
+    selectedUniverseId: merged.selectedUniverseId,
+    selectedSagaId: merged.selectedSagaId,
+    currentChapterId: merged.currentChapterId || sagaMaps.currentChapterId,
     activeChapterBySagaId: {
       ...sagaMaps.activeChapterBySagaId,
-      [saga.id]: chapter.id,
+      ...merged.activeChapterBySagaId,
     },
     villainInfluenceBySaga: {
       ...merged.villainInfluenceBySaga,
-      [saga.id]: merged.villainInfluenceBySaga[saga.id] ?? 100,
+      [merged.selectedSagaId]: merged.villainInfluenceBySaga[merged.selectedSagaId] ?? 100,
     },
   };
 }

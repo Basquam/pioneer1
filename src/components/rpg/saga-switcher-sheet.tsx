@@ -2,6 +2,7 @@ import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-nati
 import Animated, { FadeInUp } from 'react-native-reanimated';
 
 import { SagaCard } from '@/components/rpg/saga-card';
+import { CinematicEmptyState } from '@/components/rpg/cinematic-empty-state';
 import { GameLayout } from '@/constants/layout';
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
@@ -20,6 +21,10 @@ export function SagaSwitcherSheet({ visible, onClose }: SagaSwitcherSheetProps) 
   const modalBottomInset = useModalBottomInset(32);
 
   if (!visible) return null;
+
+  const unlockedSagas = activeUniverse.sagas.filter((saga) =>
+    isSagaUnlocked(saga, playerProgress.unlockedRewards),
+  );
 
   const handleSelect = (sagaId: string) => {
     if (sagaId === activeSaga.id) {
@@ -56,30 +61,39 @@ export function SagaSwitcherSheet({ visible, onClose }: SagaSwitcherSheetProps) 
           </Animated.View>
 
           <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-            {activeUniverse.sagas.map((saga, index) => {
-              const unlocked = isSagaUnlocked(saga, playerProgress.unlockedRewards);
-              const completedChapters = getCompletedChapterCountForSaga(saga, playerProgress);
-              const totalChapters = saga.chapters.length;
+            {unlockedSagas.length === 0 ? (
+              <CinematicEmptyState
+                title="No unlocked storylines yet."
+                message="Ride through the Vulture Gang saga to unlock more campaigns across Dustfall."
+                primaryLabel="CLOSE"
+                onPrimaryPress={onClose}
+              />
+            ) : (
+              activeUniverse.sagas.map((saga, index) => {
+                const unlocked = isSagaUnlocked(saga, playerProgress.unlockedRewards);
+                const completedChapters = getCompletedChapterCountForSaga(saga, playerProgress);
+                const totalChapters = saga.chapters.length;
 
-              return (
-                <View key={saga.id} style={styles.cardWrap}>
-                  <SagaCard
-                    saga={saga}
-                    palette={palette}
-                    selected={activeSaga.id === saga.id}
-                    unlocked={unlocked}
-                    unlockHint={getSagaUnlockHint(saga)}
-                    index={index}
-                    onPress={() => handleSelect(saga.id)}
-                  />
-                  {unlocked && totalChapters > 0 && (
-                    <Text style={[styles.progressHint, { color: palette.fog }]}>
-                      {completedChapters}/{totalChapters} chapters cleared
-                    </Text>
-                  )}
-                </View>
-              );
-            })}
+                return (
+                  <View key={saga.id} style={styles.cardWrap}>
+                    <SagaCard
+                      saga={saga}
+                      palette={palette}
+                      selected={activeSaga.id === saga.id}
+                      unlocked={unlocked}
+                      unlockHint={getSagaUnlockHint(saga)}
+                      index={index}
+                      onPress={() => handleSelect(saga.id)}
+                    />
+                    {unlocked && totalChapters > 0 && (
+                      <Text style={[styles.progressHint, { color: palette.fog }]}>
+                        {completedChapters}/{totalChapters} chapters cleared
+                      </Text>
+                    )}
+                  </View>
+                );
+              })
+            )}
           </ScrollView>
 
           <Pressable onPress={onClose} style={[styles.closeButton, { borderColor: palette.panelBorder }]}>

@@ -104,8 +104,16 @@ export function StoryScreen() {
         )}
 
         <SectionLabel>SAGA CHAPTERS</SectionLabel>
-        <View style={styles.trail}>
-          {chapterRows.map(({ chapter, status }, index) => (
+        {chapters.length === 0 ? (
+          <CinematicEmptyState
+            title="No chapters available."
+            message={`${activeSaga.title} doesn't have playable chapters yet. Switch to an unlocked saga or restore the default storyline.`}
+            primaryLabel="SWITCH SAGA"
+            onPrimaryPress={() => setSagaSwitcherVisible(true)}
+          />
+        ) : (
+          <View style={styles.trail}>
+            {chapterRows.map(({ chapter, status }, index) => (
             <View key={chapter.id} style={styles.trailRow}>
               <View style={styles.rail}>
                 <View
@@ -144,7 +152,8 @@ export function StoryScreen() {
               </View>
             </View>
           ))}
-        </View>
+          </View>
+        )}
       </ScreenScroll>
 
       <ChapterDetailSheet
