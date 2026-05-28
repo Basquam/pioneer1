@@ -37,6 +37,8 @@ export type NarrativeCharacter = {
   role: string;
   personality: string;
   isVillain?: boolean;
+  /** Character-specific affinity label — e.g. Trust, Respect, Rivalry. */
+  affinityLabel?: string;
   lines: {
     greeting: string[];
     chapterIntro: string[];

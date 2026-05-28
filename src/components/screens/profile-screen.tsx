@@ -151,7 +151,7 @@ export function ProfileScreen() {
             key={character.id}
             character={character}
             index={i}
-            relationship={playerProgress.relationshipByCharacter[character.id]}
+            affinity={playerProgress.characterAffinity[character.id] ?? 0}
           />
         ))}
 

@@ -33,28 +33,32 @@ export const IRON_RAILWAY_CHAPTERS: Chapter[] = [
     title: 'First Shipment',
     territoryName: 'Railyard Gate',
     mapPosition: { x: 14, y: 80 },
-    summary: 'Your first freight run must leave on time or Vane claims the whole line.',
+    summary:
+      'Your first freight run after High Noon — progress always costs something, and Vane already sent the invoice.',
     dramaticPurpose: 'Establish the logistics fantasy and corporate threat.',
-    introDialogue: 'Station Master Briggs: First shipment’s on the platform. Move it clean, move it fast — Vane’s already counting our failures.',
+    introDialogue:
+      'Station Master Briggs: You rode High Noon and kept Dustfall breathing. Now the bill arrives — first shipment’s on the platform, and Vane’s already counting our failures.',
     introScene: [
       {
         characterId: BRIGGS_ID,
-        line: 'Junior manager — manifest’s live, crew’s waiting. This run sets the tone for every route after it.',
+        line: 'Junior manager — Mercer vouched for you, and High Noon bought us time. Manifest’s live, crew’s waiting. Progress always costs something — pay in sweat before Vane collects in deeds.',
         badge: 'CHAPTER I',
       },
       {
         characterId: SILAS_VANE_ID,
-        line: 'How charming. A debut shipment. Do try not to embarrass the frontier.',
+        line: 'How charming. A debut shipment from the hero of High Noon. Do try not to embarrass the frontier — my shareholders hate wasted theater.',
         badge: 'VILLAIN',
       },
       {
         characterId: BRIGGS_ID,
-        line: 'Ignore the silk hat. Keep the platform clear and the cars coupled.',
+        line: 'Ignore the silk hat. Keep the platform clear and the cars coupled. The town eats because we move on time.',
         badge: 'ORDERS',
       },
     ],
-    successDialogue: 'Station Master Briggs: First shipment cleared. The line stays ours — for now.',
-    failureDialogue: 'Station Master Briggs: Vane’s men are smiling. Fix the backlog before the next bell.',
+    successDialogue:
+      'Station Master Briggs: First shipment cleared. The line stays ours — for now. But Vane filed a hold on Cargo Six overnight. He doesn’t want us fast — he wants us tired.',
+    failureDialogue:
+      'Station Master Briggs: Vane’s men are smiling. Fix the backlog before the next bell — hunger downline doesn’t negotiate.',
     questTemplates: [
       template('first-shipment', 'cleaning', 'Sweep the Loading Dock', 'Clean kitchen and counters', 'Spilled grain hides sabotage under the planks.', 115, 8, BRIGGS_ID),
       template('first-shipment', 'work', 'Sign the Manifest', 'Complete one deep work block', 'One unsigned page stops a whole train.', 120, 9, BRIGGS_ID),
@@ -70,28 +74,32 @@ export const IRON_RAILWAY_CHAPTERS: Chapter[] = [
     title: 'Delayed Cargo',
     territoryName: 'Cargo Hold Six',
     mapPosition: { x: 32, y: 62 },
-    summary: 'Vane slows the line with red tape while Dustfall waits on critical freight.',
+    summary:
+      'Vane slows the line with red tape — proof that progress always costs something when power owns the clock.',
     dramaticPurpose: 'Raise stakes with deliberate corporate delay.',
-    introDialogue: 'Station Master Briggs: Cargo’s sitting in Hold Six. Vane filed three inspections overnight. We move anyway.',
+    introDialogue:
+      'Station Master Briggs: Cargo’s sitting in Hold Six. Vane filed three inspections overnight. We move anyway — towns don’t eat paperwork.',
     introScene: [
       {
         characterId: BRIGGS_ID,
-        line: 'Hold Six is backed up — medicine, timber, grain. Vane wants us to choke on paperwork.',
+        line: 'Hold Six is backed up — medicine, timber, grain. Vane wants us to choke on regulations while Dustfall counts the hours.',
         badge: 'CHAPTER II',
       },
       {
         characterId: SILAS_VANE_ID,
-        line: 'Safety regulations, manager. Wouldn’t want an *accident* on your precious line.',
+        line: 'Safety regulations, manager. Wouldn’t want an *accident* on your precious line. Progress always costs something — I merely itemize the price.',
         badge: 'VILLAIN',
       },
       {
         characterId: BRIGGS_ID,
-        line: 'Cut the delay where you can. Real towns don’t eat inspections.',
+        line: 'Cut the delay where you can. Real towns don’t eat inspections — they eat what we ship.',
         badge: 'FIELD REPORT',
       },
     ],
-    successDialogue: 'Station Master Briggs: Cargo rolling again. Vane lost this round on the clock.',
-    failureDialogue: 'Station Master Briggs: Hold Six is still locked. People downline are going hungry.',
+    successDialogue:
+      'Station Master Briggs: Cargo rolling again. Vane lost this round on the clock. But listen — three rail ties split clean through at the pass. That’s not weather. That’s invoice by vandalism.',
+    failureDialogue:
+      'Station Master Briggs: Hold Six is still locked. People downline are going hungry — and Vane’s lawyers are already drafting the blame.',
     questTemplates: [
       template('delayed-cargo', 'cleaning', 'Clear Hold Six', 'Deep clean one neglected area', 'Clutter slows every handoff between cars.', 120, 9, BRIGGS_ID),
       template('delayed-cargo', 'work', 'Override the Delay Order', 'Ship one important work task', 'One cleared form unlocks a dozen crates.', 125, 10, BRIGGS_ID),
@@ -107,28 +115,32 @@ export const IRON_RAILWAY_CHAPTERS: Chapter[] = [
     title: 'Broken Tracks',
     territoryName: 'Broken Tracks Pass',
     mapPosition: { x: 50, y: 44 },
-    summary: 'Sabotage on the main line threatens to sever Dustfall from the frontier.',
+    summary:
+      'Sabotage on the main line — progress always costs something when steel snaps and towns go silent.',
     dramaticPurpose: 'Shift from paperwork to physical infrastructure crisis.',
-    introDialogue: 'Station Master Briggs: Rails are cracked at the pass. Vane denies sabotage. We repair and run.',
+    introDialogue:
+      'Station Master Briggs: Rails are cracked at the pass. Vane denies sabotage. We repair and run — because closed tracks starve every town on the map.',
     introScene: [
       {
         characterId: BRIGGS_ID,
-        line: 'Three rail ties split clean through. That’s not weather — that’s invoice by vandalism.',
+        line: 'Three rail ties split clean through. That’s not weather — that’s Vane teaching us the price of independence.',
         badge: 'CHAPTER III',
       },
       {
         characterId: SILAS_VANE_ID,
-        line: 'Maintenance costs money, manager. Perhaps you should lease from someone competent.',
+        line: 'Maintenance costs money, manager. Perhaps you should lease from someone competent — progress always costs something, and you’re over budget.',
         badge: 'VILLAIN',
       },
       {
         characterId: BRIGGS_ID,
-        line: 'Get crews what they need. A closed pass strangles every town on the line.',
+        line: 'Get crews what they need. A closed pass strangles every settlement that trusted us after High Noon.',
         badge: 'ORDERS',
       },
     ],
-    successDialogue: 'Station Master Briggs: Tracks hold. First engine through the pass blew its whistle for us.',
-    failureDialogue: 'Station Master Briggs: The pass is still closed. Downline stations are rationing.',
+    successDialogue:
+      'Station Master Briggs: Tracks hold. First engine through the pass blew its whistle for us. But Vane slashed rates at the junction — freight war’s coming, and he fights with contracts, not wrenches.',
+    failureDialogue:
+      'Station Master Briggs: The pass is still closed. Downline stations are rationing — and Vane’s men are handing out leases.',
     questTemplates: [
       template('broken-tracks', 'cleaning', 'Clear the Ballast Pit', 'Declutter one messy zone', 'Loose stone hides snapped spikes.', 130, 10, BRIGGS_ID),
       template('broken-tracks', 'work', 'Repair Schedule Dispatch', 'Complete one admin/work task', 'Crews move on orders, not hope.', 130, 10, BRIGGS_ID),
@@ -144,28 +156,32 @@ export const IRON_RAILWAY_CHAPTERS: Chapter[] = [
     title: 'Freight War',
     territoryName: 'Freight War Junction',
     mapPosition: { x: 68, y: 26 },
-    summary: 'Vane undercuts your routes while rival contracts poach your carriers.',
+    summary:
+      'Open economic warfare on the network — progress always costs something when rivals undercut your lifeline.',
     dramaticPurpose: 'Escalate to open economic warfare on the network.',
-    introDialogue: 'Station Master Briggs: Freight war’s on. Vane slashed rates to starve us. Hold the junction or lose the map.',
+    introDialogue:
+      'Station Master Briggs: Freight war’s on. Vane slashed rates to starve us. Hold the junction or lose the map — and every town we promised to feed.',
     introScene: [
       {
         characterId: SILAS_VANE_ID,
-        line: 'Competition is healthy, manager. I simply compete with lawyers and locked sidings.',
+        line: 'Competition is healthy, manager. I simply compete with lawyers and locked sidings. You wanted a modern frontier — here is the tariff.',
         badge: 'CHAPTER IV',
       },
       {
         characterId: BRIGGS_ID,
-        line: 'He’s poaching every carrier we trained. Fight with reliability — it’s the one thing he can’t fake.',
+        line: 'He’s poaching every carrier we trained. Fight with reliability — it’s the one thing he can’t fake on a ledger.',
         badge: 'STAND FAST',
       },
       {
         characterId: BRIGGS_ID,
-        line: 'Junction’s the heart. Keep the switches clean and the schedules honest.',
+        line: 'Junction’s the heart. Keep the switches clean and the schedules honest. Golden Route opens at noon — win there or Vane owns the territory.',
         badge: 'MIDNIGHT',
       },
     ],
-    successDialogue: 'Station Master Briggs: Junction held. Shippers are coming back to our timetable.',
-    failureDialogue: 'Station Master Briggs: We lost two contracts today. Win tomorrow or the line goes dark.',
+    successDialogue:
+      'Station Master Briggs: Junction held. Shippers are coming back to our timetable. One more run, manager — Golden Route terminal at noon. Vane wants the deed. We run the line and keep it public.',
+    failureDialogue:
+      'Station Master Briggs: We lost two contracts today. Win tomorrow or the line goes dark — and Dustfall eats last.',
     questTemplates: [
       template('freight-war', 'cleaning', 'Polish the Junction Switches', 'Night reset of your key area', 'Grime jams a switch — one jam loses a war.', 140, 11, BRIGGS_ID),
       template('freight-war', 'work', 'Counter-Offer Ledger', 'Finish one hard work deliverable', 'Numbers win freight wars as surely as gunfire.', 140, 11, BRIGGS_ID),
@@ -181,28 +197,32 @@ export const IRON_RAILWAY_CHAPTERS: Chapter[] = [
     title: 'The Golden Route',
     territoryName: 'Golden Route Terminal',
     mapPosition: { x: 86, y: 8 },
-    summary: 'Control of the Golden Route decides whether Dustfall keeps its lifeline.',
+    summary:
+      'Control of the Golden Route — progress always costs something, and this is the price of a free frontier.',
     dramaticPurpose: 'Resolve the saga with the network secured or corporate rule.',
-    introDialogue: 'Station Master Briggs: Golden Route opens at noon. Vane wants the deed. We run the line and keep it public.',
+    introDialogue:
+      'Station Master Briggs: Golden Route opens at noon. Vane wants the deed. We run the line and keep it public — because every mile we built cost blood, sweat, and High Noon.',
     introScene: [
       {
         characterId: BRIGGS_ID,
-        line: 'This is the terminal that feeds half the territory. Win here and the network stands free.',
+        line: 'This is the terminal that feeds half the territory. Win here and the network stands free. Lose, and Dustfall trades one cage for another.',
         badge: 'FINALE',
       },
       {
         characterId: SILAS_VANE_ID,
-        line: 'The Golden Route was always mine, manager. You merely delayed the acquisition.',
+        line: 'The Golden Route was always mine, manager. Crow broke your nerve; I bought the rebuild. Progress always costs something — today, you pay in full.',
         badge: 'SHOWDOWN',
       },
       {
         characterId: BRIGGS_ID,
-        line: 'Last manifest of the saga. Move like the line depends on you — because it does.',
+        line: 'Last manifest of the saga. Move like the line depends on you — because it does, and because Mercer didn’t trust you with High Noon so Vane could take the rails.',
         badge: 'LAST RUN',
       },
     ],
-    successDialogue: 'Station Master Briggs: Golden Route secured. Vane can watch our trains from his boardroom window.',
-    failureDialogue: 'Station Master Briggs: We lost the terminal today. The war for the rails isn’t over.',
+    successDialogue:
+      'Station Master Briggs: Golden Route secured. Vane can watch our trains from his boardroom window — but he doesn’t own the timetable. Progress cost us plenty. It was worth every mile.',
+    failureDialogue:
+      'Station Master Briggs: We lost the terminal today. The war for the rails isn’t over — and the bill still comes due.',
     questTemplates: [
       template('golden-route', 'cleaning', 'Shine the Terminal Floor', 'Complete full cleaning sweep', 'The world watches this platform at noon.', 150, 12, BRIGGS_ID),
       template('golden-route', 'work', 'Final Network Audit', 'Ship priority work mission', 'One clean audit proves the line is ours.', 155, 12, BRIGGS_ID),

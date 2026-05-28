@@ -2,17 +2,17 @@ import { StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { CharacterPortrait } from '@/components/rpg/character-portrait';
+import { RelationshipProgressSection } from '@/components/rpg/relationship-progress-section';
 import { GameFonts } from '@/constants/typography';
-import { tierLabel } from '@/lib/narrative-helpers';
-import type { NarrativeCharacter, RelationshipTier } from '@/types/narrative';
+import type { NarrativeCharacter } from '@/types/narrative';
 
 type CharacterCardProps = {
   character: NarrativeCharacter;
   index: number;
-  relationship?: RelationshipTier;
+  affinity?: number;
 };
 
-export function CharacterCard({ character, index, relationship }: CharacterCardProps) {
+export function CharacterCard({ character, index, affinity = 0 }: CharacterCardProps) {
   return (
     <Animated.View entering={FadeInDown.delay(index * 70).springify()} style={styles.card}>
       <CharacterPortrait character={character} />
@@ -20,9 +20,7 @@ export function CharacterCard({ character, index, relationship }: CharacterCardP
         <Text style={styles.name}>{character.name}</Text>
         <Text style={styles.role}>{character.role}</Text>
         <Text style={styles.personality}>{character.personality}</Text>
-        {relationship && (
-          <Text style={styles.relationship}>RELATIONSHIP · {tierLabel(relationship)}</Text>
-        )}
+        <RelationshipProgressSection character={character} affinity={affinity} />
       </View>
     </Animated.View>
   );
@@ -46,5 +44,4 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     lineHeight: 18,
   },
-  relationship: { fontFamily: GameFonts.uiSemi, fontSize: 9, color: '#e85d04', letterSpacing: 2, marginTop: 4 },
 });

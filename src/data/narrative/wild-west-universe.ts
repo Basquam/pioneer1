@@ -13,11 +13,12 @@ import type { Saga, Universe } from '@/types/narrative';
 const vultureGangSaga: Saga = {
   id: 'vulture-gang',
   title: 'Vulture Gang',
-  villainName: 'Black Vulture Gang',
-  villainTitle: 'Outlaw Syndicate',
+  villainName: 'Elias Crow',
+  villainTitle: 'Black Vulture Leader',
   villainCharacterId: ELIAS_CROW_ID,
   status: 'available',
-  summary: 'Outlaws extort Dustfall through fear, sabotage, and public humiliation.',
+  summary:
+    'Outlaws prey on Dustfall where order is fragile — one skipped duty and the whole town learns how fast courage unravels.',
   rankTitles: ['Rookie Deputy', 'Trail Marshal', 'Frontier Legend'],
   characters: VULTURE_GANG_CHARACTERS,
   chapters: VULTURE_GANG_CHAPTERS,
@@ -32,7 +33,8 @@ const ironRailwayCompanySaga: Saga = {
   status: 'locked',
   requiredUnlockId: 'high-noon-story-unlock',
   unlockRequirementLabel: 'Complete High Noon',
-  summary: 'Build and protect a frontier railway logistics network against corporate sabotage.',
+  summary:
+    'Build and defend a railway lifeline knowing progress always costs something — steel, sweat, and the compromises no one puts on the manifest.',
   rankTitles: ['Junior Logistics Manager', 'Route Marshal', 'Network Warden'],
   characters: IRON_RAILWAY_CHARACTERS,
   chapters: IRON_RAILWAY_CHAPTERS,
@@ -58,7 +60,7 @@ export const DUST_AND_IRON_UNIVERSE: Universe = {
   icon: '🤠',
   mentorName: 'Sheriff Ada Mercer',
   locationName: 'Dustfall',
-  mood: 'Dusty, dark, dramatic, and unforgiving.',
+  mood: 'Dusty, dark, dramatic — a frontier where order is fragile and every habit holds the line.',
   coreProgressionName: 'Deputy Campaign',
   status: 'available',
   palette: {

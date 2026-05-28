@@ -45,28 +45,32 @@ export const VULTURE_GANG_CHAPTERS: Chapter[] = [
     title: 'First Warning',
     territoryName: 'Dustfall Gate',
     mapPosition: { x: 16, y: 82 },
-    summary: 'The Black Vulture Gang marks your town and tests your resolve.',
+    summary:
+      'The Black Vulture Gang marks Dustfall — a reminder that order is fragile and fear travels faster than law.',
     dramaticPurpose: 'Introduce the threat and force the player to take action.',
-    introDialogue: 'Sheriff Ada Mercer: Deputy, the vultures are circling. Show this town we do not fold.',
+    introDialogue:
+      'Sheriff Ada Mercer: Deputy, they hung our colors upside down at the gate. Show this town order still means something.',
     introScene: [
       {
         characterId: ADA_MERCER_ID,
-        line: 'Deputy — they hung our colors upside down at the saloon. This is their first warning.',
+        line: 'Deputy — report to the gate. They hung our colors upside down at the saloon. First warning. No speeches — just work.',
         badge: 'CHAPTER I',
       },
       {
         characterId: ELIAS_CROW_ID,
-        line: 'Pretty little town. Shame if discipline ran out before sundown.',
+        line: 'Pretty little town. Shame if discipline ran out before sundown. Order is fragile, sheriff — I’m merely pointing at the cracks.',
         badge: 'VILLAIN',
       },
       {
         characterId: BRIGGS_ID,
-        line: 'Station platform’s a mess. If supplies stop, fear wins without a single shot.',
+        line: 'Platform’s a mess and the morning freight is late. If supplies stop, fear wins without a single shot fired.',
         badge: 'FIELD REPORT',
       },
     ],
-    successDialogue: 'Sheriff Ada Mercer: Good work. You answered their warning with steel and discipline.',
-    failureDialogue: 'Sheriff Ada Mercer: They smell hesitation. Get back in the saddle before dusk.',
+    successDialogue:
+      'Sheriff Ada Mercer: Good work. You answered their warning with steel and discipline. But look east — smoke on the warehouse ridge at first light. They weren’t bluffing. Dawn belongs to whoever wakes ready.',
+    failureDialogue:
+      'Sheriff Ada Mercer: They smell hesitation. Order is fragile, deputy — get back in the saddle before dusk.',
     questTemplates: [
       template('first-warning', 'cleaning', 'Sweep the Saloon Floor', 'Clean kitchen and counters', 'Glass and dust hide a message from the gang.', 110, 8, BRIGGS_ID),
       template('first-warning', 'fitness', 'Stable Drill', 'Do a quick bodyweight routine', 'A tired deputy cannot outrun an ambush.', 120, 10, ADA_MERCER_ID),
@@ -85,28 +89,31 @@ export const VULTURE_GANG_CHAPTERS: Chapter[] = [
     title: 'Smoke at Dawn',
     territoryName: 'Burnt Warehouse',
     mapPosition: { x: 38, y: 62 },
-    summary: 'Raiders strike before sunrise while the town still sleeps.',
+    summary: 'Raiders strike before sunrise — proof again that order is fragile when the town sleeps.',
     dramaticPurpose: 'Escalate urgency and push consistency under pressure.',
-    introDialogue: 'Sheriff Ada Mercer: Smoke on the horizon. They hit at dawn. We answer before noon.',
+    introDialogue:
+      'Sheriff Ada Mercer: Smoke on the horizon. They hit at dawn. We answer before noon — together.',
     introScene: [
       {
         characterId: BRIGGS_ID,
-        line: 'Dawn train never came. Smoke on the ridge — they’re cutting our lines.',
+        line: 'Dawn train never came. Smoke on the ridge — they’re cutting our lines before the town wakes.',
         badge: 'CHAPTER II',
       },
       {
         characterId: ADA_MERCER_ID,
-        line: 'No panic. We move fast, we move together. Every chore done is a barricade.',
+        line: 'No panic. We move fast, we move together. You’ve kept pace so far — I expect the same at sunrise.',
         badge: 'ORDERS',
       },
       {
         characterId: ELIAS_CROW_ID,
-        line: 'Did you hear that? Silence at sunrise. That’s the sound of you falling behind.',
+        line: 'Did you hear that silence at sunrise? That’s the sound of order slipping. I didn’t start the fire — I just stopped pretending the town was safe.',
         badge: 'TAUNT',
       },
     ],
-    successDialogue: 'Sheriff Ada Mercer: Dawn broke in our favor. Keep this pace and they panic.',
-    failureDialogue: 'Sheriff Ada Mercer: We lost ground this morning. Reclaim it before nightfall.',
+    successDialogue:
+      'Sheriff Ada Mercer: Dawn broke in our favor. You held when it counted — I won’t forget that. But Crow’s men were seen on the wagon trail. They snapped an axle once; they’ll try again.',
+    failureDialogue:
+      'Sheriff Ada Mercer: We lost ground this morning. Reclaim it before nightfall — the warehouse folk are watching.',
     questTemplates: [
       template('smoke-at-dawn', 'cleaning', 'Ashes in the Kitchen', 'Deep clean one neglected area', 'Soot in the air, panic in the room.', 120, 9, BRIGGS_ID),
       template('smoke-at-dawn', 'fitness', 'Chase the Outriders', 'Cardio sprint or brisk walk session', 'Outriders flee fast; your legs decide the chase.', 130, 10, ADA_MERCER_ID),
@@ -125,13 +132,14 @@ export const VULTURE_GANG_CHAPTERS: Chapter[] = [
     title: 'Broken Wagon',
     territoryName: 'Broken Wagon Trail',
     mapPosition: { x: 54, y: 42 },
-    summary: 'A sabotaged wagon stalls critical supplies for the town.',
+    summary: 'A sabotaged wagon stalls critical supplies — order is fragile when hunger joins the gang.',
     dramaticPurpose: 'Shift from reaction to strategic rebuilding.',
-    introDialogue: 'Sheriff Ada Mercer: They snapped the axle and laughed. We rebuild while they watch.',
+    introDialogue:
+      'Sheriff Ada Mercer: They snapped the axle and laughed. We rebuild while they watch — and we don’t blink.',
     introScene: [
       {
         characterId: ADA_MERCER_ID,
-        line: 'They sabotaged the supply wagon. This isn’t random — they’re starving our nerve.',
+        line: 'They sabotaged the supply wagon. This isn’t random — they’re starving our nerve. I trust you to hold the trail.',
         badge: 'CHAPTER III',
       },
       {
@@ -141,12 +149,14 @@ export const VULTURE_GANG_CHAPTERS: Chapter[] = [
       },
       {
         characterId: ELIAS_CROW_ID,
-        line: 'Rebuild all you want. Every delay puts another nail in Dustfall’s coffin.',
+        line: 'Rebuild all you want. Every delay teaches Dustfall who really keeps the clocks wound. I’m not cruel — I’m honest.',
         badge: 'TAUNT',
       },
     ],
-    successDialogue: 'Sheriff Ada Mercer: Wagon rolling again. They expected panic, found resolve.',
-    failureDialogue: 'Sheriff Ada Mercer: Supplies stalled means spirits stalled. Fix this fast.',
+    successDialogue:
+      'Sheriff Ada Mercer: Wagon rolling again. They expected panic, found resolve — and found you. But listen: Crow’s riders were seen in Ambush Canyon after dark. The next test won’t wait for sunrise.',
+    failureDialogue:
+      'Sheriff Ada Mercer: Supplies stalled means spirits stalled. Fix this fast — I’ll cover the platform if you cover the trail.',
     questTemplates: [
       template('broken-wagon', 'cleaning', 'Clear the Wagon Yard', 'Declutter one messy zone', 'Debris hides nails and bad luck.', 130, 10, BRIGGS_ID),
       template('broken-wagon', 'fitness', 'Axle Strength Drill', 'Strength routine', 'You rebuild with muscle and grit.', 140, 11, ADA_MERCER_ID),
@@ -165,28 +175,31 @@ export const VULTURE_GANG_CHAPTERS: Chapter[] = [
     title: 'Night Ambush',
     territoryName: 'Ambush Canyon',
     mapPosition: { x: 70, y: 24 },
-    summary: 'The gang attacks under moonlight, aiming to break morale.',
+    summary: 'The gang attacks under moonlight — order is fragile when exhaustion finds you alone.',
     dramaticPurpose: 'Deliver the darkest moment before the finale.',
-    introDialogue: 'Sheriff Ada Mercer: Lanterns low. Keep your nerve. They hunt fear in the dark.',
+    introDialogue:
+      'Sheriff Ada Mercer: Lanterns low. Keep your nerve. They hunt fear in the dark — I’ll be on the ridge if you need me.',
     introScene: [
       {
         characterId: ELIAS_CROW_ID,
-        line: 'Moon’s up, deputy. Perfect light to see your chores go unfinished.',
+        line: 'Moon’s up, deputy. Perfect light to see your chores go unfinished — and your sheriff’s little order fray at the edges.',
         badge: 'CHAPTER IV',
       },
       {
         characterId: ADA_MERCER_ID,
-        line: 'They hit at night because they think exhaustion breaks people. It won’t break us.',
+        line: 'They hit at night because they think exhaustion breaks people. It won’t break us. Stay close to the line — I mean that.',
         badge: 'STAND FAST',
       },
       {
         characterId: BRIGGS_ID,
-        line: 'Last train out leaves at midnight. If we slip now, the whole line goes quiet.',
+        line: 'Last train out leaves at midnight. If we slip now, the whole line goes quiet — and quiet towns get bought cheap.',
         badge: 'MIDNIGHT',
       },
     ],
-    successDialogue: 'Sheriff Ada Mercer: We held the line in moonlight. They’re rattled now.',
-    failureDialogue: 'Sheriff Ada Mercer: Night took its toll. We stand again at first light.',
+    successDialogue:
+      'Sheriff Ada Mercer: We held the line in moonlight. They’re rattled — and so am I, if I’m honest. High Noon is coming, deputy. One clean day decides whether Dustfall keeps breathing. Rest if you can. I’ll wake you at first bell.',
+    failureDialogue:
+      'Sheriff Ada Mercer: Night took its toll. We stand again at first light — and I’ll be on the square with you.',
     questTemplates: [
       template('night-ambush', 'cleaning', 'Lantern Line Sweep', 'Night reset of your key area', 'Order in darkness keeps panic out.', 140, 11, BRIGGS_ID),
       template('night-ambush', 'fitness', 'Midnight Patrol', 'Evening movement session', 'If your body quits, the line breaks.', 145, 12, ADA_MERCER_ID),
@@ -205,28 +218,37 @@ export const VULTURE_GANG_CHAPTERS: Chapter[] = [
     title: 'High Noon',
     territoryName: 'High Noon Square',
     mapPosition: { x: 86, y: 8 },
-    summary: 'Final showdown as the gang pushes all-in for control of Dustfall.',
+    summary:
+      'Final showdown at High Noon Square — order is fragile one last time, and the whole territory watches.',
     dramaticPurpose: 'Resolve the saga with earned momentum and consequences.',
-    introDialogue: 'Sheriff Ada Mercer: High noon, deputy. One clean day of work decides this town’s future.',
+    introDialogue:
+      'Sheriff Ada Mercer: High noon, deputy. One clean day of work decides this town’s future — ride at my side.',
     introScene: [
       {
         characterId: ADA_MERCER_ID,
-        line: 'This is it. High noon. The town watches whether discipline or chaos owns Dustfall.',
+        line: 'This is it. High noon. The town watches whether discipline or chaos owns Dustfall. I’d rather have you here than half my old posse.',
         badge: 'FINALE',
       },
       {
         characterId: BRIGGS_ID,
-        line: 'Platform’s packed, nerves are raw. Finish strong and the rails stay ours.',
+        line: 'Platform’s packed, nerves are raw. Finish strong and the rails stay ours — because what comes next costs more than bullets.',
         badge: 'LAST RUN',
       },
       {
         characterId: ELIAS_CROW_ID,
-        line: 'Noon light, no shadows to hide in. Let’s see if your legend was real.',
+        line: 'Noon light, no shadows to hide in. Let’s see if your legend was real — or if Dustfall finally admits it needs a harder hand.',
         badge: 'SHOWDOWN',
       },
+      {
+        characterId: BRIGGS_ID,
+        line: 'When the square clears — win or lose — find me at the railyard. Silas Vane bought the contracts Crow left bleeding. Progress always costs something.',
+        badge: 'WHISPER',
+      },
     ],
-    successDialogue: 'Sheriff Ada Mercer: Dustfall stands. The vultures broke against your discipline.',
-    failureDialogue: 'Sheriff Ada Mercer: We lost this round, not the frontier. We rise and ride again.',
+    successDialogue:
+      'Sheriff Ada Mercer: Dustfall stands. The vultures broke against your discipline — and against mine, for trusting you with it. But listen: Briggs telegraphed from the railyard. Crow fled east, yet Silas Vane bought every contract he abandoned. Progress always costs something, deputy. The Iron Railway Company needs a manager who won’t fold. When you’re ready — the line is calling.',
+    failureDialogue:
+      'Sheriff Ada Mercer: We lost this round, not the frontier. We rise and ride again — and Vane still waits on the rails whether we’re ready or not.',
     questTemplates: [
       template('high-noon', 'cleaning', 'Final Saloon Polish', 'Complete full cleaning sweep', 'The town meets noon in order, not chaos.', 150, 12, BRIGGS_ID),
       template('high-noon', 'fitness', 'Duel Conditioning', 'High-effort workout', 'Your body is your final weapon.', 155, 12, ADA_MERCER_ID),

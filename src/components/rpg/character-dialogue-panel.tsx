@@ -5,6 +5,7 @@ import Animated, { FadeIn, FadeInLeft } from 'react-native-reanimated';
 import { CharacterPortrait } from '@/components/rpg/character-portrait';
 import { GameFonts } from '@/constants/typography';
 import { getCharacter } from '@/lib/narrative-helpers';
+import { formatRelationshipHeader, getRelationshipProgress } from '@/lib/relationship-progress';
 import { useGame } from '@/hooks/use-game';
 import type { DialogueBeat } from '@/types/narrative';
 
@@ -46,7 +47,9 @@ export function CharacterDialoguePanel({
 
   if (!character) return null;
 
-  const tier = playerProgress.relationshipByCharacter[character.id];
+  const affinity = playerProgress.characterAffinity[character.id] ?? 0;
+  const { tier } = getRelationshipProgress(affinity);
+  const relationshipHeader = formatRelationshipHeader(character, tier);
 
   return (
     <Animated.View entering={FadeInLeft.duration(400)} style={styles.wrapper}>
@@ -79,9 +82,9 @@ export function CharacterDialoguePanel({
                 <Text style={{ color: palette.accent }}>▌</Text>
               )}
             </Animated.Text>
-            {tier && !character.isVillain && (
-              <Text style={[styles.tier, { color: palette.accent }]}>RELATIONSHIP · {tier.toUpperCase()}</Text>
-            )}
+            {affinity > 0 || !character.isVillain ? (
+              <Text style={[styles.tier, { color: palette.accent }]}>{relationshipHeader}</Text>
+            ) : null}
           </View>
         </View>
       </View>

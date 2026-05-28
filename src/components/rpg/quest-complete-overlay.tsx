@@ -17,6 +17,7 @@ import { GameLayout } from '@/constants/layout';
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
 import { getCharacter } from '@/lib/narrative-helpers';
+import { formatAffinityGain } from '@/lib/relationship-progress';
 
 type QuestCompletePhase = 'stamp' | 'reaction';
 
@@ -52,6 +53,8 @@ export function QuestCompleteOverlay() {
   const progressMessage = isUserQuest
     ? 'Your real task helped the story move forward.'
     : 'Chapter progress advanced.';
+  const affinityGainLabel = character ? formatAffinityGain(character) : null;
+  const reactionBadge = character?.isVillain ? 'VILLAIN REACTION' : 'ALLY RESPONSE';
 
   const advanceToReaction = () => {
     if (phase === 'stamp') setPhase('reaction');
@@ -101,6 +104,14 @@ export function QuestCompleteOverlay() {
                 />
               </Animated.View>
 
+              {affinityGainLabel && (
+                <Animated.Text
+                  entering={FadeInUp.duration(450).delay(420)}
+                  style={[styles.affinityGain, { color: palette.accent }]}>
+                  {affinityGainLabel}
+                </Animated.Text>
+              )}
+
               <Animated.Text
                 entering={FadeInUp.duration(400).delay(480)}
                 style={[styles.tapHint, { color: palette.accent }]}>
@@ -119,9 +130,14 @@ export function QuestCompleteOverlay() {
                   ]}>
                   {character && <CharacterPortrait character={character} />}
                   <View style={styles.reactionBody}>
-                    <Text style={[styles.reactionBadge, { color: palette.gold }]}>ALLY RESPONSE</Text>
+                    <Text style={[styles.reactionBadge, { color: palette.gold }]}>{reactionBadge}</Text>
                     {character && (
                       <Text style={[styles.reactionName, { color: palette.bone }]}>{character.name}</Text>
+                    )}
+                    {affinityGainLabel && (
+                      <Text style={[styles.affinityGain, { color: palette.accent }]}>
+                        {affinityGainLabel}
+                      </Text>
                     )}
                     <Text style={[styles.reactionQuest, { color: palette.fog }]} numberOfLines={2}>
                       {questComplete.narrativeTitle}
@@ -208,6 +224,12 @@ const styles = StyleSheet.create({
   rewardLabel: { fontFamily: GameFonts.uiSemi, fontSize: 9, letterSpacing: 2 },
   rewardValue: { fontFamily: GameFonts.ui, fontSize: 28, letterSpacing: 2 },
   rewardDivider: { width: 1, height: 36 },
+  affinityGain: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 11,
+    letterSpacing: 1,
+    textAlign: 'center',
+  },
   tapHint: {
     fontFamily: GameFonts.uiSemi,
     fontSize: 10,
