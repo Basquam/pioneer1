@@ -7,6 +7,7 @@ import { GlowButton } from '@/components/rpg/glow-button';
 import { GameLayout } from '@/constants/layout';
 import { GameFonts } from '@/constants/typography';
 import { parseDialogueLine } from '@/lib/narrative-helpers';
+import { findStoryUnlockReward } from '@/lib/chapter-rewards';
 import {
   getStartSagaCtaLabel,
   REWARD_TYPE_LABELS,
@@ -27,8 +28,11 @@ export function ChapterCompleteOverlay() {
 
   const dialogue = parseDialogueLine(chapterComplete.successDialogue);
   const hasNextChapter = chapterComplete.nextChapterId !== null;
-  const unlockedSaga = chapterComplete.newReward
-    ? resolveStoryUnlockSaga(activeUniverse, chapterComplete.newReward)
+  const storyUnlockReward = chapterComplete.newRewards
+    ? findStoryUnlockReward(chapterComplete.newRewards)
+    : undefined;
+  const unlockedSaga = storyUnlockReward
+    ? resolveStoryUnlockSaga(activeUniverse, storyUnlockReward)
     : undefined;
   const unlockedSagaFirstChapterId = unlockedSaga?.chapters[0]?.id;
 
@@ -84,19 +88,22 @@ export function ChapterCompleteOverlay() {
             />
           </Animated.View>
 
-          {chapterComplete.newReward && (
+          {chapterComplete.newRewards?.map((reward, index) => (
             <Animated.View
-              entering={FadeInUp.duration(500).delay(600)}
+              key={reward.id}
+              entering={FadeInUp.duration(500).delay(600 + index * 80)}
               style={[styles.unlockCard, { backgroundColor: palette.panel, borderColor: palette.gold }]}>
-              <Text style={[styles.unlockEyebrow, { color: palette.gold }]}>NEW REWARD</Text>
+              <Text style={[styles.unlockEyebrow, { color: palette.gold }]}>
+                {reward.type === 'storyUnlock' ? 'STORY UNLOCKED' : 'NEW REWARD'}
+              </Text>
               <Text style={[styles.unlockType, { color: palette.accent }]}>
-                {REWARD_TYPE_LABELS[chapterComplete.newReward.type]}
+                {REWARD_TYPE_LABELS[reward.type]}
               </Text>
               <Text style={[styles.unlockName, { color: palette.bone }]}>
-                {chapterComplete.newReward.name}
+                {reward.name}
               </Text>
             </Animated.View>
-          )}
+          ))}
 
           <Animated.View entering={FadeInUp.duration(500).delay(640)} style={styles.buttonWrap}>
             {unlockedSaga && unlockedSagaFirstChapterId ? (

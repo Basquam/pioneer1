@@ -8,6 +8,17 @@ import { migrateLegacyProgress } from '@/lib/saga-progress';
 
 const STORAGE_KEY = '@pioneer/player-progress';
 
+/** Players who completed Golden Route before the storyUnlock split still get HB access. */
+function migrateHonestBusinessmanUnlock(unlockedRewards: string[]): string[] {
+  if (
+    unlockedRewards.includes('golden-route-title') &&
+    !unlockedRewards.includes('honest-businessman-story-unlock')
+  ) {
+    return [...unlockedRewards, 'honest-businessman-story-unlock'];
+  }
+  return unlockedRewards;
+}
+
 const defaultUniverseId = DUST_AND_IRON_UNIVERSE.id;
 const defaultSagaId = DUST_AND_IRON_UNIVERSE.sagas[0]?.id ?? '';
 const defaultChapterId = DUST_AND_IRON_UNIVERSE.sagas[0]?.chapters[0]?.id ?? '';
@@ -74,7 +85,7 @@ function normalizeProgress(raw: Partial<PlayerProgress> & Record<string, unknown
   const merged: PlayerProgress = {
     ...base,
     ...raw,
-    unlockedRewards: raw.unlockedRewards ?? base.unlockedRewards,
+    unlockedRewards: migrateHonestBusinessmanUnlock(raw.unlockedRewards ?? base.unlockedRewards),
     userQuests: raw.userQuests ?? base.userQuests,
     villainInfluenceBySaga: raw.villainInfluenceBySaga ?? base.villainInfluenceBySaga,
     chapterCompletions: raw.chapterCompletions ?? base.chapterCompletions,

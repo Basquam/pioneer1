@@ -1,3 +1,4 @@
+import { getChapterRewards } from '@/lib/chapter-rewards';
 import type { ChapterReward, ChapterRewardType, Saga, Universe } from '@/types/narrative';
 
 export const REWARD_TYPE_LABELS: Record<ChapterRewardType, string> = {
@@ -27,7 +28,9 @@ export function unlockRewardIds(
 }
 
 export function getUniverseRewards(universe: Universe): ChapterReward[] {
-  return universe.sagas.flatMap((saga) => saga.chapters.map((chapter) => chapter.chapterReward));
+  return universe.sagas.flatMap((saga) =>
+    saga.chapters.flatMap((chapter) => getChapterRewards(chapter)),
+  );
 }
 
 export function findRewardById(universe: Universe, rewardId: string): ChapterReward | undefined {

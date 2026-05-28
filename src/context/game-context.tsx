@@ -28,7 +28,11 @@ import {
 } from '@/lib/player-progress-storage';
 import { buildBoardQuests, countCompletedTemplates, findBoardQuest } from '@/lib/quest-board';
 import { triggerQuestCompleteHaptic } from '@/lib/quest-haptics';
-import { sumChapterTemplateRewards } from '@/lib/chapter-rewards';
+import {
+  getChapterRewards,
+  sumChapterTemplateRewards,
+  unlockChapterRewards,
+} from '@/lib/chapter-rewards';
 import {
   appendSagaCompletedChapter,
   appendSagaCompletedQuest,
@@ -470,7 +474,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
           earnedXp: rewards.xp,
           earnedReputation: rewards.reputation,
           nextChapterId: nextChapter?.id ?? null,
-          newReward: currentChapter.chapterReward,
+          newRewards: getChapterRewards(currentChapter),
         };
       }
 
@@ -497,10 +501,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
       const pendingChapter = pendingChapterCompleteRef.current;
       pendingChapterCompleteRef.current = null;
       if (pendingChapter) {
-        if (pendingChapter.newReward) {
+        if (pendingChapter.newRewards?.length) {
           setProgress((prev) => ({
             ...prev,
-            unlockedRewards: unlockRewardIds(prev.unlockedRewards, pendingChapter.newReward!.id),
+            unlockedRewards: unlockChapterRewards(
+              prev.unlockedRewards,
+              pendingChapter.newRewards!,
+            ),
           }));
         }
         setChapterComplete(pendingChapter);
@@ -620,7 +627,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
           ...next.completedQuestIdsBySagaId,
           [activeSaga.id]: [...sagaQuestIds],
         },
-        unlockedRewards: unlockRewardIds(next.unlockedRewards, currentChapter.chapterReward.id),
+        unlockedRewards: unlockChapterRewards(
+          next.unlockedRewards,
+          getChapterRewards(currentChapter),
+        ),
         seenChapterIntros: next.seenChapterIntros.includes(currentChapter.id)
           ? next.seenChapterIntros
           : [...next.seenChapterIntros, currentChapter.id],
@@ -653,7 +663,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setProgress((prev) => {
       let unlockedRewards = prev.unlockedRewards;
       for (const chapter of vultureSaga.chapters) {
-        unlockedRewards = unlockRewardIds(unlockedRewards, chapter.chapterReward.id);
+        unlockedRewards = unlockChapterRewards(unlockedRewards, getChapterRewards(chapter));
       }
 
       const next: PlayerProgress = {

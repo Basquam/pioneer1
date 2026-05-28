@@ -1,3 +1,8 @@
+import { HONEST_BUSINESSMAN_CHAPTERS } from '@/data/narrative/honest-businessman-chapters';
+import {
+  HONEST_BUSINESSMAN_CHARACTERS,
+  VICTOR_CRANE_ID,
+} from '@/data/narrative/honest-businessman-characters';
 import { IRON_RAILWAY_CHAPTERS } from '@/data/narrative/iron-railway-chapters';
 import {
   IRON_RAILWAY_CHARACTERS,
@@ -43,14 +48,17 @@ const ironRailwayCompanySaga: Saga = {
 const honestBusinessmanSaga: Saga = {
   id: 'honest-businessman',
   title: 'Honest Businessman',
-  villainName: 'Mr. Halbrook',
-  villainTitle: 'Mask of Respectability',
-  villainCharacterId: '',
+  villainName: 'Victor Crane',
+  villainTitle: 'Corrupt Merchant Prince',
+  villainCharacterId: VICTOR_CRANE_ID,
   status: 'locked',
-  summary: 'A charming merchant manipulates trade routes and political favors.',
-  rankTitles: ['Ledger Hand', 'Dealbreaker', 'Truthbringer'],
-  characters: [],
-  chapters: [],
+  requiredUnlockId: 'honest-businessman-story-unlock',
+  unlockRequirementLabel: 'Complete The Golden Route',
+  summary:
+    'Build a legitimate business in Dustfall while gangs, corrupt officials, and railway monopolies squeeze every honest coin — because honesty is expensive.',
+  rankTitles: ['Frontier Shop Owner', 'Young Entrepreneur', 'Honest Businessman'],
+  characters: HONEST_BUSINESSMAN_CHARACTERS,
+  chapters: HONEST_BUSINESSMAN_CHAPTERS,
 };
 
 export const DUST_AND_IRON_UNIVERSE: Universe = {

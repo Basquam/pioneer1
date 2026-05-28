@@ -66,7 +66,7 @@ export const IRON_RAILWAY_CHAPTERS: Chapter[] = [
       template('first-shipment', 'errand', 'Fetch the Seal Stamp', 'Complete one pending errand', 'No stamp, no shipment — simple as steel.', 110, 8, BRIGGS_ID),
       template('first-shipment', 'health', 'Platform Break', 'Hydrate, meds, and a short recovery break', 'Exhausted crews drop cargo.', 100, 7, BRIGGS_ID),
     ],
-    chapterReward: { id: 'first-shipment-badge', type: 'badge', name: 'First Shipment Cleared' },
+    chapterRewards: [{ id: 'first-shipment-badge', type: 'badge', name: 'First Shipment Cleared' }],
   },
   {
     id: 'delayed-cargo',
@@ -107,7 +107,7 @@ export const IRON_RAILWAY_CHAPTERS: Chapter[] = [
       template('delayed-cargo', 'errand', 'Run the Release Slip', 'Finish one practical chore outside', 'The slip is in town. The train is here. Close the gap.', 115, 8, BRIGGS_ID),
       template('delayed-cargo', 'health', 'Night Shift Recovery', 'Breathing routine and water reset', 'Tired crews sign bad manifests.', 105, 8, BRIGGS_ID),
     ],
-    chapterReward: { id: 'delayed-cargo-title', type: 'title', name: 'Cargo Clerk' },
+    chapterRewards: [{ id: 'delayed-cargo-title', type: 'title', name: 'Cargo Clerk' }],
   },
   {
     id: 'broken-tracks',
@@ -148,7 +148,7 @@ export const IRON_RAILWAY_CHAPTERS: Chapter[] = [
       template('broken-tracks', 'errand', 'Fetch Rail Spikes', 'Complete a practical pickup errand', 'The forge is ten miles. The train is today.', 120, 9, BRIGGS_ID),
       template('broken-tracks', 'health', 'Crew Meal Rotation', 'Meal + rest hygiene block', 'Hungry track hands miss a cracked tie.', 110, 8, BRIGGS_ID),
     ],
-    chapterReward: { id: 'broken-tracks-cosmetic', type: 'cosmetic', name: 'Brass Switch Key' },
+    chapterRewards: [{ id: 'broken-tracks-cosmetic', type: 'cosmetic', name: 'Brass Switch Key' }],
   },
   {
     id: 'freight-war',
@@ -189,7 +189,7 @@ export const IRON_RAILWAY_CHAPTERS: Chapter[] = [
       template('freight-war', 'errand', 'Deliver the Loyalty Contracts', 'Complete a practical checklist errand', 'Ink on paper keeps carriers on our side.', 125, 10, BRIGGS_ID),
       template('freight-war', 'health', 'Switchyard Stamina', 'Sleep prep / mindfulness reset', 'Clear head, clean routing.', 120, 9, BRIGGS_ID),
     ],
-    chapterReward: { id: 'freight-war-badge', type: 'badge', name: 'Junction Defender' },
+    chapterRewards: [{ id: 'freight-war-badge', type: 'badge', name: 'Junction Defender' }],
   },
   {
     id: 'golden-route',
@@ -220,7 +220,7 @@ export const IRON_RAILWAY_CHAPTERS: Chapter[] = [
       },
     ],
     successDialogue:
-      'Station Master Briggs: Golden Route secured. Vane can watch our trains from his boardroom window — but he doesn’t own the timetable. Progress cost us plenty. It was worth every mile.',
+      'Station Master Briggs: Golden Route secured. Vane can watch our trains from his boardroom window — but he doesn’t own the timetable. Progress cost us plenty. It was worth every mile. Mara Bell telegraphed from Main Street — Victor Crane’s circling the shop fronts. When you’re ready, honesty’s waiting.',
     failureDialogue:
       'Station Master Briggs: We lost the terminal today. The war for the rails isn’t over — and the bill still comes due.',
     questTemplates: [
@@ -230,10 +230,14 @@ export const IRON_RAILWAY_CHAPTERS: Chapter[] = [
       template('golden-route', 'errand', 'Deliver the Route Seal', 'Finish critical practical errand', 'The seal reaches the terminal or Vane wins by default.', 140, 11, BRIGGS_ID),
       template('golden-route', 'health', 'Noon Stamina Protocol', 'Health routine and recovery', 'Steady hands sign freedom into law.', 130, 10, BRIGGS_ID),
     ],
-    chapterReward: {
-      id: 'golden-route-title',
-      type: 'title',
-      name: 'Golden Route Master',
-    },
+    chapterRewards: [
+      { id: 'golden-route-title', type: 'title', name: 'Golden Route Master' },
+      {
+        id: 'honest-businessman-story-unlock',
+        type: 'storyUnlock',
+        name: 'Honest Businessman',
+        unlockTargetId: 'honest-businessman',
+      },
+    ],
   },
 ];

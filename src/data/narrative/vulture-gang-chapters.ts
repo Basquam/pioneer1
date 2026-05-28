@@ -81,7 +81,7 @@ export const VULTURE_GANG_CHAPTERS: Chapter[] = [
       template('first-warning', 'creative', 'Wanted Poster Draft', 'Create a short design or writing piece', 'Your words shape the town’s courage.', 115, 8, ADA_MERCER_ID),
       template('first-warning', 'errand', 'Supply Run at Sundown', 'Complete one pending errand', 'Ammo and bread vanish fast under siege.', 110, 8, BRIGGS_ID),
     ],
-    chapterReward: { id: 'first-warning-badge', type: 'badge', name: 'First Dustfall Patrol' },
+    chapterRewards: [{ id: 'first-warning-badge', type: 'badge', name: 'First Dustfall Patrol' }],
   },
   {
     id: 'smoke-at-dawn',
@@ -124,7 +124,7 @@ export const VULTURE_GANG_CHAPTERS: Chapter[] = [
       template('smoke-at-dawn', 'creative', 'Dawn Ballad', 'Create a short audio/text/art piece', 'Hope is a weapon too.', 115, 8, ADA_MERCER_ID),
       template('smoke-at-dawn', 'errand', 'Railside Pickup', 'Finish one practical chore outside', 'Supplies arrive under fire.', 120, 9, BRIGGS_ID),
     ],
-    chapterReward: { id: 'smoke-at-dawn-title', type: 'title', name: 'Smoke Watcher' },
+    chapterRewards: [{ id: 'smoke-at-dawn-title', type: 'title', name: 'Smoke Watcher' }],
   },
   {
     id: 'broken-wagon',
@@ -167,7 +167,7 @@ export const VULTURE_GANG_CHAPTERS: Chapter[] = [
       template('broken-wagon', 'creative', 'Paint the Crest', 'Create/update something expressive', 'Symbols remind people what they protect.', 120, 9, ADA_MERCER_ID),
       template('broken-wagon', 'errand', 'Find Spare Parts', 'Complete a practical pickup errand', 'The right part at the right hour saves the run.', 125, 10, BRIGGS_ID),
     ],
-    chapterReward: { id: 'broken-wagon-cosmetic', type: 'cosmetic', name: 'Railway Deputy Bandana' },
+    chapterRewards: [{ id: 'broken-wagon-cosmetic', type: 'cosmetic', name: 'Railway Deputy Bandana' }],
   },
   {
     id: 'night-ambush',
@@ -210,7 +210,7 @@ export const VULTURE_GANG_CHAPTERS: Chapter[] = [
       template('night-ambush', 'creative', 'Signal Flare Design', 'Creative micro-session', 'In darkness, even small lights matter.', 125, 9, ADA_MERCER_ID),
       template('night-ambush', 'errand', 'Moonlit Supply Check', 'Complete a practical checklist errand', 'One missing item can end the night.', 130, 10, BRIGGS_ID),
     ],
-    chapterReward: { id: 'night-ambush-badge', type: 'badge', name: 'Ambush Survivor' },
+    chapterRewards: [{ id: 'night-ambush-badge', type: 'badge', name: 'Ambush Survivor' }],
   },
   {
     id: 'high-noon',
@@ -259,11 +259,13 @@ export const VULTURE_GANG_CHAPTERS: Chapter[] = [
       template('high-noon', 'creative', 'Victory Chronicle', 'Capture progress creatively', 'Your story becomes the town’s memory.', 135, 10, ADA_MERCER_ID),
       template('high-noon', 'errand', 'Last Bell Supplies', 'Finish critical practical errand', 'Noon waits for no one.', 140, 11, BRIGGS_ID),
     ],
-    chapterReward: {
-      id: 'high-noon-story-unlock',
-      type: 'storyUnlock',
-      name: 'Iron Railway Company',
-      unlockTargetId: 'iron-railway-company',
-    },
+    chapterRewards: [
+      {
+        id: 'high-noon-story-unlock',
+        type: 'storyUnlock',
+        name: 'Iron Railway Company',
+        unlockTargetId: 'iron-railway-company',
+      },
+    ],
   },
 ];

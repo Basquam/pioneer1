@@ -87,7 +87,7 @@ export type Chapter = {
   successDialogue: string;
   failureDialogue: string;
   questTemplates: QuestTemplate[];
-  chapterReward: ChapterReward;
+  chapterRewards: ChapterReward[];
 };
 
 export type Saga = {
@@ -132,7 +132,7 @@ export type ChapterCompleteState = {
   earnedXp: number;
   earnedReputation: number;
   nextChapterId: string | null;
-  newReward?: ChapterReward;
+  newRewards?: ChapterReward[];
 };
 
 export type QuestCompleteState = {
