@@ -89,6 +89,10 @@ export function restoreDefaultStoryProgress(progress: PlayerProgress): PlayerPro
     {
       ...progress,
       selectedUniverseId: universe.id,
+      lastSagaByUniverseId: {
+        ...progress.lastSagaByUniverseId,
+        [universe.id]: saga.id,
+      },
       villainInfluenceBySaga: {
         ...progress.villainInfluenceBySaga,
         [saga.id]: progress.villainInfluenceBySaga[saga.id] ?? 100,

@@ -44,11 +44,10 @@ import {
 import {
   applyDevSwitchToDustAndIron,
   applyDevSwitchToNeuroNet,
+  applyUniverseSelection,
   applyUniverseSagaSwitch,
   isSagaInPreview,
   NEURONET_UNIVERSE_UNLOCK_ID,
-  snapshotUniverseProgress,
-  type DevUniverseSnapshot,
 } from '@/lib/dev-universe-switch';
 import { isSagaUnlocked, isUniverseUnlocked, unlockRewardIds } from '@/lib/reward-unlocks';
 import { getUniverseUiCopy } from '@/lib/universe-ui-copy';
@@ -150,7 +149,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [questCreated, setQuestCreated] = useState<UserQuest | null>(null);
   const [addQuestSheetOpen, setAddQuestSheetOpen] = useState(false);
   const pendingChapterCompleteRef = useRef<ChapterCompleteState | null>(null);
-  const devUniverseSnapshotRef = useRef<DevUniverseSnapshot | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -251,13 +249,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       const universe = findUniverse(universeId);
       if (!universe || !isUniverseUnlocked(universe, prev.unlockedRewards)) return prev;
 
-      const availableSaga =
-        universe.sagas.find((s) => s.status === 'available') ?? universe.sagas[0];
-      if (!availableSaga) {
-        return { ...prev, selectedUniverseId: universe.id };
-      }
-
-      return applyUniverseSagaSwitch(prev, universe.id, availableSaga.id);
+      return applyUniverseSelection(prev, universe.id);
     });
   }, []);
 
@@ -692,12 +684,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   const devSwitchToNeuroNet = useCallback(() => {
     if (!__DEV__) return;
-    setProgress((prev) => {
-      if (prev.selectedUniverseId === 'dust-and-iron') {
-        devUniverseSnapshotRef.current = snapshotUniverseProgress(prev);
-      }
-      return applyDevSwitchToNeuroNet(prev);
-    });
+    setProgress((prev) => applyDevSwitchToNeuroNet(prev));
     setNarrativeMoment(null);
     setChapterComplete(null);
     setQuestComplete(null);
@@ -706,8 +693,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   const devSwitchToDustAndIron = useCallback(() => {
     if (!__DEV__) return;
-    setProgress((prev) => applyDevSwitchToDustAndIron(prev, devUniverseSnapshotRef.current));
-    devUniverseSnapshotRef.current = null;
+    setProgress((prev) => applyDevSwitchToDustAndIron(prev));
     setNarrativeMoment(null);
     setChapterComplete(null);
     setQuestComplete(null);

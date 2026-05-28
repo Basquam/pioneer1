@@ -2,6 +2,7 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
+import { getLocalDateKey } from '@/lib/daily-streak';
 import {
   countTodayUserQuests,
   getDailyFocusLimit,
@@ -17,7 +18,11 @@ export function TodayFocusDisplay({ variant = 'briefing' }: TodayFocusDisplayPro
   const { activeUniverse, playerProgress } = useGame();
   const { palette } = activeUniverse;
   const limit = getDailyFocusLimit(playerProgress);
-  const count = countTodayUserQuests(playerProgress.userQuests);
+  const count = countTodayUserQuests(
+    playerProgress.userQuests,
+    getLocalDateKey(),
+    activeUniverse.id,
+  );
   const isProfile = variant === 'profile';
   const isInline = variant === 'inline';
 

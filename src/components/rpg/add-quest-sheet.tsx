@@ -18,6 +18,7 @@ import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
 import { useUniverseUiCopy } from '@/lib/universe-ui-copy';
 import { useModalBottomInset } from '@/hooks/use-scroll-insets';
+import { getLocalDateKey } from '@/lib/daily-streak';
 import {
   countTodayUserQuests,
   formatTodayFocusLabel,
@@ -43,7 +44,11 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
   const selectedMeta = getTaskCategoryMeta(category);
   const modalBottomInset = useModalBottomInset(32);
   const focusLimit = getDailyFocusLimit(playerProgress);
-  const todayFocusCount = countTodayUserQuests(playerProgress.userQuests);
+  const todayFocusCount = countTodayUserQuests(
+    playerProgress.userQuests,
+    getLocalDateKey(),
+    activeUniverse.id,
+  );
   const atFocusLimit = todayFocusCount >= focusLimit;
 
   const handleClose = () => {
@@ -107,7 +112,7 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
 
             <View style={[styles.focusRow, { borderColor: palette.panelBorder }]}>
               <Text style={[styles.focusLabel, { color: palette.gold }]}>
-                {formatTodayFocusLabel(todayFocusCount, focusLimit)}
+                {formatTodayFocusLabel(todayFocusCount, focusLimit, activeUniverse.id)}
               </Text>
               <Text style={[styles.focusHint, { color: palette.fog }]}>
                 {todayFocusCount < focusLimit
@@ -119,7 +124,7 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
             {confirmOverLimit && (
               <View style={[styles.warningBox, { backgroundColor: palette.panel, borderColor: palette.accent }]}>
                 <Text style={[styles.warningText, { color: palette.bone }]}>
-                  {getDailyFocusOverLimitMessage(focusLimit)}
+                  {getDailyFocusOverLimitMessage(focusLimit, activeUniverse.id)}
                 </Text>
               </View>
             )}

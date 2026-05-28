@@ -239,4 +239,6 @@ export type PlayerProgress = {
   dailyFocusLimit: number;
   /** Per-day activity log keyed by local date (YYYY-MM-DD). */
   activityByDate: Record<string, DailyActivity>;
+  /** Last selected saga per universe — restored when switching universes. */
+  lastSagaByUniverseId: Record<string, string>;
 };

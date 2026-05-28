@@ -23,6 +23,53 @@ const defaultUniverseId = DUST_AND_IRON_UNIVERSE.id;
 const defaultSagaId = DUST_AND_IRON_UNIVERSE.sagas[0]?.id ?? '';
 const defaultChapterId = DUST_AND_IRON_UNIVERSE.sagas[0]?.chapters[0]?.id ?? '';
 
+function createDefaultLastSagaByUniverseId(): Record<string, string> {
+  const result: Record<string, string> = {};
+  for (const universe of UNIVERSES) {
+    const defaultSaga =
+      universe.sagas.find((saga) => saga.status === 'available') ?? universe.sagas[0];
+    if (defaultSaga) {
+      result[universe.id] = defaultSaga.id;
+    }
+  }
+  return result;
+}
+
+function migrateLastSagaByUniverseId(
+  raw: Partial<PlayerProgress>,
+  merged: PlayerProgress,
+): Record<string, string> {
+  const defaults = createDefaultLastSagaByUniverseId();
+  const stored = raw.lastSagaByUniverseId ?? {};
+  const result = { ...defaults, ...stored };
+
+  for (const universe of UNIVERSES) {
+    if (merged.selectedUniverseId === universe.id && merged.selectedSagaId) {
+      result[universe.id] = merged.selectedSagaId;
+      continue;
+    }
+
+    const remembered = stored[universe.id];
+    if (remembered && universe.sagas.some((saga) => saga.id === remembered)) {
+      result[universe.id] = remembered;
+      continue;
+    }
+
+    const activeSaga = universe.sagas.find((saga) => {
+      const completed = merged.completedChapterIdsBySagaId[saga.id]?.length ?? 0;
+      if (completed > 0) return true;
+      const activeId = merged.activeChapterBySagaId[saga.id];
+      const firstId = saga.chapters[0]?.id;
+      return Boolean(activeId && firstId && activeId !== firstId);
+    });
+    if (activeSaga) {
+      result[universe.id] = activeSaga.id;
+    }
+  }
+
+  return result;
+}
+
 function createDefaultSagaMapsForAllUniverses(): Pick<
   PlayerProgress,
   | 'activeChapterBySagaId'
@@ -79,6 +126,7 @@ export function createInitialProgress(): PlayerProgress {
     dailyStreak: 0,
     dailyFocusLimit: 3,
     activityByDate: {},
+    lastSagaByUniverseId: createDefaultLastSagaByUniverseId(),
   };
 }
 
@@ -106,10 +154,15 @@ function normalizeProgress(raw: Partial<PlayerProgress> & Record<string, unknown
   }
 
   const sagaMaps = migrateLegacyProgress(raw, universeForMigration, merged.selectedSagaId);
+  const lastSagaByUniverseId = migrateLastSagaByUniverseId(raw, {
+    ...merged,
+    ...sagaMaps,
+  });
 
   return {
     ...merged,
     ...sagaMaps,
+    lastSagaByUniverseId,
     selectedUniverseId: merged.selectedUniverseId,
     selectedSagaId: merged.selectedSagaId,
     currentChapterId: merged.currentChapterId || sagaMaps.currentChapterId,

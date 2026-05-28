@@ -3,8 +3,9 @@ import {
   NEURONET_UNIVERSE_UNLOCK_ID,
 } from '@/data/narrative/neuronet-universe';
 import { DEFAULT_SAGA_ID, DEFAULT_UNIVERSE_ID, findSaga, findUniverse } from '@/lib/narrative-state';
+import { isSagaUnlocked } from '@/lib/reward-unlocks';
 import { getSagaActiveChapterId, setSagaActiveChapter } from '@/lib/saga-progress';
-import type { PlayerProgress } from '@/types/narrative';
+import type { PlayerProgress, Saga, Universe } from '@/types/narrative';
 
 export { NEURONET_UNIVERSE_UNLOCK_ID, NEURONET_DEFAULT_SAGA_ID };
 
@@ -22,12 +23,28 @@ export function snapshotUniverseProgress(progress: PlayerProgress): DevUniverseS
   };
 }
 
+export function resolveSagaForUniverse(universe: Universe, progress: PlayerProgress): Saga {
+  const rememberedId = progress.lastSagaByUniverseId[universe.id];
+  if (rememberedId) {
+    const remembered = findSaga(universe, rememberedId);
+    if (remembered && isSagaUnlocked(remembered, progress.unlockedRewards)) {
+      return remembered;
+    }
+  }
+
+  const unlocked = universe.sagas.find((saga) => isSagaUnlocked(saga, progress.unlockedRewards));
+  if (unlocked) return unlocked;
+
+  return universe.sagas[0]!;
+}
+
 function resolveChapterIdForSaga(
   progress: PlayerProgress,
+  universeId: string,
   sagaId: string,
   preferredChapterId?: string,
 ): string | null {
-  const universe = findUniverse(progress.selectedUniverseId);
+  const universe = findUniverse(universeId);
   if (!universe) return null;
 
   const saga = findSaga(universe, sagaId);
@@ -58,7 +75,8 @@ export function applyUniverseSagaSwitch(
   if (!saga) return progress;
 
   const chapterId = resolveChapterIdForSaga(
-    { ...progress, selectedUniverseId: universeId, selectedSagaId: sagaId },
+    progress,
+    universeId,
     sagaId,
     preferredChapterId,
   );
@@ -67,6 +85,10 @@ export function applyUniverseSagaSwitch(
     ...progress,
     selectedUniverseId: universeId,
     selectedSagaId: sagaId,
+    lastSagaByUniverseId: {
+      ...progress.lastSagaByUniverseId,
+      [universeId]: sagaId,
+    },
     villainInfluenceBySaga: {
       ...progress.villainInfluenceBySaga,
       [sagaId]: progress.villainInfluenceBySaga[sagaId] ?? 100,
@@ -88,29 +110,33 @@ export function applyDevSwitchToNeuroNet(progress: PlayerProgress): PlayerProgre
     ? progress.unlockedRewards
     : [...progress.unlockedRewards, NEURONET_UNIVERSE_UNLOCK_ID];
 
-  return applyUniverseSagaSwitch(
-    { ...progress, unlockedRewards: unlocked },
-    'neuronet',
-    NEURONET_DEFAULT_SAGA_ID,
-  );
+  const withUnlock = { ...progress, unlockedRewards: unlocked };
+  const universe = findUniverse('neuronet');
+  if (!universe) return withUnlock;
+
+  const saga = resolveSagaForUniverse(universe, withUnlock);
+  return applyUniverseSagaSwitch(withUnlock, 'neuronet', saga.id);
 }
 
-export function applyDevSwitchToDustAndIron(
-  progress: PlayerProgress,
-  snapshot?: DevUniverseSnapshot | null,
-): PlayerProgress {
-  if (snapshot && snapshot.universeId === DEFAULT_UNIVERSE_ID) {
-    return applyUniverseSagaSwitch(
-      progress,
-      snapshot.universeId,
-      snapshot.sagaId,
-      snapshot.chapterId,
-    );
-  }
+export function applyDevSwitchToDustAndIron(progress: PlayerProgress): PlayerProgress {
+  const universe = findUniverse(DEFAULT_UNIVERSE_ID);
+  if (!universe) return progress;
 
-  return applyUniverseSagaSwitch(progress, DEFAULT_UNIVERSE_ID, DEFAULT_SAGA_ID);
+  const saga = resolveSagaForUniverse(universe, progress);
+  return applyUniverseSagaSwitch(progress, DEFAULT_UNIVERSE_ID, saga.id);
 }
 
 export function isSagaInPreview(saga: { chapters: unknown[] }): boolean {
   return saga.chapters.length === 0;
+}
+
+export function applyUniverseSelection(
+  progress: PlayerProgress,
+  universeId: string,
+): PlayerProgress {
+  const universe = findUniverse(universeId);
+  if (!universe) return progress;
+
+  const saga = resolveSagaForUniverse(universe, progress);
+  return applyUniverseSagaSwitch(progress, universe.id, saga.id);
 }

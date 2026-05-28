@@ -64,7 +64,7 @@ export function DevToolsPanel() {
     },
     {
       label: 'COMPLETE CURRENT CHAPTER',
-      hint: 'Clear all bounties and advance the saga trail',
+      hint: 'Clear all operations and advance the story trail',
       onPress: devCompleteCurrentChapter,
     },
     {
@@ -84,12 +84,12 @@ export function DevToolsPanel() {
     },
     {
       label: 'SWITCH TO NEURONET',
-      hint: 'Jump to Ghost Protocol preview (Coming Soon state)',
+      hint: 'Jump to NeuroNet and restore last Ghost Protocol sector',
       onPress: devSwitchToNeuroNet,
     },
     {
       label: 'SWITCH TO DUST & IRON',
-      hint: 'Restore previous Dust & Iron saga/chapter when available',
+      hint: 'Return to Dust & Iron and restore last active saga/chapter',
       onPress: devSwitchToDustAndIron,
     },
     {

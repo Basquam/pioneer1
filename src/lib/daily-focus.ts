@@ -15,6 +15,13 @@ export function resolveQuestCreatedOnDate(quest: UserQuest): string {
   return '';
 }
 
+export function filterUserQuestsByUniverse(
+  userQuests: UserQuest[],
+  universeId: string,
+): UserQuest[] {
+  return userQuests.filter((quest) => quest.sourceUniverseId === universeId);
+}
+
 export function getDailyFocusLimit(progress: PlayerProgress): number {
   return progress.dailyFocusLimit ?? DEFAULT_DAILY_FOCUS_LIMIT;
 }
@@ -23,8 +30,10 @@ export function getDailyFocusLimit(progress: PlayerProgress): number {
 export function getTodayUserQuests(
   userQuests: UserQuest[],
   dateKey: string = getLocalDateKey(),
+  universeId?: string,
 ): UserQuest[] {
-  return userQuests
+  const scoped = universeId ? filterUserQuestsByUniverse(userQuests, universeId) : userQuests;
+  return scoped
     .filter((quest) => resolveQuestCreatedOnDate(quest) === dateKey)
     .sort((a, b) => extractQuestCreatedTime(a.id) - extractQuestCreatedTime(b.id));
 }
@@ -32,16 +41,18 @@ export function getTodayUserQuests(
 export function countTodayUserQuests(
   userQuests: UserQuest[],
   dateKey: string = getLocalDateKey(),
+  universeId?: string,
 ): number {
-  return getTodayUserQuests(userQuests, dateKey).length;
+  return getTodayUserQuests(userQuests, dateKey, universeId).length;
 }
 
 export function getDailyFocusQuestIds(
   userQuests: UserQuest[],
   limit: number = DEFAULT_DAILY_FOCUS_LIMIT,
   dateKey: string = getLocalDateKey(),
+  universeId?: string,
 ): Set<string> {
-  const todayQuests = getTodayUserQuests(userQuests, dateKey);
+  const todayQuests = getTodayUserQuests(userQuests, dateKey, universeId);
   return new Set(todayQuests.slice(0, limit).map((quest) => quest.id));
 }
 
@@ -50,14 +61,28 @@ export function isDailyFocusQuest(
   userQuests: UserQuest[],
   limit: number = DEFAULT_DAILY_FOCUS_LIMIT,
   dateKey: string = getLocalDateKey(),
+  universeId?: string,
 ): boolean {
-  return getDailyFocusQuestIds(userQuests, limit, dateKey).has(questId);
+  return getDailyFocusQuestIds(userQuests, limit, dateKey, universeId).has(questId);
 }
 
-export function formatTodayFocusLabel(count: number, limit: number): string {
+export function formatTodayFocusLabel(
+  count: number,
+  limit: number,
+  universeId: string = 'dust-and-iron',
+): string {
+  if (universeId === 'neuronet') {
+    return `Focus Operations: ${count} / ${limit}`;
+  }
   return `Focus Quests: ${count} / ${limit}`;
 }
 
-export function getDailyFocusOverLimitMessage(limit: number): string {
+export function getDailyFocusOverLimitMessage(
+  limit: number,
+  universeId: string = 'dust-and-iron',
+): string {
+  if (universeId === 'neuronet') {
+    return `More than ${limit} operations today may dilute your Focus Operations. Continue?`;
+  }
   return `More than ${limit} quests today may dilute your Focus Quests. Continue?`;
 }

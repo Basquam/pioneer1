@@ -19,6 +19,14 @@ const CHAPTER_STAKES: Record<number, string> = {
   5: 'pushes all-in at high noon',
 };
 
+const NEURONET_CHAPTER_STAKES: Record<number, string> = {
+  1: 'flags your first route',
+  2: 'scans the rainline',
+  3: 'mirrors your coordinates',
+  4: 'hunts hesitation in the dark grid',
+  5: 'locks the final drop',
+};
+
 function capitalize(word: string): string {
   if (!word) return word;
   return word.charAt(0).toUpperCase() + word.slice(1);
@@ -70,7 +78,9 @@ function buildNarrativeDescription(
 ): string {
   const task = taskNoun(originalTitle).toLowerCase();
   const article = /^[aeiou]/.test(task) ? 'An' : 'A';
-  const stakes = CHAPTER_STAKES[chapter.order] ?? 'tightens its grip';
+  const stakesByUniverse =
+    universe.id === 'neuronet' ? NEURONET_CHAPTER_STAKES : CHAPTER_STAKES;
+  const stakes = stakesByUniverse[chapter.order] ?? 'tightens its grip';
   const base = `${article} ${task} keeps ${universe.locationName} steady before ${saga.villainName} ${stakes}.`;
   return templateHook ? `${base} ${templateHook}` : base;
 }

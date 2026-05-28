@@ -50,6 +50,8 @@ export function buildBoardQuests(
   const focusQuestIds = getDailyFocusQuestIds(
     progress.userQuests,
     getDailyFocusLimit(progress),
+    undefined,
+    progress.selectedUniverseId,
   );
 
   const userQuests = progress.userQuests
