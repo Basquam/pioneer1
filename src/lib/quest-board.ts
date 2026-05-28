@@ -1,7 +1,11 @@
 import type { BoardQuest, Chapter, PlayerProgress, QuestTemplate, Saga, UserQuest } from '@/types/narrative';
 
 import { getDailyFocusLimit, getDailyFocusQuestIds } from './daily-focus';
-import { getSagaCompletedQuestIds } from './saga-progress';
+
+export type QuestBoardProgress = Pick<
+  PlayerProgress,
+  'userQuests' | 'completedQuestIdsBySagaId' | 'selectedUniverseId' | 'dailyFocusLimit'
+>;
 
 export function templateToBoardQuest(
   template: QuestTemplate,
@@ -40,9 +44,9 @@ export function userQuestToBoardQuest(quest: UserQuest, isDailyFocus = false): B
 export function buildBoardQuests(
   chapter: Chapter,
   saga: Saga,
-  progress: PlayerProgress,
+  progress: QuestBoardProgress,
 ): BoardQuest[] {
-  const completedQuestIds = getSagaCompletedQuestIds(saga, progress);
+  const completedQuestIds = progress.completedQuestIdsBySagaId[saga.id] ?? [];
   const templates = chapter.questTemplates.map((template) =>
     templateToBoardQuest(template, completedQuestIds),
   );

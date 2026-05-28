@@ -1,4 +1,8 @@
 import { getLocalDateKey } from '@/lib/daily-streak';
+import {
+  EMPTY_ACTIVITY,
+  pruneActivityByDate,
+} from '@/lib/player-progress-sanitize';
 import type { DailyActivity, PlayerProgress } from '@/types/narrative';
 
 export type WeeklyRecapStats = {
@@ -12,14 +16,6 @@ export type WeeklyRecapStats = {
 };
 
 const IRON_RAILWAY_SAGA_ID = 'iron-railway-company';
-const ACTIVITY_RETENTION_DAYS = 90;
-
-const EMPTY_ACTIVITY: DailyActivity = {
-  questsCompleted: 0,
-  xpEarned: 0,
-  reputationEarned: 0,
-  chaptersCompleted: 0,
-};
 
 function parseLocalDateKey(dateKey: string): Date {
   return new Date(`${dateKey}T12:00:00`);
@@ -59,19 +55,6 @@ export function getWeeklyRecapFlavor(selectedSagaId: string, universeId = 'dust-
   }
 
   return 'This week, Dustfall stood because you showed up.';
-}
-
-function pruneActivityByDate(
-  activityByDate: Record<string, DailyActivity>,
-  referenceDate = new Date(),
-): Record<string, DailyActivity> {
-  const cutoff = new Date(referenceDate);
-  cutoff.setDate(cutoff.getDate() - ACTIVITY_RETENTION_DAYS);
-  const cutoffKey = getLocalDateKey(cutoff);
-
-  return Object.fromEntries(
-    Object.entries(activityByDate).filter(([dateKey]) => dateKey >= cutoffKey),
-  );
 }
 
 function upsertDailyActivity(

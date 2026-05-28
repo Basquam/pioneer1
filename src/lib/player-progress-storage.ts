@@ -5,6 +5,10 @@ import { findUniverse } from '@/lib/narrative-state';
 import { narrativeWarn } from '@/lib/narrative-state-debug';
 import type { PlayerProgress } from '@/types/narrative';
 import { migrateLegacyProgress } from '@/lib/saga-progress';
+import {
+  sanitizePersistedProgress,
+  sanitizeUserQuestList,
+} from '@/lib/player-progress-sanitize';
 
 const STORAGE_KEY = '@pioneer/player-progress';
 
@@ -130,6 +134,12 @@ export function createInitialProgress(): PlayerProgress {
   };
 }
 
+export function restorePlayerProgress(
+  raw: Partial<PlayerProgress> & Record<string, unknown>,
+): PlayerProgress {
+  return normalizeProgress(raw);
+}
+
 function normalizeProgress(raw: Partial<PlayerProgress> & Record<string, unknown>): PlayerProgress {
   const base = createInitialProgress();
   const merged: PlayerProgress = {
@@ -159,7 +169,7 @@ function normalizeProgress(raw: Partial<PlayerProgress> & Record<string, unknown
     ...sagaMaps,
   });
 
-  return {
+  return sanitizePersistedProgress({
     ...merged,
     ...sagaMaps,
     lastSagaByUniverseId,
@@ -174,7 +184,8 @@ function normalizeProgress(raw: Partial<PlayerProgress> & Record<string, unknown
       ...merged.villainInfluenceBySaga,
       [merged.selectedSagaId]: merged.villainInfluenceBySaga[merged.selectedSagaId] ?? 100,
     },
-  };
+    userQuests: sanitizeUserQuestList(merged.userQuests),
+  });
 }
 
 export async function loadPlayerProgress(): Promise<PlayerProgress | null> {
@@ -189,7 +200,8 @@ export async function loadPlayerProgress(): Promise<PlayerProgress | null> {
 
 export async function savePlayerProgress(progress: PlayerProgress): Promise<void> {
   try {
-    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
+    const persisted = sanitizePersistedProgress(progress);
+    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(persisted));
   } catch {
     // Ignore write failures for now — local-only persistence.
   }

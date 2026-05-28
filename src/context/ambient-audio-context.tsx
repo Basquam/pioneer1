@@ -200,8 +200,12 @@ function AmbientTrackRegistry({
   adaptersRef: React.MutableRefObject<AdapterRegistry>;
   onRegistryChange: () => void;
 }) {
-  const entries = Object.entries(AMBIENT_AUDIO_BY_UNIVERSE_ID).filter(
-    (entry): entry is [string, number] => entry[1] !== null,
+  const entries = useMemo(
+    () =>
+      Object.entries(AMBIENT_AUDIO_BY_UNIVERSE_ID).filter(
+        (entry): entry is [string, number] => entry[1] !== null,
+      ),
+    [],
   );
 
   if (IS_WEB) {

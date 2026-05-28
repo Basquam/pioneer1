@@ -22,7 +22,9 @@ export function filterUserQuestsByUniverse(
   return userQuests.filter((quest) => quest.sourceUniverseId === universeId);
 }
 
-export function getDailyFocusLimit(progress: PlayerProgress): number {
+export function getDailyFocusLimit(
+  progress: Pick<PlayerProgress, 'dailyFocusLimit'>,
+): number {
   return progress.dailyFocusLimit ?? DEFAULT_DAILY_FOCUS_LIMIT;
 }
 

@@ -11,6 +11,7 @@ import { DailyStreakDisplay } from '@/components/rpg/daily-streak-display';
 import { TodayFocusDisplay } from '@/components/rpg/today-focus-display';
 import { WeeklyRecapCard } from '@/components/rpg/weekly-recap-card';
 import { DevToolsPanel } from '@/components/rpg/dev-tools-panel';
+import { ProgressBackupPanel } from '@/components/rpg/progress-backup-panel';
 import { ScreenScroll } from '@/components/rpg/screen-scroll';
 import { ScreenShell } from '@/components/rpg/screen-shell';
 import { SectionHeader } from '@/components/rpg/section-header';
@@ -90,6 +91,8 @@ export function ProfileScreen() {
         <SectionLabel>AUDIO</SectionLabel>
         <AmbientAudioToggle />
         <AudioDevTools />
+
+        <ProgressBackupPanel />
 
         <SectionLabel>UNLOCKS / REWARDS</SectionLabel>
         {unlockedRewards.length === 0 ? (
