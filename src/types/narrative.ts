@@ -239,6 +239,12 @@ export type PlayerProgress = {
   hasOnboarded: boolean;
   /** First-session HQ tutorial — shown once after onboarding. */
   tutorialSeen: boolean;
+  /** Universe chosen during first onboarding completion — never overwritten. */
+  firstUniverseId: string | null;
+  /** Saga chosen during first onboarding completion — never overwritten. */
+  firstSagaId: string | null;
+  /** Local ISO date (YYYY-MM-DD) when onboarding was first completed. */
+  onboardingCompletedAt: string | null;
   selectedUniverseId: string;
   selectedSagaId: string;
   /** Active chapter for the selected saga — mirrors activeChapterBySagaId[selectedSagaId]. */

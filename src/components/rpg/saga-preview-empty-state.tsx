@@ -42,8 +42,8 @@ export function SagaPreviewEmptyState({ index = 0 }: SagaPreviewEmptyStateProps)
           {activeSaga.title}
         </Text>
         <Text style={[styles.message, { color: palette.fog }]}>
-          {activeSaga.title} is in preview on {activeUniverse.name}. {ui.templateQuestLabel}s and cases
-          are not playable yet.{allyLine}
+          {activeSaga.title} is preview-only on {activeUniverse.name}. Story{' '}
+          {ui.templateQuestLabel.toLowerCase()}s are not playable yet.{allyLine}
         </Text>
       </View>
     </Animated.View>

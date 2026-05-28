@@ -27,14 +27,15 @@ import {
   validateProgressBackupJson,
 } from '@/lib/progress-backup';
 
+const IMPORT_CONFIRM_TITLE = 'Replace Current Save?';
 const IMPORT_CONFIRM_MESSAGE =
-  'This will replace your current local save with the imported backup:\n\n' +
-  '• XP, level, and reputation\n' +
-  '• Completed quests and chapters\n' +
-  '• User-created quests\n' +
-  '• Character relationships\n' +
+  'This replaces your current save on this device with the imported backup.\n\n' +
+  'You will lose any progress made since that backup:\n' +
+  '• XP, level, and standing\n' +
+  '• Completed chapters and quests\n' +
+  '• Personal quests and relationships\n' +
   '• Unlocked rewards\n\n' +
-  'Your current progress will be overwritten.';
+  'Your current save will be overwritten. This cannot be undone.';
 
 type ProgressBackupPanelProps = {
   /** When true, omit outer section chrome — used inside ProfileSection. */
@@ -65,7 +66,7 @@ export function ProgressBackupPanel({ embedded = false }: ProgressBackupPanelPro
     if (Platform.OS === 'web') {
       const downloaded = downloadProgressBackupJson(json, buildProgressBackupFilename());
       if (downloaded) {
-        clearStatusLater('Progress backup downloaded.');
+        clearStatusLater('Backup downloaded.');
         return;
       }
     } else {
@@ -77,7 +78,7 @@ export function ProgressBackupPanel({ embedded = false }: ProgressBackupPanelPro
         });
         clearStatusLater('Backup shared. Copy from the modal if needed.');
       } catch {
-        clearStatusLater('Copy the backup JSON from the modal below.');
+        clearStatusLater('Copy the backup JSON from the modal.');
       }
       return;
     }
@@ -91,7 +92,7 @@ export function ProgressBackupPanel({ embedded = false }: ProgressBackupPanelPro
     const copied = await copyTextToClipboard(exportJson);
     if (copied) {
       void Haptics.selectionAsync();
-      clearStatusLater('Backup JSON copied to clipboard.');
+      clearStatusLater('Backup copied.');
       return;
     }
 
@@ -120,7 +121,7 @@ export function ProgressBackupPanel({ embedded = false }: ProgressBackupPanelPro
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     closeImportModal();
     clearStatusLater(
-      `Progress imported from backup v${result.backup.appVersion} (${result.backup.exportedAt.slice(0, 10)}).`,
+      `Save restored from backup v${result.backup.appVersion} (${result.backup.exportedAt.slice(0, 10)}).`,
     );
   };
 
@@ -134,15 +135,15 @@ export function ProgressBackupPanel({ embedded = false }: ProgressBackupPanelPro
     setImportError(null);
 
     if (Platform.OS === 'web') {
-      const confirmed = window.confirm(`Import Progress\n\n${IMPORT_CONFIRM_MESSAGE}`);
+      const confirmed = window.confirm(`${IMPORT_CONFIRM_TITLE}\n\n${IMPORT_CONFIRM_MESSAGE}`);
       if (confirmed) void confirmImport(importJson);
       return;
     }
 
-    Alert.alert('Import Progress', IMPORT_CONFIRM_MESSAGE, [
+    Alert.alert(IMPORT_CONFIRM_TITLE, IMPORT_CONFIRM_MESSAGE, [
       { text: 'Cancel', style: 'cancel' },
       {
-        text: 'Import',
+        text: 'Replace Save',
         style: 'destructive',
         onPress: () => void confirmImport(importJson),
       },
@@ -155,8 +156,7 @@ export function ProgressBackupPanel({ embedded = false }: ProgressBackupPanelPro
         <Text style={[styles.sectionLabel, { color: palette.gold }]}>BACKUP</Text>
       ) : null}
       <Text style={[styles.sectionHint, { color: palette.fog }]}>
-        Experimental local backup. Exports and imports save data on this device only — no cloud,
-        no account sync.
+        Local backup only — this device, no cloud sync.
       </Text>
       <Text style={[styles.versionHint, { color: palette.fog }]}>
         App version {getAppVersion()}
@@ -168,8 +168,8 @@ export function ProgressBackupPanel({ embedded = false }: ProgressBackupPanelPro
         <Text style={[styles.toolLabel, { color: palette.bone }]}>EXPORT PROGRESS</Text>
         <Text style={[styles.toolHint, { color: palette.fog }]}>
           {Platform.OS === 'web'
-            ? 'Download a JSON backup file with your current save.'
-            : 'Share or copy a JSON backup of your current save.'}
+            ? 'Download a JSON file of your current save.'
+            : 'Share or copy a JSON file of your current save.'}
         </Text>
       </Pressable>
 
@@ -178,7 +178,7 @@ export function ProgressBackupPanel({ embedded = false }: ProgressBackupPanelPro
         style={[styles.toolButton, { borderColor: palette.panelBorder, backgroundColor: palette.ink }]}>
         <Text style={[styles.toolLabel, { color: palette.bone }]}>IMPORT PROGRESS</Text>
         <Text style={[styles.toolHint, { color: palette.fog }]}>
-          Paste a previously exported JSON backup to replace this save.
+          Paste a backup JSON to replace this save. You will be asked to confirm.
         </Text>
       </Pressable>
 
@@ -215,9 +215,9 @@ export function ProgressBackupPanel({ embedded = false }: ProgressBackupPanelPro
             <ScrollView
               keyboardShouldPersistTaps="handled"
               contentContainerStyle={[styles.sheetScroll, { paddingBottom: modalBottomInset }]}>
-              <Text style={[styles.sheetTitle, { color: palette.bone }]}>EXPORT BACKUP JSON</Text>
+              <Text style={[styles.sheetTitle, { color: palette.bone }]}>EXPORT BACKUP</Text>
               <Text style={[styles.sheetHint, { color: palette.fog }]}>
-                Copy this JSON or use your platform share sheet to store it safely.
+                Copy this JSON or share it somewhere safe.
               </Text>
               <TextInput
                 multiline
@@ -263,10 +263,9 @@ export function ProgressBackupPanel({ embedded = false }: ProgressBackupPanelPro
             <ScrollView
               keyboardShouldPersistTaps="handled"
               contentContainerStyle={[styles.sheetScroll, { paddingBottom: modalBottomInset }]}>
-              <Text style={[styles.sheetTitle, { color: palette.bone }]}>IMPORT BACKUP JSON</Text>
+              <Text style={[styles.sheetTitle, { color: palette.bone }]}>IMPORT BACKUP</Text>
               <Text style={[styles.sheetHint, { color: palette.fog }]}>
-                Paste an exported backup below. Import replaces your current local progress after
-                confirmation.
+                Paste your backup JSON below. Import replaces this save after you confirm.
               </Text>
               <TextInput
                 multiline
@@ -275,7 +274,7 @@ export function ProgressBackupPanel({ embedded = false }: ProgressBackupPanelPro
                   setImportJson(text);
                   if (importError) setImportError(null);
                 }}
-                placeholder="Paste backup JSON here..."
+                placeholder="Paste backup JSON..."
                 placeholderTextColor={palette.fog}
                 autoCapitalize="none"
                 autoCorrect={false}
@@ -295,7 +294,7 @@ export function ProgressBackupPanel({ embedded = false }: ProgressBackupPanelPro
                 <Pressable
                   onPress={requestImport}
                   style={[styles.actionButton, { borderColor: palette.gold, backgroundColor: palette.panel }]}>
-                  <Text style={[styles.actionLabel, { color: palette.bone }]}>IMPORT PROGRESS</Text>
+                  <Text style={[styles.actionLabel, { color: palette.bone }]}>REPLACE SAVE</Text>
                 </Pressable>
                 <Pressable
                   onPress={closeImportModal}

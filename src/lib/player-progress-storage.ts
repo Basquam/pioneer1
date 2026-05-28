@@ -123,6 +123,9 @@ export function createInitialProgress(): PlayerProgress {
   return {
     hasOnboarded: false,
     tutorialSeen: false,
+    firstUniverseId: null,
+    firstSagaId: null,
+    onboardingCompletedAt: null,
     selectedUniverseId: defaultUniverseId,
     selectedSagaId: defaultSagaId,
     currentChapterId: defaultChapterId,
@@ -170,6 +173,10 @@ function normalizeProgress(raw: Partial<PlayerProgress> & Record<string, unknown
     dailyFocusLimit: raw.dailyFocusLimit ?? base.dailyFocusLimit,
     activityByDate: raw.activityByDate ?? base.activityByDate,
     tutorialSeen: inferTutorialSeen(raw),
+    firstUniverseId: typeof raw.firstUniverseId === 'string' ? raw.firstUniverseId : null,
+    firstSagaId: typeof raw.firstSagaId === 'string' ? raw.firstSagaId : null,
+    onboardingCompletedAt:
+      typeof raw.onboardingCompletedAt === 'string' ? raw.onboardingCompletedAt : null,
   };
 
   const universeForMigration = findUniverse(merged.selectedUniverseId) ?? DUST_AND_IRON_UNIVERSE;

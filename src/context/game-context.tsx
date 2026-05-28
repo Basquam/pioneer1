@@ -319,7 +319,17 @@ export function GameProvider({ children }: { children: ReactNode }) {
   );
 
   const completeOnboarding = useCallback(() => {
-    setProgress((prev) => ({ ...prev, hasOnboarded: true }));
+    setProgress((prev) => {
+      const next: PlayerProgress = { ...prev, hasOnboarded: true };
+      if (prev.firstUniverseId !== null) return next;
+
+      return {
+        ...next,
+        firstUniverseId: prev.selectedUniverseId,
+        firstSagaId: prev.selectedSagaId,
+        onboardingCompletedAt: getLocalDateKey(),
+      };
+    });
   }, []);
 
   const addUserQuest = useCallback(

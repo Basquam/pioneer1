@@ -37,7 +37,7 @@ export function GlossarySheet({ visible, onClose }: GlossarySheetProps) {
           <View style={styles.header}>
             <Text style={[styles.title, { color: palette.bone }]}>HELP / GLOSSARY</Text>
             <Text style={[styles.subtitle, { color: palette.fog }]}>
-              Core terms in {activeUniverse.name}. Wording shifts by universe.
+              Terms for {activeUniverse.name}. Wording shifts by universe.
             </Text>
           </View>
 

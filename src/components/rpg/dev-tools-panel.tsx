@@ -5,15 +5,15 @@ import { GameLayout } from '@/constants/layout';
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
 
+const RESET_CONFIRM_TITLE = 'Erase All Progress?';
 const RESET_CONFIRM_MESSAGE =
-  'This will erase all local save data and return you to onboarding:\n\n' +
-  '• XP, level, and reputation\n' +
-  '• Completed quests and chapters\n' +
-  '• User-created quests\n' +
-  '• Character relationships\n' +
-  '• Villain influence\n' +
-  '• Unlocked rewards\n\n' +
-  'This cannot be undone.';
+  'This erases all local save data and sends you back to onboarding.\n\n' +
+  'You will lose:\n' +
+  '• XP, level, and standing\n' +
+  '• Completed chapters and quests\n' +
+  '• Personal quests and relationships\n' +
+  '• Villain progress and unlocked rewards\n\n' +
+  'This is permanent. There is no undo.';
 
 type DevToolButton = {
   label: string;
@@ -47,14 +47,14 @@ export function DevToolsPanel({ embedded = false }: { embedded?: boolean }) {
 
   const handleReset = () => {
     if (Platform.OS === 'web') {
-      const confirmed = window.confirm(`Reset Progress\n\n${RESET_CONFIRM_MESSAGE}`);
+      const confirmed = window.confirm(`${RESET_CONFIRM_TITLE}\n\n${RESET_CONFIRM_MESSAGE}`);
       if (confirmed) void performReset();
       return;
     }
 
-    Alert.alert('Reset Progress', RESET_CONFIRM_MESSAGE, [
+    Alert.alert(RESET_CONFIRM_TITLE, RESET_CONFIRM_MESSAGE, [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Reset', style: 'destructive', onPress: () => void performReset() },
+      { text: 'Erase Everything', style: 'destructive', onPress: () => void performReset() },
     ]);
   };
 
@@ -106,7 +106,7 @@ export function DevToolsPanel({ embedded = false }: { embedded?: boolean }) {
     },
     {
       label: 'RESET PROGRESS',
-      hint: 'Clears AsyncStorage and restores Dust & Iron · Chapter I',
+      hint: 'Erases all save data and restarts onboarding. Permanent.',
       onPress: handleReset,
       destructive: true,
     },
@@ -116,7 +116,7 @@ export function DevToolsPanel({ embedded = false }: { embedded?: boolean }) {
     embedded ? (
       <View style={styles.embeddedBody}>
         <Text style={[styles.sectionHint, { color: palette.fog }]}>
-          MVP shortcuts — hidden in production builds.
+          Dev shortcuts — hidden in production builds.
         </Text>
         {tools.map((tool) => (
           <Pressable
@@ -146,7 +146,7 @@ export function DevToolsPanel({ embedded = false }: { embedded?: boolean }) {
       ]}>
       <Text style={[styles.sectionLabel, { color: palette.primary }]}>DEV / TESTING</Text>
       <Text style={[styles.sectionHint, { color: palette.fog }]}>
-        MVP shortcuts — hidden in production builds.
+        Dev shortcuts — hidden in production builds.
       </Text>
 
       {tools.map((tool) => (

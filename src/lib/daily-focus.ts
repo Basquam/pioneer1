@@ -87,10 +87,10 @@ export function getDailyFocusOverLimitMessage(
   universeId: string = 'dust-and-iron',
 ): string {
   if (universeId === 'neuronet') {
-    return `More than ${limit} operations today may dilute your Focus Operations. Continue?`;
+    return `Past today's Focus limit. Extra operations still count — add anyway?`;
   }
   if (universeId === 'neon-ashes') {
-    return `More than ${limit} leads today may dilute your Focus Leads. Continue?`;
+    return `Past today's Focus limit. Extra leads still count — add anyway?`;
   }
-  return `More than ${limit} quests today may dilute your Focus Quests. Continue?`;
+  return `Past today's Focus limit. Extra quests still count — add anyway?`;
 }

@@ -144,7 +144,7 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
 
             <Text style={[styles.label, { color: palette.gold }]}>{ui.addQuestTypeLabel}</Text>
             <Text style={[styles.categoryHelper, { color: palette.fog }]}>
-              Pick a type. We&apos;ll weave it into the saga.
+              Pick a type — we weave it into the saga.
             </Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
               {TASK_CATEGORIES.map((cat) => {

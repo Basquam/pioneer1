@@ -85,7 +85,7 @@ export function StorylinesSection({ onOpenSwitcher }: StorylinesSectionProps) {
         </Text>
         <Text style={[styles.switchHint, { color: palette.fog }]}>
           {hasUnlockedSagas
-            ? 'Browse all sagas, allies, villains, and chapter progress'
+            ? 'Browse sagas, allies, villains, and progress'
             : ui.sagaSwitcherEmptyMessage}
         </Text>
       </Pressable>

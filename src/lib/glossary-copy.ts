@@ -33,32 +33,32 @@ export function getGlossaryEntries(universe: Universe, ui: UniverseUiCopy, sagaI
 
   const progressionBody =
     universe.id === 'neuronet'
-      ? `${ui.reputationLabel} tracks how much trust you've earned in the Neon Spire. The map screen calls the same idea Signal Integrity — both rise when you finish work and fall when you stall.`
+      ? `${ui.reputationLabel} is your trust in the Spire. The map calls the same thing Signal Integrity. Both rise when you finish work.`
       : universe.id === 'neon-ashes'
-        ? `${ui.reputationLabel} tracks how much Grayhaven trusts your detective work. The case board uses Case Integrity for the same idea — steady work keeps the file open.`
-        : `${ui.reputationLabel} is your standing in Dustfall. Finish quests and chapters to earn it; letting work pile up lets villains gain ground.`;
+        ? `${ui.reputationLabel} is Grayhaven's trust in you. The case board calls the same thing Case Integrity. Steady work keeps the file open.`
+        : `${ui.reputationLabel} is your standing in Dustfall. Finish quests and chapters to earn it. Stall, and villains gain ground.`;
 
   const questBody =
     universe.id === 'neuronet'
-      ? `Tasks on your Operations Board. Story ${storyTaskLabel}s advance a sector; personal operations come from real tasks you add. Other universes call these quests or leads.`
+      ? `Tasks on your Operations Board. Story ${storyTaskLabel}s advance a sector; personal operations come from real tasks you add.`
       : universe.id === 'neon-ashes'
-        ? `Tasks on your Case Board. Story ${storyTaskLabel}s advance a case; personal leads come from real tasks you add. Other universes call these quests or operations.`
-        : `Tasks on your Quest Board. Story bounties advance a chapter; personal quests come from real tasks you add. NeuroNet calls them operations; Neon Ashes calls them leads.`;
+        ? `Tasks on your Case Board. Story ${storyTaskLabel}s advance a case; personal leads come from real tasks you add.`
+        : `Tasks on your Quest Board. Story bounties advance a chapter; personal quests come from real tasks you add.`;
 
-  const focusBody = `Your first three personal ${personalTaskLabel}s each day become ${ui.focusQuestsHeaderLabel.toLowerCase()} — marked on the board for extra clarity. You can add more anytime; extras still count toward progress.`;
+  const focusBody = `Your first three personal ${personalTaskLabel}s each day become ${ui.focusQuestsHeaderLabel.toLowerCase()}. You can add more anytime — extras still count.`;
 
   return [
     {
       term: 'Universe',
-      body: `A themed world with its own story, characters, and vocabulary. Pioneer has three: Dust & Iron (frontier), NeuroNet (cyberpunk), and Neon Ashes (noir). You're in ${universe.name} — ${universe.tagline}.`,
+      body: `A themed world with its own story and vocabulary. Pioneer has three: Dust & Iron, NeuroNet, and Neon Ashes. You're in ${universe.name} — ${universe.tagline}.`,
     },
     {
       term: 'Saga',
-      body: `One full story campaign inside a universe. Each saga has several ${chaptersPlural}, its own allies, villain, and ending. Finish or switch sagas from the story trail when you've unlocked them.`,
+      body: `One full campaign inside a universe. Each saga has several ${chaptersPlural}, its own cast, and an ending.`,
     },
     {
       term: 'Chapter',
-      body: `One ${chapters.slice(0, 1).toUpperCase()}${chapters.slice(1)} in a saga — a stretch of story with its own tasks and map location. Clear its tasks to advance and unlock the next ${chapters}. NeuroNet uses "sector"; Neon Ashes uses "case".`,
+      body: `One ${chapters} in a saga — story, tasks, and a map location. Clear it to unlock the next. NeuroNet says sector; Neon Ashes says case.`,
     },
     {
       term: 'Quest / Operation / Lead',
@@ -74,15 +74,15 @@ export function getGlossaryEntries(universe: Universe, ui: UniverseUiCopy, sagaI
     },
     {
       term: 'Rewards',
-      body: 'Badges, titles, and story unlocks earned by clearing chapters. Some rewards open new sagas or entire universes. See Rewards / Unlocks on your profile.',
+      body: 'Badges, titles, and unlocks from clearing chapters. Some open new sagas or universes.',
     },
     {
       term: 'Relationships',
-      body: 'Your bond with allies and rivals in the active saga. Completing tasks shifts affinity over time — check character cards under Relationships on your profile.',
+      body: 'Bond with allies and rivals in the active saga. Completing tasks shifts affinity over time.',
     },
     {
       term: 'Daily Streak',
-      body: `Consecutive days you've opened Pioneer. Missing a day gently resets to 1 — it never drops to zero. In ${universe.name} this reads as ${streak.label.toLowerCase()}: ${streak.encouragement}`,
+      body: `Days in a row you've opened Pioneer. Miss a day and it resets to 1 — never to zero. Here: ${streak.label.toLowerCase()}.`,
     },
   ];
 }

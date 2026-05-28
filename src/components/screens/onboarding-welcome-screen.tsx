@@ -26,7 +26,7 @@ export function OnboardingWelcomeScreen() {
         <Animated.View entering={FadeInDown.duration(600)} style={styles.content}>
           <SectionHeader eyebrow="PIONEER" title="YOUR LIFE\nBECOMES LEGEND" />
           <Text style={[styles.body, { color: activeUniverse.palette.fog }]}>
-            Turn everyday life into a cinematic saga. Bounties drive the chapter. Quests are yours to write.
+            Turn daily life into a cinematic saga. Bounties drive the chapter. You write the quests.
           </Text>
         </Animated.View>
       </OnboardingScroll>

@@ -25,22 +25,22 @@ export function getHqTutorialCopy(
   return {
     eyebrow: `${locationName.toUpperCase()} · FIRST VISIT`,
     title: 'THREE MOVES TO START',
-    intro: 'HQ is your home base. Here is the loop that drives every saga.',
+    intro: 'HQ is home base. Here is the loop.',
     steps: [
       {
         number: '01',
         title: "Check today's briefing",
-        body: `Read the briefing panel for your streak, ${ui.reputationLabel.toLowerCase()}, and what is left in ${ui.todaySectorLabel.toLowerCase()}.`,
+        body: `See your streak, ${ui.reputationLabel.toLowerCase()}, and what's left in ${ui.todaySectorLabel.toLowerCase()}.`,
       },
       {
         number: '02',
         title: `Add a real-life ${personalTask}`,
-        body: `Turn something you already need to do into a ${personalTask}. Your first three each day become ${ui.focusQuestsHeaderLabel.toLowerCase()}.`,
+        body: `Turn a task you already have into a ${personalTask}. Your first three each day become ${ui.focusQuestsHeaderLabel.toLowerCase()}.`,
       },
       {
         number: '03',
-        title: `Complete ${storyTasks} to advance`,
-        body: `Clear story ${ui.templateQuestLabel.toLowerCase()}s on the ${boardName} to push the chapter forward and unlock the next beat.`,
+        title: `Clear ${storyTasks}`,
+        body: `Finish story ${ui.templateQuestLabel.toLowerCase()}s on the ${boardName} to push the chapter forward.`,
       },
     ],
     addQuestLabel: `ADD YOUR FIRST ${personalTask.toUpperCase()}`,

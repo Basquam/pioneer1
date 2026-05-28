@@ -13,6 +13,7 @@ import { WeeklyRecapCard } from '@/components/rpg/weekly-recap-card';
 import { DevToolsPanel } from '@/components/rpg/dev-tools-panel';
 import { GlossaryHelpButton } from '@/components/rpg/glossary-help-button';
 import { GlossarySheet } from '@/components/rpg/glossary-sheet';
+import { ProfileAppInfo } from '@/components/rpg/profile-app-info';
 import { ProfileSection } from '@/components/rpg/profile-section';
 import { ProgressBackupPanel } from '@/components/rpg/progress-backup-panel';
 import { ScreenScroll } from '@/components/rpg/screen-scroll';
@@ -22,6 +23,11 @@ import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
 import { useUniverseUiCopy } from '@/lib/universe-ui-copy';
 import { getCompletedChapterCountForSaga } from '@/lib/chapter-progress';
+import {
+  formatOnboardingStartedOn,
+  getSagaTitleById,
+  getUniverseNameById,
+} from '@/lib/onboarding-origin-display';
 import { getUnlockedRewardEntries, isSagaUnlocked, REWARD_TYPE_LABELS } from '@/lib/reward-unlocks';
 import { getSagaActiveChapter } from '@/lib/saga-progress';
 
@@ -50,6 +56,17 @@ export function ProfileScreen() {
     () => getUnlockedRewardEntries(activeUniverse, playerProgress.unlockedRewards),
     [activeUniverse, playerProgress.unlockedRewards],
   );
+
+  const onboardingOrigin = useMemo(() => {
+    const { firstUniverseId, firstSagaId, onboardingCompletedAt } = playerProgress;
+    if (!firstUniverseId || !firstSagaId) return null;
+
+    return {
+      universeName: getUniverseNameById(firstUniverseId) ?? firstUniverseId,
+      sagaTitle: getSagaTitleById(firstSagaId) ?? firstSagaId,
+      startedOn: onboardingCompletedAt ? formatOnboardingStartedOn(onboardingCompletedAt) : null,
+    };
+  }, [playerProgress]);
 
   return (
     <ScreenShell edges={['top']} padded={false}>
@@ -85,6 +102,28 @@ export function ProfileScreen() {
             <StatBox label="MISSIONS" value={`${completedQuestCount}/${quests.length}`} colors={activeUniverse.palette} />
             <StatBox label={ui.reputationLabel} value={`${player.reputation}`} colors={activeUniverse.palette} />
           </View>
+
+          {onboardingOrigin ? (
+            <View style={styles.originBlock}>
+              <OriginRow
+                label="First Universe"
+                value={onboardingOrigin.universeName}
+                colors={activeUniverse.palette}
+              />
+              <OriginRow
+                label="First Storyline"
+                value={onboardingOrigin.sagaTitle}
+                colors={activeUniverse.palette}
+              />
+              {onboardingOrigin.startedOn ? (
+                <OriginRow
+                  label="Started On"
+                  value={onboardingOrigin.startedOn}
+                  colors={activeUniverse.palette}
+                />
+              ) : null}
+            </View>
+          ) : null}
 
           {unlockedSagas.length > 0 ? (
             <View style={styles.subsection}>
@@ -149,7 +188,7 @@ export function ProfileScreen() {
         <ProfileSection title="REWARDS / UNLOCKS">
           {unlockedRewards.length === 0 ? (
             <CinematicEmptyState
-              title="No rewards unlocked yet."
+              title="No rewards yet."
               message={ui.unlockRewardsEmptyMessage}
               primaryLabel={ui.viewStoryTrailLabel}
               onPrimaryPress={() => router.push('/(game)/story' as Href)}
@@ -190,6 +229,10 @@ export function ProfileScreen() {
             <DevToolsPanel embedded />
           </ProfileSection>
         ) : null}
+
+        <ProfileSection title="APP INFO">
+          <ProfileAppInfo />
+        </ProfileSection>
       </ScreenScroll>
     </ScreenShell>
   );
@@ -208,6 +251,25 @@ function StatBox({
     <View style={[styles.statBox, { backgroundColor: colors.panel, borderColor: colors.panelBorder }]}>
       <Text style={[styles.statLabel, { color: colors.gold }]}>{label}</Text>
       <Text style={[styles.statValue, { color: colors.bone }]} numberOfLines={1} adjustsFontSizeToFit>
+        {value}
+      </Text>
+    </View>
+  );
+}
+
+function OriginRow({
+  label,
+  value,
+  colors,
+}: {
+  label: string;
+  value: string;
+  colors: { fog: string; bone: string };
+}) {
+  return (
+    <View style={styles.originRow}>
+      <Text style={[styles.originLabel, { color: colors.fog }]}>{label}</Text>
+      <Text style={[styles.originValue, { color: colors.bone }]} numberOfLines={2}>
         {value}
       </Text>
     </View>
@@ -243,6 +305,28 @@ const styles = StyleSheet.create({
   },
   statLabel: { fontFamily: GameFonts.uiSemi, fontSize: 10, letterSpacing: 2 },
   statValue: { fontFamily: GameFonts.ui, fontSize: 22 },
+  originBlock: { gap: 6, paddingTop: 2 },
+  originRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  originLabel: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 9,
+    letterSpacing: 1.5,
+    flexShrink: 0,
+  },
+  originValue: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 10,
+    letterSpacing: 0.3,
+    lineHeight: 14,
+    textAlign: 'right',
+    flex: 1,
+    minWidth: 0,
+  },
   subsection: { gap: 8 },
   subsectionLabel: {
     fontFamily: GameFonts.uiSemi,

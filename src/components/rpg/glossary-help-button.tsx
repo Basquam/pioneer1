@@ -29,7 +29,7 @@ export function GlossaryHelpButton({ onPress }: GlossaryHelpButtonProps) {
         <View style={styles.copy}>
           <Text style={[styles.label, { color: palette.gold }]}>HELP / GLOSSARY</Text>
           <Text style={[styles.hint, { color: palette.fog }]}>
-            Short guide to universes, quests, streaks, and other core terms.
+            Core terms for this universe.
           </Text>
         </View>
         <View style={[styles.chevron, { borderColor: palette.gold }]}>

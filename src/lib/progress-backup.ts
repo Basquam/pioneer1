@@ -1,6 +1,6 @@
-import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 
+import { getAppVersion } from '@/lib/app-info';
 import type { PlayerProgress } from '@/types/narrative';
 
 export const PROGRESS_BACKUP_FORMAT = 'pioneer-progress-backup' as const;
@@ -18,9 +18,7 @@ export type ProgressBackupValidationResult =
   | { ok: true; backup: ProgressBackupFile; playerProgress: PlayerProgress }
   | { ok: false; error: string };
 
-export function getAppVersion(): string {
-  return Constants.expoConfig?.version ?? '1.0.0';
-}
+export { getAppVersion } from '@/lib/app-info';
 
 export function createProgressBackup(playerProgress: PlayerProgress): ProgressBackupFile {
   return {
@@ -84,6 +82,19 @@ export function validatePlayerProgressShape(raw: unknown): raw is PlayerProgress
   if (!isRecord(raw.activityByDate)) return false;
   if (!isStringRecord(raw.lastSagaByUniverseId)) return false;
   if (raw.tutorialSeen !== undefined && typeof raw.tutorialSeen !== 'boolean') return false;
+  if (raw.firstUniverseId !== null && raw.firstUniverseId !== undefined && typeof raw.firstUniverseId !== 'string') {
+    return false;
+  }
+  if (raw.firstSagaId !== null && raw.firstSagaId !== undefined && typeof raw.firstSagaId !== 'string') {
+    return false;
+  }
+  if (
+    raw.onboardingCompletedAt !== null &&
+    raw.onboardingCompletedAt !== undefined &&
+    typeof raw.onboardingCompletedAt !== 'string'
+  ) {
+    return false;
+  }
 
   return true;
 }
@@ -109,21 +120,21 @@ function extractPlayerProgress(parsed: unknown): PlayerProgress | null {
 export function validateProgressBackupJson(rawJson: string): ProgressBackupValidationResult {
   const trimmed = rawJson.trim();
   if (!trimmed) {
-    return { ok: false, error: 'Paste a progress backup JSON payload first.' };
+    return { ok: false, error: 'Paste a backup JSON first.' };
   }
 
   let parsed: unknown;
   try {
     parsed = JSON.parse(trimmed);
   } catch {
-    return { ok: false, error: 'Invalid JSON. Check the copied backup text and try again.' };
+    return { ok: false, error: 'Invalid JSON. Check the text and try again.' };
   }
 
   const playerProgress = extractPlayerProgress(parsed);
   if (!playerProgress) {
     return {
       ok: false,
-      error: 'Backup JSON is missing required PlayerProgress fields.',
+      error: 'Backup is missing required save fields.',
     };
   }
 
