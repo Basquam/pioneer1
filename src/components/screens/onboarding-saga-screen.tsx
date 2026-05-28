@@ -7,6 +7,7 @@ import { SagaCard } from '@/components/rpg/saga-card';
 import { ScreenShell } from '@/components/rpg/screen-shell';
 import { SectionHeader } from '@/components/rpg/section-header';
 import { useGame } from '@/hooks/use-game';
+import { GameLayout } from '@/constants/layout';
 import { getSagaUnlockHint, isSagaUnlocked } from '@/lib/reward-unlocks';
 
 export function OnboardingSagaScreen() {
@@ -21,7 +22,10 @@ export function OnboardingSagaScreen() {
         />
       </Animated.View>
 
-      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}>
         {activeUniverse.sagas.map((saga, index) => (
           <SagaCard
             key={saga.id}
@@ -46,5 +50,6 @@ export function OnboardingSagaScreen() {
 }
 
 const styles = StyleSheet.create({
-  scroll: { flex: 1, marginVertical: 12 },
+  scroll: { flex: 1, marginVertical: GameLayout.screenContentGap },
+  scrollContent: { gap: GameLayout.screenContentGap, paddingBottom: 8 },
 });

@@ -15,6 +15,7 @@ import { useEffect } from 'react';
 import { useColorScheme } from 'react-native';
 
 import { GameProvider } from '@/context/game-context';
+import { AmbientAudioProvider } from '@/context/ambient-audio-context';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -43,18 +44,20 @@ export default function RootLayout() {
 
   return (
     <GameProvider>
-      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <Stack
-          screenOptions={{
-            headerShown: false,
-            animation: 'fade',
-            contentStyle: { backgroundColor: '#050308' },
-          }}>
-          <Stack.Screen name="index" />
-          <Stack.Screen name="onboarding" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="(game)" options={{ animation: 'fade_from_bottom' }} />
-        </Stack>
-      </ThemeProvider>
+      <AmbientAudioProvider>
+        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+          <Stack
+            screenOptions={{
+              headerShown: false,
+              animation: 'fade',
+              contentStyle: { backgroundColor: '#050308' },
+            }}>
+            <Stack.Screen name="index" />
+            <Stack.Screen name="onboarding" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="(game)" options={{ animation: 'fade_from_bottom' }} />
+          </Stack>
+        </ThemeProvider>
+      </AmbientAudioProvider>
     </GameProvider>
   );
 }

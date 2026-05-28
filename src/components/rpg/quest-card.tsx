@@ -64,26 +64,38 @@ export function QuestCard({ quest, index }: QuestCardProps) {
         <View style={styles.topRow}>
           <View style={styles.badges}>
             <View style={[styles.badge, { backgroundColor: palette.primary }]}>
-              <Text style={[styles.badgeText, { color: palette.bone }]}>
+              <Text style={[styles.badgeText, { color: palette.bone }]} numberOfLines={1}>
                 {categoryMeta.icon} {categoryMeta.label.toUpperCase()}
               </Text>
             </View>
             {quest.source === 'user' && (
               <View style={[styles.badge, { backgroundColor: palette.accent }]}>
-                <Text style={[styles.badgeText, { color: palette.bone }]}>YOUR QUEST</Text>
+                <Text style={[styles.badgeText, { color: palette.bone }]} numberOfLines={1}>
+                  YOUR QUEST
+                </Text>
               </View>
             )}
           </View>
-          <Text style={[styles.xp, { color: palette.gold }]}>+{quest.xpReward} XP</Text>
+          <Text style={[styles.xp, { color: palette.gold }]} numberOfLines={1}>
+            +{quest.xpReward} XP
+          </Text>
         </View>
-        <Text style={[styles.title, { color: palette.bone }]}>{quest.narrativeTitle}</Text>
-        <Text style={[styles.sub, { color: palette.fog }]}>{quest.narrativeDescription}</Text>
-        <Text style={[styles.categoryId, { color: palette.fog }]}>{quest.category}</Text>
+        <Text style={[styles.title, { color: palette.bone }]} numberOfLines={3}>
+          {quest.narrativeTitle}
+        </Text>
+        <Text style={[styles.sub, { color: palette.fog }]} numberOfLines={4}>
+          {quest.narrativeDescription}
+        </Text>
+        <Text style={[styles.categoryId, { color: palette.fog }]} numberOfLines={1}>
+          {quest.category}
+        </Text>
         <View style={styles.realRow}>
           <Text style={[styles.realLabel, { color: palette.fog }]}>
             {quest.source === 'user' ? 'REAL TASK' : 'OBJECTIVE'}
           </Text>
-          <Text style={[styles.realTask, { color: palette.gold }]}>{quest.originalTitle}</Text>
+          <Text style={[styles.realTask, { color: palette.gold }]} numberOfLines={2}>
+            {quest.originalTitle}
+          </Text>
         </View>
         <Text style={[styles.tap, { color: palette.accent }]}>TAP TO COMPLETE ›</Text>
       </View>
@@ -100,12 +112,12 @@ const styles = StyleSheet.create({
     transform: [{ skewX: '-2deg' }],
   },
   accent: { position: 'absolute', left: 0, top: 0, bottom: 0, width: 4 },
-  inner: { paddingLeft: 8, gap: 8, transform: [{ skewX: '2deg' }] },
-  topRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  badges: { flexDirection: 'row', gap: 6, flexShrink: 1 },
-  badge: { paddingHorizontal: 8, paddingVertical: 3, transform: [{ skewX: '-8deg' }] },
+  inner: { paddingLeft: 8, gap: 8, transform: [{ skewX: '2deg' }], minWidth: 0 },
+  topRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 },
+  badges: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, flex: 1, minWidth: 0 },
+  badge: { paddingHorizontal: 8, paddingVertical: 3, transform: [{ skewX: '-8deg' }], maxWidth: '100%' },
   badgeText: { fontFamily: GameFonts.uiSemi, fontSize: 9, letterSpacing: 2 },
-  xp: { fontFamily: GameFonts.ui, fontSize: 13, letterSpacing: 2 },
+  xp: { fontFamily: GameFonts.ui, fontSize: 13, letterSpacing: 2, flexShrink: 0 },
   title: { fontFamily: GameFonts.display, fontSize: 18, lineHeight: 24 },
   sub: { fontFamily: GameFonts.displayRegular, fontSize: 13, lineHeight: 19, fontStyle: 'italic' },
   categoryId: {
@@ -117,14 +129,15 @@ const styles = StyleSheet.create({
   },
   realRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 8,
-    alignItems: 'center',
+    alignItems: 'flex-start',
     paddingTop: 6,
     borderTopWidth: 1,
     borderTopColor: 'rgba(255,255,255,0.08)',
   },
-  realLabel: { fontFamily: GameFonts.uiSemi, fontSize: 9, letterSpacing: 2 },
-  realTask: { fontFamily: GameFonts.ui, fontSize: 13, letterSpacing: 1, flex: 1 },
+  realLabel: { fontFamily: GameFonts.uiSemi, fontSize: 9, letterSpacing: 2, flexShrink: 0 },
+  realTask: { fontFamily: GameFonts.ui, fontSize: 13, letterSpacing: 1, flex: 1, minWidth: 120, lineHeight: 18 },
   tap: { fontFamily: GameFonts.ui, fontSize: 11, letterSpacing: 2, textAlign: 'right' },
   stamp: { fontFamily: GameFonts.ui, fontSize: 11, letterSpacing: 3 },
   doneTitle: { fontFamily: GameFonts.displayRegular, fontSize: 14, fontStyle: 'italic', marginTop: 4 },

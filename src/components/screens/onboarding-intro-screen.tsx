@@ -8,6 +8,7 @@ import { GlowButton } from '@/components/rpg/glow-button';
 import { ScreenShell } from '@/components/rpg/screen-shell';
 import { SectionHeader } from '@/components/rpg/section-header';
 import { VillainMeter } from '@/components/rpg/villain-meter';
+import { GameLayout } from '@/constants/layout';
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
 
@@ -79,8 +80,8 @@ const styles = StyleSheet.create({
   dialogueArea: {
     flex: 1,
     justifyContent: 'flex-end',
-    paddingBottom: 16,
-    gap: 12,
+    paddingBottom: GameLayout.screenContentGap,
+    gap: GameLayout.screenContentGap,
   },
   tap: {
     fontFamily: GameFonts.ui,

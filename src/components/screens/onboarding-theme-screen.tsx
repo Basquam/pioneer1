@@ -8,6 +8,7 @@ import { ScreenShell } from '@/components/rpg/screen-shell';
 import { SectionHeader } from '@/components/rpg/section-header';
 import { ThemeCard } from '@/components/rpg/theme-card';
 import { useGame } from '@/hooks/use-game';
+import { GameLayout } from '@/constants/layout';
 
 export function OnboardingThemeScreen() {
   const { universes, activeUniverse, selectUniverse } = useGame();
@@ -42,6 +43,6 @@ export function OnboardingThemeScreen() {
 }
 
 const styles = StyleSheet.create({
-  scroll: { flex: 1, marginVertical: 12 },
-  scrollContent: { paddingBottom: 8 },
+  scroll: { flex: 1, marginVertical: GameLayout.screenContentGap },
+  scrollContent: { paddingBottom: 8, gap: GameLayout.screenContentGap },
 });

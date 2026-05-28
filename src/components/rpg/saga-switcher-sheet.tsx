@@ -2,6 +2,7 @@ import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-nati
 import Animated, { FadeInUp } from 'react-native-reanimated';
 
 import { SagaCard } from '@/components/rpg/saga-card';
+import { GameLayout } from '@/constants/layout';
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
 import { getCompletedChapterCountForSaga } from '@/lib/chapter-progress';
@@ -31,7 +32,16 @@ export function SagaSwitcherSheet({ visible, onClose }: SagaSwitcherSheetProps) 
   return (
     <Modal visible transparent animationType="fade" onRequestClose={onClose}>
       <Pressable style={[styles.backdrop, { backgroundColor: `${palette.void}ee` }]} onPress={onClose}>
-        <Pressable style={styles.content} onPress={(event) => event.stopPropagation()}>
+        <Pressable
+          style={[
+            styles.content,
+            {
+              backgroundColor: palette.night,
+              borderColor: palette.panelBorder,
+              maxHeight: GameLayout.modalMaxHeight,
+            },
+          ]}
+          onPress={(event) => event.stopPropagation()}>
           <Animated.View entering={FadeInUp.duration(400)} style={styles.header}>
             <Text style={[styles.eyebrow, { color: palette.accent }]}>STORYLINES</Text>
             <Text style={[styles.title, { color: palette.bone }]}>CHOOSE YOUR SAGA</Text>
@@ -40,7 +50,7 @@ export function SagaSwitcherSheet({ visible, onClose }: SagaSwitcherSheetProps) 
             </Text>
           </Animated.View>
 
-          <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
+          <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
             {activeUniverse.sagas.map((saga, index) => {
               const unlocked = isSagaUnlocked(saga, playerProgress.unlockedRewards);
               const completedChapters = getCompletedChapterCountForSaga(saga, playerProgress);
@@ -82,22 +92,23 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   content: {
-    maxHeight: '88%',
-    paddingHorizontal: 20,
+    borderTopWidth: 1,
+    paddingHorizontal: GameLayout.screenPaddingHorizontal,
     paddingTop: 24,
     paddingBottom: 32,
     gap: 12,
   },
   header: { gap: 6 },
   eyebrow: { fontFamily: GameFonts.ui, fontSize: 10, letterSpacing: 3 },
-  title: { fontFamily: GameFonts.display, fontSize: 28, letterSpacing: 2 },
+  title: { fontFamily: GameFonts.display, fontSize: 26, letterSpacing: 2, lineHeight: 32 },
   subtitle: {
     fontFamily: GameFonts.displayRegular,
     fontSize: 13,
     lineHeight: 19,
     fontStyle: 'italic',
   },
-  scroll: { flexGrow: 0 },
+  scroll: { flexShrink: 1 },
+  scrollContent: { gap: 4, paddingBottom: 4 },
   cardWrap: { gap: 4 },
   progressHint: {
     fontFamily: GameFonts.uiSemi,

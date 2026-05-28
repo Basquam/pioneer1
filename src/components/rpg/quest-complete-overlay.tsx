@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, {
   FadeIn,
   FadeInDown,
@@ -13,6 +13,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { CharacterPortrait } from '@/components/rpg/character-portrait';
+import { GameLayout } from '@/constants/layout';
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
 import { getCharacter } from '@/lib/narrative-helpers';
@@ -61,23 +62,28 @@ export function QuestCompleteOverlay() {
       <Pressable
         style={[styles.backdrop, { backgroundColor: `${palette.void}ee` }]}
         onPress={phase === 'reaction' ? dismissQuestComplete : advanceToReaction}>
-        {phase === 'stamp' ? (
-          <Pressable style={styles.content} onPress={advanceToReaction}>
-            <Animated.View entering={FadeIn.duration(300)} style={styles.stampPhase}>
-              <Animated.View
-                style={[
-                  styles.stampWrap,
-                  stampStyle,
-                  { borderColor: palette.gold, backgroundColor: `${palette.primary}33` },
-                ]}>
-                <Text style={[styles.stamp, { color: palette.gold }]}>{stampLabel}</Text>
-              </Animated.View>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          bounces={false}>
+          {phase === 'stamp' ? (
+            <Pressable style={styles.content} onPress={advanceToReaction}>
+              <Animated.View entering={FadeIn.duration(300)} style={styles.stampPhase}>
+                <Animated.View
+                  style={[
+                    styles.stampWrap,
+                    stampStyle,
+                    { borderColor: palette.gold, backgroundColor: `${palette.primary}33` },
+                  ]}>
+                  <Text style={[styles.stamp, { color: palette.gold }]}>{stampLabel}</Text>
+                </Animated.View>
 
-              <Animated.Text
-                entering={FadeInDown.duration(450).delay(180)}
-                style={[styles.questTitle, { color: palette.bone }]}>
-                {questComplete.narrativeTitle}
-              </Animated.Text>
+                <Animated.Text
+                  entering={FadeInDown.duration(450).delay(180)}
+                  style={[styles.questTitle, { color: palette.bone }]}>
+                  {questComplete.narrativeTitle}
+                </Animated.Text>
 
               <Animated.Text
                 entering={FadeInDown.duration(450).delay(260)}
@@ -101,34 +107,35 @@ export function QuestCompleteOverlay() {
                 TAP TO CONTINUE ›
               </Animated.Text>
             </Animated.View>
-          </Pressable>
-        ) : (
-          <Pressable style={styles.content} onPress={(event) => event.stopPropagation()}>
-            <Animated.View entering={ZoomIn.duration(400)} style={styles.reactionPhase}>
-              <Pressable
-                onPress={dismissQuestComplete}
-                style={[
-                  styles.reactionCard,
-                  { backgroundColor: palette.panel, borderColor: palette.gold },
-                ]}>
-                {character && <CharacterPortrait character={character} />}
-                <View style={styles.reactionBody}>
-                  <Text style={[styles.reactionBadge, { color: palette.gold }]}>ALLY RESPONSE</Text>
-                  {character && (
-                    <Text style={[styles.reactionName, { color: palette.bone }]}>{character.name}</Text>
-                  )}
-                  <Text style={[styles.reactionQuest, { color: palette.fog }]}>
-                    {questComplete.narrativeTitle}
-                  </Text>
-                  <Text style={[styles.reactionLine, { color: palette.bone }]}>
-                    {questComplete.characterLine}
-                  </Text>
-                  <Text style={[styles.tapHint, { color: palette.fog }]}>TAP TO DISMISS</Text>
-                </View>
-              </Pressable>
-            </Animated.View>
-          </Pressable>
-        )}
+            </Pressable>
+          ) : (
+            <Pressable style={styles.content} onPress={(event) => event.stopPropagation()}>
+              <Animated.View entering={ZoomIn.duration(400)} style={styles.reactionPhase}>
+                <Pressable
+                  onPress={dismissQuestComplete}
+                  style={[
+                    styles.reactionCard,
+                    { backgroundColor: palette.panel, borderColor: palette.gold },
+                  ]}>
+                  {character && <CharacterPortrait character={character} />}
+                  <View style={styles.reactionBody}>
+                    <Text style={[styles.reactionBadge, { color: palette.gold }]}>ALLY RESPONSE</Text>
+                    {character && (
+                      <Text style={[styles.reactionName, { color: palette.bone }]}>{character.name}</Text>
+                    )}
+                    <Text style={[styles.reactionQuest, { color: palette.fog }]} numberOfLines={2}>
+                      {questComplete.narrativeTitle}
+                    </Text>
+                    <Text style={[styles.reactionLine, { color: palette.bone }]}>
+                      {questComplete.characterLine}
+                    </Text>
+                    <Text style={[styles.tapHint, { color: palette.fog }]}>TAP TO DISMISS</Text>
+                  </View>
+                </Pressable>
+              </Animated.View>
+            </Pressable>
+          )}
+        </ScrollView>
       </Pressable>
     </Modal>
   );
@@ -152,13 +159,14 @@ function RewardStat({
 }
 
 const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
+  backdrop: { flex: 1 },
+  scrollContent: {
+    flexGrow: 1,
     justifyContent: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 36,
+    paddingHorizontal: GameLayout.modalHorizontalPadding,
+    paddingVertical: GameLayout.modalVerticalPadding,
   },
-  content: { gap: 16 },
+  content: { gap: 16, width: '100%' },
   stampPhase: { alignItems: 'center', gap: 14 },
   stampWrap: {
     borderWidth: 2,
@@ -214,8 +222,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 14,
     transform: [{ skewX: '-2deg' }],
+    alignItems: 'flex-start',
   },
-  reactionBody: { flex: 1, gap: 6 },
+  reactionBody: { flex: 1, gap: 6, minWidth: 0 },
   reactionBadge: { fontFamily: GameFonts.uiSemi, fontSize: 9, letterSpacing: 2 },
   reactionName: { fontFamily: GameFonts.ui, fontSize: 14, letterSpacing: 2 },
   reactionQuest: { fontFamily: GameFonts.uiSemi, fontSize: 10, letterSpacing: 1 },

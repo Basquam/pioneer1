@@ -5,6 +5,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { GlowButton } from '@/components/rpg/glow-button';
 import { ScreenShell } from '@/components/rpg/screen-shell';
 import { SectionHeader } from '@/components/rpg/section-header';
+import { GameLayout } from '@/constants/layout';
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
 
@@ -29,7 +30,7 @@ export function OnboardingWelcomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  content: { flex: 1, gap: 20, paddingTop: 24 },
+  content: { flex: 1, gap: GameLayout.screenContentGap, paddingTop: 24 },
   body: {
     fontFamily: GameFonts.displayRegular,
     fontSize: 16,

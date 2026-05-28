@@ -1,9 +1,10 @@
 import { type Href, router } from 'expo-router';
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown, FadeInUp, ZoomIn } from 'react-native-reanimated';
 
 import { DialoguePanel } from '@/components/rpg/dialogue-panel';
 import { GlowButton } from '@/components/rpg/glow-button';
+import { GameLayout } from '@/constants/layout';
 import { GameFonts } from '@/constants/typography';
 import { parseDialogueLine } from '@/lib/narrative-helpers';
 import {
@@ -43,7 +44,12 @@ export function ChapterCompleteOverlay() {
         <View style={[styles.vignetteTop, { backgroundColor: palette.primary }]} />
         <View style={[styles.vignetteBottom, { backgroundColor: palette.accent }]} />
 
-        <Animated.View entering={FadeIn.duration(500)} style={styles.content}>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          bounces={false}>
+          <Animated.View entering={FadeIn.duration(500)} style={styles.content}>
           <Animated.Text
             entering={ZoomIn.duration(650).delay(120)}
             style={[styles.stamp, { color: palette.gold, borderColor: palette.gold }]}>
@@ -54,7 +60,7 @@ export function ChapterCompleteOverlay() {
             <Text style={[styles.chapterEyebrow, { color: palette.accent }]}>
               CHAPTER {chapterComplete.chapterOrder}
             </Text>
-            <Text style={[styles.chapterTitle, { color: palette.bone }]}>
+            <Text style={[styles.chapterTitle, { color: palette.bone }]} numberOfLines={3}>
               {chapterComplete.chapterTitle.toUpperCase()}
             </Text>
           </Animated.View>
@@ -119,7 +125,8 @@ export function ChapterCompleteOverlay() {
               />
             )}
           </Animated.View>
-        </Animated.View>
+          </Animated.View>
+        </ScrollView>
       </View>
     </Modal>
   );
@@ -164,11 +171,12 @@ function RewardStat({
 }
 
 const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
+  backdrop: { flex: 1 },
+  scrollContent: {
+    flexGrow: 1,
     justifyContent: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 36,
+    paddingHorizontal: GameLayout.modalHorizontalPadding,
+    paddingVertical: GameLayout.modalVerticalPadding,
   },
   vignetteTop: {
     position: 'absolute',
@@ -203,10 +211,10 @@ const styles = StyleSheet.create({
   chapterEyebrow: { fontFamily: GameFonts.ui, fontSize: 11, letterSpacing: 3 },
   chapterTitle: {
     fontFamily: GameFonts.display,
-    fontSize: 32,
-    letterSpacing: 3,
+    fontSize: 28,
+    letterSpacing: 2,
     textAlign: 'center',
-    lineHeight: 38,
+    lineHeight: 34,
   },
   dialogueWrap: { marginTop: 4 },
   rewardsRow: {
@@ -240,6 +248,13 @@ const styles = StyleSheet.create({
     transform: [{ skewX: '-6deg' }],
     marginTop: 4,
   },
-  secondaryLabel: { fontFamily: GameFonts.ui, fontSize: 14, letterSpacing: 2 },
-  secondaryHint: { fontFamily: GameFonts.uiSemi, fontSize: 9, letterSpacing: 1.5, marginTop: 4 },
+  secondaryLabel: { fontFamily: GameFonts.ui, fontSize: 14, letterSpacing: 2, textAlign: 'center' },
+  secondaryHint: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 9,
+    letterSpacing: 1.5,
+    marginTop: 4,
+    textAlign: 'center',
+    paddingHorizontal: 8,
+  },
 });

@@ -66,8 +66,22 @@ export function GlowButton({ label, hint, onPress }: GlowButtonProps) {
           btnStyle,
           { backgroundColor: palette.primary, borderColor: palette.gold },
         ]}>
-        <Text style={[styles.label, { color: palette.bone }]}>{label}</Text>
-        {hint && <Text style={[styles.hint, { color: palette.gold }]}>{hint}</Text>}
+        <Text
+          style={[styles.label, { color: palette.bone }]}
+          numberOfLines={1}
+          adjustsFontSizeToFit
+          minimumFontScale={0.75}>
+          {label}
+        </Text>
+        {hint ? (
+          <Text
+            style={[styles.hint, { color: palette.gold }]}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.8}>
+            {hint}
+          </Text>
+        ) : null}
       </AnimatedPressable>
     </View>
   );
@@ -79,10 +93,18 @@ const styles = StyleSheet.create({
   button: {
     width: '100%',
     paddingVertical: 16,
+    paddingHorizontal: 12,
     alignItems: 'center',
     borderWidth: 2,
     transform: [{ skewX: '-6deg' }],
   },
-  label: { fontFamily: GameFonts.ui, fontSize: 20, letterSpacing: 4 },
-  hint: { fontFamily: GameFonts.uiSemi, fontSize: 10, letterSpacing: 2, marginTop: 4 },
+  label: { fontFamily: GameFonts.ui, fontSize: 18, letterSpacing: 3, textAlign: 'center' },
+  hint: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 10,
+    letterSpacing: 1.5,
+    marginTop: 4,
+    textAlign: 'center',
+    paddingHorizontal: 4,
+  },
 });

@@ -1,6 +1,7 @@
 import { Pressable, StyleSheet, Text } from 'react-native';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 
+import { GameLayout } from '@/constants/layout';
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
 
@@ -34,7 +35,9 @@ export function CinematicEmptyState({
         { backgroundColor: palette.panel, borderColor: palette.panelBorder },
       ]}>
       <Text style={[styles.eyebrow, { color: palette.accent }]}>FIELD REPORT</Text>
-      <Text style={[styles.title, { color: palette.bone }]}>{title}</Text>
+      <Text style={[styles.title, { color: palette.bone }]} numberOfLines={3}>
+        {title}
+      </Text>
       <Text style={[styles.message, { color: palette.fog }]}>{message}</Text>
 
       <Pressable
@@ -57,7 +60,7 @@ export function CinematicEmptyState({
 const styles = StyleSheet.create({
   panel: {
     borderWidth: 1,
-    padding: 16,
+    padding: GameLayout.panelPadding,
     gap: 8,
     transform: [{ skewX: '-2deg' }],
   },
@@ -76,7 +79,7 @@ const styles = StyleSheet.create({
     marginTop: 6,
     transform: [{ skewX: '-4deg' }],
   },
-  primaryLabel: { fontFamily: GameFonts.ui, fontSize: 12, letterSpacing: 2 },
+  primaryLabel: { fontFamily: GameFonts.ui, fontSize: 12, letterSpacing: 2, textAlign: 'center' },
   secondaryButton: {
     borderWidth: 1,
     paddingVertical: 10,

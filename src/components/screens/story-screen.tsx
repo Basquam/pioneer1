@@ -1,13 +1,15 @@
 import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { ChapterCard } from '@/components/rpg/chapter-card';
 import { ChapterDetailSheet } from '@/components/rpg/chapter-detail-sheet';
 import { CinematicEmptyState } from '@/components/rpg/cinematic-empty-state';
 import { SagaSwitcherSheet } from '@/components/rpg/saga-switcher-sheet';
+import { ScreenScroll } from '@/components/rpg/screen-scroll';
 import { ScreenShell } from '@/components/rpg/screen-shell';
 import { SectionHeader } from '@/components/rpg/section-header';
+import { SectionLabel } from '@/components/rpg/section-label';
 import { VillainMeter } from '@/components/rpg/villain-meter';
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
@@ -56,8 +58,8 @@ export function StoryScreen() {
 
   return (
     <ScreenShell edges={['top']} padded={false}>
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        <Animated.View entering={FadeInDown.duration(500)} style={styles.pad}>
+      <ScreenScroll>
+        <Animated.View entering={FadeInDown.duration(500)}>
           <View style={styles.titleRow}>
             <View style={styles.titleBlock}>
               <SectionHeader
@@ -72,78 +74,78 @@ export function StoryScreen() {
               <Text style={[styles.switchLabel, { color: palette.gold }]}>SWITCH SAGA</Text>
             </Pressable>
           </View>
+        </Animated.View>
 
-          <VillainMeter />
+        <VillainMeter />
 
-          <View
-            style={[
-              styles.progressCard,
-              { backgroundColor: palette.panel, borderColor: palette.panelBorder },
-            ]}>
-            <Text style={[styles.progressEyebrow, { color: palette.gold }]}>
-              {completedCount}/{chapters.length} CHAPTERS CLEARED
+        <View
+          style={[
+            styles.progressCard,
+            { backgroundColor: palette.panel, borderColor: palette.panelBorder },
+          ]}>
+          <Text style={[styles.progressEyebrow, { color: palette.gold }]}>
+            {completedCount}/{chapters.length} CHAPTERS CLEARED
+          </Text>
+          {activeChapter && (
+            <Text style={[styles.progressActive, { color: palette.bone }]} numberOfLines={2}>
+              Now riding through: {activeChapter.title}
             </Text>
-            {activeChapter && (
-              <Text style={[styles.progressActive, { color: palette.bone }]}>
-                Now riding through: {activeChapter.title}
-              </Text>
-            )}
-            <Text style={[styles.progressSub, { color: palette.fog }]}>{activeSaga.summary}</Text>
-          </View>
-
-          {sagaComplete && (
-            <CinematicEmptyState
-              title="Saga complete."
-              message={`You rode every chapter of ${activeSaga.title}. The trail ends here — for now. Choose your next storyline.`}
-              primaryLabel="SWITCH SAGA"
-              onPrimaryPress={() => setSagaSwitcherVisible(true)}
-            />
           )}
+          <Text style={[styles.progressSub, { color: palette.fog }]}>{activeSaga.summary}</Text>
+        </View>
 
-          <Text style={[styles.section, { color: palette.gold }]}>SAGA CHAPTERS</Text>
-          <View style={styles.trail}>
-            {chapterRows.map(({ chapter, status }, index) => (
-              <View key={chapter.id} style={styles.trailRow}>
-                <View style={styles.rail}>
+        {sagaComplete && (
+          <CinematicEmptyState
+            title="Saga complete."
+            message={`You rode every chapter of ${activeSaga.title}. The trail ends here — for now. Choose your next storyline.`}
+            primaryLabel="SWITCH SAGA"
+            onPrimaryPress={() => setSagaSwitcherVisible(true)}
+          />
+        )}
+
+        <SectionLabel>SAGA CHAPTERS</SectionLabel>
+        <View style={styles.trail}>
+          {chapterRows.map(({ chapter, status }, index) => (
+            <View key={chapter.id} style={styles.trailRow}>
+              <View style={styles.rail}>
+                <View
+                  style={[
+                    styles.railDot,
+                    {
+                      backgroundColor:
+                        status === 'completed'
+                          ? palette.gold
+                          : status === 'active'
+                            ? palette.primary
+                            : palette.ink,
+                      borderColor: status === 'active' ? palette.gold : palette.panelBorder,
+                    },
+                  ]}
+                />
+                {index < chapterRows.length - 1 && (
                   <View
                     style={[
-                      styles.railDot,
+                      styles.railLine,
                       {
                         backgroundColor:
-                          status === 'completed'
-                            ? palette.gold
-                            : status === 'active'
-                              ? palette.primary
-                              : palette.ink,
-                        borderColor: status === 'active' ? palette.gold : palette.panelBorder,
+                          status === 'completed' ? `${palette.gold}88` : `${palette.panelBorder}88`,
                       },
                     ]}
                   />
-                  {index < chapterRows.length - 1 && (
-                    <View
-                      style={[
-                        styles.railLine,
-                        {
-                          backgroundColor:
-                            status === 'completed' ? `${palette.gold}88` : `${palette.panelBorder}88`,
-                        },
-                      ]}
-                    />
-                  )}
-                </View>
-                <View style={styles.cardWrap}>
-                  <ChapterCard
-                    chapter={chapter}
-                    status={status}
-                    index={index}
-                    onPress={() => handleChapterPress(chapter, status)}
-                  />
-                </View>
+                )}
               </View>
-            ))}
-          </View>
-        </Animated.View>
-      </ScrollView>
+              <View style={styles.cardWrap}>
+                <ChapterCard
+                  chapter={chapter}
+                  status={status}
+                  index={index}
+                  onPress={() => handleChapterPress(chapter, status)}
+                />
+              </View>
+            </View>
+          ))}
+        </View>
+      </ScreenScroll>
 
       <ChapterDetailSheet
         visible={detailMode !== null}
@@ -160,16 +162,19 @@ export function StoryScreen() {
 }
 
 const styles = StyleSheet.create({
-  scroll: { paddingBottom: 100 },
-  pad: { paddingHorizontal: 20, gap: 12, paddingTop: 8 },
-  titleRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
-  titleBlock: { flex: 1 },
+  titleRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'flex-start',
+    gap: 10,
+  },
+  titleBlock: { flex: 1, minWidth: 200 },
   switchButton: {
     borderWidth: 1,
     paddingHorizontal: 10,
     paddingVertical: 8,
-    marginTop: 8,
     transform: [{ skewX: '-6deg' }],
+    alignSelf: 'flex-start',
   },
   switchLabel: { fontFamily: GameFonts.ui, fontSize: 9, letterSpacing: 1.5 },
   progressCard: {
@@ -179,14 +184,13 @@ const styles = StyleSheet.create({
     transform: [{ skewX: '-2deg' }],
   },
   progressEyebrow: { fontFamily: GameFonts.ui, fontSize: 10, letterSpacing: 2 },
-  progressActive: { fontFamily: GameFonts.ui, fontSize: 15, letterSpacing: 1 },
+  progressActive: { fontFamily: GameFonts.ui, fontSize: 15, letterSpacing: 1, lineHeight: 20 },
   progressSub: {
     fontFamily: GameFonts.displayRegular,
     fontSize: 13,
     lineHeight: 19,
     fontStyle: 'italic',
   },
-  section: { fontFamily: GameFonts.ui, fontSize: 11, letterSpacing: 3, marginTop: 8 },
   trail: { gap: 0 },
   trailRow: { flexDirection: 'row', gap: 12 },
   rail: { width: 16, alignItems: 'center', paddingTop: 22 },
@@ -202,5 +206,5 @@ const styles = StyleSheet.create({
     minHeight: 24,
     marginTop: 4,
   },
-  cardWrap: { flex: 1 },
+  cardWrap: { flex: 1, minWidth: 0 },
 });

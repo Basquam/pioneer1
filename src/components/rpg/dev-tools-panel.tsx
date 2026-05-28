@@ -1,6 +1,7 @@
 import { type Href, router } from 'expo-router';
 import { Alert, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { GameLayout } from '@/constants/layout';
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
 
@@ -103,14 +104,12 @@ export function DevToolsPanel() {
               backgroundColor: tool.destructive ? `${palette.primary}18` : palette.panel,
             },
           ]}>
-          <Text
-            style={[
-              styles.toolLabel,
-              { color: tool.destructive ? palette.primary : palette.bone },
-            ]}>
+          <Text style={[styles.toolLabel, { color: tool.destructive ? palette.primary : palette.bone }]}>
             {tool.label}
           </Text>
-          <Text style={[styles.toolHint, { color: palette.fog }]}>{tool.hint}</Text>
+          <Text style={[styles.toolHint, { color: palette.fog }]} numberOfLines={2}>
+            {tool.hint}
+          </Text>
         </Pressable>
       ))}
     </View>
@@ -120,9 +119,8 @@ export function DevToolsPanel() {
 const styles = StyleSheet.create({
   panel: {
     borderWidth: 1,
-    padding: 14,
+    padding: GameLayout.panelPadding,
     gap: 10,
-    marginTop: 8,
     transform: [{ skewX: '-2deg' }],
   },
   sectionLabel: { fontFamily: GameFonts.ui, fontSize: 11, letterSpacing: 3 },

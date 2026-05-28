@@ -7,6 +7,7 @@ import { GlowButton } from '@/components/rpg/glow-button';
 import { ScreenShell } from '@/components/rpg/screen-shell';
 import { SectionHeader } from '@/components/rpg/section-header';
 import { ONBOARDING_PREMISE_BEATS } from '@/data/narrative/onboarding-premise';
+import { GameLayout } from '@/constants/layout';
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
 
@@ -40,7 +41,9 @@ export function OnboardingPremiseScreen() {
           <View style={[styles.accent, { backgroundColor: palette.primary }]} />
           <View style={styles.beatInner}>
             <Text style={[styles.beatBadge, { color: palette.accent }]}>BEAT {beat.badge}</Text>
-            <Text style={[styles.beatTitle, { color: palette.bone }]}>{beat.title}</Text>
+            <Text style={[styles.beatTitle, { color: palette.bone }]} numberOfLines={3}>
+              {beat.title}
+            </Text>
             <Text style={[styles.beatLine, { color: palette.fog }]}>{beat.line}</Text>
           </View>
         </Animated.View>
@@ -82,7 +85,7 @@ export function OnboardingPremiseScreen() {
 
 const styles = StyleSheet.create({
   header: { paddingTop: 24 },
-  beatArea: { flex: 1, justifyContent: 'center', gap: 20 },
+  beatArea: { flex: 1, justifyContent: 'center', gap: GameLayout.screenContentGap },
   beatCard: {
     borderWidth: 2,
     overflow: 'hidden',
@@ -91,7 +94,7 @@ const styles = StyleSheet.create({
   accent: { position: 'absolute', left: 0, top: 0, bottom: 0, width: 4 },
   beatInner: { padding: 22, paddingLeft: 26, gap: 10, transform: [{ skewX: '2deg' }] },
   beatBadge: { fontFamily: GameFonts.ui, fontSize: 10, letterSpacing: 3 },
-  beatTitle: { fontFamily: GameFonts.display, fontSize: 26, letterSpacing: 2, lineHeight: 32 },
+  beatTitle: { fontFamily: GameFonts.display, fontSize: 24, letterSpacing: 2, lineHeight: 30 },
   beatLine: {
     fontFamily: GameFonts.displayRegular,
     fontSize: 17,

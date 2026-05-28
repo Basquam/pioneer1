@@ -1,7 +1,8 @@
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown, FadeInUp, ZoomIn } from 'react-native-reanimated';
 
 import { GlowButton } from '@/components/rpg/glow-button';
+import { GameLayout } from '@/constants/layout';
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
 import { getTaskCategoryMeta } from '@/lib/task-categories';
@@ -25,7 +26,12 @@ export function QuestCreatedOverlay() {
         <View style={[styles.vignetteTop, { backgroundColor: palette.primary }]} />
         <View style={[styles.vignetteBottom, { backgroundColor: palette.accent }]} />
 
-        <Animated.View entering={FadeIn.duration(500)} style={styles.content}>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          bounces={false}>
+          <Animated.View entering={FadeIn.duration(500)} style={styles.content}>
           <Animated.Text
             entering={ZoomIn.duration(650).delay(120)}
             style={[styles.stamp, { color: palette.gold, borderColor: palette.gold }]}>
@@ -82,7 +88,8 @@ export function QuestCreatedOverlay() {
               onPress={addAnotherQuest}
             />
           </Animated.View>
-        </Animated.View>
+          </Animated.View>
+        </ScrollView>
       </View>
     </Modal>
   );
@@ -127,11 +134,12 @@ function SecondaryButton({
 }
 
 const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
+  backdrop: { flex: 1 },
+  scrollContent: {
+    flexGrow: 1,
     justifyContent: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 36,
+    paddingHorizontal: GameLayout.modalHorizontalPadding,
+    paddingVertical: GameLayout.modalVerticalPadding,
   },
   vignetteTop: {
     position: 'absolute',
@@ -170,7 +178,7 @@ const styles = StyleSheet.create({
     transform: [{ skewX: '-2deg' }],
   },
   realLabel: { fontFamily: GameFonts.uiSemi, fontSize: 9, letterSpacing: 2 },
-  realTask: { fontFamily: GameFonts.ui, fontSize: 15, letterSpacing: 0.5 },
+  realTask: { fontFamily: GameFonts.ui, fontSize: 15, letterSpacing: 0.5, lineHeight: 21 },
   divider: { height: 1, marginVertical: 4 },
   narrativeLabel: { fontFamily: GameFonts.uiSemi, fontSize: 9, letterSpacing: 2, marginTop: 2 },
   narrativeTitle: { fontFamily: GameFonts.display, fontSize: 22, lineHeight: 28, letterSpacing: 1 },
@@ -213,6 +221,13 @@ const styles = StyleSheet.create({
     transform: [{ skewX: '-6deg' }],
     marginTop: 4,
   },
-  secondaryLabel: { fontFamily: GameFonts.ui, fontSize: 14, letterSpacing: 2 },
-  secondaryHint: { fontFamily: GameFonts.uiSemi, fontSize: 9, letterSpacing: 1.5, marginTop: 4 },
+  secondaryLabel: { fontFamily: GameFonts.ui, fontSize: 14, letterSpacing: 2, textAlign: 'center' },
+  secondaryHint: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 9,
+    letterSpacing: 1.5,
+    marginTop: 4,
+    textAlign: 'center',
+    paddingHorizontal: 8,
+  },
 });

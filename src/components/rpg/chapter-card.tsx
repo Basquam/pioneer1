@@ -58,7 +58,9 @@ export function ChapterCard({ chapter, status, index, onPress }: ChapterCardProp
 
       <View style={styles.body}>
         <View style={styles.titleRow}>
-          <Text style={[styles.title, { color: palette.bone }]}>{chapter.title}</Text>
+          <Text style={[styles.title, { color: palette.bone }]} numberOfLines={2}>
+            {chapter.title}
+          </Text>
           {isCompleted && (
             <View style={[styles.stamp, { borderColor: palette.gold }]}>
               <Text style={[styles.stampText, { color: palette.gold }]}>CLEARED</Text>
@@ -98,9 +100,9 @@ const styles = StyleSheet.create({
     transform: [{ skewX: '-6deg' }],
   },
   indexText: { fontFamily: GameFonts.ui, fontSize: 16 },
-  body: { flex: 1, gap: 6 },
-  titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
-  title: { fontFamily: GameFonts.ui, fontSize: 16, letterSpacing: 1, flex: 1 },
+  body: { flex: 1, gap: 6, minWidth: 0 },
+  titleRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },
+  title: { fontFamily: GameFonts.ui, fontSize: 16, letterSpacing: 1, flex: 1, minWidth: 120 },
   stamp: {
     borderWidth: 1,
     paddingHorizontal: 6,

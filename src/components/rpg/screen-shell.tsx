@@ -4,6 +4,7 @@ import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { CinematicBackground } from '@/components/rpg/cinematic-background';
+import { GameLayout } from '@/constants/layout';
 import { useGame } from '@/hooks/use-game';
 
 type ScreenShellProps = {
@@ -31,5 +32,5 @@ export function ScreenShell({ children, edges = ['top'], padded = true }: Screen
 const styles = StyleSheet.create({
   root: { flex: 1 },
   safe: { flex: 1 },
-  padded: { paddingHorizontal: 20 },
+  padded: { paddingHorizontal: GameLayout.screenPaddingHorizontal },
 });

@@ -1,5 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { GameLayout } from '@/constants/layout';
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
 import { getCompletedChapterCountForSaga } from '@/lib/chapter-progress';
@@ -33,8 +34,10 @@ export function StorylinesSection({ onOpenSwitcher }: StorylinesSectionProps) {
       </View>
 
       <Text style={[styles.currentLabel, { color: palette.accent }]}>CURRENT SAGA</Text>
-      <Text style={[styles.sagaTitle, { color: palette.bone }]}>{activeSaga.title}</Text>
-      <Text style={[styles.role, { color: palette.fog }]}>
+      <Text style={[styles.sagaTitle, { color: palette.bone }]} numberOfLines={2}>
+        {activeSaga.title}
+      </Text>
+      <Text style={[styles.role, { color: palette.fog }]} numberOfLines={2}>
         {player.rank}
         {totalChapters > 0 ? ` · ${completedChapters}/${totalChapters} chapters` : ''}
       </Text>
@@ -54,7 +57,7 @@ export function StorylinesSection({ onOpenSwitcher }: StorylinesSectionProps) {
 const styles = StyleSheet.create({
   panel: {
     borderWidth: 1,
-    padding: 14,
+    padding: GameLayout.panelPadding,
     gap: 6,
     transform: [{ skewX: '-2deg' }],
   },

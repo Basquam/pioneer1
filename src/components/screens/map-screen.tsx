@@ -1,13 +1,15 @@
 import { type Href, router } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, Text } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { ChapterDetailSheet } from '@/components/rpg/chapter-detail-sheet';
 import { CinematicEmptyState } from '@/components/rpg/cinematic-empty-state';
 import { SagaSwitcherSheet } from '@/components/rpg/saga-switcher-sheet';
+import { ScreenScroll } from '@/components/rpg/screen-scroll';
 import { ScreenShell } from '@/components/rpg/screen-shell';
 import { SectionHeader } from '@/components/rpg/section-header';
+import { SectionLabel } from '@/components/rpg/section-label';
 import { TerritoryMap } from '@/components/rpg/territory-map';
 import { VillainMeter } from '@/components/rpg/villain-meter';
 import { GameFonts } from '@/constants/typography';
@@ -43,49 +45,49 @@ export function MapScreen() {
 
   return (
     <ScreenShell edges={['top']} padded={false}>
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        <Animated.View entering={FadeInDown.duration(500)} style={styles.pad}>
+      <ScreenScroll>
+        <Animated.View entering={FadeInDown.duration(500)}>
           <SectionHeader
             eyebrow={`${activeUniverse.name.toUpperCase()} · TERRITORY MAP`}
             title="FRONTIER PROGRESS"
             right={activeSaga.title}
           />
-
-          <VillainMeter />
-
-          <Text style={[styles.hint, { color: activeUniverse.palette.fog }]}>
-            {reclaimedCount}/{chapters.length} territories reclaimed. Your discipline reshapes Dustfall.
-          </Text>
-
-          {territoryNodes.length > 0 ? (
-            <TerritoryMap
-              nodes={territoryNodes}
-              palette={activeUniverse.palette}
-              onNodePress={handleNodePress}
-            />
-          ) : (
-            <Text style={[styles.empty, { color: activeUniverse.palette.fog }]}>
-              No territory data for this saga yet.
-            </Text>
-          )}
-
-          {allTerritoriesReclaimed && (
-            <CinematicEmptyState
-              title="Territory reclaimed."
-              message={`Every frontier on the ${activeSaga.title} map flies your colors. Collect your spoils or ride a new trail.`}
-              primaryLabel="SWITCH SAGA"
-              onPrimaryPress={() => setSagaSwitcherVisible(true)}
-              secondaryLabel="VIEW REWARDS"
-              onSecondaryPress={() => router.push('/(game)/profile' as Href)}
-            />
-          )}
-
-          <Text style={[styles.legend, { color: activeUniverse.palette.gold }]}>MAP LEGEND</Text>
-          <Text style={[styles.legendItem, { color: activeUniverse.palette.fog }]}>
-            RECLAIMED — chapter cleared · ACTIVE — current front · THREAT — locked territory
-          </Text>
         </Animated.View>
-      </ScrollView>
+
+        <VillainMeter />
+
+        <Text style={[styles.hint, { color: activeUniverse.palette.fog }]}>
+          {reclaimedCount}/{chapters.length} territories reclaimed. Your discipline reshapes Dustfall.
+        </Text>
+
+        {territoryNodes.length > 0 ? (
+          <TerritoryMap
+            nodes={territoryNodes}
+            palette={activeUniverse.palette}
+            onNodePress={handleNodePress}
+          />
+        ) : (
+          <Text style={[styles.empty, { color: activeUniverse.palette.fog }]}>
+            No territory data for this saga yet.
+          </Text>
+        )}
+
+        {allTerritoriesReclaimed && (
+          <CinematicEmptyState
+            title="Territory reclaimed."
+            message={`Every frontier on the ${activeSaga.title} map flies your colors. Collect your spoils or ride a new trail.`}
+            primaryLabel="SWITCH SAGA"
+            onPrimaryPress={() => setSagaSwitcherVisible(true)}
+            secondaryLabel="VIEW REWARDS"
+            onSecondaryPress={() => router.push('/(game)/profile' as Href)}
+          />
+        )}
+
+        <SectionLabel>MAP LEGEND</SectionLabel>
+        <Text style={[styles.legendItem, { color: activeUniverse.palette.fog }]}>
+          RECLAIMED — chapter cleared · ACTIVE — current front · THREAT — locked territory
+        </Text>
+      </ScreenScroll>
 
       <ChapterDetailSheet
         visible={detailMode !== null}
@@ -102,8 +104,6 @@ export function MapScreen() {
 }
 
 const styles = StyleSheet.create({
-  scroll: { paddingBottom: 100 },
-  pad: { paddingHorizontal: 20, gap: 12, paddingTop: 8 },
   hint: {
     fontFamily: GameFonts.displayRegular,
     fontSize: 13,
@@ -117,6 +117,5 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     paddingVertical: 40,
   },
-  legend: { fontFamily: GameFonts.ui, fontSize: 10, letterSpacing: 2, marginTop: 4 },
   legendItem: { fontFamily: GameFonts.uiSemi, fontSize: 10, letterSpacing: 0.5, lineHeight: 16 },
 });
