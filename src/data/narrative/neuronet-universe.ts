@@ -1,3 +1,8 @@
+import { GHOST_PROTOCOL_CHAPTERS } from '@/data/narrative/ghost-protocol-chapters';
+import {
+  DIRECTOR_CAIN_ID,
+  GHOST_PROTOCOL_CHARACTERS,
+} from '@/data/narrative/ghost-protocol-characters';
 import type { Saga, Universe, UniverseFaction, UniverseTerminology } from '@/types/narrative';
 
 export const NEURONET_UNIVERSE_UNLOCK_ID = 'neuronet-universe-unlock';
@@ -42,15 +47,15 @@ const ghostProtocolSaga: Saga = {
   allyName: 'Lyra Voss',
   villainName: 'Director Cain',
   villainTitle: 'Signal Ministry Director',
-  villainCharacterId: '',
+  villainCharacterId: DIRECTOR_CAIN_ID,
   status: 'locked',
   requiredUnlockId: NEURONET_UNIVERSE_UNLOCK_ID,
   unlockRequirementLabel: 'Unlock NeuroNet',
   summary:
     'Smuggle dangerous memories through the Neon Spire as a Memory Runner — your mind is the battlefield, and every packet leaves a trace.',
   rankTitles: ['Memory Runner', 'Ghost Courier', 'Protocol Breaker'],
-  characters: [],
-  chapters: [],
+  characters: GHOST_PROTOCOL_CHARACTERS,
+  chapters: GHOST_PROTOCOL_CHAPTERS,
 };
 
 const zenithCorporationSaga: Saga = {
@@ -61,7 +66,8 @@ const zenithCorporationSaga: Saga = {
   villainTitle: 'Zenith Board Enforcer',
   villainCharacterId: '',
   status: 'locked',
-  unlockRequirementLabel: 'Coming Soon',
+  requiredUnlockId: 'zenith-corporation-story-unlock',
+  unlockRequirementLabel: 'Complete Ghost Protocol',
   summary:
     'Climb the corporate hierarchy as a Junior Systems Analyst while uncovering corruption buried in efficiency reports.',
   rankTitles: ['Junior Systems Analyst', 'Compliance Lead', 'Network Architect'],
