@@ -1,5 +1,6 @@
 import type { BoardQuest, Chapter, PlayerProgress, QuestTemplate, Saga, UserQuest } from '@/types/narrative';
 
+import { getDailyFocusLimit, getDailyFocusQuestIds } from './daily-focus';
 import { getSagaCompletedQuestIds } from './saga-progress';
 
 export function templateToBoardQuest(
@@ -20,7 +21,7 @@ export function templateToBoardQuest(
   };
 }
 
-export function userQuestToBoardQuest(quest: UserQuest): BoardQuest {
+export function userQuestToBoardQuest(quest: UserQuest, isDailyFocus = false): BoardQuest {
   return {
     id: quest.id,
     source: 'user',
@@ -32,6 +33,7 @@ export function userQuestToBoardQuest(quest: UserQuest): BoardQuest {
     reputationReward: quest.reputationReward,
     reactionCharacterId: quest.reactionCharacterId,
     completed: quest.isCompleted,
+    isDailyFocus,
   };
 }
 
@@ -45,9 +47,14 @@ export function buildBoardQuests(
     templateToBoardQuest(template, completedQuestIds),
   );
 
+  const focusQuestIds = getDailyFocusQuestIds(
+    progress.userQuests,
+    getDailyFocusLimit(progress),
+  );
+
   const userQuests = progress.userQuests
     .filter((quest) => quest.sourceSagaId === saga.id && quest.sourceChapterId === chapter.id)
-    .map(userQuestToBoardQuest);
+    .map((quest) => userQuestToBoardQuest(quest, focusQuestIds.has(quest.id)));
 
   return [...templates, ...userQuests];
 }

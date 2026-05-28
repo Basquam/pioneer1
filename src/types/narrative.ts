@@ -158,6 +158,8 @@ export type UserQuest = {
   xpReward: number;
   reputationReward: number;
   reactionCharacterId: string;
+  /** Local calendar date (YYYY-MM-DD) when this quest was created. */
+  createdOnDate?: string;
 };
 
 export type BoardQuest = {
@@ -171,6 +173,8 @@ export type BoardQuest = {
   reputationReward: number;
   reactionCharacterId: string;
   completed: boolean;
+  /** First N user quests created today — highlighted on the board. */
+  isDailyFocus?: boolean;
 };
 
 export type PlayerProgress = {
@@ -193,4 +197,10 @@ export type PlayerProgress = {
   characterAffinity: Record<string, number>;
   seenChapterIntros: string[];
   dismissedTauntBySagaId: Record<string, string | null>;
+  /** Local calendar date (YYYY-MM-DD) when the player last opened the app. */
+  lastActiveDate: string | null;
+  /** Consecutive local days the player has returned. */
+  dailyStreak: number;
+  /** Max recommended user-created quests per local day before a soft warning. */
+  dailyFocusLimit: number;
 };

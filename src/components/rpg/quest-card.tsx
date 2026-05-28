@@ -33,6 +33,9 @@ export function QuestCard({ quest, index }: QuestCardProps) {
         entering={FadeInDown.delay(index * 100).springify()}
         style={[styles.wrapper, { borderColor: palette.gold, backgroundColor: `${palette.primary}22` }]}>
         <Text style={[styles.stamp, { color: palette.gold }]}>CLEARED</Text>
+        {quest.source === 'user' && quest.isDailyFocus && (
+          <Text style={[styles.focusStamp, { color: palette.gold }]}>FOCUS QUEST</Text>
+        )}
         <Text style={[styles.doneTitle, { color: palette.fog }]}>{quest.narrativeTitle}</Text>
         {quest.source === 'user' && (
           <Text style={[styles.doneReal, { color: palette.fog }]}>{quest.originalTitle}</Text>
@@ -68,6 +71,13 @@ export function QuestCard({ quest, index }: QuestCardProps) {
                 {categoryMeta.icon} {categoryMeta.label.toUpperCase()}
               </Text>
             </View>
+            {quest.source === 'user' && quest.isDailyFocus && (
+              <View style={[styles.badge, { backgroundColor: palette.gold }]}>
+                <Text style={[styles.badgeText, { color: palette.void }]} numberOfLines={1}>
+                  FOCUS QUEST
+                </Text>
+              </View>
+            )}
             {quest.source === 'user' && (
               <View style={[styles.badge, { backgroundColor: palette.accent }]}>
                 <Text style={[styles.badgeText, { color: palette.bone }]} numberOfLines={1}>
@@ -140,6 +150,7 @@ const styles = StyleSheet.create({
   realTask: { fontFamily: GameFonts.ui, fontSize: 13, letterSpacing: 1, flex: 1, minWidth: 120, lineHeight: 18 },
   tap: { fontFamily: GameFonts.ui, fontSize: 11, letterSpacing: 2, textAlign: 'right' },
   stamp: { fontFamily: GameFonts.ui, fontSize: 11, letterSpacing: 3 },
+  focusStamp: { fontFamily: GameFonts.uiSemi, fontSize: 9, letterSpacing: 2, marginTop: 2 },
   doneTitle: { fontFamily: GameFonts.displayRegular, fontSize: 14, fontStyle: 'italic', marginTop: 4 },
   doneReal: { fontFamily: GameFonts.uiSemi, fontSize: 11, marginTop: 2, letterSpacing: 0.5 },
 });

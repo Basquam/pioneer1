@@ -7,6 +7,8 @@ import { AmbientAudioToggle } from '@/components/rpg/ambient-audio-toggle';
 import { AudioDevTools } from '@/components/rpg/audio-dev-tools';
 import { CharacterCard } from '@/components/rpg/character-card';
 import { CinematicEmptyState } from '@/components/rpg/cinematic-empty-state';
+import { DailyStreakDisplay } from '@/components/rpg/daily-streak-display';
+import { TodayFocusDisplay } from '@/components/rpg/today-focus-display';
 import { DevToolsPanel } from '@/components/rpg/dev-tools-panel';
 import { ScreenScroll } from '@/components/rpg/screen-scroll';
 import { ScreenShell } from '@/components/rpg/screen-shell';
@@ -67,6 +69,10 @@ export function ProfileScreen() {
             {player.xpInLevel} / {player.xpToNext} XP to next level · {player.totalXp} total
           </Text>
         </View>
+
+        <DailyStreakDisplay variant="profile" />
+
+        <TodayFocusDisplay variant="profile" />
 
         <View style={styles.statsGrid}>
           <StatBox label="GRIT" value={String(player.stats.grit)} colors={activeUniverse.palette} />

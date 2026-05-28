@@ -17,6 +17,12 @@ import { GameLayout } from '@/constants/layout';
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
 import { useModalBottomInset } from '@/hooks/use-scroll-insets';
+import {
+  countTodayUserQuests,
+  formatTodayFocusLabel,
+  getDailyFocusLimit,
+  getDailyFocusOverLimitMessage,
+} from '@/lib/daily-focus';
 import { getTaskCategoryMeta, TASK_CATEGORIES } from '@/lib/task-categories';
 import type { TaskCategory } from '@/types/narrative';
 
@@ -26,32 +32,48 @@ type AddQuestSheetProps = {
 };
 
 export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
-  const { activeUniverse, currentChapter, addUserQuest } = useGame();
+  const { activeUniverse, currentChapter, playerProgress, addUserQuest } = useGame();
   const { palette } = activeUniverse;
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState<TaskCategory>('cleaning');
+  const [confirmOverLimit, setConfirmOverLimit] = useState(false);
 
   const selectedMeta = getTaskCategoryMeta(category);
   const modalBottomInset = useModalBottomInset(32);
+  const focusLimit = getDailyFocusLimit(playerProgress);
+  const todayFocusCount = countTodayUserQuests(playerProgress.userQuests);
+  const atFocusLimit = todayFocusCount >= focusLimit;
 
   const handleClose = () => {
     setTitle('');
     setCategory('cleaning');
+    setConfirmOverLimit(false);
     onClose();
   };
 
-  const handleCreate = () => {
+  const submitQuest = () => {
     if (!title.trim()) return;
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     addUserQuest(title, category);
     setTitle('');
     setCategory('cleaning');
+    setConfirmOverLimit(false);
+  };
+
+  const handleCreate = () => {
+    if (!title.trim()) return;
+    if (atFocusLimit && !confirmOverLimit) {
+      setConfirmOverLimit(true);
+      return;
+    }
+    submitQuest();
   };
 
   useEffect(() => {
     if (visible) return;
     setTitle('');
     setCategory('cleaning');
+    setConfirmOverLimit(false);
   }, [visible]);
 
   return (
@@ -82,6 +104,25 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
                 ? `Turn a real task into a ${currentChapter.title} mission.`
                 : 'Turn a real task into a frontier mission.'}
             </Text>
+
+            <View style={[styles.focusRow, { borderColor: palette.panelBorder }]}>
+              <Text style={[styles.focusLabel, { color: palette.gold }]}>
+                {formatTodayFocusLabel(todayFocusCount, focusLimit)}
+              </Text>
+              <Text style={[styles.focusHint, { color: palette.fog }]}>
+                {todayFocusCount < focusLimit
+                  ? 'First three personal quests today become focus quests on the board.'
+                  : 'You can still add more — they just won’t be marked as focus.'}
+              </Text>
+            </View>
+
+            {confirmOverLimit && (
+              <View style={[styles.warningBox, { backgroundColor: palette.panel, borderColor: palette.accent }]}>
+                <Text style={[styles.warningText, { color: palette.bone }]}>
+                  {getDailyFocusOverLimitMessage(focusLimit)}
+                </Text>
+              </View>
+            )}
 
             <Text style={[styles.label, { color: palette.gold }]}>REAL TASK</Text>
             <TextInput
@@ -140,7 +181,16 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
             </ScrollView>
             <Text style={[styles.categoryHint, { color: palette.fog }]}>{selectedMeta.description}</Text>
 
-            <GlowButton label="CREATE QUEST" hint="Weave it into the story" onPress={handleCreate} />
+            <GlowButton
+              label={confirmOverLimit ? 'CONTINUE ANYWAY' : 'CREATE QUEST'}
+              hint={confirmOverLimit ? 'Add beyond today\'s focus' : 'Weave it into the story'}
+              onPress={handleCreate}
+            />
+            {confirmOverLimit && (
+              <Pressable onPress={() => setConfirmOverLimit(false)} style={styles.cancelLink}>
+                <Text style={[styles.cancelText, { color: palette.fog }]}>GO BACK</Text>
+              </Pressable>
+            )}
           </ScrollView>
         </View>
       </KeyboardAvoidingView>
@@ -173,6 +223,37 @@ const styles = StyleSheet.create({
   close: { fontFamily: GameFonts.ui, fontSize: 18 },
   title: { fontFamily: GameFonts.display, fontSize: 24, lineHeight: 30 },
   sub: { fontFamily: GameFonts.displayRegular, fontSize: 13, fontStyle: 'italic', marginBottom: 4, lineHeight: 19 },
+  focusRow: {
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    paddingVertical: 10,
+    gap: 2,
+  },
+  focusLabel: {
+    fontFamily: GameFonts.ui,
+    fontSize: 12,
+    letterSpacing: 1.5,
+  },
+  focusHint: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 10,
+    letterSpacing: 0.5,
+    lineHeight: 14,
+    fontStyle: 'italic',
+  },
+  warningBox: {
+    borderWidth: 1,
+    padding: 12,
+    transform: [{ skewX: '-2deg' }],
+  },
+  warningText: {
+    fontFamily: GameFonts.displayRegular,
+    fontSize: 13,
+    lineHeight: 19,
+    fontStyle: 'italic',
+  },
+  cancelLink: { alignItems: 'center', paddingVertical: 4 },
+  cancelText: { fontFamily: GameFonts.uiSemi, fontSize: 10, letterSpacing: 2 },
   label: { fontFamily: GameFonts.uiSemi, fontSize: 10, letterSpacing: 2, marginTop: 4 },
   input: {
     borderWidth: 1,

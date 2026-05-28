@@ -1,4 +1,5 @@
 import { createContext, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { AppState, type AppStateStatus } from 'react-native';
 import { type Href, router } from 'expo-router';
 
 import { UNIVERSES } from '@/data/narrative/wild-west-universe';
@@ -10,6 +11,7 @@ import {
   restoreDefaultStoryProgress,
 } from '@/lib/narrative-state';
 import { narrativeWarn } from '@/lib/narrative-state-debug';
+import { applyDailyStreakOnOpen, getLocalDateKey } from '@/lib/daily-streak';
 import { convertTaskToUserQuest, createUserQuestId } from '@/lib/convert-task-to-quest';
 import {
   affinityToTier,
@@ -135,7 +137,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
     loadPlayerProgress().then((saved) => {
       if (!active) return;
-      if (saved) setProgress(saved);
+      const base = saved ?? createInitialProgress();
+      setProgress(applyDailyStreakOnOpen(base));
       setIsHydrated(true);
     });
 
@@ -143,6 +146,18 @@ export function GameProvider({ children }: { children: ReactNode }) {
       active = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (!isHydrated) return;
+
+    const handleAppStateChange = (state: AppStateStatus) => {
+      if (state !== 'active') return;
+      setProgress((prev) => applyDailyStreakOnOpen(prev));
+    };
+
+    const subscription = AppState.addEventListener('change', handleAppStateChange);
+    return () => subscription.remove();
+  }, [isHydrated]);
 
   useEffect(() => {
     if (!isHydrated) return;
@@ -308,6 +323,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         ...converted,
         id: createUserQuestId(),
         isCompleted: false,
+        createdOnDate: getLocalDateKey(),
       };
 
       setProgress((prev) => ({

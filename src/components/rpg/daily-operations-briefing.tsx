@@ -4,6 +4,8 @@ import { StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { AddQuestTrigger } from '@/components/rpg/add-quest-trigger';
+import { DailyStreakDisplay } from '@/components/rpg/daily-streak-display';
+import { TodayFocusDisplay } from '@/components/rpg/today-focus-display';
 import { GlowButton } from '@/components/rpg/glow-button';
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
@@ -34,6 +36,10 @@ export function DailyOperationsBriefing() {
         <Text style={[styles.subtitle, { color: palette.fog }]}>
           {activeUniverse.locationName} · {activeSaga.title}
         </Text>
+
+        <DailyStreakDisplay variant="briefing" />
+
+        <TodayFocusDisplay variant="briefing" />
 
         <View style={[styles.chapterBlock, { borderColor: palette.panelBorder }]}>
           <Text style={[styles.chapterLabel, { color: palette.accent }]}>TODAY&apos;S CHAPTER</Text>

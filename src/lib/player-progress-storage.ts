@@ -62,6 +62,9 @@ export function createInitialProgress(): PlayerProgress {
     relationshipByCharacter: {},
     characterAffinity: {},
     seenChapterIntros: [],
+    lastActiveDate: null,
+    dailyStreak: 0,
+    dailyFocusLimit: 3,
   };
 }
 
@@ -77,6 +80,9 @@ function normalizeProgress(raw: Partial<PlayerProgress> & Record<string, unknown
     relationshipByCharacter: raw.relationshipByCharacter ?? base.relationshipByCharacter,
     characterAffinity: raw.characterAffinity ?? base.characterAffinity,
     seenChapterIntros: raw.seenChapterIntros ?? base.seenChapterIntros,
+    lastActiveDate: raw.lastActiveDate ?? base.lastActiveDate,
+    dailyStreak: raw.dailyStreak ?? base.dailyStreak,
+    dailyFocusLimit: raw.dailyFocusLimit ?? base.dailyFocusLimit,
   };
 
   const universeForMigration = findUniverse(merged.selectedUniverseId) ?? DUST_AND_IRON_UNIVERSE;
