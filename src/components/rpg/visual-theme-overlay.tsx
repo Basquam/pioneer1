@@ -104,3 +104,123 @@ export function HolographicPanelChrome({ accentColor, secondaryColor }: Holograp
     </>
   );
 }
+
+type RainGlassPanelChromeProps = {
+  creamColor: string;
+  redColor: string;
+  goldColor: string;
+};
+
+/** Frosted rain-glass panel edge — cream highlight, deep red base, muted gold accent. */
+export function RainGlassPanelChrome({ creamColor, redColor, goldColor }: RainGlassPanelChromeProps) {
+  return (
+    <>
+      <View
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: 1,
+          backgroundColor: creamColor,
+          opacity: 0.55,
+        }}
+      />
+      <View
+        style={{
+          position: 'absolute',
+          top: 1,
+          left: 0,
+          right: 0,
+          height: 1,
+          backgroundColor: goldColor,
+          opacity: 0.28,
+        }}
+      />
+      <View
+        style={{
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          height: 1,
+          backgroundColor: redColor,
+          opacity: 0.35,
+        }}
+      />
+      <View
+        style={{
+          position: 'absolute',
+          top: 0,
+          bottom: 0,
+          left: 0,
+          width: 1,
+          backgroundColor: creamColor,
+          opacity: 0.18,
+        }}
+      />
+    </>
+  );
+}
+
+type RainStreakOverlayProps = {
+  color: string;
+  streakCount?: number;
+};
+
+/** Subtle vertical rain streaks for noir ambience. */
+export function RainStreakOverlay({ color, streakCount = 28 }: RainStreakOverlayProps) {
+  const streaks = Array.from({ length: streakCount }, (_, index) => ({
+    id: index,
+    left: (index * 17) % 100,
+    heightRatio: 0.4 + (index % 5) * 0.18,
+    opacity: 0.04 + (index % 4) * 0.02,
+    width: index % 3 === 0 ? 1 : 0.5,
+  }));
+
+  return (
+    <View style={StyleSheet.absoluteFill} pointerEvents="none">
+      {streaks.map((streak) => (
+        <View
+          key={streak.id}
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: `${streak.left}%` as `${number}%`,
+            width: streak.width,
+            bottom: `${(1 - streak.heightRatio) * 100}%` as `${number}%`,
+            backgroundColor: color,
+            opacity: streak.opacity,
+          }}
+        />
+      ))}
+    </View>
+  );
+}
+
+type TypewriterTextureOverlayProps = {
+  color: string;
+  lineCount?: number;
+};
+
+/** Fine horizontal grain — typewriter paper / case-file texture. */
+export function TypewriterTextureOverlay({ color, lineCount = 64 }: TypewriterTextureOverlayProps) {
+  return (
+    <View style={StyleSheet.absoluteFill} pointerEvents="none">
+      {Array.from({ length: lineCount }, (_, index) => (
+        <View
+          key={index}
+          style={{
+            position: 'absolute',
+            top: index * 6,
+            left: 0,
+            right: 0,
+            height: 1,
+            backgroundColor: color,
+            opacity: index % 4 === 0 ? 0.05 : 0.025,
+          }}
+        />
+      ))}
+    </View>
+  );
+}

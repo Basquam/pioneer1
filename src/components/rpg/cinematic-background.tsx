@@ -13,7 +13,9 @@ import Animated, {
 
 import {
   GridDotOverlay,
+  RainStreakOverlay,
   ScanlineOverlay,
+  TypewriterTextureOverlay,
 } from '@/components/rpg/visual-theme-overlay';
 import { useGame } from '@/hooks/use-game';
 import { useUniverseVisualTheme } from '@/hooks/use-universe-visual-theme';
@@ -123,6 +125,12 @@ export function CinematicBackground() {
         locations={[0.5, 0.85, 1]}
         style={StyleSheet.absoluteFill}
       />
+      {visualTheme.showRainStreaks && (
+        <RainStreakOverlay color={palette.bone} streakCount={32} />
+      )}
+      {visualTheme.showTypewriterTexture && (
+        <TypewriterTextureOverlay color={palette.bone} lineCount={72} />
+      )}
       {visualTheme.ambientParticles === 'stars' &&
         stars.map((s) => (
           <Star key={s.id} {...s} color={isNoir ? palette.accent : palette.bone} />
@@ -141,6 +149,21 @@ export function CinematicBackground() {
           },
         ]}
       />
+      {isNoir && (
+        <View
+          style={[
+            styles.ambientGlow,
+            {
+              backgroundColor: palette.primary,
+              top: height * 0.38,
+              left: -50,
+              width: 140,
+              height: 140,
+              opacity: 0.1,
+            },
+          ]}
+        />
+      )}
       {isChrome && (
         <Animated.View
           style={[

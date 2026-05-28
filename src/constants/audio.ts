@@ -1,6 +1,7 @@
 export const AmbientAudioConfig = {
   wildWestUniverseId: 'dust-and-iron',
   neuronetUniverseId: 'neuronet',
+  neonAshesUniverseId: 'neon-ashes',
   /** Temporarily raised for easier verification — tune down before release. */
   targetVolume: 0.35,
   devTestVolume: 0.8,
@@ -17,6 +18,8 @@ export const NEURONET_AMBIENT_AUDIO_MODULE = require('@/assets/audio/neuronet-am
 export const AMBIENT_AUDIO_BY_UNIVERSE_ID: Record<string, number | null> = {
   'dust-and-iron': AMBIENT_AUDIO_MODULE,
   neuronet: NEURONET_AMBIENT_AUDIO_MODULE,
+  /** Placeholder — rain, jazz club hum, and city noir ambience TBD. */
+  'neon-ashes': null,
 };
 
 export function getAmbientAudioModule(universeId: string): number | null {

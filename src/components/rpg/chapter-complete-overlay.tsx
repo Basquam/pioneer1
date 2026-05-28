@@ -4,7 +4,8 @@ import Animated, { FadeIn, FadeInDown, FadeInUp, ZoomIn } from 'react-native-rea
 
 import { DialoguePanel } from '@/components/rpg/dialogue-panel';
 import { GlowButton } from '@/components/rpg/glow-button';
-import { HolographicPanelChrome, ScanlineOverlay } from '@/components/rpg/visual-theme-overlay';
+import { PanelChrome } from '@/components/rpg/panel-chrome';
+import { ScanlineOverlay } from '@/components/rpg/visual-theme-overlay';
 import { GameLayout } from '@/constants/layout';
 import { GameFonts } from '@/constants/typography';
 import {
@@ -117,7 +118,7 @@ export function ChapterCompleteOverlay() {
                 },
               ]}>
               {visualTheme.panelTopHighlight && (
-                <HolographicPanelChrome accentColor={palette.accent} secondaryColor={palette.primary} />
+                <PanelChrome palette={palette} theme={visualTheme} />
               )}
               <Text style={[styles.unlockEyebrow, { color: goldAccent }]}>
                 {reward.type === 'storyUnlock' ? 'STORY UNLOCKED' : 'NEW REWARD'}

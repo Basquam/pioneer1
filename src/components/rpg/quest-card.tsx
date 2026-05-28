@@ -6,12 +6,12 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 
-import { HolographicPanelChrome } from '@/components/rpg/visual-theme-overlay';
+import { PanelChrome } from '@/components/rpg/panel-chrome';
 import { GameFonts } from '@/constants/typography';
 import {
-  getHolographicShadow,
   getPanelAccentColor,
   getPanelBorderColor,
+  getPanelShadow,
   skewTransform,
 } from '@/constants/universe-visual-theme';
 import { useGame } from '@/hooks/use-game';
@@ -52,7 +52,7 @@ export function QuestCard({ quest, index }: QuestCardProps) {
             backgroundColor: `${accentColor}22`,
             transform: skewTransform(visualTheme.cardSkew),
           },
-          getHolographicShadow(palette, visualTheme),
+          getPanelShadow(palette, visualTheme),
         ]}>
         <Text style={[styles.stamp, { color: goldAccent }]}>CLEARED</Text>
         {quest.source === 'user' && quest.isDailyFocus && (
@@ -88,11 +88,9 @@ export function QuestCard({ quest, index }: QuestCardProps) {
           borderWidth: visualTheme.panelBorderWidth,
           transform: skewTransform(visualTheme.cardSkew),
         },
-        getHolographicShadow(palette, visualTheme),
+        getPanelShadow(palette, visualTheme),
       ]}>
-      {visualTheme.panelTopHighlight && (
-        <HolographicPanelChrome accentColor={palette.accent} secondaryColor={palette.primary} />
-      )}
+      <PanelChrome palette={palette} theme={visualTheme} />
       <View style={[styles.accent, { backgroundColor: accentColor, width: visualTheme.accentLineWidth }]} />
       <View style={[styles.inner, visualTheme.cardSkew !== 0 && styles.innerUnskew]}>
         <View style={styles.topRow}>

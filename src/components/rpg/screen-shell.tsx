@@ -30,16 +30,25 @@ export function ScreenShell({ children, edges = ['top'], padded = true }: Screen
         />
       )}
       {visualTheme.backgroundVariant === 'noir' && (
-        <View
-          pointerEvents="none"
-          style={[
-            styles.noirFrame,
-            {
-              borderColor: `${palette.primary}44`,
-              backgroundColor: `${palette.panel}22`,
-            },
-          ]}
-        />
+        <>
+          <View
+            pointerEvents="none"
+            style={[
+              styles.noirFrame,
+              {
+                borderColor: `${palette.primary}44`,
+                backgroundColor: `${palette.panel}22`,
+              },
+            ]}
+          />
+          <View
+            pointerEvents="none"
+            style={[
+              styles.noirInnerFrame,
+              { borderColor: `${palette.gold}22` },
+            ]}
+          />
+        </>
       )}
       <SafeAreaView
         style={[styles.safe, padded && styles.padded]}
@@ -68,6 +77,15 @@ const styles = StyleSheet.create({
     bottom: 8,
     borderWidth: 1,
     borderRadius: 2,
+  },
+  noirInnerFrame: {
+    position: 'absolute',
+    top: 12,
+    left: 12,
+    right: 12,
+    bottom: 12,
+    borderWidth: 1,
+    borderRadius: 1,
   },
   safe: { flex: 1 },
   padded: { paddingHorizontal: GameLayout.screenPaddingHorizontal },

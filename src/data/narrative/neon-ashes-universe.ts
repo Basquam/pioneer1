@@ -1,3 +1,8 @@
+import { CAMPUS_MURDERS_CHAPTERS } from '@/data/narrative/campus-murders-chapters';
+import {
+  CAMPUS_MURDERS_CHARACTERS,
+  THE_GLASS_STUDENT_ID,
+} from '@/data/narrative/campus-murders-characters';
 import { HOLLOW_SYNDICATE_CHAPTERS } from '@/data/narrative/hollow-syndicate-chapters';
 import {
   HOLLOW_SYNDICATE_CHARACTERS,
@@ -64,15 +69,15 @@ const campusMurdersSaga: Saga = {
   allyName: 'Professor Lena Ward',
   villainName: 'The Glass Student',
   villainTitle: 'Academy Phantom',
-  villainCharacterId: '',
+  villainCharacterId: THE_GLASS_STUDENT_ID,
   status: 'locked',
   requiredUnlockId: 'campus-murders-story-unlock',
   unlockRequirementLabel: 'Complete Hollow Syndicate',
   summary:
     'Arrive as a visiting investigator at a prestigious academy where polished halls hide a series of murders no one wants solved.',
   rankTitles: ['Visiting Investigator', 'Campus Sleuth', 'Academy Reckoner'],
-  characters: [],
-  chapters: [],
+  characters: CAMPUS_MURDERS_CHARACTERS,
+  chapters: CAMPUS_MURDERS_CHAPTERS,
 };
 
 const jazzClubSecretsSaga: Saga = {
@@ -83,7 +88,8 @@ const jazzClubSecretsSaga: Saga = {
   villainTitle: 'Club Proprietor',
   villainCharacterId: '',
   status: 'locked',
-  unlockRequirementLabel: 'Coming Soon',
+  requiredUnlockId: 'jazz-club-secrets-story-unlock',
+  unlockRequirementLabel: 'Complete Campus Murders',
   summary:
     'Patrol the after-hours city as a night detective and uncover secrets buried beneath smoke, saxophone, and silence.',
   rankTitles: ['Night Detective', 'After-Hours Sleuth', 'City Confessor'],

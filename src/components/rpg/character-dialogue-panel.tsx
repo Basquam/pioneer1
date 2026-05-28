@@ -3,12 +3,12 @@ import { StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeIn, FadeInLeft } from 'react-native-reanimated';
 
 import { CharacterPortrait } from '@/components/rpg/character-portrait';
-import { HolographicPanelChrome } from '@/components/rpg/visual-theme-overlay';
+import { PanelChrome } from '@/components/rpg/panel-chrome';
 import { GameFonts } from '@/constants/typography';
 import {
-  getHolographicShadow,
   getPanelAccentColor,
   getPanelBorderColor,
+  getPanelShadow,
   skewTransform,
 } from '@/constants/universe-visual-theme';
 import { getCharacter } from '@/lib/narrative-helpers';
@@ -74,11 +74,14 @@ export function CharacterDialoguePanel({
             borderWidth: visualTheme.panelBorderWidth,
             transform: skewTransform(visualTheme.cardSkew),
           },
-          getHolographicShadow(palette, visualTheme),
+          getPanelShadow(palette, visualTheme),
         ]}>
-        {visualTheme.panelTopHighlight && !character.isVillain && (
-          <HolographicPanelChrome accentColor={palette.accent} secondaryColor={palette.primary} />
-        )}
+        <PanelChrome
+          palette={palette}
+          theme={visualTheme}
+          isVillain={character.isVillain}
+          allowVillain={false}
+        />
         <View
           style={[
             styles.accent,

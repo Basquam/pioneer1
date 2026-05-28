@@ -2,17 +2,17 @@ import * as Haptics from 'expo-haptics';
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
+import { PanelChrome } from '@/components/rpg/panel-chrome';
 import { GameFonts } from '@/constants/typography';
 import {
-  getHolographicShadow,
   getPanelAccentColor,
   getPanelBorderColor,
+  getPanelShadow,
   skewTransform,
 } from '@/constants/universe-visual-theme';
 import { useGame } from '@/hooks/use-game';
 import { useUniverseVisualTheme } from '@/hooks/use-universe-visual-theme';
 import { useUniverseUiCopy } from '@/lib/universe-ui-copy';
-import { HolographicPanelChrome } from '@/components/rpg/visual-theme-overlay';
 import type { ChapterStatus } from '@/lib/chapter-progress';
 import type { Chapter } from '@/types/narrative';
 
@@ -57,11 +57,9 @@ export function ChapterCard({ chapter, status, index, onPress }: ChapterCardProp
           opacity: isLocked ? 0.45 : 1,
           transform: skewTransform(visualTheme.cardSkew),
         },
-        getHolographicShadow(palette, visualTheme),
+        getPanelShadow(palette, visualTheme),
       ]}>
-      {visualTheme.panelTopHighlight && (
-        <HolographicPanelChrome accentColor={palette.accent} secondaryColor={palette.primary} />
-      )}
+      <PanelChrome palette={palette} theme={visualTheme} />
       <View
         style={[
           styles.index,

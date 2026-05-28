@@ -119,8 +119,9 @@ export function applyDevSwitchToNeonAshes(progress: PlayerProgress): PlayerProgr
   const universe = findUniverse('neon-ashes');
   if (!universe) return withUnlock;
 
-  const saga = resolveSagaForUniverse(universe, withUnlock);
-  return applyUniverseSagaSwitch(withUnlock, 'neon-ashes', saga.id);
+  const saga = findSaga(universe, NEON_ASHES_DEFAULT_SAGA_ID) ?? resolveSagaForUniverse(universe, withUnlock);
+  const firstChapterId = saga.chapters[0]?.id;
+  return applyUniverseSagaSwitch(withUnlock, 'neon-ashes', saga.id, firstChapterId);
 }
 
 export function applyDevSwitchToNeuroNet(progress: PlayerProgress): PlayerProgress {

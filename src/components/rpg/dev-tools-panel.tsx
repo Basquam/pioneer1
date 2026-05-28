@@ -96,7 +96,7 @@ export function DevToolsPanel() {
     },
     {
       label: 'SWITCH TO NEON ASHES',
-      hint: 'Jump to Neon Ashes and restore last Hollow Syndicate case',
+      hint: 'Jump to Neon Ashes · Hollow Syndicate Case 1 (Cold File)',
       onPress: devSwitchToNeonAshes,
     },
     {

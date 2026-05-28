@@ -5,7 +5,10 @@ export type UniverseVisualTheme = {
   buttonSkew: number;
   panelBorderWidth: number;
   panelUsesHolographic: boolean;
+  panelUsesRainGlass: boolean;
   panelTopHighlight: boolean;
+  showTypewriterTexture: boolean;
+  showRainStreaks: boolean;
   backgroundVariant: 'western' | 'chrome' | 'noir';
   showScanlines: boolean;
   showGridDots: boolean;
@@ -27,7 +30,10 @@ const DUST_AND_IRON_VISUAL_THEME: UniverseVisualTheme = {
   buttonSkew: -6,
   panelBorderWidth: 1,
   panelUsesHolographic: false,
+  panelUsesRainGlass: false,
   panelTopHighlight: false,
+  showTypewriterTexture: false,
+  showRainStreaks: false,
   backgroundVariant: 'western',
   showScanlines: false,
   showGridDots: false,
@@ -49,7 +55,10 @@ const NEON_ASHES_VISUAL_THEME: UniverseVisualTheme = {
   buttonSkew: -3,
   panelBorderWidth: 1,
   panelUsesHolographic: false,
+  panelUsesRainGlass: true,
   panelTopHighlight: true,
+  showTypewriterTexture: true,
+  showRainStreaks: true,
   backgroundVariant: 'noir',
   showScanlines: false,
   showGridDots: false,
@@ -71,7 +80,10 @@ const NEURONET_VISUAL_THEME: UniverseVisualTheme = {
   buttonSkew: 0,
   panelBorderWidth: 1,
   panelUsesHolographic: true,
+  panelUsesRainGlass: false,
   panelTopHighlight: true,
+  showTypewriterTexture: false,
+  showRainStreaks: false,
   backgroundVariant: 'chrome',
   showScanlines: true,
   showGridDots: true,
@@ -126,4 +138,22 @@ export function getHolographicShadow(palette: UniversePalette, theme: UniverseVi
     shadowOffset: { width: 0, height: 0 } as const,
     elevation: 5,
   };
+}
+
+export function getRainGlassShadow(palette: UniversePalette, theme: UniverseVisualTheme) {
+  if (!theme.panelUsesRainGlass) return {};
+  return {
+    shadowColor: palette.primary,
+    shadowOpacity: 0.16,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 3 } as const,
+    elevation: 4,
+  };
+}
+
+/** Universe-aware panel elevation — holographic chrome or rain-glass depth. */
+export function getPanelShadow(palette: UniversePalette, theme: UniverseVisualTheme) {
+  if (theme.panelUsesHolographic) return getHolographicShadow(palette, theme);
+  if (theme.panelUsesRainGlass) return getRainGlassShadow(palette, theme);
+  return {};
 }

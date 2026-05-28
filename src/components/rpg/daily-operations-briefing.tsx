@@ -7,12 +7,12 @@ import { AddQuestTrigger } from '@/components/rpg/add-quest-trigger';
 import { DailyStreakDisplay } from '@/components/rpg/daily-streak-display';
 import { TodayFocusDisplay } from '@/components/rpg/today-focus-display';
 import { GlowButton } from '@/components/rpg/glow-button';
-import { HolographicPanelChrome } from '@/components/rpg/visual-theme-overlay';
+import { PanelChrome } from '@/components/rpg/panel-chrome';
 import { GameFonts } from '@/constants/typography';
 import {
-  getHolographicShadow,
   getPanelAccentColor,
   getPanelBorderColor,
+  getPanelShadow,
   skewTransform,
 } from '@/constants/universe-visual-theme';
 import { useGame } from '@/hooks/use-game';
@@ -49,11 +49,9 @@ export function DailyOperationsBriefing() {
           borderWidth: visualTheme.panelBorderWidth,
           transform: skewTransform(visualTheme.cardSkew),
         },
-        getHolographicShadow(palette, visualTheme),
+        getPanelShadow(palette, visualTheme),
       ]}>
-      {visualTheme.panelTopHighlight && (
-        <HolographicPanelChrome accentColor={palette.accent} secondaryColor={palette.primary} />
-      )}
+      <PanelChrome palette={palette} theme={visualTheme} />
       <View style={[styles.accent, { backgroundColor: accentColor, width: visualTheme.accentLineWidth }]} />
 
       <View style={[styles.inner, visualTheme.cardSkew !== 0 && styles.innerUnskew]}>
