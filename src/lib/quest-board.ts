@@ -38,6 +38,7 @@ export function userQuestToBoardQuest(quest: UserQuest, isDailyFocus = false): B
     reactionCharacterId: quest.reactionCharacterId,
     completed: quest.isCompleted,
     isDailyFocus,
+    ...(quest.starterTaskTitle ? { starterTaskTitle: quest.starterTaskTitle } : {}),
   };
 }
 

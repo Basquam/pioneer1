@@ -9,6 +9,7 @@ import {
   applyDevSwitchToNeuroNet,
 } from '../src/lib/dev-universe-switch';
 import { resolveNarrativeState } from '../src/lib/narrative-state';
+import { createEmptyIdentityVotes } from '../src/lib/identity-votes';
 import type { PlayerProgress, TaskCategory } from '../src/types/narrative';
 
 const AMBIENT_UNIVERSE_IDS = ['dust-and-iron', 'neuronet', 'neon-ashes'] as const;
@@ -47,6 +48,7 @@ function baseProgress(): PlayerProgress {
     dailyFocusLimit: 3,
     activityByDate: {},
     lastSagaByUniverseId: {},
+    identityVotes: createEmptyIdentityVotes(),
   } as PlayerProgress;
 
   for (const universe of UNIVERSES) {

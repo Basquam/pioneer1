@@ -8,6 +8,7 @@ import { AudioDevTools } from '@/components/rpg/audio-dev-tools';
 import { CharacterCard } from '@/components/rpg/character-card';
 import { CinematicEmptyState } from '@/components/rpg/cinematic-empty-state';
 import { DailyStreakDisplay } from '@/components/rpg/daily-streak-display';
+import { IdentityEvidencePanel } from '@/components/rpg/identity-evidence-panel';
 import { TodayFocusDisplay } from '@/components/rpg/today-focus-display';
 import { WeeklyRecapCard } from '@/components/rpg/weekly-recap-card';
 import { DevToolsPanel } from '@/components/rpg/dev-tools-panel';
@@ -166,6 +167,10 @@ export function ProfileScreen() {
               })}
             </View>
           ) : null}
+        </ProfileSection>
+
+        <ProfileSection title="IDENTITY EVIDENCE">
+          <IdentityEvidencePanel />
         </ProfileSection>
 
         <ProfileSection title="DAILY / WEEKLY ACTIVITY">

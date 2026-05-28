@@ -67,6 +67,10 @@ export function sanitizeUserQuest(raw: unknown): UserQuest | null {
     sanitized.createdOnDate = quest.createdOnDate;
   }
 
+  if (typeof quest.starterTaskTitle === 'string' && quest.starterTaskTitle.length > 0) {
+    sanitized.starterTaskTitle = quest.starterTaskTitle;
+  }
+
   return sanitized;
 }
 

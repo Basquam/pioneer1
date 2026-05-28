@@ -1,5 +1,5 @@
 import * as Haptics from 'expo-haptics';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   KeyboardAvoidingView,
   Modal,
@@ -7,6 +7,7 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
   TextInput,
   View,
@@ -26,6 +27,7 @@ import {
   getDailyFocusOverLimitMessage,
 } from '@/lib/daily-focus';
 import { getTaskCategoryMeta, TASK_CATEGORIES } from '@/lib/task-categories';
+import { generateStarterTaskTitle, getStarterToggleCopy } from '@/lib/two-minute-starter';
 import type { TaskCategory } from '@/types/narrative';
 
 type AddQuestSheetProps = {
@@ -40,6 +42,15 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState<TaskCategory>('cleaning');
   const [confirmOverLimit, setConfirmOverLimit] = useState(false);
+  const [easierToStart, setEasierToStart] = useState(false);
+  const [starterTitle, setStarterTitle] = useState('');
+
+  const starterCopy = getStarterToggleCopy(activeUniverse.id);
+  const trimmedTitle = title.trim();
+  const suggestedStarter = useMemo(
+    () => (trimmedTitle ? generateStarterTaskTitle(trimmedTitle, category) : ''),
+    [trimmedTitle, category],
+  );
 
   const selectedMeta = getTaskCategoryMeta(category);
   const modalBottomInset = useModalBottomInset(32);
@@ -51,24 +62,31 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
   );
   const atFocusLimit = todayFocusCount >= focusLimit;
 
-  const handleClose = () => {
+  const resetForm = () => {
     setTitle('');
     setCategory('cleaning');
     setConfirmOverLimit(false);
+    setEasierToStart(false);
+    setStarterTitle('');
+  };
+
+  const handleClose = () => {
+    resetForm();
     onClose();
   };
 
   const submitQuest = () => {
-    if (!title.trim()) return;
+    if (!trimmedTitle) return;
+    const starter = easierToStart ? starterTitle.trim() || suggestedStarter : '';
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    addUserQuest(title, category);
-    setTitle('');
-    setCategory('cleaning');
-    setConfirmOverLimit(false);
+    addUserQuest(trimmedTitle, category, {
+      ...(starter ? { starterTaskTitle: starter } : {}),
+    });
+    resetForm();
   };
 
   const handleCreate = () => {
-    if (!title.trim()) return;
+    if (!trimmedTitle) return;
     if (atFocusLimit && !confirmOverLimit) {
       setConfirmOverLimit(true);
       return;
@@ -76,12 +94,25 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
     submitQuest();
   };
 
+  const handleToggleEasier = (enabled: boolean) => {
+    void Haptics.selectionAsync();
+    setEasierToStart(enabled);
+    if (enabled) {
+      setStarterTitle(suggestedStarter);
+    } else {
+      setStarterTitle('');
+    }
+  };
+
   useEffect(() => {
     if (visible) return;
-    setTitle('');
-    setCategory('cleaning');
-    setConfirmOverLimit(false);
+    resetForm();
   }, [visible]);
+
+  useEffect(() => {
+    if (!easierToStart || !trimmedTitle) return;
+    setStarterTitle(suggestedStarter);
+  }, [easierToStart, suggestedStarter, trimmedTitle]);
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={handleClose}>
@@ -141,6 +172,38 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
               ]}
               autoFocus
             />
+
+            <View style={[styles.toggleRow, { borderColor: palette.panelBorder }]}>
+              <View style={styles.toggleCopy}>
+                <Text style={[styles.toggleLabel, { color: palette.bone }]}>{starterCopy.toggleLabel}</Text>
+                <Text style={[styles.toggleHint, { color: palette.fog }]}>{starterCopy.universeHint}</Text>
+              </View>
+              <Switch
+                value={easierToStart}
+                onValueChange={handleToggleEasier}
+                trackColor={{ false: palette.panelBorder, true: palette.primary }}
+                thumbColor={easierToStart ? palette.gold : palette.fog}
+              />
+            </View>
+
+            {easierToStart && (
+              <View style={[styles.starterBox, { backgroundColor: palette.panel, borderColor: palette.gold }]}>
+                <Text style={[styles.starterLabel, { color: palette.gold }]}>STARTER TASK</Text>
+                <TextInput
+                  value={starterTitle}
+                  onChangeText={setStarterTitle}
+                  placeholder={suggestedStarter}
+                  placeholderTextColor={`${palette.fog}88`}
+                  style={[
+                    styles.input,
+                    { color: palette.bone, borderColor: palette.panelBorder, backgroundColor: palette.night },
+                  ]}
+                />
+                <Text style={[styles.starterHint, { color: palette.fog }]}>
+                  Main task stays: {trimmedTitle || 'enter a task above'}
+                </Text>
+              </View>
+            )}
 
             <Text style={[styles.label, { color: palette.gold }]}>{ui.addQuestTypeLabel}</Text>
             <Text style={[styles.categoryHelper, { color: palette.fog }]}>
@@ -267,6 +330,45 @@ const styles = StyleSheet.create({
     fontFamily: GameFonts.ui,
     fontSize: 15,
     letterSpacing: 0.5,
+  },
+  toggleRow: {
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    paddingVertical: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  toggleCopy: { flex: 1, gap: 4 },
+  toggleLabel: {
+    fontFamily: GameFonts.ui,
+    fontSize: 13,
+    letterSpacing: 0.5,
+  },
+  toggleHint: {
+    fontFamily: GameFonts.displayRegular,
+    fontSize: 12,
+    lineHeight: 17,
+    fontStyle: 'italic',
+  },
+  starterBox: {
+    borderWidth: 1,
+    padding: 12,
+    gap: 8,
+    transform: [{ skewX: '-2deg' }],
+  },
+  starterLabel: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 10,
+    letterSpacing: 2,
+  },
+  starterHint: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 10,
+    letterSpacing: 0.3,
+    lineHeight: 14,
+    fontStyle: 'italic',
   },
   chips: { gap: 8, paddingVertical: 4 },
   categoryHelper: {

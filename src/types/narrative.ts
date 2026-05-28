@@ -192,6 +192,10 @@ export type QuestCompleteState = {
   earnedReputation: number;
   characterId: string;
   characterLine: string;
+  /** e.g. "+1 Reliable" */
+  identityVoteGainLine?: string;
+  /** Universe-flavored identity reinforcement line. */
+  identityUniverseLine?: string;
 };
 
 export type UserQuest = {
@@ -211,7 +215,21 @@ export type UserQuest = {
   reactionCharacterId: string;
   /** Local calendar date (YYYY-MM-DD) when this quest was created. */
   createdOnDate?: string;
+  /** Optional small first step to reduce friction on a larger task. */
+  starterTaskTitle?: string;
 };
+
+export type IdentityTraitKey =
+  | 'organized'
+  | 'resilient'
+  | 'curious'
+  | 'reliable'
+  | 'selfRespecting'
+  | 'connected'
+  | 'builder'
+  | 'prepared';
+
+export type IdentityVotes = Record<IdentityTraitKey, number>;
 
 export type BoardQuest = {
   id: string;
@@ -226,6 +244,7 @@ export type BoardQuest = {
   completed: boolean;
   /** First N user quests created today — highlighted on the board. */
   isDailyFocus?: boolean;
+  starterTaskTitle?: string;
 };
 
 export type DailyActivity = {
@@ -273,4 +292,6 @@ export type PlayerProgress = {
   activityByDate: Record<string, DailyActivity>;
   /** Last selected saga per universe — restored when switching universes. */
   lastSagaByUniverseId: Record<string, string>;
+  /** Per-trait identity votes — only increase on quest completion. */
+  identityVotes: IdentityVotes;
 };

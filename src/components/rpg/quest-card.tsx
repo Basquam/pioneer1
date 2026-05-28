@@ -17,6 +17,7 @@ import {
 import { useGame } from '@/hooks/use-game';
 import { useUniverseVisualTheme } from '@/hooks/use-universe-visual-theme';
 import { useUniverseUiCopy } from '@/lib/universe-ui-copy';
+import { formatStarterMoveLine } from '@/lib/two-minute-starter';
 import { getTaskCategoryMeta } from '@/lib/task-categories';
 import type { BoardQuest } from '@/types/narrative';
 
@@ -136,6 +137,11 @@ export function QuestCard({ quest, index }: QuestCardProps) {
             {quest.originalTitle}
           </Text>
         </View>
+        {quest.starterTaskTitle && (
+          <Text style={[styles.starterMove, { color: palette.fog }]} numberOfLines={2}>
+            {formatStarterMoveLine(quest.starterTaskTitle, activeUniverse.id)}
+          </Text>
+        )}
         <Text style={[styles.tap, { color: palette.accent }]}>TAP TO COMPLETE ›</Text>
       </View>
     </AnimatedPressable>
@@ -177,6 +183,13 @@ const styles = StyleSheet.create({
   },
   realLabel: { fontFamily: GameFonts.uiSemi, fontSize: 9, letterSpacing: 2, flexShrink: 0 },
   realTask: { fontFamily: GameFonts.ui, fontSize: 13, letterSpacing: 1, flex: 1, minWidth: 120, lineHeight: 18 },
+  starterMove: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 10,
+    letterSpacing: 0.5,
+    lineHeight: 14,
+    fontStyle: 'italic',
+  },
   tap: { fontFamily: GameFonts.ui, fontSize: 11, letterSpacing: 2, textAlign: 'right' },
   stamp: { fontFamily: GameFonts.ui, fontSize: 11, letterSpacing: 3 },
   focusStamp: { fontFamily: GameFonts.uiSemi, fontSize: 9, letterSpacing: 2, marginTop: 2 },

@@ -114,8 +114,23 @@ export function QuestCompleteOverlay() {
                 </Animated.Text>
               )}
 
+              {questComplete.identityVoteGainLine && (
+                <Animated.View
+                  entering={FadeInUp.duration(450).delay(460)}
+                  style={[styles.identityVoteBox, { borderColor: palette.panelBorder }]}>
+                  <Text style={[styles.identityVoteGain, { color: palette.gold }]}>
+                    {questComplete.identityVoteGainLine}
+                  </Text>
+                  {questComplete.identityUniverseLine && (
+                    <Text style={[styles.identityUniverseLine, { color: palette.bone }]}>
+                      {questComplete.identityUniverseLine}
+                    </Text>
+                  )}
+                </Animated.View>
+              )}
+
               <Animated.Text
-                entering={FadeInUp.duration(400).delay(480)}
+                entering={FadeInUp.duration(400).delay(520)}
                 style={[styles.tapHint, { color: palette.accent }]}>
                 TAP TO CONTINUE ›
               </Animated.Text>
@@ -230,6 +245,28 @@ const styles = StyleSheet.create({
     fontFamily: GameFonts.uiSemi,
     fontSize: 11,
     letterSpacing: 1,
+    textAlign: 'center',
+  },
+  identityVoteBox: {
+    borderWidth: 1,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    gap: 4,
+    width: '100%',
+    transform: [{ skewX: '-2deg' }],
+    alignItems: 'center',
+  },
+  identityVoteGain: {
+    fontFamily: GameFonts.ui,
+    fontSize: 20,
+    letterSpacing: 2,
+    textAlign: 'center',
+  },
+  identityUniverseLine: {
+    fontFamily: GameFonts.displayRegular,
+    fontSize: 13,
+    lineHeight: 19,
+    fontStyle: 'italic',
     textAlign: 'center',
   },
   tapHint: {

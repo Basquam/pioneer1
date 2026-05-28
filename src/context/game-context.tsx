@@ -14,6 +14,7 @@ import { narrativeWarn } from '@/lib/narrative-state-debug';
 import { applyDailyStreakOnOpen, getLocalDateKey } from '@/lib/daily-streak';
 import { recordChapterCompleted, recordQuestCompleted } from '@/lib/weekly-recap';
 import { convertTaskToUserQuest, createUserQuestId } from '@/lib/convert-task-to-quest';
+import { castIdentityVote } from '@/lib/identity-votes';
 import {
   affinityToTier,
   getCharacter,
@@ -108,7 +109,11 @@ type GameContextValue = {
   selectSaga: (sagaId: string) => void;
   switchSaga: (sagaId: string, options?: { forceFirstChapter?: boolean }) => void;
   completeOnboarding: () => void;
-  addUserQuest: (originalTitle: string, category: TaskCategory) => void;
+  addUserQuest: (
+    originalTitle: string,
+    category: TaskCategory,
+    options?: { starterTaskTitle?: string },
+  ) => void;
   openAddQuestSheet: () => void;
   closeAddQuestSheet: () => void;
   viewCreatedQuestOnBoard: () => void;
@@ -333,7 +338,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const addUserQuest = useCallback(
-    (originalTitle: string, category: TaskCategory) => {
+    (
+      originalTitle: string,
+      category: TaskCategory,
+      options?: { starterTaskTitle?: string },
+    ) => {
       const trimmed = originalTitle.trim();
       if (!trimmed || !currentChapter) return;
 
@@ -352,6 +361,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
           id: createUserQuestId(),
           isCompleted: false,
           createdOnDate: getLocalDateKey(),
+          ...(options?.starterTaskTitle ? { starterTaskTitle: options.starterTaskTitle.trim() } : {}),
         };
 
         setAddQuestSheetOpen(false);
@@ -452,6 +462,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
       const charId = boardQuest.reactionCharacterId;
       const nextAffinity = (progress.characterAffinity[charId] ?? 0) + 1;
+      const identityVote = castIdentityVote(
+        progress.identityVotes,
+        boardQuest.category,
+        activeUniverse.id,
+      );
 
       const updatedCompletedIds =
         boardQuest.source === 'template'
@@ -494,6 +509,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
               ...prev.relationshipByCharacter,
               [charId]: affinityToTier(nextAffinity),
             },
+            identityVotes: identityVote.identityVotes,
           },
           boardQuest.xpReward,
           boardQuest.reputationReward,
@@ -528,6 +544,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
         characterLine: reactor
           ? pickCharacterLine(reactor, 'questComplete', updatedCompletedIds.length)
           : ui.questCompleteFallbackLine,
+        identityVoteGainLine: identityVote.voteGainLine,
+        identityUniverseLine: identityVote.universeLine,
       });
     },
     [activeSaga, activeUniverse, chapterComplete, currentChapter, progress, questComplete, quests, sagaCompletedQuestIds],

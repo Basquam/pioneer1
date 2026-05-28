@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { DUST_AND_IRON_UNIVERSE, UNIVERSES } from '@/data/narrative/universes';
+import { createEmptyIdentityVotes, sanitizeIdentityVotes } from '@/lib/identity-votes';
 import { findUniverse } from '@/lib/narrative-state';
 import { narrativeWarn } from '@/lib/narrative-state-debug';
 import type { PlayerProgress } from '@/types/narrative';
@@ -147,6 +148,7 @@ export function createInitialProgress(): PlayerProgress {
     dailyFocusLimit: 3,
     activityByDate: {},
     lastSagaByUniverseId: createDefaultLastSagaByUniverseId(),
+    identityVotes: createEmptyIdentityVotes(),
   };
 }
 
@@ -177,6 +179,7 @@ function normalizeProgress(raw: Partial<PlayerProgress> & Record<string, unknown
     firstSagaId: typeof raw.firstSagaId === 'string' ? raw.firstSagaId : null,
     onboardingCompletedAt:
       typeof raw.onboardingCompletedAt === 'string' ? raw.onboardingCompletedAt : null,
+    identityVotes: sanitizeIdentityVotes(raw.identityVotes ?? raw.identityVotesByCategory),
   };
 
   const universeForMigration = findUniverse(merged.selectedUniverseId) ?? DUST_AND_IRON_UNIVERSE;
