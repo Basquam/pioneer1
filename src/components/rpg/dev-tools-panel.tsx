@@ -29,6 +29,9 @@ export function DevToolsPanel() {
     devCompleteCurrentChapter,
     devUnlockVultureGangChapters,
     devUnlockIronRailwayCompany,
+    devUnlockNeuroNet,
+    devSwitchToNeuroNet,
+    devSwitchToDustAndIron,
     resetProgress,
   } = useGame();
   const { palette } = activeUniverse;
@@ -73,6 +76,21 @@ export function DevToolsPanel() {
       label: 'UNLOCK IRON RAILWAY COMPANY',
       hint: 'Grant the High Noon story unlock reward',
       onPress: devUnlockIronRailwayCompany,
+    },
+    {
+      label: 'UNLOCK NEURONET',
+      hint: 'Grant the NeuroNet universe unlock reward',
+      onPress: devUnlockNeuroNet,
+    },
+    {
+      label: 'SWITCH TO NEURONET',
+      hint: 'Jump to Ghost Protocol preview (Coming Soon state)',
+      onPress: devSwitchToNeuroNet,
+    },
+    {
+      label: 'SWITCH TO DUST & IRON',
+      hint: 'Restore previous Dust & Iron saga/chapter when available',
+      onPress: devSwitchToDustAndIron,
     },
     {
       label: 'RESET PROGRESS',

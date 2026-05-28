@@ -8,24 +8,25 @@ type ThemeCardProps = {
   universe: Universe;
   selected: boolean;
   index: number;
+  locked?: boolean;
   onPress: () => void;
 };
 
-export function ThemeCard({ universe, selected, index, onPress }: ThemeCardProps) {
+export function ThemeCard({ universe, selected, index, locked, onPress }: ThemeCardProps) {
   const { palette } = universe;
-  const locked = universe.status === 'locked';
+  const isLocked = locked ?? universe.status === 'locked';
 
   return (
     <Animated.View entering={FadeInDown.delay(index * 80).springify()}>
       <Pressable
-        disabled={locked}
+        disabled={isLocked}
         onPress={onPress}
         style={[
           styles.card,
           {
             backgroundColor: palette.panel,
             borderColor: selected ? palette.gold : palette.panelBorder,
-            opacity: locked ? 0.5 : 1,
+            opacity: isLocked ? 0.5 : 1,
           },
         ]}>
         <Text style={styles.icon}>{universe.icon}</Text>
@@ -38,15 +39,19 @@ export function ThemeCard({ universe, selected, index, onPress }: ThemeCardProps
               style={[
                 styles.statusBadge,
                 {
-                  borderColor: locked ? palette.fog : palette.gold,
-                  backgroundColor: locked ? `${palette.ink}88` : `${palette.primary}33`,
+                  borderColor: isLocked ? palette.fog : palette.gold,
+                  backgroundColor: isLocked ? `${palette.ink}88` : `${palette.primary}33`,
                 },
               ]}>
-              <Text style={[styles.statusText, { color: locked ? palette.fog : palette.gold }]}>
-                {locked ? 'LOCKED' : 'UNLOCKED'}
+              <Text style={[styles.statusText, { color: isLocked ? palette.fog : palette.gold }]}>
+                {isLocked ? 'LOCKED' : 'UNLOCKED'}
               </Text>
             </View>
           </View>
+          <Text style={[styles.moodLabel, { color: palette.accent }]}>THEME</Text>
+          <Text style={[styles.mood, { color: palette.fog }]} numberOfLines={2}>
+            {universe.theme}
+          </Text>
           <Text style={[styles.moodLabel, { color: palette.accent }]}>MOOD</Text>
           <Text style={[styles.mood, { color: palette.fog }]} numberOfLines={3}>
             {universe.mood}
@@ -56,8 +61,13 @@ export function ThemeCard({ universe, selected, index, onPress }: ThemeCardProps
           <Text style={[styles.tag, { color: palette.fog }]} numberOfLines={2}>
             {universe.tagline}
           </Text>
+          {isLocked && universe.unlockRequirementLabel && (
+            <Text style={[styles.requirement, { color: palette.villainGlow }]}>
+              REQUIRES: {universe.unlockRequirementLabel.toUpperCase()}
+            </Text>
+          )}
         </View>
-        {selected && !locked && (
+        {selected && !isLocked && (
           <View style={[styles.check, { backgroundColor: palette.primary }]}>
             <Text style={[styles.checkText, { color: palette.bone }]}>✓</Text>
           </View>
@@ -92,6 +102,7 @@ const styles = StyleSheet.create({
   mood: { fontFamily: GameFonts.displayRegular, fontSize: 13, fontStyle: 'italic', lineHeight: 18 },
   progression: { fontFamily: GameFonts.ui, fontSize: 13, letterSpacing: 1 },
   tag: { fontFamily: GameFonts.uiSemi, fontSize: 10, letterSpacing: 1, marginTop: 2 },
+  requirement: { fontFamily: GameFonts.uiSemi, fontSize: 9, letterSpacing: 1.5, marginTop: 6 },
   check: {
     width: 28,
     height: 28,

@@ -5,6 +5,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { ChapterCard } from '@/components/rpg/chapter-card';
 import { ChapterDetailSheet } from '@/components/rpg/chapter-detail-sheet';
 import { CinematicEmptyState } from '@/components/rpg/cinematic-empty-state';
+import { SagaPreviewEmptyState } from '@/components/rpg/saga-preview-empty-state';
 import { SagaSwitcherSheet } from '@/components/rpg/saga-switcher-sheet';
 import { ScreenScroll } from '@/components/rpg/screen-scroll';
 import { ScreenShell } from '@/components/rpg/screen-shell';
@@ -17,7 +18,7 @@ import { getActiveChapterId, getChapterStatus, type ChapterStatus } from '@/lib/
 import type { Chapter } from '@/types/narrative';
 
 export function StoryScreen() {
-  const { activeUniverse, activeSaga, chapters, playerProgress } = useGame();
+  const { activeUniverse, activeSaga, chapters, isSagaPreview, playerProgress } = useGame();
   const { palette } = activeUniverse;
   const [selectedChapter, setSelectedChapter] = useState<Chapter | null>(null);
   const [detailMode, setDetailMode] = useState<ChapterStatus | null>(null);
@@ -104,7 +105,9 @@ export function StoryScreen() {
         )}
 
         <SectionLabel>SAGA CHAPTERS</SectionLabel>
-        {chapters.length === 0 ? (
+        {isSagaPreview ? (
+          <SagaPreviewEmptyState />
+        ) : chapters.length === 0 ? (
           <CinematicEmptyState
             title="No chapters available."
             message={`${activeSaga.title} doesn't have playable chapters yet. Switch to an unlocked saga or restore the default saga.`}

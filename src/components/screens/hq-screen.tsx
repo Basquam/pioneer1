@@ -12,6 +12,7 @@ import { ScreenScroll } from '@/components/rpg/screen-scroll';
 import { ScreenShell } from '@/components/rpg/screen-shell';
 import { SectionHeader } from '@/components/rpg/section-header';
 import { SectionLabel } from '@/components/rpg/section-label';
+import { SagaPreviewEmptyState } from '@/components/rpg/saga-preview-empty-state';
 import { StorylinesSection } from '@/components/rpg/storylines-section';
 import { XpPopup } from '@/components/rpg/xp-popup';
 import { GameFonts } from '@/constants/typography';
@@ -25,6 +26,7 @@ export function HqScreen() {
     storyLine,
     quests,
     completedQuestCount,
+    isSagaPreview,
     maybeShowVillainTaunt,
   } = useGame();
   const [sagaSwitcherVisible, setSagaSwitcherVisible] = useState(false);
@@ -53,6 +55,8 @@ export function HqScreen() {
         <DailyOperationsBriefing />
 
         <StorylinesSection onOpenSwitcher={() => setSagaSwitcherVisible(true)} />
+
+        {isSagaPreview && <SagaPreviewEmptyState />}
 
         <DialoguePanel line={storyLine} badge="FIELD REPORT" animate={false} />
 

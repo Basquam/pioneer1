@@ -7,10 +7,11 @@ import { ScreenShell } from '@/components/rpg/screen-shell';
 import { SectionHeader } from '@/components/rpg/section-header';
 import { ThemeCard } from '@/components/rpg/theme-card';
 import { useGame } from '@/hooks/use-game';
+import { isUniverseUnlocked } from '@/lib/reward-unlocks';
 
 export function OnboardingThemeScreen() {
-  const { universes, activeUniverse, selectUniverse } = useGame();
-  const canContinue = activeUniverse.status === 'available';
+  const { universes, activeUniverse, playerProgress, selectUniverse } = useGame();
+  const canContinue = isUniverseUnlocked(activeUniverse, playerProgress.unlockedRewards);
 
   return (
     <ScreenShell edges={['top', 'bottom']}>
@@ -30,6 +31,7 @@ export function OnboardingThemeScreen() {
             key={universe.id}
             universe={universe}
             selected={activeUniverse.id === universe.id}
+            locked={!isUniverseUnlocked(universe, playerProgress.unlockedRewards)}
             index={i}
             onPress={() => selectUniverse(universe.id)}
           />

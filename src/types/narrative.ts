@@ -8,6 +8,21 @@ export type TaskCategory =
   | 'creative'
   | 'errand';
 
+export type UniverseTerminology = {
+  questTerm: string;
+  mapTerm: string;
+  streakTerm: string;
+  reputationTerm: string;
+  chapterCompleteTerm: string;
+};
+
+export type UniverseFaction = {
+  id: string;
+  name: string;
+  theme: string;
+  description: string;
+};
+
 export type UniversePalette = {
   void: string;
   night: string;
@@ -96,6 +111,8 @@ export type Saga = {
   villainName: string;
   villainTitle: string;
   villainCharacterId: string;
+  /** Main ally name — shown in saga selection when chapters are not yet playable. */
+  allyName?: string;
   status: 'available' | 'locked';
   /** Reward id required to unlock this saga when status is locked. */
   requiredUnlockId?: string;
@@ -114,8 +131,18 @@ export type Universe = {
   mentorName: string;
   locationName: string;
   mood: string;
+  /** Recurring narrative theme for the universe. */
+  theme: string;
   coreProgressionName: string;
+  terminology: UniverseTerminology;
+  factions: UniverseFaction[];
+  /** Audio asset key — see constants/audio.ts for bundled tracks. */
+  ambientAudioId?: string;
   status: 'available' | 'locked';
+  /** Reward id required to unlock this universe when status is locked. */
+  requiredUnlockId?: string;
+  /** Shown on universe selection when status is locked. */
+  unlockRequirementLabel?: string;
   palette: UniversePalette;
   sagas: Saga[];
 };

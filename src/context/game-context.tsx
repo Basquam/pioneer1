@@ -2,7 +2,7 @@ import { createContext, useCallback, useEffect, useMemo, useRef, useState, type 
 import { AppState, type AppStateStatus } from 'react-native';
 import { type Href, router } from 'expo-router';
 
-import { UNIVERSES } from '@/data/narrative/wild-west-universe';
+import { UNIVERSES } from '@/data/narrative/universes';
 import {
   findUniverse,
   getDefaultSaga,
@@ -41,7 +41,16 @@ import {
   getSagaDismissedTauntChapterId,
   setSagaActiveChapter,
 } from '@/lib/saga-progress';
-import { isSagaUnlocked, unlockRewardIds } from '@/lib/reward-unlocks';
+import {
+  applyDevSwitchToDustAndIron,
+  applyDevSwitchToNeuroNet,
+  applyUniverseSagaSwitch,
+  isSagaInPreview,
+  NEURONET_UNIVERSE_UNLOCK_ID,
+  snapshotUniverseProgress,
+  type DevUniverseSnapshot,
+} from '@/lib/dev-universe-switch';
+import { isSagaUnlocked, isUniverseUnlocked, unlockRewardIds } from '@/lib/reward-unlocks';
 import type {
   BoardQuest,
   Chapter,
@@ -90,6 +99,7 @@ type GameContextValue = {
   showChapterIntro: boolean;
   completedQuestCount: number;
   allQuestsComplete: boolean;
+  isSagaPreview: boolean;
   selectUniverse: (universeId: string) => void;
   selectSaga: (sagaId: string) => void;
   switchSaga: (sagaId: string, options?: { forceFirstChapter?: boolean }) => void;
@@ -113,6 +123,9 @@ type GameContextValue = {
   devCompleteCurrentChapter: () => void;
   devUnlockVultureGangChapters: () => void;
   devUnlockIronRailwayCompany: () => void;
+  devUnlockNeuroNet: () => void;
+  devSwitchToNeuroNet: () => void;
+  devSwitchToDustAndIron: () => void;
   isHydrated: boolean;
 };
 
@@ -136,6 +149,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [questCreated, setQuestCreated] = useState<UserQuest | null>(null);
   const [addQuestSheetOpen, setAddQuestSheetOpen] = useState(false);
   const pendingChapterCompleteRef = useRef<ChapterCompleteState | null>(null);
+  const devUniverseSnapshotRef = useRef<DevUniverseSnapshot | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -176,6 +190,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const currentChapter = resolvedNarrative.chapter;
   const chapters = activeSaga.chapters;
   const characters = activeSaga.characters;
+  const isSagaPreview = isSagaInPreview(activeSaga);
   const sagaCompletedQuestIds = getSagaCompletedQuestIds(activeSaga, progress);
 
   useEffect(() => {
@@ -231,80 +246,48 @@ export function GameProvider({ children }: { children: ReactNode }) {
   );
 
   const selectUniverse = useCallback((universeId: string) => {
-    const universe = findUniverse(universeId);
-    if (!universe || universe.status === 'locked') return;
-
-    const availableSaga = universe.sagas.find((s) => s.status === 'available') ?? universe.sagas[0];
-    const firstChapter = availableSaga?.chapters[0];
-
     setProgress((prev) => {
-      if (!availableSaga || !firstChapter) {
+      const universe = findUniverse(universeId);
+      if (!universe || !isUniverseUnlocked(universe, prev.unlockedRewards)) return prev;
+
+      const availableSaga =
+        universe.sagas.find((s) => s.status === 'available') ?? universe.sagas[0];
+      if (!availableSaga) {
         return { ...prev, selectedUniverseId: universe.id };
       }
 
-      return setSagaActiveChapter(
-        {
-          ...prev,
-          selectedUniverseId: universe.id,
-          villainInfluenceBySaga: {
-            ...prev.villainInfluenceBySaga,
-            [availableSaga.id]: prev.villainInfluenceBySaga[availableSaga.id] ?? 100,
-          },
-        },
-        availableSaga.id,
-        firstChapter.id,
-      );
+      return applyUniverseSagaSwitch(prev, universe.id, availableSaga.id);
     });
   }, []);
 
   const selectSaga = useCallback(
     (sagaId: string) => {
-      const saga = getSaga(activeUniverse, sagaId);
-      if (!saga || !isSagaUnlocked(saga, progress.unlockedRewards) || saga.chapters.length === 0) return;
+      setProgress((prev) => {
+        const universe = findUniverse(prev.selectedUniverseId) ?? activeUniverse;
+        const saga = getSaga(universe, sagaId);
+        if (!saga || !isSagaUnlocked(saga, prev.unlockedRewards)) return prev;
 
-      const chapterId = saga.chapters[0].id;
-
-      setProgress((prev) =>
-        setSagaActiveChapter(
-          {
-            ...prev,
-            villainInfluenceBySaga: {
-              ...prev.villainInfluenceBySaga,
-              [saga.id]: prev.villainInfluenceBySaga[saga.id] ?? 100,
-            },
-          },
-          saga.id,
-          chapterId,
-        ),
-      );
+        return applyUniverseSagaSwitch(prev, universe.id, saga.id);
+      });
     },
-    [activeUniverse, progress.unlockedRewards],
+    [activeUniverse],
   );
 
   const switchSaga = useCallback(
     (sagaId: string, options?: { forceFirstChapter?: boolean }) => {
-      const saga = getSaga(activeUniverse, sagaId);
-      if (!saga || !isSagaUnlocked(saga, progress.unlockedRewards) || saga.chapters.length === 0) return;
+      setProgress((prev) => {
+        const universe = findUniverse(prev.selectedUniverseId) ?? activeUniverse;
+        const saga = getSaga(universe, sagaId);
+        if (!saga || !isSagaUnlocked(saga, prev.unlockedRewards)) return prev;
 
-      const chapterId = options?.forceFirstChapter
-        ? saga.chapters[0].id
-        : getSagaActiveChapterId(saga, progress);
+        if (options?.forceFirstChapter && saga.chapters.length > 0) {
+          return applyUniverseSagaSwitch(prev, universe.id, saga.id, saga.chapters[0]!.id);
+        }
 
-      setProgress((prev) =>
-        setSagaActiveChapter(
-          {
-            ...prev,
-            villainInfluenceBySaga: {
-              ...prev.villainInfluenceBySaga,
-              [saga.id]: prev.villainInfluenceBySaga[saga.id] ?? 100,
-            },
-          },
-          saga.id,
-          chapterId,
-        ),
-      );
+        return applyUniverseSagaSwitch(prev, universe.id, saga.id);
+      });
     },
-    [activeUniverse, progress],
+    [activeUniverse],
   );
 
   const completeOnboarding = useCallback(() => {
@@ -697,6 +680,38 @@ export function GameProvider({ children }: { children: ReactNode }) {
     }));
   }, []);
 
+  const devUnlockNeuroNet = useCallback(() => {
+    if (!__DEV__) return;
+    setProgress((prev) => ({
+      ...prev,
+      unlockedRewards: unlockRewardIds(prev.unlockedRewards, NEURONET_UNIVERSE_UNLOCK_ID),
+    }));
+  }, []);
+
+  const devSwitchToNeuroNet = useCallback(() => {
+    if (!__DEV__) return;
+    setProgress((prev) => {
+      if (prev.selectedUniverseId === 'dust-and-iron') {
+        devUniverseSnapshotRef.current = snapshotUniverseProgress(prev);
+      }
+      return applyDevSwitchToNeuroNet(prev);
+    });
+    setNarrativeMoment(null);
+    setChapterComplete(null);
+    setQuestComplete(null);
+    pendingChapterCompleteRef.current = null;
+  }, []);
+
+  const devSwitchToDustAndIron = useCallback(() => {
+    if (!__DEV__) return;
+    setProgress((prev) => applyDevSwitchToDustAndIron(prev, devUniverseSnapshotRef.current));
+    devUniverseSnapshotRef.current = null;
+    setNarrativeMoment(null);
+    setChapterComplete(null);
+    setQuestComplete(null);
+    pendingChapterCompleteRef.current = null;
+  }, []);
+
   const restoreDefaultStory = useCallback(() => {
     setProgress((prev) => restoreDefaultStoryProgress(prev));
     setNarrativeMoment(null);
@@ -743,6 +758,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       showChapterIntro,
       completedQuestCount,
       allQuestsComplete,
+      isSagaPreview,
       selectUniverse,
       selectSaga,
       switchSaga,
@@ -766,6 +782,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
       devCompleteCurrentChapter,
       devUnlockVultureGangChapters,
       devUnlockIronRailwayCompany,
+      devUnlockNeuroNet,
+      devSwitchToNeuroNet,
+      devSwitchToDustAndIron,
       isHydrated,
     }),
     [
@@ -787,11 +806,15 @@ export function GameProvider({ children }: { children: ReactNode }) {
       devAddXp,
       devCompleteCurrentChapter,
       devUnlockIronRailwayCompany,
+      devUnlockNeuroNet,
+      devSwitchToNeuroNet,
+      devSwitchToDustAndIron,
       devUnlockVultureGangChapters,
       dismissNarrativeMoment,
       dismissQuestComplete,
       dismissXpBurst,
       isHydrated,
+      isSagaPreview,
       markChapterIntroSeen,
       maybeShowVillainTaunt,
       narrativeMoment,

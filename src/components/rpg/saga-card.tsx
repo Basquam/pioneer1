@@ -64,6 +64,13 @@ export function SagaCard({
           {saga.summary}
         </Text>
 
+        {saga.allyName ? (
+          <>
+            <Text style={[styles.label, { color: palette.accent }]}>MAIN ALLY</Text>
+            <Text style={[styles.value, { color: palette.bone }]}>{saga.allyName}</Text>
+          </>
+        ) : null}
+
         {saga.villainName ? (
           <>
             <Text style={[styles.label, { color: palette.accent }]}>VILLAIN</Text>

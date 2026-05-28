@@ -13,7 +13,38 @@ import {
   ELIAS_CROW_ID,
   VULTURE_GANG_CHARACTERS,
 } from '@/data/narrative/vulture-gang-characters';
-import type { Saga, Universe } from '@/types/narrative';
+import type { Saga, Universe, UniverseFaction, UniverseTerminology } from '@/types/narrative';
+
+export const DUST_AND_IRON_THEME = 'Order is fragile.';
+
+export const DUST_AND_IRON_TERMINOLOGY: UniverseTerminology = {
+  questTerm: 'Quest',
+  mapTerm: 'Territory Map',
+  streakTerm: 'Town Stability',
+  reputationTerm: 'Reputation',
+  chapterCompleteTerm: 'Chapter Complete',
+};
+
+export const DUST_AND_IRON_FACTIONS: UniverseFaction[] = [
+  {
+    id: 'vulture-gang',
+    name: 'Vulture Gang',
+    theme: 'Order is fragile.',
+    description: 'Outlaws preying on Dustfall where discipline breaks and fear spreads fastest.',
+  },
+  {
+    id: 'iron-railway-company',
+    name: 'Iron Railway Company',
+    theme: 'Progress always costs something.',
+    description: 'Corporate rail barons who treat towns as assets and timetables as leverage.',
+  },
+  {
+    id: 'dustfall-settlers',
+    name: 'Dustfall Settlers',
+    theme: 'Every habit holds the line.',
+    description: 'Frontier folk building a town one honest day of work at a time.',
+  },
+];
 
 const vultureGangSaga: Saga = {
   id: 'vulture-gang',
@@ -69,7 +100,11 @@ export const DUST_AND_IRON_UNIVERSE: Universe = {
   mentorName: 'Sheriff Ada Mercer',
   locationName: 'Dustfall',
   mood: 'Dusty, dark, dramatic — a frontier where order is fragile and every habit holds the line.',
+  theme: DUST_AND_IRON_THEME,
   coreProgressionName: 'Deputy Reputation',
+  terminology: DUST_AND_IRON_TERMINOLOGY,
+  factions: DUST_AND_IRON_FACTIONS,
+  ambientAudioId: 'dustfall-ambient',
   status: 'available',
   palette: {
     void: '#050308',
@@ -91,13 +126,3 @@ export const DUST_AND_IRON_UNIVERSE: Universe = {
   },
   sagas: [vultureGangSaga, ironRailwayCompanySaga, honestBusinessmanSaga],
 };
-
-export const UNIVERSES: Universe[] = [DUST_AND_IRON_UNIVERSE];
-
-export function getUniverse(universeId: string): Universe {
-  const universe = UNIVERSES.find((u) => u.id === universeId);
-  if (!universe) {
-    throw new Error(`Universe not found: ${universeId}`);
-  }
-  return universe;
-}

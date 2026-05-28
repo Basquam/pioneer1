@@ -10,6 +10,7 @@ import { DialoguePanel } from '@/components/rpg/dialogue-panel';
 import { GameHud } from '@/components/rpg/game-hud';
 import { NarrativeMomentOverlay } from '@/components/rpg/narrative-moment-overlay';
 import { QuestCard } from '@/components/rpg/quest-card';
+import { SagaPreviewEmptyState } from '@/components/rpg/saga-preview-empty-state';
 import { ScreenScroll } from '@/components/rpg/screen-scroll';
 import { ScreenShell } from '@/components/rpg/screen-shell';
 import { SectionHeader } from '@/components/rpg/section-header';
@@ -27,6 +28,7 @@ export function QuestsScreen() {
     playerProgress,
     quests,
     storyLine,
+    isSagaPreview,
     openAddQuestSheet,
     maybeShowVillainTaunt,
     restoreDefaultStory,
@@ -56,12 +58,16 @@ export function QuestsScreen() {
       <ScreenShell edges={['top']} padded={false}>
         <ScreenScroll>
           <SectionHeader eyebrow="QUEST BOARD" title="ACTIVE MISSIONS" />
-          <CinematicEmptyState
-            title="No active chapter."
-            message="This saga has no active chapter right now. Restore the default saga to pick up where the trail begins."
-            primaryLabel="Restore Default Saga"
-            onPrimaryPress={restoreDefaultStory}
-          />
+          {isSagaPreview ? (
+            <SagaPreviewEmptyState />
+          ) : (
+            <CinematicEmptyState
+              title="No active chapter."
+              message="This saga has no active chapter right now. Restore the default saga to pick up where the trail begins."
+              primaryLabel="Restore Default Saga"
+              onPrimaryPress={restoreDefaultStory}
+            />
+          )}
         </ScreenScroll>
       </ScreenShell>
     );

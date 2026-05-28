@@ -1,9 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import { DUST_AND_IRON_UNIVERSE } from '@/data/narrative/wild-west-universe';
+import { DUST_AND_IRON_UNIVERSE, UNIVERSES } from '@/data/narrative/universes';
 import { findUniverse } from '@/lib/narrative-state';
 import { narrativeWarn } from '@/lib/narrative-state-debug';
-import type { PlayerProgress, Universe } from '@/types/narrative';
+import type { PlayerProgress } from '@/types/narrative';
 import { migrateLegacyProgress } from '@/lib/saga-progress';
 
 const STORAGE_KEY = '@pioneer/player-progress';
@@ -23,7 +23,7 @@ const defaultUniverseId = DUST_AND_IRON_UNIVERSE.id;
 const defaultSagaId = DUST_AND_IRON_UNIVERSE.sagas[0]?.id ?? '';
 const defaultChapterId = DUST_AND_IRON_UNIVERSE.sagas[0]?.chapters[0]?.id ?? '';
 
-function createDefaultSagaMaps(universe: Universe): Pick<
+function createDefaultSagaMapsForAllUniverses(): Pick<
   PlayerProgress,
   | 'activeChapterBySagaId'
   | 'completedChapterIdsBySagaId'
@@ -35,12 +35,14 @@ function createDefaultSagaMaps(universe: Universe): Pick<
   const completedQuestIdsBySagaId: Record<string, string[]> = {};
   const dismissedTauntBySagaId: Record<string, string | null> = {};
 
-  for (const saga of universe.sagas) {
-    completedChapterIdsBySagaId[saga.id] = [];
-    completedQuestIdsBySagaId[saga.id] = [];
-    dismissedTauntBySagaId[saga.id] = null;
-    if (saga.chapters[0]) {
-      activeChapterBySagaId[saga.id] = saga.chapters[0].id;
+  for (const universe of UNIVERSES) {
+    for (const saga of universe.sagas) {
+      completedChapterIdsBySagaId[saga.id] = [];
+      completedQuestIdsBySagaId[saga.id] = [];
+      dismissedTauntBySagaId[saga.id] = null;
+      if (saga.chapters[0]) {
+        activeChapterBySagaId[saga.id] = saga.chapters[0].id;
+      }
     }
   }
 
@@ -53,7 +55,7 @@ function createDefaultSagaMaps(universe: Universe): Pick<
 }
 
 export function createInitialProgress(): PlayerProgress {
-  const sagaMaps = createDefaultSagaMaps(DUST_AND_IRON_UNIVERSE);
+  const sagaMaps = createDefaultSagaMapsForAllUniverses();
 
   return {
     hasOnboarded: false,

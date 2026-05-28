@@ -1,4 +1,4 @@
-import { DUST_AND_IRON_UNIVERSE, UNIVERSES } from '@/data/narrative/wild-west-universe';
+import { DUST_AND_IRON_UNIVERSE, UNIVERSES } from '@/data/narrative/universes';
 import { setSagaActiveChapter } from '@/lib/saga-progress';
 import type { Chapter, PlayerProgress, Saga, Universe } from '@/types/narrative';
 
@@ -57,8 +57,7 @@ export function resolveNarrativeState(progress: PlayerProgress): ResolvedNarrati
   }
 
   if (saga.chapters.length === 0) {
-    issues.push(`Saga has no chapters: ${saga.id}`);
-    return { isValid: false, issues, universe, saga, chapter: null };
+    return { isValid: true, issues: [], universe, saga, chapter: null };
   }
 
   const chapter = findActiveChapter(saga, progress);

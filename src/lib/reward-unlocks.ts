@@ -8,6 +8,17 @@ export const REWARD_TYPE_LABELS: Record<ChapterRewardType, string> = {
   storyUnlock: 'STORY UNLOCK',
 };
 
+export function isUniverseUnlocked(universe: Universe, unlockedRewards: string[]): boolean {
+  if (universe.status === 'available') return true;
+  if (!universe.requiredUnlockId) return false;
+  return unlockedRewards.includes(universe.requiredUnlockId);
+}
+
+export function getUniverseUnlockHint(universe: Universe): string | undefined {
+  if (universe.status === 'available') return undefined;
+  return universe.unlockRequirementLabel ?? 'Complete the previous universe';
+}
+
 export function isSagaUnlocked(saga: Saga, unlockedRewards: string[]): boolean {
   if (saga.status === 'available') return true;
   if (!saga.requiredUnlockId) return false;
