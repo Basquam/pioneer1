@@ -7,11 +7,12 @@ import { ScreenShell } from '@/components/rpg/screen-shell';
 import { SectionHeader } from '@/components/rpg/section-header';
 import { ThemeCard } from '@/components/rpg/theme-card';
 import { useGame } from '@/hooks/use-game';
-import { isUniverseUnlocked } from '@/lib/reward-unlocks';
+import { getUniverseLibraryProgress } from '@/lib/content-library-progress';
 
 export function OnboardingThemeScreen() {
   const { universes, activeUniverse, playerProgress, selectUniverse } = useGame();
-  const canContinue = isUniverseUnlocked(activeUniverse, playerProgress.unlockedRewards);
+  const activeLibrary = getUniverseLibraryProgress(activeUniverse, playerProgress);
+  const canContinue = activeLibrary.unlocked;
 
   return (
     <ScreenShell edges={['top', 'bottom']}>
@@ -24,14 +25,14 @@ export function OnboardingThemeScreen() {
           />
         }>
         <Animated.View entering={FadeInDown.duration(500)}>
-          <SectionHeader eyebrow="UNIVERSE SELECTION" title="CHOOSE YOUR UNIVERSE" />
+          <SectionHeader eyebrow="UNIVERSE LIBRARY" title="CHOOSE YOUR UNIVERSE" />
         </Animated.View>
         {universes.map((universe, i) => (
           <ThemeCard
             key={universe.id}
             universe={universe}
             selected={activeUniverse.id === universe.id}
-            locked={!isUniverseUnlocked(universe, playerProgress.unlockedRewards)}
+            libraryProgress={getUniverseLibraryProgress(universe, playerProgress)}
             index={i}
             onPress={() => selectUniverse(universe.id)}
           />

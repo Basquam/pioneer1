@@ -117,6 +117,7 @@ export const NEON_ASHES_UNIVERSE: Universe = {
   status: 'locked',
   requiredUnlockId: NEON_ASHES_UNIVERSE_UNLOCK_ID,
   unlockRequirementLabel: 'Coming Soon',
+  ambientAudioId: 'neon-ashes-ambient',
   palette: {
     void: '#0a0808',
     night: '#121010',

@@ -1,7 +1,12 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
+import { ContentProgressBar } from '@/components/rpg/content-progress-bar';
 import { GameFonts } from '@/constants/typography';
+import {
+  formatChapterProgress,
+  type SagaLibraryProgress,
+} from '@/lib/content-library-progress';
 import { useUniverseUiCopy } from '@/lib/universe-ui-copy';
 import type { Saga, UniversePalette } from '@/types/narrative';
 
@@ -11,8 +16,10 @@ type SagaCardProps = {
   selected: boolean;
   unlocked: boolean;
   unlockHint?: string;
+  libraryProgress: SagaLibraryProgress;
   index: number;
   onPress: () => void;
+  compact?: boolean;
 };
 
 export function SagaCard({
@@ -21,11 +28,16 @@ export function SagaCard({
   selected,
   unlocked,
   unlockHint,
+  libraryProgress,
   index,
   onPress,
+  compact = false,
 }: SagaCardProps) {
   const ui = useUniverseUiCopy();
   const playerRole = saga.rankTitles[0];
+  const chapterLabel =
+    libraryProgress.totalChapters === 1 ? 'chapter' : 'chapters';
+  const showProgress = unlocked && libraryProgress.totalChapters > 0;
 
   return (
     <Animated.View entering={FadeInDown.delay(index * 80).springify()}>
@@ -37,7 +49,7 @@ export function SagaCard({
           {
             backgroundColor: palette.panel,
             borderColor: selected ? palette.gold : palette.panelBorder,
-            opacity: unlocked ? 1 : 0.5,
+            opacity: unlocked ? 1 : 0.72,
           },
         ]}>
         <View style={styles.headerRow}>
@@ -58,13 +70,37 @@ export function SagaCard({
           </View>
         </View>
 
+        <Text style={[styles.meta, { color: palette.fog }]}>
+          {libraryProgress.totalChapters} {chapterLabel}
+          {showProgress
+            ? ` · ${formatChapterProgress(
+                libraryProgress.completedChapters,
+                libraryProgress.totalChapters,
+              )} complete`
+            : libraryProgress.totalChapters === 0
+              ? ' · coming soon'
+              : ''}
+        </Text>
+
+        {showProgress && (
+          <ContentProgressBar
+            completed={libraryProgress.completedChapters}
+            total={libraryProgress.totalChapters}
+            palette={palette}
+          />
+        )}
+
         <Text style={[styles.label, { color: palette.accent }]}>YOUR ROLE</Text>
         <Text style={[styles.value, { color: palette.bone }]}>{playerRole}</Text>
 
-        <Text style={[styles.label, { color: palette.accent }]}>STORY FANTASY</Text>
-        <Text style={[styles.summary, { color: palette.fog }]} numberOfLines={4}>
-          {saga.summary}
-        </Text>
+        {!compact && (
+          <>
+            <Text style={[styles.label, { color: palette.accent }]}>STORY FANTASY</Text>
+            <Text style={[styles.summary, { color: palette.fog }]} numberOfLines={2}>
+              {saga.summary}
+            </Text>
+          </>
+        )}
 
         {saga.allyName ? (
           <>
@@ -82,9 +118,9 @@ export function SagaCard({
           </>
         ) : null}
 
-        {!unlocked && saga.requiredUnlockId && unlockHint && (
+        {!unlocked && unlockHint && (
           <Text style={[styles.requirement, { color: palette.villainGlow }]}>
-            REQUIRES: {unlockHint}
+            REQUIRES: {unlockHint.toUpperCase()}
           </Text>
         )}
 
@@ -113,6 +149,7 @@ const styles = StyleSheet.create({
     transform: [{ skewX: '-8deg' }],
   },
   statusText: { fontFamily: GameFonts.uiSemi, fontSize: 8, letterSpacing: 1.5 },
+  meta: { fontFamily: GameFonts.uiSemi, fontSize: 10, letterSpacing: 1, marginBottom: 2 },
   label: { fontFamily: GameFonts.uiSemi, fontSize: 8, letterSpacing: 2, marginTop: 6 },
   value: { fontFamily: GameFonts.ui, fontSize: 14, letterSpacing: 1 },
   summary: { fontFamily: GameFonts.displayRegular, fontSize: 13, fontStyle: 'italic', lineHeight: 19 },

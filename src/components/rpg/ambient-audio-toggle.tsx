@@ -20,7 +20,9 @@ export function AmbientAudioToggle() {
   const ambientHint =
     activeUniverse.id === 'neuronet'
       ? 'Neon rain, synth hum, electric buzz, and distant city drone across the Spire.'
-      : 'Distant wind, saloon murmur, and creaking wood across Dustfall.';
+      : activeUniverse.id === 'neon-ashes'
+        ? 'Rain on glass, distant jazz club murmur, city rumble, and vinyl crackle across Grayhaven.'
+        : 'Distant wind, saloon murmur, and creaking wood across Dustfall.';
 
   if (!universeHasAmbientAudio(activeUniverse.id)) {
     return null;

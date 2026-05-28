@@ -15,11 +15,13 @@ export const AMBIENT_AUDIO_MODULE = require('@/assets/audio/dustfall-ambient.wav
 /** Bundled NeuroNet cyberpunk ambience — rain, synth hum, electric buzz, city drone. */
 export const NEURONET_AMBIENT_AUDIO_MODULE = require('@/assets/audio/neuronet-ambient.wav');
 
+/** Bundled Neon Ashes noir ambience — rain on glass, jazz club murmur, city rumble, vinyl crackle. */
+export const NEON_ASHES_AMBIENT_AUDIO_MODULE = require('@/assets/audio/neon-ashes-ambient.wav');
+
 export const AMBIENT_AUDIO_BY_UNIVERSE_ID: Record<string, number | null> = {
   'dust-and-iron': AMBIENT_AUDIO_MODULE,
   neuronet: NEURONET_AMBIENT_AUDIO_MODULE,
-  /** Placeholder — rain, jazz club hum, and city noir ambience TBD. */
-  'neon-ashes': null,
+  'neon-ashes': NEON_ASHES_AMBIENT_AUDIO_MODULE,
 };
 
 export function getAmbientAudioModule(universeId: string): number | null {

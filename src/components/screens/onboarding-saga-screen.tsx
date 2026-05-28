@@ -7,10 +7,16 @@ import { SagaCard } from '@/components/rpg/saga-card';
 import { ScreenShell } from '@/components/rpg/screen-shell';
 import { SectionHeader } from '@/components/rpg/section-header';
 import { useGame } from '@/hooks/use-game';
+import {
+  formatChapterProgress,
+  getSagaLibraryProgress,
+  getUniverseLibraryProgress,
+} from '@/lib/content-library-progress';
 import { getSagaUnlockHint, isSagaUnlocked } from '@/lib/reward-unlocks';
 
 export function OnboardingSagaScreen() {
   const { activeUniverse, activeSaga, playerProgress, selectSaga } = useGame();
+  const universeLibrary = getUniverseLibraryProgress(activeUniverse, playerProgress);
 
   return (
     <ScreenShell edges={['top', 'bottom']}>
@@ -24,8 +30,12 @@ export function OnboardingSagaScreen() {
         }>
         <Animated.View entering={FadeInDown.duration(500)}>
           <SectionHeader
-            eyebrow={`${activeUniverse.name.toUpperCase()} · SAGA SELECTION`}
+            eyebrow={`${activeUniverse.name.toUpperCase()} · SAGA LIBRARY`}
             title="CHOOSE YOUR PATH"
+            right={formatChapterProgress(
+              universeLibrary.completedChapters,
+              universeLibrary.totalChapters,
+            )}
           />
         </Animated.View>
 
@@ -37,7 +47,9 @@ export function OnboardingSagaScreen() {
             selected={activeSaga.id === saga.id}
             unlocked={isSagaUnlocked(saga, playerProgress.unlockedRewards)}
             unlockHint={getSagaUnlockHint(saga)}
+            libraryProgress={getSagaLibraryProgress(saga, playerProgress)}
             index={index}
+            compact
             onPress={() => selectSaga(saga.id)}
           />
         ))}

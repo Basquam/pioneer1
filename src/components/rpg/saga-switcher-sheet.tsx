@@ -1,6 +1,7 @@
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 
+import { ContentProgressBar } from '@/components/rpg/content-progress-bar';
 import { SagaCard } from '@/components/rpg/saga-card';
 import { CinematicEmptyState } from '@/components/rpg/cinematic-empty-state';
 import { GameLayout } from '@/constants/layout';
@@ -8,7 +9,11 @@ import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
 import { useUniverseUiCopy } from '@/lib/universe-ui-copy';
 import { useModalBottomInset } from '@/hooks/use-scroll-insets';
-import { getCompletedChapterCountForSaga } from '@/lib/chapter-progress';
+import {
+  formatChapterProgress,
+  getSagaLibraryProgress,
+  getUniverseLibraryProgress,
+} from '@/lib/content-library-progress';
 import { getSagaUnlockHint, isSagaUnlocked } from '@/lib/reward-unlocks';
 
 type SagaSwitcherSheetProps = {
@@ -21,6 +26,7 @@ export function SagaSwitcherSheet({ visible, onClose }: SagaSwitcherSheetProps) 
   const { activeUniverse, activeSaga, playerProgress, switchSaga } = useGame();
   const { palette } = activeUniverse;
   const modalBottomInset = useModalBottomInset(32);
+  const universeLibrary = getUniverseLibraryProgress(activeUniverse, playerProgress);
 
   if (!visible) return null;
 
@@ -29,6 +35,11 @@ export function SagaSwitcherSheet({ visible, onClose }: SagaSwitcherSheetProps) 
   );
 
   const handleSelect = (sagaId: string) => {
+    const saga = activeUniverse.sagas.find((entry) => entry.id === sagaId);
+    if (!saga || !isSagaUnlocked(saga, playerProgress.unlockedRewards)) {
+      return;
+    }
+
     if (sagaId === activeSaga.id) {
       onClose();
       return;
@@ -53,48 +64,67 @@ export function SagaSwitcherSheet({ visible, onClose }: SagaSwitcherSheetProps) 
           ]}
           onPress={(event) => event.stopPropagation()}>
           <Animated.View entering={FadeInUp.duration(400)} style={styles.header}>
-            <Text style={[styles.eyebrow, { color: palette.accent }]}>SAGAS</Text>
+            <Text style={[styles.eyebrow, { color: palette.accent }]}>
+              {activeUniverse.name.toUpperCase()} · SAGA LIBRARY
+            </Text>
             <Text style={[styles.title, { color: palette.bone }]} numberOfLines={2}>
               CHOOSE YOUR SAGA
             </Text>
             <Text style={[styles.subtitle, { color: palette.fog }]}>
-              Switch between unlocked sagas. Progress is saved per saga.
+              {universeLibrary.playableSagas}/{universeLibrary.totalSagas} sagas unlocked · progress
+              saved per saga
             </Text>
+            {universeLibrary.totalChapters > 0 && (
+              <View style={styles.universeProgress}>
+                <Text style={[styles.progressLabel, { color: palette.fog }]}>
+                  Universe progress ·{' '}
+                  {formatChapterProgress(
+                    universeLibrary.completedChapters,
+                    universeLibrary.totalChapters,
+                  )}
+                </Text>
+                <ContentProgressBar
+                  completed={universeLibrary.completedChapters}
+                  total={universeLibrary.totalChapters}
+                  palette={palette}
+                />
+              </View>
+            )}
           </Animated.View>
 
           <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-            {unlockedSagas.length === 0 ? (
+            {activeUniverse.sagas.length === 0 ? (
               <CinematicEmptyState
-                title="No unlocked sagas yet."
+                title="No sagas available."
                 message={ui.sagaSwitcherEmptyMessage}
                 primaryLabel="CLOSE"
                 onPrimaryPress={onClose}
               />
             ) : (
-              activeUniverse.sagas.map((saga, index) => {
-                const unlocked = isSagaUnlocked(saga, playerProgress.unlockedRewards);
-                const completedChapters = getCompletedChapterCountForSaga(saga, playerProgress);
-                const totalChapters = saga.chapters.length;
+              <>
+                {unlockedSagas.length === 0 && (
+                  <Text style={[styles.lockedHint, { color: palette.fog }]}>
+                    {ui.sagaSwitcherEmptyMessage}
+                  </Text>
+                )}
+                {activeUniverse.sagas.map((saga, index) => {
+                  const unlocked = isSagaUnlocked(saga, playerProgress.unlockedRewards);
 
-                return (
-                  <View key={saga.id} style={styles.cardWrap}>
+                  return (
                     <SagaCard
+                      key={saga.id}
                       saga={saga}
                       palette={palette}
                       selected={activeSaga.id === saga.id}
                       unlocked={unlocked}
                       unlockHint={getSagaUnlockHint(saga)}
+                      libraryProgress={getSagaLibraryProgress(saga, playerProgress)}
                       index={index}
                       onPress={() => handleSelect(saga.id)}
                     />
-                    {unlocked && totalChapters > 0 && (
-                      <Text style={[styles.progressHint, { color: palette.fog }]}>
-                        {ui.sagaProgressMeta(completedChapters, totalChapters)}
-                      </Text>
-                    )}
-                  </View>
-                );
-              })
+                  );
+                })}
+              </>
             )}
           </ScrollView>
 
@@ -127,17 +157,16 @@ const styles = StyleSheet.create({
     lineHeight: 19,
     fontStyle: 'italic',
   },
+  universeProgress: { gap: 4, marginTop: 4 },
+  progressLabel: { fontFamily: GameFonts.uiSemi, fontSize: 9, letterSpacing: 1.5 },
   scroll: { flexShrink: 1 },
   scrollContent: { gap: 4, paddingBottom: 4 },
-  cardWrap: { gap: 4 },
-  progressHint: {
-    fontFamily: GameFonts.uiSemi,
-    fontSize: 9,
-    letterSpacing: 1.5,
-    textAlign: 'right',
-    marginTop: -8,
-    marginBottom: 4,
-    paddingRight: 4,
+  lockedHint: {
+    fontFamily: GameFonts.displayRegular,
+    fontSize: 12,
+    lineHeight: 18,
+    fontStyle: 'italic',
+    marginBottom: 8,
   },
   closeButton: {
     borderWidth: 1,

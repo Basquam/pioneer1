@@ -1,25 +1,28 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { ContentProgressBar } from '@/components/rpg/content-progress-bar';
 import { GameLayout } from '@/constants/layout';
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
-import { getCompletedChapterCountForSaga } from '@/lib/chapter-progress';
-import { isSagaUnlocked } from '@/lib/reward-unlocks';
+import {
+  formatChapterProgress,
+  getSagaLibraryProgress,
+  getUniverseLibraryProgress,
+} from '@/lib/content-library-progress';
+import { useUniverseUiCopy } from '@/lib/universe-ui-copy';
 
 type StorylinesSectionProps = {
   onOpenSwitcher: () => void;
 };
 
 export function StorylinesSection({ onOpenSwitcher }: StorylinesSectionProps) {
+  const ui = useUniverseUiCopy();
   const { activeUniverse, activeSaga, player, playerProgress } = useGame();
   const { palette } = activeUniverse;
 
-  const unlockedSagas = activeUniverse.sagas.filter((saga) =>
-    isSagaUnlocked(saga, playerProgress.unlockedRewards),
-  );
-  const completedChapters = getCompletedChapterCountForSaga(activeSaga, playerProgress);
-  const totalChapters = activeSaga.chapters.length;
-  const hasUnlockedSagas = unlockedSagas.length > 0;
+  const universeLibrary = getUniverseLibraryProgress(activeUniverse, playerProgress);
+  const sagaLibrary = getSagaLibraryProgress(activeSaga, playerProgress);
+  const hasUnlockedSagas = universeLibrary.playableSagas > 0;
 
   return (
     <View
@@ -28,11 +31,28 @@ export function StorylinesSection({ onOpenSwitcher }: StorylinesSectionProps) {
         { backgroundColor: palette.panel, borderColor: palette.panelBorder },
       ]}>
       <View style={styles.headerRow}>
-        <Text style={[styles.eyebrow, { color: palette.gold }]}>SAGAS</Text>
+        <Text style={[styles.eyebrow, { color: palette.gold }]}>SAGA LIBRARY</Text>
         <Text style={[styles.unlockedCount, { color: palette.fog }]}>
-          {unlockedSagas.length}/{activeUniverse.sagas.length} UNLOCKED
+          {universeLibrary.playableSagas}/{universeLibrary.totalSagas} unlocked
         </Text>
       </View>
+
+      {universeLibrary.totalChapters > 0 && (
+        <View style={styles.universeProgress}>
+          <Text style={[styles.progressLabel, { color: palette.fog }]}>
+            Universe ·{' '}
+            {formatChapterProgress(
+              universeLibrary.completedChapters,
+              universeLibrary.totalChapters,
+            )}
+          </Text>
+          <ContentProgressBar
+            completed={universeLibrary.completedChapters}
+            total={universeLibrary.totalChapters}
+            palette={palette}
+          />
+        </View>
+      )}
 
       <Text style={[styles.currentLabel, { color: palette.accent }]}>CURRENT SAGA</Text>
       <Text style={[styles.sagaTitle, { color: palette.bone }]} numberOfLines={2}>
@@ -40,8 +60,18 @@ export function StorylinesSection({ onOpenSwitcher }: StorylinesSectionProps) {
       </Text>
       <Text style={[styles.role, { color: palette.fog }]} numberOfLines={2}>
         {player.rank}
-        {totalChapters > 0 ? ` · ${completedChapters}/${totalChapters} chapters` : ''}
+        {sagaLibrary.totalChapters > 0
+          ? ` · ${formatChapterProgress(sagaLibrary.completedChapters, sagaLibrary.totalChapters)}`
+          : ''}
       </Text>
+
+      {sagaLibrary.totalChapters > 0 && (
+        <ContentProgressBar
+          completed={sagaLibrary.completedChapters}
+          total={sagaLibrary.totalChapters}
+          palette={palette}
+        />
+      )}
 
       <Pressable
         onPress={hasUnlockedSagas ? onOpenSwitcher : undefined}
@@ -51,12 +81,12 @@ export function StorylinesSection({ onOpenSwitcher }: StorylinesSectionProps) {
           { borderColor: palette.gold, opacity: hasUnlockedSagas ? 1 : 0.55 },
         ]}>
         <Text style={[styles.switchLabel, { color: palette.gold }]}>
-          {hasUnlockedSagas ? 'CHANGE SAGA' : 'NO SAGAS UNLOCKED'}
+          {hasUnlockedSagas ? 'OPEN SAGA LIBRARY' : 'NO SAGAS UNLOCKED'}
         </Text>
         <Text style={[styles.switchHint, { color: palette.fog }]}>
           {hasUnlockedSagas
-            ? 'View unlocked sagas and switch between them'
-            : 'Complete the Vulture Gang saga to unlock more sagas'}
+            ? 'Browse all sagas, allies, villains, and chapter progress'
+            : ui.sagaSwitcherEmptyMessage}
         </Text>
       </Pressable>
     </View>
@@ -78,6 +108,8 @@ const styles = StyleSheet.create({
   },
   eyebrow: { fontFamily: GameFonts.ui, fontSize: 10, letterSpacing: 3 },
   unlockedCount: { fontFamily: GameFonts.uiSemi, fontSize: 9, letterSpacing: 1.5 },
+  universeProgress: { gap: 4, marginTop: 2, marginBottom: 4 },
+  progressLabel: { fontFamily: GameFonts.uiSemi, fontSize: 9, letterSpacing: 1.5 },
   currentLabel: { fontFamily: GameFonts.uiSemi, fontSize: 8, letterSpacing: 2, marginTop: 4 },
   sagaTitle: { fontFamily: GameFonts.ui, fontSize: 18, letterSpacing: 2 },
   role: { fontFamily: GameFonts.uiSemi, fontSize: 11, letterSpacing: 1 },

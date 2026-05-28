@@ -15,6 +15,7 @@ import {
   AMBIENT_AUDIO_BY_UNIVERSE_ID,
   AMBIENT_AUDIO_MODULE,
   AmbientAudioConfig,
+  NEON_ASHES_AMBIENT_AUDIO_MODULE,
   NEURONET_AMBIENT_AUDIO_MODULE,
   getAmbientAudioModule,
   universeHasAmbientAudio,
@@ -58,10 +59,16 @@ function logResolvedAmbientModule(universeId: string, module: number) {
     module,
     isDustModule: module === AMBIENT_AUDIO_MODULE,
     isNeuronetModule: module === NEURONET_AMBIENT_AUDIO_MODULE,
+    isNeonAshesModule: module === NEON_ASHES_AMBIENT_AUDIO_MODULE,
     neuronetLookup: getAmbientAudioModule('neuronet'),
     dustLookup: getAmbientAudioModule('dust-and-iron'),
+    neonAshesLookup: getAmbientAudioModule('neon-ashes'),
     neuronetDistinctFromDust:
       getAmbientAudioModule('neuronet') !== getAmbientAudioModule('dust-and-iron'),
+    neonAshesDistinctFromDust:
+      getAmbientAudioModule('neon-ashes') !== getAmbientAudioModule('dust-and-iron'),
+    neonAshesDistinctFromNeuronet:
+      getAmbientAudioModule('neon-ashes') !== getAmbientAudioModule('neuronet'),
   });
 }
 
@@ -420,8 +427,13 @@ export function AmbientAudioProvider({ children }: { children: ReactNode }) {
     ambientDebug('Ambient module registry check', {
       neuronetModule: getAmbientAudioModule('neuronet'),
       dustModule: getAmbientAudioModule('dust-and-iron'),
+      neonAshesModule: getAmbientAudioModule('neon-ashes'),
       neuronetDistinctFromDust:
         getAmbientAudioModule('neuronet') !== getAmbientAudioModule('dust-and-iron'),
+      neonAshesDistinctFromDust:
+        getAmbientAudioModule('neon-ashes') !== getAmbientAudioModule('dust-and-iron'),
+      neonAshesDistinctFromNeuronet:
+        getAmbientAudioModule('neon-ashes') !== getAmbientAudioModule('neuronet'),
     });
   }, []);
 
