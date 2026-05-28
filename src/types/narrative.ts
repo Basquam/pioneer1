@@ -196,6 +196,8 @@ export type QuestCompleteState = {
   identityVoteGainLine?: string;
   /** Universe-flavored identity reinforcement line. */
   identityUniverseLine?: string;
+  /** Encouraging line when a recovery quest cycle is completed. */
+  recoveryCompleteLine?: string;
 };
 
 export type UserQuest = {
@@ -217,6 +219,8 @@ export type UserQuest = {
   createdOnDate?: string;
   /** Optional small first step to reduce friction on a larger task. */
   starterTaskTitle?: string;
+  /** Optional environment priming step to do before starting later. */
+  prepStepTitle?: string;
 };
 
 export type IdentityTraitKey =
@@ -245,6 +249,7 @@ export type BoardQuest = {
   /** First N user quests created today — highlighted on the board. */
   isDailyFocus?: boolean;
   starterTaskTitle?: string;
+  prepStepTitle?: string;
 };
 
 export type DailyActivity = {
@@ -294,4 +299,10 @@ export type PlayerProgress = {
   lastSagaByUniverseId: Record<string, string>;
   /** Per-trait identity votes — only increase on quest completion. */
   identityVotes: IdentityVotes;
+  /** Last local date active before a missed-day gap was detected. */
+  lastMissedDate: string | null;
+  /** Return date when a recovery quest was offered after a missed day. */
+  recoveryQuestOfferedForDate: string | null;
+  /** Local dates when the user completed a recovery quest after returning. */
+  recoveryQuestCompletedDates: string[];
 };

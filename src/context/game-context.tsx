@@ -11,7 +11,14 @@ import {
   restoreDefaultStoryProgress,
 } from '@/lib/narrative-state';
 import { narrativeWarn } from '@/lib/narrative-state-debug';
-import { applyDailyStreakOnOpen, getLocalDateKey } from '@/lib/daily-streak';
+import { getLocalDateKey } from '@/lib/daily-streak';
+import {
+  applySessionOnOpen,
+  getRecoveryQuestCopy,
+  markRecoveryQuestComplete,
+  shouldMarkRecoveryOnQuestComplete,
+  shouldShowRecoveryPrompt,
+} from '@/lib/recovery-quest';
 import { recordChapterCompleted, recordQuestCompleted } from '@/lib/weekly-recap';
 import { convertTaskToUserQuest, createUserQuestId } from '@/lib/convert-task-to-quest';
 import { castIdentityVote } from '@/lib/identity-votes';
@@ -100,6 +107,8 @@ type GameContextValue = {
   questComplete: QuestCompleteState | null;
   questCreated: UserQuest | null;
   addQuestSheetOpen: boolean;
+  addQuestRecoveryMode: boolean;
+  showRecoveryPrompt: boolean;
   showChapterIntro: boolean;
   showHqTutorial: boolean;
   completedQuestCount: number;
@@ -112,9 +121,10 @@ type GameContextValue = {
   addUserQuest: (
     originalTitle: string,
     category: TaskCategory,
-    options?: { starterTaskTitle?: string },
+    options?: { starterTaskTitle?: string; prepStepTitle?: string },
   ) => void;
   openAddQuestSheet: () => void;
+  openRecoveryQuestSheet: () => void;
   closeAddQuestSheet: () => void;
   viewCreatedQuestOnBoard: () => void;
   addAnotherQuest: () => void;
@@ -162,6 +172,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [questComplete, setQuestComplete] = useState<QuestCompleteState | null>(null);
   const [questCreated, setQuestCreated] = useState<UserQuest | null>(null);
   const [addQuestSheetOpen, setAddQuestSheetOpen] = useState(false);
+  const [addQuestRecoveryMode, setAddQuestRecoveryMode] = useState(false);
   const pendingChapterCompleteRef = useRef<ChapterCompleteState | null>(null);
 
   useEffect(() => {
@@ -170,7 +181,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     loadPlayerProgress().then((saved) => {
       if (!active) return;
       const base = saved ?? createInitialProgress();
-      setProgress(applyDailyStreakOnOpen(base));
+      setProgress(applySessionOnOpen(base));
       setIsHydrated(true);
     });
 
@@ -184,7 +195,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
     const handleAppStateChange = (state: AppStateStatus) => {
       if (state !== 'active') return;
-      setProgress((prev) => applyDailyStreakOnOpen(prev));
+      setProgress((prev) => applySessionOnOpen(prev));
     };
 
     const subscription = AppState.addEventListener('change', handleAppStateChange);
@@ -255,6 +266,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
     (currentChapter.introScene?.length ?? 0) > 0 &&
     !progress.seenChapterIntros.includes(currentChapter.id) &&
     chapterComplete === null;
+
+  const showRecoveryPrompt = useMemo(
+    () => isHydrated && shouldShowRecoveryPrompt(progress),
+    [isHydrated, progress],
+  );
 
   const showHqTutorial =
     isHydrated &&
@@ -341,7 +357,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     (
       originalTitle: string,
       category: TaskCategory,
-      options?: { starterTaskTitle?: string },
+      options?: { starterTaskTitle?: string; prepStepTitle?: string },
     ) => {
       const trimmed = originalTitle.trim();
       if (!trimmed || !currentChapter) return;
@@ -362,6 +378,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
           isCompleted: false,
           createdOnDate: getLocalDateKey(),
           ...(options?.starterTaskTitle ? { starterTaskTitle: options.starterTaskTitle.trim() } : {}),
+          ...(options?.prepStepTitle ? { prepStepTitle: options.prepStepTitle.trim() } : {}),
         };
 
         setAddQuestSheetOpen(false);
@@ -377,11 +394,18 @@ export function GameProvider({ children }: { children: ReactNode }) {
   );
 
   const openAddQuestSheet = useCallback(() => {
+    setAddQuestRecoveryMode(false);
+    setAddQuestSheetOpen(true);
+  }, []);
+
+  const openRecoveryQuestSheet = useCallback(() => {
+    setAddQuestRecoveryMode(true);
     setAddQuestSheetOpen(true);
   }, []);
 
   const closeAddQuestSheet = useCallback(() => {
     setAddQuestSheetOpen(false);
+    setAddQuestRecoveryMode(false);
   }, []);
 
   const viewCreatedQuestOnBoard = useCallback(() => {
@@ -391,6 +415,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   const addAnotherQuest = useCallback(() => {
     setQuestCreated(null);
+    setAddQuestRecoveryMode(false);
     setAddQuestSheetOpen(true);
   }, []);
 
@@ -474,6 +499,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
           : sagaCompletedQuestIds;
 
       const chapterDoneCount = countCompletedTemplates(currentChapter, updatedCompletedIds);
+      const completingRecovery = shouldMarkRecoveryOnQuestComplete(progress);
 
       setProgress((prev) => {
         const withQuestCompletion =
@@ -481,9 +507,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
             ? appendSagaCompletedQuest(prev, activeSaga.id, questId)
             : prev;
 
+        const withRecovery = completingRecovery ? markRecoveryQuestComplete(withQuestCompletion) : withQuestCompletion;
+
         return recordQuestCompleted(
           {
-            ...withQuestCompletion,
+            ...withRecovery,
             userQuests:
               boardQuest.source === 'user'
                 ? prev.userQuests.map((quest) =>
@@ -546,6 +574,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
           : ui.questCompleteFallbackLine,
         identityVoteGainLine: identityVote.voteGainLine,
         identityUniverseLine: identityVote.universeLine,
+        ...(completingRecovery
+          ? { recoveryCompleteLine: getRecoveryQuestCopy(activeUniverse.id).completeMessage }
+          : {}),
       });
     },
     [activeSaga, activeUniverse, chapterComplete, currentChapter, progress, questComplete, quests, sagaCompletedQuestIds],
@@ -828,6 +859,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setQuestComplete(null);
     setQuestCreated(null);
     setAddQuestSheetOpen(false);
+    setAddQuestRecoveryMode(false);
     pendingChapterCompleteRef.current = null;
     await savePlayerProgress(restored);
   }, []);
@@ -853,6 +885,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       questComplete,
       questCreated,
       addQuestSheetOpen,
+      addQuestRecoveryMode,
+      showRecoveryPrompt,
       showChapterIntro,
       showHqTutorial,
       completedQuestCount,
@@ -864,6 +898,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       completeOnboarding,
       addUserQuest,
       openAddQuestSheet,
+      openRecoveryQuestSheet,
       closeAddQuestSheet,
       viewCreatedQuestOnBoard,
       addAnotherQuest,
@@ -895,6 +930,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       activeSaga,
       activeUniverse,
       addAnotherQuest,
+      addQuestRecoveryMode,
       addQuestSheetOpen,
       addUserQuest,
       allQuestsComplete,
@@ -926,6 +962,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       maybeShowVillainTaunt,
       narrativeMoment,
       openAddQuestSheet,
+      openRecoveryQuestSheet,
       player,
       narrativeStateValid,
       progress,
@@ -939,6 +976,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       selectUniverse,
       showChapterIntro,
       showHqTutorial,
+      showRecoveryPrompt,
       startHqTutorialAddQuest,
       startUnlockedSagaFromChapterComplete,
       storyLine,

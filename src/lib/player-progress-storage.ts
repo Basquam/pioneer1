@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { DUST_AND_IRON_UNIVERSE, UNIVERSES } from '@/data/narrative/universes';
 import { createEmptyIdentityVotes, sanitizeIdentityVotes } from '@/lib/identity-votes';
+import { sanitizeRecoveryQuestCompletedDates } from '@/lib/recovery-quest';
 import { findUniverse } from '@/lib/narrative-state';
 import { narrativeWarn } from '@/lib/narrative-state-debug';
 import type { PlayerProgress } from '@/types/narrative';
@@ -149,6 +150,9 @@ export function createInitialProgress(): PlayerProgress {
     activityByDate: {},
     lastSagaByUniverseId: createDefaultLastSagaByUniverseId(),
     identityVotes: createEmptyIdentityVotes(),
+    lastMissedDate: null,
+    recoveryQuestOfferedForDate: null,
+    recoveryQuestCompletedDates: [],
   };
 }
 
@@ -180,6 +184,10 @@ function normalizeProgress(raw: Partial<PlayerProgress> & Record<string, unknown
     onboardingCompletedAt:
       typeof raw.onboardingCompletedAt === 'string' ? raw.onboardingCompletedAt : null,
     identityVotes: sanitizeIdentityVotes(raw.identityVotes ?? raw.identityVotesByCategory),
+    lastMissedDate: typeof raw.lastMissedDate === 'string' ? raw.lastMissedDate : null,
+    recoveryQuestOfferedForDate:
+      typeof raw.recoveryQuestOfferedForDate === 'string' ? raw.recoveryQuestOfferedForDate : null,
+    recoveryQuestCompletedDates: sanitizeRecoveryQuestCompletedDates(raw.recoveryQuestCompletedDates),
   };
 
   const universeForMigration = findUniverse(merged.selectedUniverseId) ?? DUST_AND_IRON_UNIVERSE;

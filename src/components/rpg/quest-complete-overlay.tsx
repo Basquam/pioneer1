@@ -129,8 +129,16 @@ export function QuestCompleteOverlay() {
                 </Animated.View>
               )}
 
+              {questComplete.recoveryCompleteLine && (
+                <Animated.Text
+                  entering={FadeInUp.duration(450).delay(500)}
+                  style={[styles.recoveryComplete, { color: palette.accent }]}>
+                  {questComplete.recoveryCompleteLine}
+                </Animated.Text>
+              )}
+
               <Animated.Text
-                entering={FadeInUp.duration(400).delay(520)}
+                entering={FadeInUp.duration(400).delay(560)}
                 style={[styles.tapHint, { color: palette.accent }]}>
                 TAP TO CONTINUE ›
               </Animated.Text>
@@ -267,6 +275,12 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 19,
     fontStyle: 'italic',
+    textAlign: 'center',
+  },
+  recoveryComplete: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 12,
+    letterSpacing: 1.5,
     textAlign: 'center',
   },
   tapHint: {

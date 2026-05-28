@@ -39,6 +39,7 @@ export function userQuestToBoardQuest(quest: UserQuest, isDailyFocus = false): B
     completed: quest.isCompleted,
     isDailyFocus,
     ...(quest.starterTaskTitle ? { starterTaskTitle: quest.starterTaskTitle } : {}),
+    ...(quest.prepStepTitle ? { prepStepTitle: quest.prepStepTitle } : {}),
   };
 }
 

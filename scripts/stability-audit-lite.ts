@@ -49,6 +49,9 @@ function baseProgress(): PlayerProgress {
     activityByDate: {},
     lastSagaByUniverseId: {},
     identityVotes: createEmptyIdentityVotes(),
+    lastMissedDate: null,
+    recoveryQuestOfferedForDate: null,
+    recoveryQuestCompletedDates: [],
   } as PlayerProgress;
 
   for (const universe of UNIVERSES) {

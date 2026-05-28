@@ -7,6 +7,7 @@ import { DailyOperationsBriefing } from '@/components/rpg/daily-operations-brief
 import { DialoguePanel } from '@/components/rpg/dialogue-panel';
 import { NarrativeMomentOverlay } from '@/components/rpg/narrative-moment-overlay';
 import { QuestCard } from '@/components/rpg/quest-card';
+import { RecoveryQuestBanner } from '@/components/rpg/recovery-quest-banner';
 import { SagaSwitcherSheet } from '@/components/rpg/saga-switcher-sheet';
 import { ScreenScroll } from '@/components/rpg/screen-scroll';
 import { ScreenShell } from '@/components/rpg/screen-shell';
@@ -56,6 +57,8 @@ export function HqScreen() {
         </Animated.View>
 
         <DailyOperationsBriefing />
+
+        <RecoveryQuestBanner />
 
         <StorylinesSection onOpenSwitcher={() => setSagaSwitcherVisible(true)} />
 

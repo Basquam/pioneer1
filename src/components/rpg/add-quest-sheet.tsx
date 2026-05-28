@@ -28,6 +28,17 @@ import {
 } from '@/lib/daily-focus';
 import { getTaskCategoryMeta, TASK_CATEGORIES } from '@/lib/task-categories';
 import { generateStarterTaskTitle, getStarterToggleCopy } from '@/lib/two-minute-starter';
+import {
+  getDefaultPrepPreset,
+  getPrepPresets,
+  getQuestPrepCopy,
+  isPrepPreset,
+} from '@/lib/quest-prep';
+import {
+  getDefaultRecoveryCategory,
+  getDefaultRecoveryTaskTitle,
+  RECOVERY_QUEST_CATEGORIES,
+} from '@/lib/recovery-quest';
 import type { TaskCategory } from '@/types/narrative';
 
 type AddQuestSheetProps = {
@@ -37,15 +48,20 @@ type AddQuestSheetProps = {
 
 export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
   const ui = useUniverseUiCopy();
-  const { activeUniverse, currentChapter, playerProgress, addUserQuest } = useGame();
+  const { activeUniverse, currentChapter, playerProgress, addUserQuest, addQuestRecoveryMode } = useGame();
   const { palette } = activeUniverse;
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState<TaskCategory>('cleaning');
   const [confirmOverLimit, setConfirmOverLimit] = useState(false);
   const [easierToStart, setEasierToStart] = useState(false);
   const [starterTitle, setStarterTitle] = useState('');
+  const [prepEnabled, setPrepEnabled] = useState(false);
+  const [prepStepTitle, setPrepStepTitle] = useState('');
 
   const starterCopy = getStarterToggleCopy(activeUniverse.id);
+  const prepCopy = getQuestPrepCopy(activeUniverse.id);
+  const prepPresets = useMemo(() => getPrepPresets(category), [category]);
+  const categoryOptions = addQuestRecoveryMode ? RECOVERY_QUEST_CATEGORIES : TASK_CATEGORIES;
   const trimmedTitle = title.trim();
   const suggestedStarter = useMemo(
     () => (trimmedTitle ? generateStarterTaskTitle(trimmedTitle, category) : ''),
@@ -68,6 +84,8 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
     setConfirmOverLimit(false);
     setEasierToStart(false);
     setStarterTitle('');
+    setPrepEnabled(false);
+    setPrepStepTitle('');
   };
 
   const handleClose = () => {
@@ -78,9 +96,11 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
   const submitQuest = () => {
     if (!trimmedTitle) return;
     const starter = easierToStart ? starterTitle.trim() || suggestedStarter : '';
+    const prep = prepEnabled ? prepStepTitle.trim() : '';
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     addUserQuest(trimmedTitle, category, {
       ...(starter ? { starterTaskTitle: starter } : {}),
+      ...(prep ? { prepStepTitle: prep } : {}),
     });
     resetForm();
   };
@@ -104,15 +124,47 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
     }
   };
 
+  const handleTogglePrep = (enabled: boolean) => {
+    void Haptics.selectionAsync();
+    setPrepEnabled(enabled);
+    if (enabled) {
+      setPrepStepTitle(getDefaultPrepPreset(category));
+    } else {
+      setPrepStepTitle('');
+    }
+  };
+
   useEffect(() => {
     if (visible) return;
     resetForm();
   }, [visible]);
 
   useEffect(() => {
+    if (!visible || !addQuestRecoveryMode) return;
+
+    const recoveryCategory = getDefaultRecoveryCategory();
+    const recoveryTitle = getDefaultRecoveryTaskTitle(recoveryCategory);
+    setEasierToStart(true);
+    setCategory(recoveryCategory);
+    setTitle(recoveryTitle);
+    setStarterTitle(generateStarterTaskTitle(recoveryTitle, recoveryCategory));
+    setPrepEnabled(false);
+    setPrepStepTitle('');
+  }, [visible, addQuestRecoveryMode]);
+
+  useEffect(() => {
     if (!easierToStart || !trimmedTitle) return;
     setStarterTitle(suggestedStarter);
   }, [easierToStart, suggestedStarter, trimmedTitle]);
+
+  useEffect(() => {
+    if (!prepEnabled) return;
+    const isKnownPreset = prepStepTitle.trim().length > 0 &&
+      TASK_CATEGORIES.some((cat) => isPrepPreset(prepStepTitle, cat));
+    if (!prepStepTitle.trim() || (isKnownPreset && !isPrepPreset(prepStepTitle, category))) {
+      setPrepStepTitle(getDefaultPrepPreset(category));
+    }
+  }, [category, prepEnabled, prepStepTitle]);
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={handleClose}>
@@ -205,12 +257,20 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
               </View>
             )}
 
+            {addQuestRecoveryMode && (
+              <View style={[styles.recoveryHintBox, { borderColor: palette.gold, backgroundColor: palette.panel }]}>
+                <Text style={[styles.recoveryHint, { color: palette.bone }]}>
+                  Recovery quest — pick a tiny task and start with the 2-minute version.
+                </Text>
+              </View>
+            )}
+
             <Text style={[styles.label, { color: palette.gold }]}>{ui.addQuestTypeLabel}</Text>
             <Text style={[styles.categoryHelper, { color: palette.fog }]}>
               Pick a type — we weave it into the saga.
             </Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
-              {TASK_CATEGORIES.map((cat) => {
+              {categoryOptions.map((cat) => {
                 const selected = category === cat;
                 const meta = getTaskCategoryMeta(cat);
                 return (
@@ -219,6 +279,12 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
                     onPress={() => {
                       void Haptics.selectionAsync();
                       setCategory(cat);
+                      if (addQuestRecoveryMode) {
+                        const recoveryTitle = getDefaultRecoveryTaskTitle(cat);
+                        setTitle(recoveryTitle);
+                        setEasierToStart(true);
+                        setStarterTitle(generateStarterTaskTitle(recoveryTitle, cat));
+                      }
                     }}
                     style={[
                       styles.chip,
@@ -248,6 +314,63 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
               })}
             </ScrollView>
             <Text style={[styles.categoryHint, { color: palette.fog }]}>{selectedMeta.description}</Text>
+
+            <View style={[styles.toggleRow, { borderColor: palette.panelBorder }]}>
+              <View style={styles.toggleCopy}>
+                <Text style={[styles.toggleLabel, { color: palette.bone }]}>{prepCopy.sectionLabel}</Text>
+                <Text style={[styles.toggleHint, { color: palette.fog }]}>{prepCopy.helperText}</Text>
+                <Text style={[styles.toggleUniverseHint, { color: palette.gold }]}>{prepCopy.universeHint}</Text>
+              </View>
+              <Switch
+                value={prepEnabled}
+                onValueChange={handleTogglePrep}
+                trackColor={{ false: palette.panelBorder, true: palette.primary }}
+                thumbColor={prepEnabled ? palette.gold : palette.fog}
+              />
+            </View>
+
+            {prepEnabled && (
+              <View style={[styles.prepBox, { backgroundColor: palette.panel, borderColor: palette.gold }]}>
+                <Text style={[styles.prepLabel, { color: palette.gold }]}>PREP STEP</Text>
+                <View style={styles.presetList}>
+                  {prepPresets.map((preset) => {
+                    const selected = prepStepTitle === preset;
+                    return (
+                      <Pressable
+                        key={preset}
+                        onPress={() => {
+                          void Haptics.selectionAsync();
+                          setPrepStepTitle(preset);
+                        }}
+                        style={[
+                          styles.presetChip,
+                          {
+                            backgroundColor: selected ? palette.primary : palette.night,
+                            borderColor: selected ? palette.gold : palette.panelBorder,
+                          },
+                        ]}>
+                        <Text
+                          style={[styles.presetChipText, { color: selected ? palette.bone : palette.fog }]}
+                          numberOfLines={3}>
+                          {preset}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+                <Text style={[styles.prepCustomLabel, { color: palette.fog }]}>Or write your own</Text>
+                <TextInput
+                  value={prepStepTitle}
+                  onChangeText={setPrepStepTitle}
+                  placeholder={getDefaultPrepPreset(category)}
+                  placeholderTextColor={`${palette.fog}88`}
+                  style={[
+                    styles.input,
+                    { color: palette.bone, borderColor: palette.panelBorder, backgroundColor: palette.night },
+                  ]}
+                />
+              </View>
+            )}
 
             <GlowButton
               label={confirmOverLimit ? 'CONTINUE ANYWAY' : ui.addQuestCreateLabel}
@@ -352,6 +475,14 @@ const styles = StyleSheet.create({
     lineHeight: 17,
     fontStyle: 'italic',
   },
+  toggleUniverseHint: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 10,
+    letterSpacing: 0.5,
+    lineHeight: 14,
+    fontStyle: 'italic',
+    marginTop: 2,
+  },
   starterBox: {
     borderWidth: 1,
     padding: 12,
@@ -368,6 +499,46 @@ const styles = StyleSheet.create({
     fontSize: 10,
     letterSpacing: 0.3,
     lineHeight: 14,
+    fontStyle: 'italic',
+  },
+  prepBox: {
+    borderWidth: 1,
+    padding: 12,
+    gap: 10,
+    transform: [{ skewX: '-2deg' }],
+  },
+  prepLabel: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 10,
+    letterSpacing: 2,
+  },
+  presetList: { gap: 8 },
+  presetChip: {
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    transform: [{ skewX: '-2deg' }],
+  },
+  presetChipText: {
+    fontFamily: GameFonts.ui,
+    fontSize: 12,
+    letterSpacing: 0.3,
+    lineHeight: 17,
+  },
+  prepCustomLabel: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 10,
+    letterSpacing: 1,
+  },
+  recoveryHintBox: {
+    borderWidth: 1,
+    padding: 12,
+    transform: [{ skewX: '-2deg' }],
+  },
+  recoveryHint: {
+    fontFamily: GameFonts.displayRegular,
+    fontSize: 13,
+    lineHeight: 19,
     fontStyle: 'italic',
   },
   chips: { gap: 8, paddingVertical: 4 },
