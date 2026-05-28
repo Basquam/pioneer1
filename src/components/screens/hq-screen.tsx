@@ -71,14 +71,14 @@ export function HqScreen() {
           />
         </View>
 
-        <SectionLabel>PRIORITY BOUNTIES</SectionLabel>
+        <SectionLabel>UP NEXT</SectionLabel>
         {quests.slice(0, 2).map((q, i) => (
           <QuestCard key={q.id} quest={q} index={i} />
         ))}
         {completedQuestCount < quests.length && (
           <Pressable onPress={() => router.push('/(game)/quests' as Href)}>
             <Text style={[styles.more, { color: activeUniverse.palette.accent }]}>
-              VIEW ALL BOUNTIES ›
+              OPEN QUEST BOARD ›
             </Text>
           </Pressable>
         )}

@@ -17,8 +17,8 @@ export function OnboardingThemeScreen() {
       <OnboardingScroll
         footer={
           <GlowButton
-            label="SELECT SAGA"
-            hint={canContinue ? activeUniverse.name : 'Choose an unlocked universe'}
+            label="CONTINUE"
+            hint={canContinue ? `NEXT: CHOOSE YOUR SAGA` : 'Choose an unlocked universe'}
             onPress={() => router.push('/onboarding/saga' as Href)}
           />
         }>

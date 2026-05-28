@@ -53,7 +53,7 @@ export function AddQuestTrigger({ variant }: AddQuestTriggerProps) {
           style={[styles.banner, { borderColor: palette.accent, backgroundColor: `${palette.panel}cc` }]}>
           <Text style={[styles.bannerLabel, { color: palette.accent }]}>+ ADD QUEST</Text>
           <Text style={[styles.bannerSub, { color: palette.fog }]} numberOfLines={2}>
-            Turn your real task into a story mission
+            Turn a real task into a quest
           </Text>
         </Pressable>
       ) : (

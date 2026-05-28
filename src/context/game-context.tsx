@@ -12,6 +12,7 @@ import {
 } from '@/lib/narrative-state';
 import { narrativeWarn } from '@/lib/narrative-state-debug';
 import { applyDailyStreakOnOpen, getLocalDateKey } from '@/lib/daily-streak';
+import { recordChapterCompleted, recordQuestCompleted } from '@/lib/weekly-recap';
 import { convertTaskToUserQuest, createUserQuestId } from '@/lib/convert-task-to-quest';
 import {
   affinityToTier,
@@ -423,34 +424,38 @@ export function GameProvider({ children }: { children: ReactNode }) {
             ? appendSagaCompletedQuest(prev, activeSaga.id, questId)
             : prev;
 
-        return {
-          ...withQuestCompletion,
-          userQuests:
-            boardQuest.source === 'user'
-              ? prev.userQuests.map((quest) =>
-                  quest.id === questId ? { ...quest, isCompleted: true } : quest,
-                )
-              : prev.userQuests,
-          totalXp: nextTotalXp,
-          level: nextLevel,
-          reputation: nextReputation,
-          villainInfluenceBySaga: {
-            ...prev.villainInfluenceBySaga,
-            [activeSaga.id]: updatedInfluence,
+        return recordQuestCompleted(
+          {
+            ...withQuestCompletion,
+            userQuests:
+              boardQuest.source === 'user'
+                ? prev.userQuests.map((quest) =>
+                    quest.id === questId ? { ...quest, isCompleted: true } : quest,
+                  )
+                : prev.userQuests,
+            totalXp: nextTotalXp,
+            level: nextLevel,
+            reputation: nextReputation,
+            villainInfluenceBySaga: {
+              ...prev.villainInfluenceBySaga,
+              [activeSaga.id]: updatedInfluence,
+            },
+            chapterCompletions: {
+              ...prev.chapterCompletions,
+              [currentChapter.id]: chapterDoneCount,
+            },
+            characterAffinity: {
+              ...prev.characterAffinity,
+              [charId]: nextAffinity,
+            },
+            relationshipByCharacter: {
+              ...prev.relationshipByCharacter,
+              [charId]: affinityToTier(nextAffinity),
+            },
           },
-          chapterCompletions: {
-            ...prev.chapterCompletions,
-            [currentChapter.id]: chapterDoneCount,
-          },
-          characterAffinity: {
-            ...prev.characterAffinity,
-            [charId]: nextAffinity,
-          },
-          relationshipByCharacter: {
-            ...prev.relationshipByCharacter,
-            [charId]: affinityToTier(nextAffinity),
-          },
-        };
+          boardQuest.xpReward,
+          boardQuest.reputationReward,
+        );
       });
 
       const chapterAllDone = chapterDoneCount === currentChapter.questTemplates.length;
@@ -550,7 +555,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
                 [targetSaga.id]: next.villainInfluenceBySaga[targetSaga.id] ?? 100,
               },
             };
-            return next;
+            return recordChapterCompleted(next);
           }
 
           if (current.nextChapterId) {
@@ -564,7 +569,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
             };
           }
 
-          return next;
+          return recordChapterCompleted(next);
         });
 
         return null;

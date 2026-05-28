@@ -43,7 +43,7 @@ export function XpPopup() {
       ]}
       pointerEvents="none">
       <Text style={[styles.amount, { color: palette.gold }]}>+{xpBurst.amount} XP</Text>
-      <Text style={[styles.flavor, { color: palette.bone }]}>BOUNTY CLAIMED</Text>
+      <Text style={[styles.flavor, { color: palette.bone }]}>XP EARNED</Text>
     </Animated.View>
   );
 }

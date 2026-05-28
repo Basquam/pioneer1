@@ -7,17 +7,17 @@ export type PremiseBeat = {
 export const ONBOARDING_PREMISE_BEATS: PremiseBeat[] = [
   {
     badge: 'I',
-    title: 'REAL TASKS, STORY QUESTS',
+    title: 'REAL TASKS → QUESTS',
     line: 'Your real tasks become story quests.',
   },
   {
     badge: 'II',
     title: 'ADVANCE THE SAGA',
-    line: 'Completing quests advances chapters.',
+    line: 'Complete bounties and quests to advance chapters.',
   },
   {
     badge: 'III',
-    title: 'SHAPE THE WORLD',
-    line: 'Your discipline shapes the world.',
+    title: 'SHAPE THE FRONTIER',
+    line: 'Your discipline shapes Dustfall.',
   },
 ];

@@ -9,6 +9,7 @@ import { CharacterCard } from '@/components/rpg/character-card';
 import { CinematicEmptyState } from '@/components/rpg/cinematic-empty-state';
 import { DailyStreakDisplay } from '@/components/rpg/daily-streak-display';
 import { TodayFocusDisplay } from '@/components/rpg/today-focus-display';
+import { WeeklyRecapCard } from '@/components/rpg/weekly-recap-card';
 import { DevToolsPanel } from '@/components/rpg/dev-tools-panel';
 import { ScreenScroll } from '@/components/rpg/screen-scroll';
 import { ScreenShell } from '@/components/rpg/screen-shell';
@@ -74,11 +75,13 @@ export function ProfileScreen() {
 
         <TodayFocusDisplay variant="profile" />
 
+        <WeeklyRecapCard />
+
         <View style={styles.statsGrid}>
           <StatBox label="GRIT" value={String(player.stats.grit)} colors={activeUniverse.palette} />
           <StatBox label="FOCUS" value={String(player.stats.focus)} colors={activeUniverse.palette} />
           <StatBox label="LEGEND" value={`${player.stats.legend}%`} colors={activeUniverse.palette} />
-          <StatBox label="BOUNTIES" value={`${completedQuestCount}/${quests.length}`} colors={activeUniverse.palette} />
+          <StatBox label="MISSIONS" value={`${completedQuestCount}/${quests.length}`} colors={activeUniverse.palette} />
           <StatBox label="REPUTATION" value={`${player.reputation}`} colors={activeUniverse.palette} />
         </View>
 

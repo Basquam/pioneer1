@@ -55,9 +55,9 @@ export function isDailyFocusQuest(
 }
 
 export function formatTodayFocusLabel(count: number, limit: number): string {
-  return `Today's Focus: ${count} / ${limit}`;
+  return `Focus Quests: ${count} / ${limit}`;
 }
 
 export function getDailyFocusOverLimitMessage(limit: number): string {
-  return `More than ${limit} quests may dilute today's story. Continue?`;
+  return `More than ${limit} quests today may dilute your Focus Quests. Continue?`;
 }

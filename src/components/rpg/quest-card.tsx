@@ -101,7 +101,7 @@ export function QuestCard({ quest, index }: QuestCardProps) {
         </Text>
         <View style={styles.realRow}>
           <Text style={[styles.realLabel, { color: palette.fog }]}>
-            {quest.source === 'user' ? 'REAL TASK' : 'OBJECTIVE'}
+            {quest.source === 'user' ? 'REAL TASK' : 'BOUNTY'}
           </Text>
           <Text style={[styles.realTask, { color: palette.gold }]} numberOfLines={2}>
             {quest.originalTitle}

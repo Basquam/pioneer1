@@ -32,7 +32,7 @@ export function GameHud({ compact }: GameHudProps) {
         <View style={styles.titleBlock}>
           <Text style={[styles.rank, { color: palette.bone }]}>{player.rank.toUpperCase()}</Text>
           <Text style={[styles.subtitle, { color: palette.fog }]}>
-            {player.totalXp} XP · {completedQuestCount}/{quests.length} BOUNTIES
+            {player.totalXp} XP · {completedQuestCount}/{quests.length} MISSIONS
           </Text>
         </View>
       </View>

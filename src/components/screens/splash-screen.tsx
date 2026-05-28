@@ -145,7 +145,7 @@ export function SplashScreen() {
         <Text style={styles.badge}>☆ FRONTIER BADGE ☆</Text>
         <Text style={styles.title}>PIONEER</Text>
         <View style={styles.rule} />
-        <Text style={styles.tagline}>Your tasks become stories.</Text>
+        <Text style={styles.tagline}>Real tasks become quests.</Text>
       </Animated.View>
 
       <Animated.Text entering={FadeIn.delay(700)} exiting={FadeOut} style={styles.loader}>

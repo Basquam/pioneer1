@@ -92,7 +92,7 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
             keyboardShouldPersistTaps="handled"
             contentContainerStyle={[styles.sheetScroll, { paddingBottom: modalBottomInset }]}>
             <View style={styles.header}>
-              <Text style={[styles.eyebrow, { color: palette.gold }]}>NEW BOUNTY</Text>
+              <Text style={[styles.eyebrow, { color: palette.gold }]}>NEW QUEST</Text>
               <Pressable onPress={handleClose} hitSlop={12}>
                 <Text style={[styles.close, { color: palette.fog }]}>✕</Text>
               </Pressable>
@@ -101,8 +101,8 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
             <Text style={[styles.title, { color: palette.bone }]}>Add Quest</Text>
             <Text style={[styles.sub, { color: palette.fog }]} numberOfLines={2}>
               {currentChapter
-                ? `Turn a real task into a ${currentChapter.title} mission.`
-                : 'Turn a real task into a frontier mission.'}
+                ? `Turn a real task into a quest for ${currentChapter.title}.`
+                : 'Turn a real task into a frontier quest.'}
             </Text>
 
             <View style={[styles.focusRow, { borderColor: palette.panelBorder }]}>
@@ -111,8 +111,8 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
               </Text>
               <Text style={[styles.focusHint, { color: palette.fog }]}>
                 {todayFocusCount < focusLimit
-                  ? 'First three personal quests today become focus quests on the board.'
-                  : 'You can still add more — they just won’t be marked as focus.'}
+                  ? 'First three quests today become Focus Quests on the board.'
+                  : 'You can still add more — they just won’t be marked as Focus Quests.'}
               </Text>
             </View>
 
@@ -137,9 +137,9 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
               autoFocus
             />
 
-            <Text style={[styles.label, { color: palette.gold }]}>QUEST ARCHETYPE</Text>
+            <Text style={[styles.label, { color: palette.gold }]}>QUEST TYPE</Text>
             <Text style={[styles.categoryHelper, { color: palette.fog }]}>
-              Choose what kind of real-life task this is. We'll turn it into a story quest.
+              Pick a type. We&apos;ll weave it into the saga.
             </Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
               {TASK_CATEGORIES.map((cat) => {
@@ -183,7 +183,7 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
 
             <GlowButton
               label={confirmOverLimit ? 'CONTINUE ANYWAY' : 'CREATE QUEST'}
-              hint={confirmOverLimit ? 'Add beyond today\'s focus' : 'Weave it into the story'}
+              hint={confirmOverLimit ? 'Add beyond today\'s Focus Quests' : 'Add to the Quest Board'}
               onPress={handleCreate}
             />
             {confirmOverLimit && (

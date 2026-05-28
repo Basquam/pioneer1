@@ -51,20 +51,20 @@ export function SagaSwitcherSheet({ visible, onClose }: SagaSwitcherSheetProps) 
           ]}
           onPress={(event) => event.stopPropagation()}>
           <Animated.View entering={FadeInUp.duration(400)} style={styles.header}>
-            <Text style={[styles.eyebrow, { color: palette.accent }]}>STORYLINES</Text>
+            <Text style={[styles.eyebrow, { color: palette.accent }]}>SAGAS</Text>
             <Text style={[styles.title, { color: palette.bone }]} numberOfLines={2}>
               CHOOSE YOUR SAGA
             </Text>
             <Text style={[styles.subtitle, { color: palette.fog }]}>
-              Switch between unlocked campaigns. Progress is saved per storyline.
+              Switch between unlocked sagas. Progress is saved per saga.
             </Text>
           </Animated.View>
 
           <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
             {unlockedSagas.length === 0 ? (
               <CinematicEmptyState
-                title="No unlocked storylines yet."
-                message="Ride through the Vulture Gang saga to unlock more campaigns across Dustfall."
+                title="No unlocked sagas yet."
+                message="Complete the Vulture Gang saga to unlock more sagas across Dustfall."
                 primaryLabel="CLOSE"
                 onPrimaryPress={onClose}
               />

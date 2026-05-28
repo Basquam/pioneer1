@@ -55,11 +55,11 @@ export function QuestsScreen() {
     return (
       <ScreenShell edges={['top']} padded={false}>
         <ScreenScroll>
-          <SectionHeader eyebrow="BOUNTY BOARD" title="ACTIVE QUESTS" />
+          <SectionHeader eyebrow="QUEST BOARD" title="ACTIVE MISSIONS" />
           <CinematicEmptyState
             title="No active chapter."
-            message="This saga has no active chapter right now. Restore the default storyline to pick up where the trail begins."
-            primaryLabel="Restore Default Story"
+            message="This saga has no active chapter right now. Restore the default saga to pick up where the trail begins."
+            primaryLabel="Restore Default Saga"
             onPrimaryPress={restoreDefaultStory}
           />
         </ScreenScroll>
@@ -73,13 +73,13 @@ export function QuestsScreen() {
     <ScreenShell edges={['top']} padded={false}>
       <ScreenScroll>
         <Animated.View entering={FadeInDown.duration(500)}>
-          <SectionHeader eyebrow="BOUNTY BOARD" title="ACTIVE QUESTS" />
+          <SectionHeader eyebrow="QUEST BOARD" title="ACTIVE MISSIONS" />
         </Animated.View>
         <GameHud compact />
         <VillainMeter />
         {leadBeat && <CharacterDialoguePanel beat={leadBeat} animate={false} />}
         <Text style={[styles.hint, { color: activeUniverse.palette.fog }]}>
-          Real tasks disguised as story missions. Tap to complete.
+          Complete bounties and quests to advance the chapter. Tap to mark done.
         </Text>
 
         <AddQuestTrigger variant="banner" />
@@ -87,8 +87,8 @@ export function QuestsScreen() {
         <SectionLabel>YOUR QUESTS</SectionLabel>
         {!hasPersonalQuests ? (
           <CinematicEmptyState
-            title="No personal quests written yet."
-            message="Every chore, errand, and habit can become a bounty on the board. Write your first one into the story."
+            title="No quests yet."
+            message="Turn a real task into a quest for today's chapter."
             primaryLabel="ADD QUEST"
             onPrimaryPress={openAddQuestSheet}
           />
@@ -100,7 +100,7 @@ export function QuestsScreen() {
         {allChapterBountiesComplete ? (
           <CinematicEmptyState
             title="Chapter bounties cleared."
-            message="Continue the story from HQ."
+            message="Continue the saga from HQ."
             primaryLabel="RETURN TO HQ"
             onPrimaryPress={() => router.push('/(game)/hq' as Href)}
             index={1}

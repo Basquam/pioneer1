@@ -65,6 +65,7 @@ export function createInitialProgress(): PlayerProgress {
     lastActiveDate: null,
     dailyStreak: 0,
     dailyFocusLimit: 3,
+    activityByDate: {},
   };
 }
 
@@ -83,6 +84,7 @@ function normalizeProgress(raw: Partial<PlayerProgress> & Record<string, unknown
     lastActiveDate: raw.lastActiveDate ?? base.lastActiveDate,
     dailyStreak: raw.dailyStreak ?? base.dailyStreak,
     dailyFocusLimit: raw.dailyFocusLimit ?? base.dailyFocusLimit,
+    activityByDate: raw.activityByDate ?? base.activityByDate,
   };
 
   const universeForMigration = findUniverse(merged.selectedUniverseId) ?? DUST_AND_IRON_UNIVERSE;

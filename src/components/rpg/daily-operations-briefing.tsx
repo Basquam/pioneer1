@@ -56,7 +56,7 @@ export function DailyOperationsBriefing() {
             value={String(remainingBounties)}
             palette={palette}
           />
-          <StatCell label="YOUR QUESTS" value={String(userQuestCount)} palette={palette} />
+          <StatCell label="QUESTS LEFT" value={String(userQuestCount)} palette={palette} />
           <StatCell label="LEVEL" value={String(player.level)} palette={palette} />
           <StatCell label="XP" value={String(player.totalXp)} palette={palette} />
           <StatCell label="REPUTATION" value={String(player.reputation)} palette={palette} />
@@ -65,7 +65,7 @@ export function DailyOperationsBriefing() {
 
         <GlowButton
           label="GO TO QUEST BOARD"
-          hint="CLAIM TODAY'S BOUNTIES"
+          hint="VIEW BOUNTIES & QUESTS"
           onPress={() => router.push('/(game)/quests' as Href)}
         />
 

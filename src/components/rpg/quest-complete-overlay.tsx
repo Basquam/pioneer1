@@ -51,8 +51,8 @@ export function QuestCompleteOverlay() {
   const isUserQuest = questComplete.source === 'user';
   const stampLabel = isUserQuest ? 'QUEST CLEARED' : 'BOUNTY CLEARED';
   const progressMessage = isUserQuest
-    ? 'Your real task helped the story move forward.'
-    : 'Chapter progress advanced.';
+    ? 'Your quest moved the story forward.'
+    : 'This bounty advanced the chapter.';
   const affinityGainLabel = character ? formatAffinityGain(character) : null;
   const reactionBadge = character?.isVillain ? 'VILLAIN REACTION' : 'ALLY RESPONSE';
 

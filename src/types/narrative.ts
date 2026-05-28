@@ -177,6 +177,13 @@ export type BoardQuest = {
   isDailyFocus?: boolean;
 };
 
+export type DailyActivity = {
+  questsCompleted: number;
+  xpEarned: number;
+  reputationEarned: number;
+  chaptersCompleted: number;
+};
+
 export type PlayerProgress = {
   hasOnboarded: boolean;
   selectedUniverseId: string;
@@ -203,4 +210,6 @@ export type PlayerProgress = {
   dailyStreak: number;
   /** Max recommended user-created quests per local day before a soft warning. */
   dailyFocusLimit: number;
+  /** Per-day activity log keyed by local date (YYYY-MM-DD). */
+  activityByDate: Record<string, DailyActivity>;
 };

@@ -61,7 +61,7 @@ export const DUST_AND_IRON_UNIVERSE: Universe = {
   mentorName: 'Sheriff Ada Mercer',
   locationName: 'Dustfall',
   mood: 'Dusty, dark, dramatic — a frontier where order is fragile and every habit holds the line.',
-  coreProgressionName: 'Deputy Campaign',
+  coreProgressionName: 'Deputy Reputation',
   status: 'available',
   palette: {
     void: '#050308',

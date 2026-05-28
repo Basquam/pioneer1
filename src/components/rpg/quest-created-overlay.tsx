@@ -35,7 +35,7 @@ export function QuestCreatedOverlay() {
           <Animated.Text
             entering={ZoomIn.duration(650).delay(120)}
             style={[styles.stamp, { color: palette.gold, borderColor: palette.gold }]}>
-            NEW QUEST WRITTEN INTO THE STORY
+            NEW QUEST ADDED
           </Animated.Text>
 
           <Animated.View
@@ -46,7 +46,7 @@ export function QuestCreatedOverlay() {
 
             <View style={[styles.divider, { backgroundColor: palette.panelBorder }]} />
 
-            <Text style={[styles.narrativeLabel, { color: palette.gold }]}>STORY QUEST</Text>
+            <Text style={[styles.narrativeLabel, { color: palette.gold }]}>SAGA QUEST</Text>
             <Text style={[styles.narrativeTitle, { color: palette.bone }]}>
               {questCreated.narrativeTitle}
             </Text>
@@ -78,12 +78,12 @@ export function QuestCreatedOverlay() {
           <Animated.View entering={FadeInUp.duration(500).delay(520)} style={styles.buttonWrap}>
             <GlowButton
               label="VIEW ON QUEST BOARD"
-              hint="YOUR BOUNTY AWAITS"
+              hint="SEE YOUR QUEST"
               onPress={viewCreatedQuestOnBoard}
             />
             <SecondaryButton
               label="ADD ANOTHER QUEST"
-              hint="WEAVE ANOTHER TASK INTO THE STORY"
+              hint="ADD ANOTHER QUEST TODAY"
               palette={palette}
               onPress={addAnotherQuest}
             />

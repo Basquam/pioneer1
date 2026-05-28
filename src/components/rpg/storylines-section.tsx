@@ -28,7 +28,7 @@ export function StorylinesSection({ onOpenSwitcher }: StorylinesSectionProps) {
         { backgroundColor: palette.panel, borderColor: palette.panelBorder },
       ]}>
       <View style={styles.headerRow}>
-        <Text style={[styles.eyebrow, { color: palette.gold }]}>STORYLINES</Text>
+        <Text style={[styles.eyebrow, { color: palette.gold }]}>SAGAS</Text>
         <Text style={[styles.unlockedCount, { color: palette.fog }]}>
           {unlockedSagas.length}/{activeUniverse.sagas.length} UNLOCKED
         </Text>
@@ -55,8 +55,8 @@ export function StorylinesSection({ onOpenSwitcher }: StorylinesSectionProps) {
         </Text>
         <Text style={[styles.switchHint, { color: palette.fog }]}>
           {hasUnlockedSagas
-            ? 'View unlocked storylines and switch campaigns'
-            : 'Complete the default saga to unlock more storylines'}
+            ? 'View unlocked sagas and switch between them'
+            : 'Complete the Vulture Gang saga to unlock more sagas'}
         </Text>
       </Pressable>
     </View>

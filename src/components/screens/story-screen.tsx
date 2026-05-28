@@ -97,7 +97,7 @@ export function StoryScreen() {
         {sagaComplete && (
           <CinematicEmptyState
             title="Saga complete."
-            message={`You rode every chapter of ${activeSaga.title}. The trail ends here — for now. Choose your next storyline.`}
+            message={`You rode every chapter of ${activeSaga.title}. The trail ends here — for now. Choose your next saga.`}
             primaryLabel="SWITCH SAGA"
             onPrimaryPress={() => setSagaSwitcherVisible(true)}
           />
@@ -107,7 +107,7 @@ export function StoryScreen() {
         {chapters.length === 0 ? (
           <CinematicEmptyState
             title="No chapters available."
-            message={`${activeSaga.title} doesn't have playable chapters yet. Switch to an unlocked saga or restore the default storyline.`}
+            message={`${activeSaga.title} doesn't have playable chapters yet. Switch to an unlocked saga or restore the default saga.`}
             primaryLabel="SWITCH SAGA"
             onPrimaryPress={() => setSagaSwitcherVisible(true)}
           />

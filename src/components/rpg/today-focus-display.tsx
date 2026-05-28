@@ -31,17 +31,17 @@ export function TodayFocusDisplay({ variant = 'briefing' }: TodayFocusDisplayPro
         },
       ]}>
       <View style={styles.headerRow}>
-        <Text style={[styles.label, { color: palette.accent }]}>TODAY&apos;S FOCUS</Text>
+        <Text style={[styles.label, { color: palette.accent }]}>FOCUS QUESTS</Text>
         <Text style={[styles.value, { color: palette.gold }]}>
           {count} / {limit}
         </Text>
       </View>
       <Text style={[styles.hint, { color: palette.fog }]}>
         {count < limit
-          ? `${limit - count} focus ${limit - count === 1 ? 'slot' : 'slots'} left for personal quests today.`
+          ? `${limit - count} Focus Quest ${limit - count === 1 ? 'slot' : 'slots'} left today.`
           : count === limit
-            ? 'Focus full — extra quests are allowed but won’t be highlighted.'
-            : 'You’re beyond today’s focus — story still moves forward.'}
+            ? 'Focus Quests full — extra quests still count toward progress.'
+            : 'Beyond today\'s Focus Quests — the story still moves forward.'}
       </Text>
     </View>
   );

@@ -53,7 +53,7 @@ export function OnboardingIntroScreen() {
   return (
     <ScreenShell edges={['top', 'bottom']}>
       <OnboardingScroll
-        footer={showStart ? <GlowButton label="ENTER HQ" hint="CLAIM YOUR FIRST BOUNTIES" onPress={handleStart} /> : undefined}>
+        footer={showStart ? <GlowButton label="ENTER HQ" hint="OPEN QUEST BOARD" onPress={handleStart} /> : undefined}>
         <SectionHeader
           eyebrow={`PROLOGUE · ${activeSaga.title.toUpperCase()}`}
           title={activeUniverse.locationName.toUpperCase()}

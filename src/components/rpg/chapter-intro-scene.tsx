@@ -64,7 +64,7 @@ export function ChapterIntroScene({ visible, onComplete }: ChapterIntroSceneProp
           )}
 
           {typingDone && isLast && (
-            <GlowButton label="BEGIN CHAPTER" hint="CLAIM YOUR BOUNTIES" onPress={handleAdvance} />
+            <GlowButton label="BEGIN CHAPTER" hint="VIEW CHAPTER BOUNTIES" onPress={handleAdvance} />
           )}
         </Animated.View>
       </View>

@@ -102,7 +102,7 @@ export const IRON_RAILWAY_CHAPTERS: Chapter[] = [
       'Station Master Briggs: Hold Six is still locked. People downline are going hungry — and Vane’s lawyers are already drafting the blame.',
     questTemplates: [
       template('delayed-cargo', 'cleaning', 'Clear Hold Six', 'Deep clean one neglected area', 'Clutter slows every handoff between cars.', 120, 9, BRIGGS_ID),
-      template('delayed-cargo', 'work', 'Override the Delay Order', 'Ship one important work task', 'One cleared form unlocks a dozen crates.', 125, 10, BRIGGS_ID),
+      template('delayed-cargo', 'work', 'Override the Delay Order', 'Complete one important work item', 'One cleared form unlocks a dozen crates.', 125, 10, BRIGGS_ID),
       template('delayed-cargo', 'study', 'Decode Inspection Codes', 'Focused study block', 'Their codes repeat — learn the pattern, beat the stall.', 130, 10, BRIGGS_ID),
       template('delayed-cargo', 'errand', 'Run the Release Slip', 'Finish one practical chore outside', 'The slip is in town. The train is here. Close the gap.', 115, 8, BRIGGS_ID),
       template('delayed-cargo', 'health', 'Night Shift Recovery', 'Breathing routine and water reset', 'Tired crews sign bad manifests.', 105, 8, BRIGGS_ID),
@@ -143,7 +143,7 @@ export const IRON_RAILWAY_CHAPTERS: Chapter[] = [
       'Station Master Briggs: The pass is still closed. Downline stations are rationing — and Vane’s men are handing out leases.',
     questTemplates: [
       template('broken-tracks', 'cleaning', 'Clear the Ballast Pit', 'Declutter one messy zone', 'Loose stone hides snapped spikes.', 130, 10, BRIGGS_ID),
-      template('broken-tracks', 'work', 'Repair Schedule Dispatch', 'Complete one admin/work task', 'Crews move on orders, not hope.', 130, 10, BRIGGS_ID),
+      template('broken-tracks', 'work', 'Repair Schedule Dispatch', 'Finish one admin or work item', 'Crews move on orders, not hope.', 130, 10, BRIGGS_ID),
       template('broken-tracks', 'study', 'Survey the Damage Map', 'Study or planning session', 'Measure twice, repair once, run forever.', 135, 10, BRIGGS_ID),
       template('broken-tracks', 'errand', 'Fetch Rail Spikes', 'Complete a practical pickup errand', 'The forge is ten miles. The train is today.', 120, 9, BRIGGS_ID),
       template('broken-tracks', 'health', 'Crew Meal Rotation', 'Meal + rest hygiene block', 'Hungry track hands miss a cracked tie.', 110, 8, BRIGGS_ID),
@@ -225,7 +225,7 @@ export const IRON_RAILWAY_CHAPTERS: Chapter[] = [
       'Station Master Briggs: We lost the terminal today. The war for the rails isn’t over — and the bill still comes due.',
     questTemplates: [
       template('golden-route', 'cleaning', 'Shine the Terminal Floor', 'Complete full cleaning sweep', 'The world watches this platform at noon.', 150, 12, BRIGGS_ID),
-      template('golden-route', 'work', 'Final Network Audit', 'Ship priority work mission', 'One clean audit proves the line is ours.', 155, 12, BRIGGS_ID),
+      template('golden-route', 'work', 'Final Network Audit', 'Complete one priority work item', 'One clean audit proves the line is ours.', 155, 12, BRIGGS_ID),
       template('golden-route', 'study', 'Golden Route Charter', 'Focused study and recap', 'Know the law that keeps the route public.', 150, 12, BRIGGS_ID),
       template('golden-route', 'errand', 'Deliver the Route Seal', 'Finish critical practical errand', 'The seal reaches the terminal or Vane wins by default.', 140, 11, BRIGGS_ID),
       template('golden-route', 'health', 'Noon Stamina Protocol', 'Health routine and recovery', 'Steady hands sign freedom into law.', 130, 10, BRIGGS_ID),

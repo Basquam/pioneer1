@@ -7,7 +7,7 @@ import { useGame } from '@/hooks/use-game';
 
 const TAB_META: Record<string, { label: string; icon: string }> = {
   hq: { label: 'HQ', icon: '⌂' },
-  quests: { label: 'QUESTS', icon: '⚔' },
+  quests: { label: 'BOARD', icon: '⚔' },
   story: { label: 'STORY', icon: '📜' },
   map: { label: 'MAP', icon: '◎' },
   profile: { label: 'PROFILE', icon: '★' },

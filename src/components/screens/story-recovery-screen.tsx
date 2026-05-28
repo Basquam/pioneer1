@@ -17,8 +17,8 @@ export function StoryRecoveryScreen() {
       <View style={styles.content}>
         <CinematicEmptyState
           title="Story state got lost."
-          message="Your XP, rewards, and quest history are kept safe. Restore the default Dust & Iron storyline to continue."
-          primaryLabel="Restore Default Story"
+          message="Your XP, rewards, and quest history are kept safe. Restore the default Dust & Iron saga to continue."
+          primaryLabel="Restore Default Saga"
           onPrimaryPress={restoreDefaultStory}
         />
       </View>
