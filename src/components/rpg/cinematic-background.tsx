@@ -107,6 +107,7 @@ export function CinematicBackground() {
   }));
 
   const isChrome = visualTheme.backgroundVariant === 'chrome';
+  const isNoir = visualTheme.backgroundVariant === 'noir';
 
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="none">
@@ -115,13 +116,17 @@ export function CinematicBackground() {
         colors={
           isChrome
             ? ['transparent', `${palette.accent}22`, `${palette.primary}18`]
-            : ['transparent', `${palette.primary}33`, `${palette.accent}18`]
+            : isNoir
+              ? ['transparent', `${palette.primary}28`, `${palette.accent}14`]
+              : ['transparent', `${palette.primary}33`, `${palette.accent}18`]
         }
         locations={[0.5, 0.85, 1]}
         style={StyleSheet.absoluteFill}
       />
       {visualTheme.ambientParticles === 'stars' &&
-        stars.map((s) => <Star key={s.id} {...s} color={palette.bone} />)}
+        stars.map((s) => (
+          <Star key={s.id} {...s} color={isNoir ? palette.accent : palette.bone} />
+        ))}
       {visualTheme.showGridDots && (
         <GridDotOverlay color={palette.accent} accentColor={palette.primary} />
       )}
@@ -131,8 +136,8 @@ export function CinematicBackground() {
           glowStyle,
           {
             backgroundColor: palette.glow,
-            top: isChrome ? height * 0.08 : height * 0.15,
-            right: isChrome ? -20 : -40,
+            top: isChrome ? height * 0.08 : isNoir ? height * 0.12 : height * 0.15,
+            right: isChrome ? -20 : isNoir ? -30 : -40,
           },
         ]}
       />

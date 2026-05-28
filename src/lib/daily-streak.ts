@@ -35,6 +35,14 @@ export function getStreakFlavor(selectedSagaId: string, universeId = 'dust-and-i
     };
   }
 
+  if (universeId === 'neon-ashes') {
+    return {
+      label: 'Case Momentum',
+      shortLabel: 'CASE MOMENTUM',
+      encouragement: 'Grayhaven holds its breath when you return each night.',
+    };
+  }
+
   if (selectedSagaId === IRON_RAILWAY_SAGA_ID) {
     return {
       label: 'Route Reliability',

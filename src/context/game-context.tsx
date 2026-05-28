@@ -43,10 +43,12 @@ import {
 } from '@/lib/saga-progress';
 import {
   applyDevSwitchToDustAndIron,
+  applyDevSwitchToNeonAshes,
   applyDevSwitchToNeuroNet,
   applyUniverseSelection,
   applyUniverseSagaSwitch,
   isSagaInPreview,
+  NEON_ASHES_UNIVERSE_UNLOCK_ID,
   NEURONET_UNIVERSE_UNLOCK_ID,
 } from '@/lib/dev-universe-switch';
 import { isSagaUnlocked, isUniverseUnlocked, unlockRewardIds } from '@/lib/reward-unlocks';
@@ -124,7 +126,9 @@ type GameContextValue = {
   devUnlockVultureGangChapters: () => void;
   devUnlockIronRailwayCompany: () => void;
   devUnlockNeuroNet: () => void;
+  devUnlockNeonAshes: () => void;
   devSwitchToNeuroNet: () => void;
+  devSwitchToNeonAshes: () => void;
   devSwitchToDustAndIron: () => void;
   isHydrated: boolean;
 };
@@ -682,6 +686,23 @@ export function GameProvider({ children }: { children: ReactNode }) {
     }));
   }, []);
 
+  const devUnlockNeonAshes = useCallback(() => {
+    if (!__DEV__) return;
+    setProgress((prev) => ({
+      ...prev,
+      unlockedRewards: unlockRewardIds(prev.unlockedRewards, NEON_ASHES_UNIVERSE_UNLOCK_ID),
+    }));
+  }, []);
+
+  const devSwitchToNeonAshes = useCallback(() => {
+    if (!__DEV__) return;
+    setProgress((prev) => applyDevSwitchToNeonAshes(prev));
+    setNarrativeMoment(null);
+    setChapterComplete(null);
+    setQuestComplete(null);
+    pendingChapterCompleteRef.current = null;
+  }, []);
+
   const devSwitchToNeuroNet = useCallback(() => {
     if (!__DEV__) return;
     setProgress((prev) => applyDevSwitchToNeuroNet(prev));
@@ -771,7 +792,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
       devUnlockVultureGangChapters,
       devUnlockIronRailwayCompany,
       devUnlockNeuroNet,
+      devUnlockNeonAshes,
       devSwitchToNeuroNet,
+      devSwitchToNeonAshes,
       devSwitchToDustAndIron,
       isHydrated,
     }),
@@ -795,7 +818,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
       devCompleteCurrentChapter,
       devUnlockIronRailwayCompany,
       devUnlockNeuroNet,
+      devUnlockNeonAshes,
       devSwitchToNeuroNet,
+      devSwitchToNeonAshes,
       devSwitchToDustAndIron,
       devUnlockVultureGangChapters,
       dismissNarrativeMoment,

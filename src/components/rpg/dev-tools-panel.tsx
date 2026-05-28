@@ -30,7 +30,9 @@ export function DevToolsPanel() {
     devUnlockVultureGangChapters,
     devUnlockIronRailwayCompany,
     devUnlockNeuroNet,
+    devUnlockNeonAshes,
     devSwitchToNeuroNet,
+    devSwitchToNeonAshes,
     devSwitchToDustAndIron,
     resetProgress,
   } = useGame();
@@ -83,9 +85,19 @@ export function DevToolsPanel() {
       onPress: devUnlockNeuroNet,
     },
     {
+      label: 'UNLOCK NEON ASHES',
+      hint: 'Grant the Neon Ashes universe unlock reward',
+      onPress: devUnlockNeonAshes,
+    },
+    {
       label: 'SWITCH TO NEURONET',
       hint: 'Jump to NeuroNet and restore last Ghost Protocol sector',
       onPress: devSwitchToNeuroNet,
+    },
+    {
+      label: 'SWITCH TO NEON ASHES',
+      hint: 'Jump to Neon Ashes and restore last Hollow Syndicate case',
+      onPress: devSwitchToNeonAshes,
     },
     {
       label: 'SWITCH TO DUST & IRON',

@@ -50,6 +50,10 @@ export function getWeeklyRecapFlavor(selectedSagaId: string, universeId = 'dust-
     return 'This week, the Neon Spire held because you kept the signal alive.';
   }
 
+  if (universeId === 'neon-ashes') {
+    return 'This week, Grayhaven leaned toward truth because you kept the case alive.';
+  }
+
   if (selectedSagaId === IRON_RAILWAY_SAGA_ID) {
     return 'This week, the line kept moving because you kept moving.';
   }

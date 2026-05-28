@@ -1,4 +1,8 @@
 import {
+  NEON_ASHES_DEFAULT_SAGA_ID,
+  NEON_ASHES_UNIVERSE_UNLOCK_ID,
+} from '@/data/narrative/neon-ashes-universe';
+import {
   NEURONET_DEFAULT_SAGA_ID,
   NEURONET_UNIVERSE_UNLOCK_ID,
 } from '@/data/narrative/neuronet-universe';
@@ -8,6 +12,7 @@ import { getSagaActiveChapterId, setSagaActiveChapter } from '@/lib/saga-progres
 import type { PlayerProgress, Saga, Universe } from '@/types/narrative';
 
 export { NEURONET_UNIVERSE_UNLOCK_ID, NEURONET_DEFAULT_SAGA_ID };
+export { NEON_ASHES_UNIVERSE_UNLOCK_ID, NEON_ASHES_DEFAULT_SAGA_ID };
 
 export type DevUniverseSnapshot = {
   universeId: string;
@@ -103,6 +108,19 @@ export function applyUniverseSagaSwitch(
   }
 
   return setSagaActiveChapter(base, sagaId, chapterId);
+}
+
+export function applyDevSwitchToNeonAshes(progress: PlayerProgress): PlayerProgress {
+  const unlocked = progress.unlockedRewards.includes(NEON_ASHES_UNIVERSE_UNLOCK_ID)
+    ? progress.unlockedRewards
+    : [...progress.unlockedRewards, NEON_ASHES_UNIVERSE_UNLOCK_ID];
+
+  const withUnlock = { ...progress, unlockedRewards: unlocked };
+  const universe = findUniverse('neon-ashes');
+  if (!universe) return withUnlock;
+
+  const saga = resolveSagaForUniverse(universe, withUnlock);
+  return applyUniverseSagaSwitch(withUnlock, 'neon-ashes', saga.id);
 }
 
 export function applyDevSwitchToNeuroNet(progress: PlayerProgress): PlayerProgress {

@@ -29,6 +29,18 @@ export function ScreenShell({ children, edges = ['top'], padded = true }: Screen
           style={[styles.chromeFrame, { borderColor: `${palette.accent}33` }]}
         />
       )}
+      {visualTheme.backgroundVariant === 'noir' && (
+        <View
+          pointerEvents="none"
+          style={[
+            styles.noirFrame,
+            {
+              borderColor: `${palette.primary}44`,
+              backgroundColor: `${palette.panel}22`,
+            },
+          ]}
+        />
+      )}
       <SafeAreaView
         style={[styles.safe, padded && styles.padded]}
         edges={edges}>
@@ -47,6 +59,15 @@ const styles = StyleSheet.create({
     right: 6,
     bottom: 6,
     borderWidth: 1,
+  },
+  noirFrame: {
+    position: 'absolute',
+    top: 8,
+    left: 8,
+    right: 8,
+    bottom: 8,
+    borderWidth: 1,
+    borderRadius: 2,
   },
   safe: { flex: 1 },
   padded: { paddingHorizontal: GameLayout.screenPaddingHorizontal },

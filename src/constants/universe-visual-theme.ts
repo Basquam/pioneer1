@@ -6,7 +6,7 @@ export type UniverseVisualTheme = {
   panelBorderWidth: number;
   panelUsesHolographic: boolean;
   panelTopHighlight: boolean;
-  backgroundVariant: 'western' | 'chrome';
+  backgroundVariant: 'western' | 'chrome' | 'noir';
   showScanlines: boolean;
   showGridDots: boolean;
   ambientParticles: 'stars' | 'grid-dots';
@@ -44,6 +44,28 @@ const DUST_AND_IRON_VISUAL_THEME: UniverseVisualTheme = {
   buttonBorderWidth: 2,
 };
 
+const NEON_ASHES_VISUAL_THEME: UniverseVisualTheme = {
+  cardSkew: -1,
+  buttonSkew: -3,
+  panelBorderWidth: 1,
+  panelUsesHolographic: false,
+  panelTopHighlight: true,
+  backgroundVariant: 'noir',
+  showScanlines: false,
+  showGridDots: false,
+  ambientParticles: 'stars',
+  accentLineWidth: 3,
+  mapSkew: -1,
+  mapShowGrid: false,
+  nodeBorderRadius: 0,
+  nodeSkew: -2,
+  completedStamp: 'SOLVED',
+  lockedStamp: 'COLD',
+  activeStamp: 'ACTIVE',
+  headerUnderline: true,
+  buttonBorderWidth: 1,
+};
+
 const NEURONET_VISUAL_THEME: UniverseVisualTheme = {
   cardSkew: 0,
   buttonSkew: 0,
@@ -69,6 +91,7 @@ const NEURONET_VISUAL_THEME: UniverseVisualTheme = {
 export const UNIVERSE_VISUAL_THEMES: Record<string, UniverseVisualTheme> = {
   'dust-and-iron': DUST_AND_IRON_VISUAL_THEME,
   neuronet: NEURONET_VISUAL_THEME,
+  'neon-ashes': NEON_ASHES_VISUAL_THEME,
 };
 
 export function getUniverseVisualTheme(universeId: string): UniverseVisualTheme {

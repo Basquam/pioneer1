@@ -74,6 +74,9 @@ export function formatTodayFocusLabel(
   if (universeId === 'neuronet') {
     return `Focus Operations: ${count} / ${limit}`;
   }
+  if (universeId === 'neon-ashes') {
+    return `Focus Leads: ${count} / ${limit}`;
+  }
   return `Focus Quests: ${count} / ${limit}`;
 }
 
@@ -83,6 +86,9 @@ export function getDailyFocusOverLimitMessage(
 ): string {
   if (universeId === 'neuronet') {
     return `More than ${limit} operations today may dilute your Focus Operations. Continue?`;
+  }
+  if (universeId === 'neon-ashes') {
+    return `More than ${limit} leads today may dilute your Focus Leads. Continue?`;
   }
   return `More than ${limit} quests today may dilute your Focus Quests. Continue?`;
 }

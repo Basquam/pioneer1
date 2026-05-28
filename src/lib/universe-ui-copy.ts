@@ -342,6 +342,121 @@ const NEURONET_UI: Omit<
   unlockRewardsEmptyMessage: 'Complete sectors to earn badges, titles, and story unlocks.',
 };
 
+const NEON_ASHES_UI: Omit<
+  UniverseUiCopy,
+  | 'hqTitle'
+  | 'mapEyebrow'
+  | 'addQuestSubtitle'
+  | 'mapProgressHint'
+  | 'mapReclaimedMessage'
+  | 'sagaCompleteMessage'
+  | 'activeSectorProgressSub'
+  | 'sectorsClearedLabel'
+  | 'sectorIntroLabel'
+  | 'sectorEyebrow'
+  | 'activeSectorLine'
+  | 'villainInfluenceLabel'
+  | 'todaySectorLine'
+  | 'sectorRef'
+  | 'territoryStatusLabel'
+  | 'villainMeterStatus'
+  | 'sagaProgressMeta'
+  | 'hqChapterEyebrow'
+  | 'focusQuestSlotsHint'
+> = {
+  questBoardEyebrow: 'CASE BOARD',
+  questBoardTitle: 'ACTIVE LEADS',
+  reputationLabel: 'DETECTIVE STANDING',
+  templateQuestLabel: 'LEAD',
+  templateQuestClearedLabel: 'LEAD CLOSED',
+  userQuestClearedLabel: 'LEAD CLOSED',
+  userQuestsLabel: 'YOUR LEADS',
+  chapterTemplatesLabel: 'CASE LEADS',
+  chapterTemplatesClearedTitle: 'Case leads cleared.',
+  questsBoardHint: 'Complete leads to advance the case. Tap to mark done.',
+  addQuestSheetTitle: 'Add Lead',
+  addQuestSheetEyebrow: 'NEW LEAD',
+  hqReturnLabel: 'RETURN TO OFFICE',
+  openQuestBoardLabel: 'OPEN CASE BOARD ›',
+  goToQuestBoardLabel: 'GO TO CASE BOARD',
+  goToQuestBoardHint: 'VIEW CASE LEADS',
+  mapTitle: 'CASE INTEGRITY',
+  mapEmptyMessage: 'No case board data for this saga yet.',
+  mapReclaimedTitle: 'Case advanced.',
+  mapLegend: 'SOLVED — case advanced · ACTIVE — open lead · COLD — sealed location',
+  worldMapQuickLink: 'CASE BOARD',
+  storyTitle: 'CASE PROGRESS',
+  sagaSectorsLabel: 'SAGA CASES',
+  beginSectorLabel: 'BEGIN CASE',
+  beginSectorHint: 'VIEW CASE LEADS',
+  villainStatLabel: 'INFLUENCE',
+  antagonistTauntBadge: 'SYNDICATE PRESSURE',
+  antagonistReactionBadge: 'ANTAGONIST SIGNAL',
+  allyReactionBadge: 'ALLY REPORT',
+  chapterCompleteStamp: 'CASE ADVANCED',
+  continueHintNext: 'ADVANCE TO NEXT CASE',
+  continueHintHome: 'RETURN TO GRAYHAVEN',
+  stayInSagaHint: 'ADVANCE TO NEXT CASE',
+  stayInSagaHintHome: 'RETURN TO THE OFFICE',
+  templateQuestCompleteMessage: 'This lead advanced the case.',
+  userQuestCompleteMessage: 'Your lead moved the investigation forward.',
+  viewQuestBoardLabel: 'VIEW ON CASE BOARD',
+  viewQuestBoardHint: 'SEE YOUR LEAD',
+  todaySectorLabel: "TODAY'S CASE",
+  operationsLeftLabel: 'LEADS LEFT',
+  realTaskLabel: 'REAL TASK',
+  sagaQuestLabel: 'SAGA LEAD',
+  sectorUnavailableSub: 'Case unavailable',
+  operativeFileEyebrow: 'DETECTIVE FILE',
+  tabHq: 'OFFICE',
+  tabBoard: 'LEADS',
+  tabMap: 'BOARD',
+  coreProgressionLabel: 'DETECTIVE STANDING',
+  addQuestTriggerBanner: '+ ADD LEAD',
+  addQuestTriggerSub: 'Turn a real task into a lead',
+  addQuestAccessibilityLabel: 'Add Lead',
+  addQuestTypeLabel: 'LEAD TYPE',
+  addQuestCreateLabel: 'CREATE LEAD',
+  addQuestCreateHint: 'Add to the Case Board',
+  noActiveChapterTitle: 'No active case.',
+  hudMissionsLabel: 'LEADS',
+  questCompleteFallbackLine: 'Grayhaven remembers what you accomplished.',
+  addQuestConfirmOverLimitHint: "Add beyond today's Focus Leads",
+  addQuestFocusHintUnder: 'First three leads today become Focus Leads on the board.',
+  addQuestFocusHintOver: 'You can still add more — they just won’t be marked as Focus Leads.',
+  newQuestAddedStamp: 'NEW LEAD ADDED',
+  addAnotherQuestLabel: 'ADD ANOTHER LEAD',
+  addAnotherQuestHint: 'ADD ANOTHER LEAD TODAY',
+  personalOpsLeftLabel: 'PERSONAL LEADS LEFT',
+  focusQuestLabel: 'FOCUS LEAD',
+  focusQuestsHeaderLabel: 'FOCUS LEADS',
+  focusQuestFullHint: 'Focus Leads full — extra leads still count toward progress.',
+  focusQuestOverHint: "Beyond today's Focus Leads — the case still moves forward.",
+  yourQuestLabel: 'YOUR LEAD',
+  noActiveChapterBriefing: 'No active case',
+  noQuestsYetTitle: 'No leads yet.',
+  noQuestsYetMessage: "Turn a real task into a lead for today's case.",
+  addQuestButtonLabel: 'ADD LEAD',
+  chapterTemplatesClearedContinueMessage: 'Continue the saga from the office.',
+  noActiveChapterEmptyMessage:
+    'This saga has no active case right now. Restore the default saga to pick up where the file begins.',
+  restoreDefaultSagaLabel: 'Restore Default Saga',
+  lockedSectorMessage: 'Complete previous cases to unlock.',
+  lockedSectorCardMessage: 'Complete previous cases to unlock this location.',
+  villainLabel: 'ANTAGONIST',
+  weeklyRecapQuietHint:
+    'No leads cleared yet this week — Grayhaven waits for your first move.',
+  weeklyRecapSectorsLabel: 'CASES',
+  sagaSwitcherEmptyMessage:
+    'Complete Hollow Syndicate to unlock more sagas across Grayhaven.',
+  sagaCompleteTitle: 'Saga complete.',
+  noChaptersTitle: 'No cases available.',
+  noChaptersMessage:
+    "doesn't have playable cases yet. Switch to an unlocked saga or restore the default saga.",
+  viewStoryTrailLabel: 'VIEW CASE TRAIL',
+  unlockRewardsEmptyMessage: 'Complete cases to earn badges, titles, and story unlocks.',
+};
+
 function dustTerritoryStatusLabel(status: ChapterStatus): string {
   switch (status) {
     case 'completed':
@@ -361,6 +476,17 @@ function neuroTerritoryStatusLabel(status: ChapterStatus): string {
       return 'ROUTING';
     case 'locked':
       return 'LOCKED';
+  }
+}
+
+function noirTerritoryStatusLabel(status: ChapterStatus): string {
+  switch (status) {
+    case 'completed':
+      return 'SOLVED';
+    case 'active':
+      return 'ACTIVE';
+    case 'locked':
+      return 'COLD';
   }
 }
 
@@ -438,9 +564,49 @@ function buildNeuroNetCopy(universe: Universe): UniverseUiCopy {
   };
 }
 
+function buildNeonAshesCopy(universe: Universe): UniverseUiCopy {
+  return {
+    ...NEON_ASHES_UI,
+    chapterCompleteStamp: universe.terminology.chapterCompleteTerm.toUpperCase(),
+    hqTitle: (locationName) => `${locationName} · Detective Office`,
+    mapEyebrow: (universeName) => `${universeName.toUpperCase()} · ${universe.terminology.mapTerm.toUpperCase()}`,
+    addQuestSubtitle: (chapterTitle) =>
+      chapterTitle
+        ? `Turn a real task into a lead for ${chapterTitle}.`
+        : 'Turn a real task into a Grayhaven lead.',
+    mapProgressHint: (cleared, total, locationName) =>
+      `${cleared}/${total} locations solved. Your Case Integrity reshapes ${locationName}.`,
+    mapReclaimedMessage: (sagaTitle) =>
+      `Every location on ${sagaTitle} runs clean. Collect your rewards or open a new case.`,
+    sagaCompleteMessage: (sagaTitle) =>
+      `You advanced every case of ${sagaTitle}. The file closes — for now. Choose your next saga.`,
+    activeSectorProgressSub: (order) => `Case ${order} progress`,
+    todaySectorLine: (order, title) => `Case ${order} — ${title}`,
+    sectorsClearedLabel: (cleared, total) => `${cleared}/${total} CASES ADVANCED`,
+    sectorIntroLabel: (order, title) => `CASE ${order} · ${title.toUpperCase()}`,
+    sectorEyebrow: (order) => `CASE ${order}`,
+    activeSectorLine: (title) => `Now investigating: ${title}`,
+    villainInfluenceLabel: (villainName) => `${villainName} · INFLUENCE`,
+    continueHintHome: `RETURN TO ${universe.locationName.toUpperCase()}`,
+    sectorRef: (order, title) => `Case ${order} · ${title}`,
+    focusQuestSlotsHint: (remaining) =>
+      `${remaining} Focus Lead ${remaining === 1 ? 'slot' : 'slots'} left today.`,
+    territoryStatusLabel: noirTerritoryStatusLabel,
+    villainMeterStatus: (level) =>
+      level === 'high' ? 'CRITICAL PRESSURE' : level === 'mid' ? 'CASE CONTESTED' : 'INFLUENCE FADING',
+    sagaProgressMeta: (completed, total, activeTitle) =>
+      `${completed}/${total} cases advanced${activeTitle ? ` · investigating ${activeTitle}` : ''}`,
+    hqChapterEyebrow: (sagaTitle, order) =>
+      order ? `${sagaTitle.toUpperCase()} · CASE ${order}` : sagaTitle.toUpperCase(),
+  };
+}
+
 export function getUniverseUiCopy(universe: Universe): UniverseUiCopy {
   if (universe.id === 'neuronet') {
     return buildNeuroNetCopy(universe);
+  }
+  if (universe.id === 'neon-ashes') {
+    return buildNeonAshesCopy(universe);
   }
   return buildDustAndIronCopy(universe);
 }
@@ -457,6 +623,16 @@ export function getUniverseTabMeta(universeId: string): Record<string, { label: 
       quests: { label: 'OPS', icon: '⬡' },
       story: { label: 'STORY', icon: '📡' },
       map: { label: 'GRID', icon: '◎' },
+      profile: { label: 'PROFILE', icon: '★' },
+    };
+  }
+
+  if (universeId === 'neon-ashes') {
+    return {
+      hq: { label: 'OFFICE', icon: '◆' },
+      quests: { label: 'LEADS', icon: '▪' },
+      story: { label: 'CASES', icon: '📁' },
+      map: { label: 'BOARD', icon: '◎' },
       profile: { label: 'PROFILE', icon: '★' },
     };
   }
