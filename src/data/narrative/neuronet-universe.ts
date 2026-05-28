@@ -3,6 +3,11 @@ import {
   DIRECTOR_CAIN_ID,
   GHOST_PROTOCOL_CHARACTERS,
 } from '@/data/narrative/ghost-protocol-characters';
+import { ZENITH_CORPORATION_CHAPTERS } from '@/data/narrative/zenith-corporation-chapters';
+import {
+  EXECUTIVE_HELIX_ID,
+  ZENITH_CORPORATION_CHARACTERS,
+} from '@/data/narrative/zenith-corporation-characters';
 import type { Saga, Universe, UniverseFaction, UniverseTerminology } from '@/types/narrative';
 
 export const NEURONET_UNIVERSE_UNLOCK_ID = 'neuronet-universe-unlock';
@@ -63,16 +68,16 @@ const zenithCorporationSaga: Saga = {
   title: 'Zenith Corporation',
   allyName: 'Mira Kade',
   villainName: 'Executive Helix',
-  villainTitle: 'Zenith Board Enforcer',
-  villainCharacterId: '',
+  villainTitle: 'Corporate Strategist',
+  villainCharacterId: EXECUTIVE_HELIX_ID,
   status: 'locked',
   requiredUnlockId: 'zenith-corporation-story-unlock',
   unlockRequirementLabel: 'Complete Ghost Protocol',
   summary:
-    'Climb the corporate hierarchy as a Junior Systems Analyst while uncovering corruption buried in efficiency reports.',
+    'Climb inside a mega-corporation while discovering that productivity metrics are being used to control human memory and behavior.',
   rankTitles: ['Junior Systems Analyst', 'Compliance Lead', 'Network Architect'],
-  characters: [],
-  chapters: [],
+  characters: ZENITH_CORPORATION_CHARACTERS,
+  chapters: ZENITH_CORPORATION_CHAPTERS,
 };
 
 const neonDeliverySaga: Saga = {
@@ -83,7 +88,8 @@ const neonDeliverySaga: Saga = {
   villainTitle: 'Street Syndicate Boss',
   villainCharacterId: '',
   status: 'locked',
-  unlockRequirementLabel: 'Coming Soon',
+  requiredUnlockId: 'neon-delivery-story-unlock',
+  unlockRequirementLabel: 'Complete Zenith Corporation',
   summary:
     'Survive neon-soaked courier runs through district nodes while conspiracies chase every delivery manifest.',
   rankTitles: ['Courier Rider', 'Route Phantom', 'Neon Legend'],
