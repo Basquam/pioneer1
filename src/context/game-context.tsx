@@ -100,6 +100,7 @@ type GameContextValue = {
   questCreated: UserQuest | null;
   addQuestSheetOpen: boolean;
   showChapterIntro: boolean;
+  showHqTutorial: boolean;
   completedQuestCount: number;
   allQuestsComplete: boolean;
   isSagaPreview: boolean;
@@ -115,6 +116,8 @@ type GameContextValue = {
   completeQuest: (questId: string) => void;
   dismissXpBurst: () => void;
   markChapterIntroSeen: () => void;
+  dismissHqTutorial: () => void;
+  startHqTutorialAddQuest: () => void;
   dismissNarrativeMoment: () => void;
   dismissQuestComplete: () => void;
   continueFromChapterComplete: () => void;
@@ -244,8 +247,19 @@ export function GameProvider({ children }: { children: ReactNode }) {
     : '';
   const showChapterIntro =
     currentChapter !== null &&
+    (currentChapter.introScene?.length ?? 0) > 0 &&
     !progress.seenChapterIntros.includes(currentChapter.id) &&
     chapterComplete === null;
+
+  const showHqTutorial =
+    isHydrated &&
+    progress.hasOnboarded &&
+    !progress.tutorialSeen &&
+    !showChapterIntro &&
+    chapterComplete === null &&
+    questComplete === null &&
+    questCreated === null &&
+    narrativeMoment === null;
 
   const player = useMemo(
     () => ({
@@ -370,6 +384,19 @@ export function GameProvider({ children }: { children: ReactNode }) {
         : [...prev.seenChapterIntros, currentChapter.id],
     }));
   }, [currentChapter]);
+
+  const markTutorialSeen = useCallback(() => {
+    setProgress((prev) => (prev.tutorialSeen ? prev : { ...prev, tutorialSeen: true }));
+  }, []);
+
+  const dismissHqTutorial = useCallback(() => {
+    markTutorialSeen();
+  }, [markTutorialSeen]);
+
+  const startHqTutorialAddQuest = useCallback(() => {
+    markTutorialSeen();
+    setAddQuestSheetOpen(true);
+  }, [markTutorialSeen]);
 
   const maybeShowVillainTaunt = useCallback(() => {
     if (!currentChapter) return;
@@ -799,6 +826,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       questCreated,
       addQuestSheetOpen,
       showChapterIntro,
+      showHqTutorial,
       completedQuestCount,
       allQuestsComplete,
       isSagaPreview,
@@ -814,6 +842,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       completeQuest,
       dismissXpBurst,
       markChapterIntroSeen,
+      dismissHqTutorial,
+      startHqTutorialAddQuest,
       dismissNarrativeMoment,
       dismissQuestComplete,
       continueFromChapterComplete,
@@ -858,6 +888,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       devSwitchToNeonAshes,
       devSwitchToDustAndIron,
       devUnlockVultureGangChapters,
+      dismissHqTutorial,
       dismissNarrativeMoment,
       dismissQuestComplete,
       dismissXpBurst,
@@ -879,6 +910,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       selectSaga,
       selectUniverse,
       showChapterIntro,
+      showHqTutorial,
+      startHqTutorialAddQuest,
       startUnlockedSagaFromChapterComplete,
       storyLine,
       switchSaga,

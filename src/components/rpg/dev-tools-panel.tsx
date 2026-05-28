@@ -22,7 +22,7 @@ type DevToolButton = {
   destructive?: boolean;
 };
 
-export function DevToolsPanel() {
+export function DevToolsPanel({ embedded = false }: { embedded?: boolean }) {
   const {
     activeUniverse,
     devAddXp,
@@ -113,6 +113,32 @@ export function DevToolsPanel() {
   ];
 
   return (
+    embedded ? (
+      <View style={styles.embeddedBody}>
+        <Text style={[styles.sectionHint, { color: palette.fog }]}>
+          MVP shortcuts — hidden in production builds.
+        </Text>
+        {tools.map((tool) => (
+          <Pressable
+            key={tool.label}
+            onPress={tool.onPress}
+            style={[
+              styles.toolButton,
+              {
+                borderColor: tool.destructive ? palette.primary : palette.panelBorder,
+                backgroundColor: tool.destructive ? `${palette.primary}18` : palette.panel,
+              },
+            ]}>
+            <Text style={[styles.toolLabel, { color: tool.destructive ? palette.primary : palette.bone }]}>
+              {tool.label}
+            </Text>
+            <Text style={[styles.toolHint, { color: palette.fog }]} numberOfLines={2}>
+              {tool.hint}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
+    ) : (
     <View
       style={[
         styles.panel,
@@ -143,6 +169,7 @@ export function DevToolsPanel() {
         </Pressable>
       ))}
     </View>
+    )
   );
 }
 
@@ -161,6 +188,7 @@ const styles = StyleSheet.create({
     lineHeight: 15,
     marginBottom: 4,
   },
+  embeddedBody: { gap: 10 },
   toolButton: {
     borderWidth: 1,
     padding: 12,

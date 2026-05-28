@@ -105,11 +105,24 @@ function createDefaultSagaMapsForAllUniverses(): Pick<
   };
 }
 
+function inferTutorialSeen(raw: Partial<PlayerProgress>): boolean {
+  if (typeof raw.tutorialSeen === 'boolean') return raw.tutorialSeen;
+  if (!raw.hasOnboarded) return false;
+
+  const hasActivity =
+    (raw.totalXp ?? 0) > 0 ||
+    (raw.userQuests?.length ?? 0) > 0 ||
+    Object.values(raw.completedQuestIdsBySagaId ?? {}).some((ids) => (ids?.length ?? 0) > 0);
+
+  return hasActivity;
+}
+
 export function createInitialProgress(): PlayerProgress {
   const sagaMaps = createDefaultSagaMapsForAllUniverses();
 
   return {
     hasOnboarded: false,
+    tutorialSeen: false,
     selectedUniverseId: defaultUniverseId,
     selectedSagaId: defaultSagaId,
     currentChapterId: defaultChapterId,
@@ -156,6 +169,7 @@ function normalizeProgress(raw: Partial<PlayerProgress> & Record<string, unknown
     dailyStreak: raw.dailyStreak ?? base.dailyStreak,
     dailyFocusLimit: raw.dailyFocusLimit ?? base.dailyFocusLimit,
     activityByDate: raw.activityByDate ?? base.activityByDate,
+    tutorialSeen: inferTutorialSeen(raw),
   };
 
   const universeForMigration = findUniverse(merged.selectedUniverseId) ?? DUST_AND_IRON_UNIVERSE;

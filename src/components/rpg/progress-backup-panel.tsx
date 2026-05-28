@@ -36,7 +36,12 @@ const IMPORT_CONFIRM_MESSAGE =
   '• Unlocked rewards\n\n' +
   'Your current progress will be overwritten.';
 
-export function ProgressBackupPanel() {
+type ProgressBackupPanelProps = {
+  /** When true, omit outer section chrome — used inside ProfileSection. */
+  embedded?: boolean;
+};
+
+export function ProgressBackupPanel({ embedded = false }: ProgressBackupPanelProps) {
   const { activeUniverse, playerProgress, importProgress } = useGame();
   const { palette } = activeUniverse;
   const modalBottomInset = useModalBottomInset(32);
@@ -144,46 +149,58 @@ export function ProgressBackupPanel() {
     ]);
   };
 
+  const panelContent = (
+    <>
+      {!embedded ? (
+        <Text style={[styles.sectionLabel, { color: palette.gold }]}>BACKUP</Text>
+      ) : null}
+      <Text style={[styles.sectionHint, { color: palette.fog }]}>
+        Experimental local backup. Exports and imports save data on this device only — no cloud,
+        no account sync.
+      </Text>
+      <Text style={[styles.versionHint, { color: palette.fog }]}>
+        App version {getAppVersion()}
+      </Text>
+
+      <Pressable
+        onPress={() => void handleExport()}
+        style={[styles.toolButton, { borderColor: palette.gold, backgroundColor: palette.ink }]}>
+        <Text style={[styles.toolLabel, { color: palette.bone }]}>EXPORT PROGRESS</Text>
+        <Text style={[styles.toolHint, { color: palette.fog }]}>
+          {Platform.OS === 'web'
+            ? 'Download a JSON backup file with your current save.'
+            : 'Share or copy a JSON backup of your current save.'}
+        </Text>
+      </Pressable>
+
+      <Pressable
+        onPress={() => setImportVisible(true)}
+        style={[styles.toolButton, { borderColor: palette.panelBorder, backgroundColor: palette.ink }]}>
+        <Text style={[styles.toolLabel, { color: palette.bone }]}>IMPORT PROGRESS</Text>
+        <Text style={[styles.toolHint, { color: palette.fog }]}>
+          Paste a previously exported JSON backup to replace this save.
+        </Text>
+      </Pressable>
+
+      {statusMessage ? (
+        <Text style={[styles.statusMessage, { color: palette.accent }]}>{statusMessage}</Text>
+      ) : null}
+    </>
+  );
+
   return (
     <>
-      <View
-        style={[
-          styles.panel,
-          { backgroundColor: palette.panel, borderColor: palette.panelBorder },
-        ]}>
-        <Text style={[styles.sectionLabel, { color: palette.gold }]}>BACKUP</Text>
-        <Text style={[styles.sectionHint, { color: palette.fog }]}>
-          Experimental local backup. Exports and imports save data on this device only — no cloud,
-          no account sync.
-        </Text>
-        <Text style={[styles.versionHint, { color: palette.fog }]}>
-          App version {getAppVersion()}
-        </Text>
-
-        <Pressable
-          onPress={() => void handleExport()}
-          style={[styles.toolButton, { borderColor: palette.gold, backgroundColor: palette.ink }]}>
-          <Text style={[styles.toolLabel, { color: palette.bone }]}>EXPORT PROGRESS</Text>
-          <Text style={[styles.toolHint, { color: palette.fog }]}>
-            {Platform.OS === 'web'
-              ? 'Download a JSON backup file with your current save.'
-              : 'Share or copy a JSON backup of your current save.'}
-          </Text>
-        </Pressable>
-
-        <Pressable
-          onPress={() => setImportVisible(true)}
-          style={[styles.toolButton, { borderColor: palette.panelBorder, backgroundColor: palette.ink }]}>
-          <Text style={[styles.toolLabel, { color: palette.bone }]}>IMPORT PROGRESS</Text>
-          <Text style={[styles.toolHint, { color: palette.fog }]}>
-            Paste a previously exported JSON backup to replace this save.
-          </Text>
-        </Pressable>
-
-        {statusMessage ? (
-          <Text style={[styles.statusMessage, { color: palette.accent }]}>{statusMessage}</Text>
-        ) : null}
-      </View>
+      {embedded ? (
+        panelContent
+      ) : (
+        <View
+          style={[
+            styles.panel,
+            { backgroundColor: palette.panel, borderColor: palette.panelBorder },
+          ]}>
+          {panelContent}
+        </View>
+      )}
 
       <Modal visible={exportVisible} transparent animationType="fade" onRequestClose={closeExportModal}>
         <KeyboardAvoidingView

@@ -83,6 +83,7 @@ export function validatePlayerProgressShape(raw: unknown): raw is PlayerProgress
   if (typeof raw.dailyFocusLimit !== 'number') return false;
   if (!isRecord(raw.activityByDate)) return false;
   if (!isStringRecord(raw.lastSagaByUniverseId)) return false;
+  if (raw.tutorialSeen !== undefined && typeof raw.tutorialSeen !== 'boolean') return false;
 
   return true;
 }

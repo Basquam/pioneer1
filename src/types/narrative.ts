@@ -237,6 +237,8 @@ export type DailyActivity = {
 
 export type PlayerProgress = {
   hasOnboarded: boolean;
+  /** First-session HQ tutorial — shown once after onboarding. */
+  tutorialSeen: boolean;
   selectedUniverseId: string;
   selectedSagaId: string;
   /** Active chapter for the selected saga — mirrors activeChapterBySagaId[selectedSagaId]. */

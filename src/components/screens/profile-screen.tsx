@@ -1,5 +1,5 @@
 import { type Href, router } from 'expo-router';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
@@ -11,11 +11,13 @@ import { DailyStreakDisplay } from '@/components/rpg/daily-streak-display';
 import { TodayFocusDisplay } from '@/components/rpg/today-focus-display';
 import { WeeklyRecapCard } from '@/components/rpg/weekly-recap-card';
 import { DevToolsPanel } from '@/components/rpg/dev-tools-panel';
+import { GlossaryHelpButton } from '@/components/rpg/glossary-help-button';
+import { GlossarySheet } from '@/components/rpg/glossary-sheet';
+import { ProfileSection } from '@/components/rpg/profile-section';
 import { ProgressBackupPanel } from '@/components/rpg/progress-backup-panel';
 import { ScreenScroll } from '@/components/rpg/screen-scroll';
 import { ScreenShell } from '@/components/rpg/screen-shell';
 import { SectionHeader } from '@/components/rpg/section-header';
-import { SectionLabel } from '@/components/rpg/section-label';
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
 import { useUniverseUiCopy } from '@/lib/universe-ui-copy';
@@ -25,6 +27,7 @@ import { getSagaActiveChapter } from '@/lib/saga-progress';
 
 export function ProfileScreen() {
   const ui = useUniverseUiCopy();
+  const [glossaryVisible, setGlossaryVisible] = useState(false);
   const {
     activeUniverse,
     activeSaga,
@@ -55,120 +58,138 @@ export function ProfileScreen() {
           <SectionHeader eyebrow={ui.operativeFileEyebrow} title="PROFILE" />
         </Animated.View>
 
-        <View style={[styles.card, { backgroundColor: activeUniverse.palette.panel, borderColor: activeUniverse.palette.gold }]}>
-          <Text style={styles.avatar}>{activeUniverse.icon}</Text>
-          <Text style={[styles.rank, { color: activeUniverse.palette.gold }]}>{player.rank.toUpperCase()}</Text>
-          <Text style={[styles.level, { color: activeUniverse.palette.bone }]}>
-            LEVEL {player.level}
-          </Text>
-          <View style={[styles.xpBar, { backgroundColor: activeUniverse.palette.xpTrack }]}>
-            <View
-              style={[
-                styles.xpFill,
-                { width: `${player.xpProgress * 100}%`, backgroundColor: activeUniverse.palette.xpFill },
-              ]}
-            />
+        <ProfileSection title="PLAYER PROGRESS" style={styles.firstSection}>
+          <View style={[styles.card, { backgroundColor: activeUniverse.palette.panel, borderColor: activeUniverse.palette.gold }]}>
+            <Text style={styles.avatar}>{activeUniverse.icon}</Text>
+            <Text style={[styles.rank, { color: activeUniverse.palette.gold }]}>{player.rank.toUpperCase()}</Text>
+            <Text style={[styles.level, { color: activeUniverse.palette.bone }]}>
+              LEVEL {player.level}
+            </Text>
+            <View style={[styles.xpBar, { backgroundColor: activeUniverse.palette.xpTrack }]}>
+              <View
+                style={[
+                  styles.xpFill,
+                  { width: `${player.xpProgress * 100}%`, backgroundColor: activeUniverse.palette.xpFill },
+                ]}
+              />
+            </View>
+            <Text style={[styles.xpText, { color: activeUniverse.palette.fog }]}>
+              {player.xpInLevel} / {player.xpToNext} XP to next level · {player.totalXp} total
+            </Text>
           </View>
-          <Text style={[styles.xpText, { color: activeUniverse.palette.fog }]}>
-            {player.xpInLevel} / {player.xpToNext} XP to next level · {player.totalXp} total
-          </Text>
-        </View>
 
-        <DailyStreakDisplay variant="profile" />
+          <View style={styles.statsGrid}>
+            <StatBox label="GRIT" value={String(player.stats.grit)} colors={activeUniverse.palette} />
+            <StatBox label="FOCUS" value={String(player.stats.focus)} colors={activeUniverse.palette} />
+            <StatBox label="LEGEND" value={`${player.stats.legend}%`} colors={activeUniverse.palette} />
+            <StatBox label="MISSIONS" value={`${completedQuestCount}/${quests.length}`} colors={activeUniverse.palette} />
+            <StatBox label={ui.reputationLabel} value={`${player.reputation}`} colors={activeUniverse.palette} />
+          </View>
 
-        <TodayFocusDisplay variant="profile" />
+          {unlockedSagas.length > 0 ? (
+            <View style={styles.subsection}>
+              <Text style={[styles.subsectionLabel, { color: activeUniverse.palette.gold }]}>SAGA PROGRESS</Text>
+              {unlockedSagas.map((saga) => {
+                const completedChapters = getCompletedChapterCountForSaga(saga, playerProgress);
+                const activeChapter = getSagaActiveChapter(saga, playerProgress);
+                const totalChapters = saga.chapters.length;
 
-        <WeeklyRecapCard />
-
-        <View style={styles.statsGrid}>
-          <StatBox label="GRIT" value={String(player.stats.grit)} colors={activeUniverse.palette} />
-          <StatBox label="FOCUS" value={String(player.stats.focus)} colors={activeUniverse.palette} />
-          <StatBox label="LEGEND" value={`${player.stats.legend}%`} colors={activeUniverse.palette} />
-          <StatBox label="MISSIONS" value={`${completedQuestCount}/${quests.length}`} colors={activeUniverse.palette} />
-          <StatBox label={ui.reputationLabel} value={`${player.reputation}`} colors={activeUniverse.palette} />
-        </View>
-
-        <SectionLabel>AUDIO</SectionLabel>
-        <AmbientAudioToggle />
-        <AudioDevTools />
-
-        <ProgressBackupPanel />
-
-        <SectionLabel>UNLOCKS / REWARDS</SectionLabel>
-        {unlockedRewards.length === 0 ? (
-          <CinematicEmptyState
-            title="No rewards unlocked yet."
-            message={ui.unlockRewardsEmptyMessage}
-            primaryLabel={ui.viewStoryTrailLabel}
-            onPrimaryPress={() => router.push('/(game)/story' as Href)}
-          />
-        ) : (
-          unlockedRewards.map((reward) => (
-            <View
-              key={reward.id}
-              style={[
-                styles.rewardRow,
-                { backgroundColor: activeUniverse.palette.panel, borderColor: activeUniverse.palette.panelBorder },
-              ]}>
-              <Text style={[styles.rewardType, { color: activeUniverse.palette.accent }]}>
-                {REWARD_TYPE_LABELS[reward.type]}
-              </Text>
-              <Text style={[styles.rewardName, { color: activeUniverse.palette.bone }]} numberOfLines={2}>
-                {reward.name}
-              </Text>
+                return (
+                  <View
+                    key={saga.id}
+                    style={[
+                      styles.sagaProgressRow,
+                      {
+                        backgroundColor: activeUniverse.palette.panel,
+                        borderColor:
+                          saga.id === activeSaga.id
+                            ? activeUniverse.palette.gold
+                            : activeUniverse.palette.panelBorder,
+                      },
+                    ]}>
+                    <View style={styles.sagaProgressHeader}>
+                      <Text
+                        style={[styles.sagaProgressTitle, { color: activeUniverse.palette.bone }]}
+                        numberOfLines={2}>
+                        {saga.title}
+                      </Text>
+                      {saga.id === activeSaga.id && (
+                        <Text style={[styles.sagaProgressActive, { color: activeUniverse.palette.gold }]}>
+                          ACTIVE
+                        </Text>
+                      )}
+                    </View>
+                    <Text style={[styles.sagaProgressMeta, { color: activeUniverse.palette.fog }]} numberOfLines={2}>
+                      {ui.sagaProgressMeta(completedChapters, totalChapters, activeChapter?.title)}
+                    </Text>
+                  </View>
+                );
+              })}
             </View>
-          ))
-        )}
+          ) : null}
+        </ProfileSection>
 
-        <SectionLabel>SAGA PROGRESS</SectionLabel>
-        {unlockedSagas.map((saga) => {
-          const completedChapters = getCompletedChapterCountForSaga(saga, playerProgress);
-          const activeChapter = getSagaActiveChapter(saga, playerProgress);
-          const totalChapters = saga.chapters.length;
+        <ProfileSection title="DAILY / WEEKLY ACTIVITY">
+          <DailyStreakDisplay variant="profile" />
+          <TodayFocusDisplay variant="profile" />
+          <WeeklyRecapCard />
+        </ProfileSection>
 
-          return (
-            <View
-              key={saga.id}
-              style={[
-                styles.sagaProgressRow,
-                {
-                  backgroundColor: activeUniverse.palette.panel,
-                  borderColor:
-                    saga.id === activeSaga.id
-                      ? activeUniverse.palette.gold
-                      : activeUniverse.palette.panelBorder,
-                },
-              ]}>
-              <View style={styles.sagaProgressHeader}>
-                <Text
-                  style={[styles.sagaProgressTitle, { color: activeUniverse.palette.bone }]}
-                  numberOfLines={2}>
-                  {saga.title}
+        <ProfileSection title="RELATIONSHIPS">
+          {characters.map((character, i) => (
+            <CharacterCard
+              key={character.id}
+              character={character}
+              index={i}
+              affinity={playerProgress.characterAffinity[character.id] ?? 0}
+            />
+          ))}
+        </ProfileSection>
+
+        <ProfileSection title="REWARDS / UNLOCKS">
+          {unlockedRewards.length === 0 ? (
+            <CinematicEmptyState
+              title="No rewards unlocked yet."
+              message={ui.unlockRewardsEmptyMessage}
+              primaryLabel={ui.viewStoryTrailLabel}
+              onPrimaryPress={() => router.push('/(game)/story' as Href)}
+            />
+          ) : (
+            unlockedRewards.map((reward) => (
+              <View
+                key={reward.id}
+                style={[
+                  styles.rewardRow,
+                  { backgroundColor: activeUniverse.palette.panel, borderColor: activeUniverse.palette.panelBorder },
+                ]}>
+                <Text style={[styles.rewardType, { color: activeUniverse.palette.accent }]}>
+                  {REWARD_TYPE_LABELS[reward.type]}
                 </Text>
-                {saga.id === activeSaga.id && (
-                  <Text style={[styles.sagaProgressActive, { color: activeUniverse.palette.gold }]}>
-                    ACTIVE
-                  </Text>
-                )}
+                <Text style={[styles.rewardName, { color: activeUniverse.palette.bone }]} numberOfLines={2}>
+                  {reward.name}
+                </Text>
               </View>
-              <Text style={[styles.sagaProgressMeta, { color: activeUniverse.palette.fog }]} numberOfLines={2}>
-                {ui.sagaProgressMeta(completedChapters, totalChapters, activeChapter?.title)}
-              </Text>
-            </View>
-          );
-        })}
+            ))
+          )}
+        </ProfileSection>
 
-        <SectionLabel>ALLIES & ENEMIES</SectionLabel>
-        {characters.map((character, i) => (
-          <CharacterCard
-            key={character.id}
-            character={character}
-            index={i}
-            affinity={playerProgress.characterAffinity[character.id] ?? 0}
-          />
-        ))}
+        <ProfileSection title="SETTINGS">
+          <GlossaryHelpButton onPress={() => setGlossaryVisible(true)} />
+          <AmbientAudioToggle />
+          {__DEV__ ? <AudioDevTools /> : null}
+        </ProfileSection>
 
-        <DevToolsPanel />
+        <GlossarySheet visible={glossaryVisible} onClose={() => setGlossaryVisible(false)} />
+
+        <ProfileSection title="BACKUP" badge="experimental">
+          <ProgressBackupPanel embedded />
+        </ProfileSection>
+
+        {__DEV__ ? (
+          <ProfileSection title="DEV / TESTING" badge="dev">
+            <DevToolsPanel embedded />
+          </ProfileSection>
+        ) : null}
       </ScreenScroll>
     </ScreenShell>
   );
@@ -194,9 +215,12 @@ function StatBox({
 }
 
 const styles = StyleSheet.create({
+  firstSection: {
+    marginTop: 0,
+  },
   card: {
     alignItems: 'center',
-    padding: 24,
+    padding: 20,
     borderWidth: 2,
     transform: [{ skewX: '-2deg' }],
     gap: 8,
@@ -219,6 +243,13 @@ const styles = StyleSheet.create({
   },
   statLabel: { fontFamily: GameFonts.uiSemi, fontSize: 10, letterSpacing: 2 },
   statValue: { fontFamily: GameFonts.ui, fontSize: 22 },
+  subsection: { gap: 8 },
+  subsectionLabel: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 9,
+    letterSpacing: 2,
+    marginBottom: 2,
+  },
   rewardRow: {
     borderWidth: 1,
     padding: 12,
