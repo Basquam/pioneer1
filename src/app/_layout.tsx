@@ -8,8 +8,7 @@ import {
   PlayfairDisplay_700Bold,
   useFonts as usePlayfairFonts,
 } from '@expo-google-fonts/playfair-display';
-import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
-import { Stack } from 'expo-router';
+import { DarkTheme, DefaultTheme, ThemeProvider, Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { useColorScheme } from 'react-native';

@@ -1,6 +1,5 @@
 import { StyleSheet, Text, View } from 'react-native';
 
-import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
 import type { NarrativeCharacter } from '@/types/narrative';
 

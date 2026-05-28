@@ -6,7 +6,7 @@ import {
   NEURONET_DEFAULT_SAGA_ID,
   NEURONET_UNIVERSE_UNLOCK_ID,
 } from '@/data/narrative/neuronet-universe';
-import { DEFAULT_SAGA_ID, DEFAULT_UNIVERSE_ID, findSaga, findUniverse } from '@/lib/narrative-state';
+import { DEFAULT_UNIVERSE_ID, findSaga, findUniverse } from '@/lib/narrative-state';
 import { isSagaUnlocked } from '@/lib/reward-unlocks';
 import { getSagaActiveChapterId, setSagaActiveChapter } from '@/lib/saga-progress';
 import type { PlayerProgress, Saga, Universe } from '@/types/narrative';
