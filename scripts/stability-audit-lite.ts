@@ -29,6 +29,13 @@ import {
   QUEST_CALENDAR_DAYS,
 } from '../src/lib/quest-calendar';
 import {
+  generateSystemsInsights,
+  getSystemsInsightHeaderFlavor,
+  hasEnoughSystemsInsightData,
+  MAX_SYSTEMS_INSIGHTS,
+  pickQuestIdForFocusInsight,
+} from '../src/lib/systems-insights';
+import {
   appendEvidenceEvent,
   createEvidenceEvent,
   groupEvidenceByDate,
@@ -636,6 +643,78 @@ const calendarDays = buildQuestCalendarDays({
 assert(calendarDays.length === QUEST_CALENDAR_DAYS, 'calendar day count');
 const todayEntry = calendarDays[calendarDays.length - 1];
 assert(todayEntry?.isToday === true, 'calendar marks today');
+
+// Systems insights
+assert(getSystemsInsightHeaderFlavor('dust-and-iron') === 'Trail Readout', 'systems insight flavor');
+assert(getSystemsInsightHeaderFlavor('neuronet') === 'Signal Diagnostics', 'neuronet insight flavor');
+assert(generateSystemsInsights(baseProgress()).length === 0, 'empty progress yields no insights');
+
+const highRiskProgress = {
+  ...baseProgress(),
+  activityByDate: {
+    '2026-05-27': {
+      questsCompleted: 1,
+      xpEarned: 10,
+      reputationEarned: 2,
+      chaptersCompleted: 0,
+      highRiskQuestsCompleted: 0,
+    },
+  },
+  userQuests: [
+    {
+      id: 'risk-1',
+      originalTitle: 'Big task A',
+      category: 'work',
+      narrativeTitle: 'Risk A',
+      narrativeDescription: 'Desc',
+      sourceUniverseId: 'dust-and-iron',
+      sourceSagaId: 'vulture-gang',
+      sourceChapterId: 'vulture-gang-ch1',
+      isCompleted: false,
+      xpReward: 10,
+      reputationReward: 2,
+      reactionCharacterId: 'deputy',
+      riskLevel: 'high',
+      createdOnDate: '2026-05-27',
+    },
+    {
+      id: 'risk-2',
+      originalTitle: 'Big task B',
+      category: 'work',
+      narrativeTitle: 'Risk B',
+      narrativeDescription: 'Desc',
+      sourceUniverseId: 'dust-and-iron',
+      sourceSagaId: 'vulture-gang',
+      sourceChapterId: 'vulture-gang-ch1',
+      isCompleted: false,
+      xpReward: 10,
+      reputationReward: 2,
+      reactionCharacterId: 'deputy',
+      riskLevel: 'high',
+      createdOnDate: '2026-05-26',
+    },
+  ] as UserQuest[],
+};
+const highRiskInsights = generateSystemsInsights(highRiskProgress, new Date('2026-05-27T12:00:00'));
+assert(
+  highRiskInsights.some((card) => card.id === 'high-risk-pile'),
+  'high-risk incomplete quests trigger insight',
+);
+assert(highRiskInsights.length <= MAX_SYSTEMS_INSIGHTS, 'insights capped at three');
+assert(
+  hasEnoughSystemsInsightData({
+    windowDateKeys: ['2026-05-27'],
+    activeIncompleteQuests: highRiskProgress.userQuests,
+    completedInWindow: [],
+    createdInWindow: highRiskProgress.userQuests,
+    awarenessAnswers: 0,
+    lowEnergyAwarenessCount: 0,
+    weeklyReviewCount: 0,
+    totalQuestsCompletedInWindow: 1,
+  }),
+  'snapshot marks enough data',
+);
+assert(pickQuestIdForFocusInsight(highRiskProgress) === 'risk-1', 'focus insight picks first active quest');
 
 if (failures.length) {
   console.error('FAILED:\n' + failures.map((f) => ` - ${f}`).join('\n'));

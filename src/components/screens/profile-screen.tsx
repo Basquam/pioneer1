@@ -15,6 +15,7 @@ import { MomentumReservePanel } from '@/components/rpg/momentum-reserve-panel';
 import { TodayFocusDisplay } from '@/components/rpg/today-focus-display';
 import { WeeklyRecapCard } from '@/components/rpg/weekly-recap-card';
 import { QuestCalendarPanel } from '@/components/rpg/quest-calendar-panel';
+import { SystemsInsightPanel } from '@/components/rpg/systems-insight-panel';
 import { DevToolsPanel } from '@/components/rpg/dev-tools-panel';
 import { GlossaryHelpButton } from '@/components/rpg/glossary-help-button';
 import { GlossarySheet } from '@/components/rpg/glossary-sheet';
@@ -201,6 +202,7 @@ export function ProfileScreen() {
           <DailyStreakDisplay variant="profile" />
           <TodayFocusDisplay variant="profile" />
           <QuestCalendarPanel />
+          <SystemsInsightPanel onEditIdentityCompass={() => setIdentityCompassVisible(true)} />
           <WeeklyRecapCard />
         </ProfileSection>
 
