@@ -67,6 +67,7 @@ export function userQuestToBoardQuest(
     ...(quest.startedAt ? { startedAt: quest.startedAt, isStarted: true } : {}),
     ...(quest.afterQuestReward ? { afterQuestReward: quest.afterQuestReward } : {}),
     riskLevel: resolveQuestRiskLevel(quest.riskLevel),
+    ...(quest.lastFocusDistraction ? { lastFocusDistraction: quest.lastFocusDistraction } : {}),
   };
 
   if (!boardQuest.createdOnDate) {

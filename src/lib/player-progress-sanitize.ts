@@ -1,4 +1,5 @@
 import { getLocalDateKey } from '@/lib/daily-streak';
+import { sanitizeQuestDistractionType } from '@/lib/distraction-shield';
 import { pruneWeeklyReviewByWeek } from '@/lib/weekly-review';
 import type { DailyActivity, PlayerProgress, QuestFrictionReason, TaskCategory, UserQuest } from '@/types/narrative';
 
@@ -108,6 +109,11 @@ export function sanitizeUserQuest(raw: unknown): UserQuest | null {
   const riskLevel = typeof quest.riskLevel === 'string' ? quest.riskLevel : null;
   if (riskLevel === 'low' || riskLevel === 'standard' || riskLevel === 'high') {
     sanitized.riskLevel = riskLevel;
+  }
+
+  const lastFocusDistraction = sanitizeQuestDistractionType(quest.lastFocusDistraction);
+  if (lastFocusDistraction) {
+    sanitized.lastFocusDistraction = lastFocusDistraction;
   }
 
   if (Array.isArray(quest.frictionReviews)) {

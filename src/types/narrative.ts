@@ -258,7 +258,18 @@ export type UserQuest = {
   afterQuestReward?: string;
   /** Goldilocks risk sizing — low, standard, or high. */
   riskLevel?: QuestRiskLevel;
+  /** Last distraction noted in Focus Mode — optional session note. */
+  lastFocusDistraction?: QuestDistractionType;
 };
+
+export type QuestDistractionType =
+  | 'phone'
+  | 'social-media'
+  | 'games'
+  | 'bed-couch'
+  | 'notifications'
+  | 'unclear-next-step'
+  | 'other';
 
 export type QuestRiskLevel = 'low' | 'standard' | 'high';
 
@@ -314,6 +325,7 @@ export type BoardQuest = {
   isStarted?: boolean;
   afterQuestReward?: string;
   riskLevel?: QuestRiskLevel;
+  lastFocusDistraction?: QuestDistractionType;
 };
 
 export type DailyActivity = {

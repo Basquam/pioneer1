@@ -35,8 +35,13 @@ import {
   SMALLEST_STEP_PROMPT,
 } from '@/lib/decisive-moment';
 import { getAfterQuestRewardCopy } from '@/lib/after-quest-reward';
+import {
+  DISTRACTION_SHIELD_OPTIONS,
+  getDistractionShieldSuggestion,
+} from '@/lib/distraction-shield';
 import { formatStarterMoveLine } from '@/lib/two-minute-starter';
 import { formatQuestRiskFocusLine, resolveQuestRiskLevel } from '@/lib/quest-risk';
+import type { QuestDistractionType } from '@/types/narrative';
 
 type RitualStep = 0 | 1 | 2 | 3 | 4;
 
@@ -49,19 +54,24 @@ export function QuestFocusOverlay() {
     focusDecisiveMoment,
     closeQuestFocus,
     completeQuest,
+    recordFocusDistraction,
   } = useGame();
   const { palette } = activeUniverse;
   const copy = getQuestFocusCopy(activeUniverse.id);
   const ritualCopy = getQuestStartRitualCopy(activeUniverse.id);
   const rewardCopy = getAfterQuestRewardCopy(activeUniverse.id);
   const [ritualStep, setRitualStep] = useState<RitualStep>(0);
+  const [selectedDistraction, setSelectedDistraction] = useState<QuestDistractionType | null>(null);
+  const [shieldSkipped, setShieldSkipped] = useState(false);
   const completePulse = useSharedValue(1);
   const ritualComplete = ritualStep === 4;
 
   useEffect(() => {
     setRitualStep(0);
+    setSelectedDistraction(focusQuest?.lastFocusDistraction ?? null);
+    setShieldSkipped(false);
     completePulse.value = 1;
-  }, [focusQuest?.id, completePulse]);
+  }, [focusQuest?.id, focusQuest?.lastFocusDistraction, completePulse]);
 
   const completeWrapStyle = useAnimatedStyle(() => ({
     transform: [{ scale: completePulse.value }],
@@ -110,6 +120,14 @@ export function QuestFocusOverlay() {
       }
       return next;
     });
+  };
+
+  const handleSelectDistraction = (type: QuestDistractionType) => {
+    void Haptics.selectionAsync();
+    setSelectedDistraction(type);
+    if (focusQuest.source === 'user') {
+      recordFocusDistraction(focusQuest.id, type);
+    }
   };
 
   const ritualStepContent =
@@ -285,6 +303,55 @@ export function QuestFocusOverlay() {
               style={[styles.completedHint, { color: palette.fog }]}>
               {copy.completedHint}
             </Animated.Text>
+          )}
+
+          {!isCompleted && !shieldSkipped && (
+            <Animated.View
+              entering={FadeInDown.duration(450).delay(310)}
+              style={[styles.shieldCard, { backgroundColor: palette.panel, borderColor: palette.panelBorder }]}>
+              <Text style={[styles.shieldEyebrow, { color: palette.gold }]}>DISTRACTION SHIELD</Text>
+              <Text style={[styles.shieldQuestion, { color: palette.bone }]}>
+                What might pull you away?
+              </Text>
+              <Text style={[styles.shieldHint, { color: palette.fog }]}>
+                Optional — pick one if it helps, or skip anytime.
+              </Text>
+
+              <View style={styles.shieldOptions}>
+                {DISTRACTION_SHIELD_OPTIONS.map((option) => {
+                  const selected = selectedDistraction === option.type;
+                  return (
+                    <Pressable
+                      key={option.type}
+                      onPress={() => handleSelectDistraction(option.type)}
+                      style={[
+                        styles.shieldChip,
+                        {
+                          borderColor: selected ? palette.gold : palette.panelBorder,
+                          backgroundColor: selected ? palette.primary : palette.night,
+                        },
+                      ]}>
+                      <Text style={[styles.shieldChipText, { color: selected ? palette.bone : palette.fog }]}>
+                        {option.label}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+
+              {selectedDistraction ? (
+                <View style={[styles.shieldSuggestionBox, { borderColor: palette.gold, backgroundColor: `${palette.primary}44` }]}>
+                  <Text style={[styles.shieldSuggestionLabel, { color: palette.gold }]}>TRY THIS SHIELD</Text>
+                  <Text style={[styles.shieldSuggestionText, { color: palette.bone }]}>
+                    {getDistractionShieldSuggestion(selectedDistraction)}
+                  </Text>
+                </View>
+              ) : null}
+
+              <Pressable onPress={() => setShieldSkipped(true)} hitSlop={8} style={styles.shieldSkip}>
+                <Text style={[styles.shieldSkipText, { color: palette.fog }]}>Skip for now</Text>
+              </Pressable>
+            </Animated.View>
           )}
 
           <Animated.View entering={FadeInDown.duration(450).delay(340)} style={styles.actions}>
@@ -509,6 +576,73 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     textAlign: 'center',
     paddingHorizontal: 8,
+  },
+  shieldCard: {
+    borderWidth: 1,
+    padding: 16,
+    gap: 10,
+    transform: [{ skewX: '-2deg' }],
+  },
+  shieldEyebrow: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 9,
+    letterSpacing: 2,
+  },
+  shieldQuestion: {
+    fontFamily: GameFonts.ui,
+    fontSize: 15,
+    letterSpacing: 0.5,
+    lineHeight: 21,
+  },
+  shieldHint: {
+    fontFamily: GameFonts.displayRegular,
+    fontSize: 12,
+    lineHeight: 17,
+    fontStyle: 'italic',
+  },
+  shieldOptions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  shieldChip: {
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    transform: [{ skewX: '-2deg' }],
+  },
+  shieldChipText: {
+    fontFamily: GameFonts.ui,
+    fontSize: 11,
+    letterSpacing: 0.3,
+    lineHeight: 15,
+  },
+  shieldSuggestionBox: {
+    borderWidth: 1,
+    padding: 12,
+    gap: 6,
+    marginTop: 2,
+  },
+  shieldSuggestionLabel: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 9,
+    letterSpacing: 2,
+  },
+  shieldSuggestionText: {
+    fontFamily: GameFonts.displayRegular,
+    fontSize: 14,
+    lineHeight: 20,
+    fontStyle: 'italic',
+  },
+  shieldSkip: {
+    alignSelf: 'center',
+    paddingVertical: 4,
+  },
+  shieldSkipText: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 10,
+    letterSpacing: 1,
+    fontStyle: 'italic',
   },
   actions: { gap: 12, marginTop: 4 },
   ritualStart: {

@@ -41,6 +41,7 @@ import {
 import { recordWeeklyReview } from '@/lib/weekly-review';
 import type {
   DailyAwarenessBlocker,
+  QuestDistractionType,
   QuestFrictionReason,
   WeeklyReviewHelpedFactor,
   WeeklyReviewSlowdownFactor,
@@ -176,6 +177,7 @@ type GameContextValue = {
   recordFrictionReview: (questId: string, reason: QuestFrictionReason) => void;
   markFrictionFixApplied: (questId: string) => void;
   archiveUserQuest: (questId: string) => void;
+  recordFocusDistraction: (questId: string, distraction: QuestDistractionType) => void;
   submitDailyAwareness: (blocker: DailyAwarenessBlocker) => void;
   dismissDailyAwarenessCheck: () => void;
   submitWeeklyReview: (
@@ -634,6 +636,18 @@ export function GameProvider({ children }: { children: ReactNode }) {
       ),
     }));
   }, []);
+
+  const recordFocusDistraction = useCallback(
+    (questId: string, distraction: QuestDistractionType) => {
+      setProgress((prev) => ({
+        ...prev,
+        userQuests: prev.userQuests.map((quest) =>
+          quest.id === questId ? { ...quest, lastFocusDistraction: distraction } : quest,
+        ),
+      }));
+    },
+    [],
+  );
 
   const submitDailyAwareness = useCallback((blocker: DailyAwarenessBlocker) => {
     setProgress((prev) => recordDailyAwarenessAnswer(prev, blocker));
@@ -1190,6 +1204,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       recordFrictionReview,
       markFrictionFixApplied,
       archiveUserQuest,
+      recordFocusDistraction,
       submitDailyAwareness,
       dismissDailyAwarenessCheck,
       submitWeeklyReview,
@@ -1276,6 +1291,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       questCreated,
       quests,
       recordFrictionReview,
+      recordFocusDistraction,
       resetProgress,
       importProgress,
       restoreDefaultStory,
