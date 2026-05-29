@@ -10,6 +10,17 @@ import {
 } from '../src/lib/dev-universe-switch';
 import { resolveNarrativeState } from '../src/lib/narrative-state';
 import { createEmptyIdentityVotes } from '../src/lib/identity-votes';
+import {
+  appendEvidenceEvent,
+  createEvidenceEvent,
+  groupEvidenceByDate,
+  sanitizeEvidenceLog,
+} from '../src/lib/evidence-log';
+import {
+  detectIdentityMilestoneUnlock,
+  getMilestoneTierForVotes,
+  getTraitBecomingProgress,
+} from '../src/lib/identity-milestones';
 import { buildBoardQuests, findBoardQuest } from '../src/lib/quest-board';
 import { computeQuestReadiness } from '../src/lib/quest-readiness';
 import { isHighRiskQuest, resolveQuestRiskLevel } from '../src/lib/quest-risk';
@@ -69,6 +80,7 @@ function baseProgress(): PlayerProgress {
     templateQuestStartedAt: {},
     weeklyReviewByWeek: {},
     recurringQuestTemplates: [],
+    evidenceLog: [],
   } as PlayerProgress;
 
   for (const universe of UNIVERSES) {
@@ -267,6 +279,40 @@ const legacyRaw = {
 const legacySanitized = sanitizeUserQuest(legacyRaw);
 assert(legacySanitized?.originalTitle === 'Legacy task', 'legacy quest sanitize');
 assert(resolveQuestRiskLevel(legacySanitized?.riskLevel) === 'standard', 'legacy default risk');
+
+// Identity milestones
+assert(getMilestoneTierForVotes(0) === null, 'zero votes no tier');
+assert(getMilestoneTierForVotes(1)?.label === 'Spark', 'spark at 1 vote');
+assert(getMilestoneTierForVotes(5)?.label === 'Emerging', 'emerging at 5 votes');
+assert(getMilestoneTierForVotes(60)?.label === 'Legendary', 'legendary at 60 votes');
+assert(detectIdentityMilestoneUnlock(0, 1)?.label === 'Spark', 'first vote unlocks spark');
+assert(detectIdentityMilestoneUnlock(4, 5)?.label === 'Emerging', 'fifth vote unlocks emerging');
+assert(detectIdentityMilestoneUnlock(5, 6) === null, 'no duplicate tier unlock');
+const reliableProgress = getTraitBecomingProgress('reliable', 3);
+assert(reliableProgress.currentTier?.label === 'Spark', 'reliable spark tier at 3');
+assert(reliableProgress.votesToNext === 2, 'reliable 2 votes to emerging');
+
+// Evidence timeline
+const sampleEvent = createEvidenceEvent({
+  universeId: 'dust-and-iron',
+  sagaId: dustSaga.id,
+  chapterId: dustChapter.id,
+  questTitle: 'Secure the supply room',
+  originalTaskTitle: 'Clean kitchen',
+  category: 'cleaning',
+  identityTraitGained: 'Organized',
+  xpEarned: 12,
+  reputationEarned: 2,
+  characterId: dustSaga.characters[0]?.id,
+  source: 'userQuest',
+  date: '2026-05-27',
+  timestamp: '2026-05-27T18:00:00.000Z',
+});
+const withEvidence = appendEvidenceEvent({ ...boardProgress, evidenceLog: [] }, sampleEvent);
+assert(withEvidence.evidenceLog.length === 1, 'append evidence event');
+assert(withEvidence.evidenceLog[0]?.questTitle === 'Secure the supply room', 'evidence quest title');
+assert(sanitizeEvidenceLog(withEvidence.evidenceLog).length === 1, 'sanitize evidence log');
+assert(groupEvidenceByDate(withEvidence.evidenceLog, '2026-05-27')[0]?.label === 'Today', 'group today');
 
 if (failures.length) {
   console.error('FAILED:\n' + failures.map((f) => ` - ${f}`).join('\n'));

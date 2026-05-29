@@ -202,6 +202,11 @@ export type QuestCompleteState = {
   rewardRitualUnlockedLine?: string;
   /** Universe-flavored reward ritual line. */
   rewardRitualFlavorLine?: string;
+  /** Shown when a trait crosses into a new milestone tier. */
+  identityMilestoneUnlock?: {
+    headline: string;
+    universeFlavorLine: string;
+  };
 };
 
 export type QuestFrictionReason =
@@ -399,6 +404,28 @@ export type WeeklyReviewEntry = {
   submittedAt: string;
 };
 
+export type EvidenceEventSource = 'userQuest' | 'chapterBounty';
+
+export type EvidenceEvent = {
+  id: string;
+  /** Local calendar date (YYYY-MM-DD). */
+  date: string;
+  /** ISO timestamp when the quest was completed. */
+  timestamp: string;
+  universeId: string;
+  sagaId: string;
+  chapterId: string;
+  questTitle: string;
+  originalTaskTitle?: string;
+  category: TaskCategory;
+  identityTraitGained?: string;
+  xpEarned: number;
+  reputationEarned: number;
+  characterId?: string;
+  rewardRitual?: string;
+  source: EvidenceEventSource;
+};
+
 export type PlayerProgress = {
   hasOnboarded: boolean;
   /** First-session HQ tutorial — shown once after onboarding. */
@@ -459,4 +486,6 @@ export type PlayerProgress = {
   weeklyReviewByWeek: Record<string, WeeklyReviewEntry>;
   /** Local recurring routine templates — spawn user quest instances on schedule. */
   recurringQuestTemplates: RecurringQuestTemplate[];
+  /** Recent quest completion events for the evidence timeline. */
+  evidenceLog: EvidenceEvent[];
 };

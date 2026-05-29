@@ -5,6 +5,7 @@ import { sanitizeLockedFocusQuestIds } from '@/lib/focus-lock';
 import { createEmptyIdentityVotes, sanitizeIdentityVotes } from '@/lib/identity-votes';
 import { sanitizeRecoveryQuestCompletedDates } from '@/lib/recovery-quest';
 import { sanitizeRecurringQuestTemplates } from '@/lib/recurring-quests';
+import { sanitizeEvidenceLog } from '@/lib/evidence-log';
 import { sanitizeTemplateQuestStartedAt } from '@/lib/decisive-moment';
 import {
   sanitizeDailyAwarenessByDate,
@@ -168,6 +169,7 @@ export function createInitialProgress(): PlayerProgress {
     templateQuestStartedAt: {},
     weeklyReviewByWeek: {},
     recurringQuestTemplates: [],
+    evidenceLog: [],
   };
 }
 
@@ -214,6 +216,7 @@ function normalizeProgress(raw: Partial<PlayerProgress> & Record<string, unknown
     recurringQuestTemplates: sanitizeRecurringQuestTemplates(
       raw.recurringQuestTemplates ?? base.recurringQuestTemplates,
     ),
+    evidenceLog: sanitizeEvidenceLog(raw.evidenceLog ?? base.evidenceLog),
   };
 
   const universeForMigration = findUniverse(merged.selectedUniverseId) ?? DUST_AND_IRON_UNIVERSE;

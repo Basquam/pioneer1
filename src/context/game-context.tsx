@@ -37,7 +37,15 @@ import {
 } from '@/lib/recurring-quests';
 import { formatRewardRitualUnlockedLine, getAfterQuestRewardCopy } from '@/lib/after-quest-reward';
 import { markQuestStarted } from '@/lib/decisive-moment';
-import { castIdentityVote } from '@/lib/identity-votes';
+import { castIdentityVote, getTraitForCategory } from '@/lib/identity-votes';
+import {
+  appendEvidenceEvent,
+  buildEvidenceEventFromQuestCompletion,
+} from '@/lib/evidence-log';
+import {
+  buildIdentityMilestoneUnlock,
+  detectIdentityMilestoneUnlock,
+} from '@/lib/identity-milestones';
 import type { UserQuestReadinessUpdates } from '@/lib/quest-readiness';
 import {
   dismissDailyAwarenessForToday,
@@ -835,11 +843,20 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
       const charId = boardQuest.reactionCharacterId;
       const nextAffinity = (progress.characterAffinity[charId] ?? 0) + 1;
+      const traitKey = getTraitForCategory(boardQuest.category);
+      const previousVoteCount = progress.identityVotes[traitKey] ?? 0;
       const identityVote = castIdentityVote(
         progress.identityVotes,
         boardQuest.category,
         activeUniverse.id,
       );
+      const milestoneTier = detectIdentityMilestoneUnlock(
+        previousVoteCount,
+        identityVote.voteCount,
+      );
+      const identityMilestoneUnlock = milestoneTier
+        ? buildIdentityMilestoneUnlock(traitKey, milestoneTier, activeUniverse.id)
+        : undefined;
 
       const updatedCompletedIds =
         boardQuest.source === 'template'
@@ -857,43 +874,53 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
         const withRecovery = completingRecovery ? markRecoveryQuestComplete(withQuestCompletion) : withQuestCompletion;
 
-        return recordQuestCompleted(
-          {
-            ...withRecovery,
-            userQuests:
-              boardQuest.source === 'user'
-                ? prev.userQuests.map((quest) =>
-                    quest.id === questId ? { ...quest, isCompleted: true } : quest,
-                  )
-                : prev.userQuests,
-            totalXp: nextTotalXp,
-            level: nextLevel,
-            reputation: nextReputation,
-            villainInfluenceBySaga: {
-              ...prev.villainInfluenceBySaga,
-              [activeSaga.id]: updatedInfluence,
+        const evidenceEvent = buildEvidenceEventFromQuestCompletion(boardQuest, {
+          universeId: activeUniverse.id,
+          sagaId: activeSaga.id,
+          chapterId: currentChapter.id,
+          traitKey,
+        });
+
+        return appendEvidenceEvent(
+          recordQuestCompleted(
+            {
+              ...withRecovery,
+              userQuests:
+                boardQuest.source === 'user'
+                  ? prev.userQuests.map((quest) =>
+                      quest.id === questId ? { ...quest, isCompleted: true } : quest,
+                    )
+                  : prev.userQuests,
+              totalXp: nextTotalXp,
+              level: nextLevel,
+              reputation: nextReputation,
+              villainInfluenceBySaga: {
+                ...prev.villainInfluenceBySaga,
+                [activeSaga.id]: updatedInfluence,
+              },
+              chapterCompletions: {
+                ...prev.chapterCompletions,
+                [currentChapter.id]: chapterDoneCount,
+              },
+              characterAffinity: {
+                ...prev.characterAffinity,
+                [charId]: nextAffinity,
+              },
+              relationshipByCharacter: {
+                ...prev.relationshipByCharacter,
+                [charId]: affinityToTier(nextAffinity),
+              },
+              identityVotes: identityVote.identityVotes,
             },
-            chapterCompletions: {
-              ...prev.chapterCompletions,
-              [currentChapter.id]: chapterDoneCount,
+            boardQuest.xpReward,
+            boardQuest.reputationReward,
+            getLocalDateKey(),
+            {
+              highRisk:
+                boardQuest.source === 'user' && isHighRiskQuest(boardQuest.riskLevel),
             },
-            characterAffinity: {
-              ...prev.characterAffinity,
-              [charId]: nextAffinity,
-            },
-            relationshipByCharacter: {
-              ...prev.relationshipByCharacter,
-              [charId]: affinityToTier(nextAffinity),
-            },
-            identityVotes: identityVote.identityVotes,
-          },
-          boardQuest.xpReward,
-          boardQuest.reputationReward,
-          getLocalDateKey(),
-          {
-            highRisk:
-              boardQuest.source === 'user' && isHighRiskQuest(boardQuest.riskLevel),
-          },
+          ),
+          evidenceEvent,
         );
       });
 
@@ -930,6 +957,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
           : ui.questCompleteFallbackLine,
         identityVoteGainLine: identityVote.voteGainLine,
         identityUniverseLine: identityVote.universeLine,
+        ...(identityMilestoneUnlock ? { identityMilestoneUnlock } : {}),
         ...(completingRecovery
           ? { recoveryCompleteLine: getRecoveryQuestCopy(activeUniverse.id).completeMessage }
           : {}),

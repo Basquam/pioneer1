@@ -37,7 +37,7 @@ export const IDENTITY_TRAIT_META: Record<IdentityTraitKey, IdentityTraitMeta> = 
   resilient: {
     key: 'resilient',
     label: 'Resilient',
-    encouragingLine: 'You keep going when the trail gets rough.',
+    encouragingLine: 'You return even when the trail gets hard.',
   },
   curious: {
     key: 'curious',

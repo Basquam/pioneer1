@@ -115,11 +115,26 @@ export function QuestCompleteOverlay() {
               )}
 
               {(questComplete.identityVoteGainLine ||
+                questComplete.identityMilestoneUnlock ||
                 questComplete.rewardRitualUnlockedLine ||
                 questComplete.recoveryCompleteLine) && (
                 <Animated.View
                   entering={FadeInUp.duration(450).delay(460)}
                   style={[styles.outcomesBox, { borderColor: palette.panelBorder }]}>
+                  {questComplete.identityMilestoneUnlock && (
+                    <View style={styles.outcomeBlock}>
+                      <Text style={[styles.milestoneEyebrow, { color: palette.gold }]}>
+                        IDENTITY MILESTONE UNLOCKED
+                      </Text>
+                      <Text style={[styles.milestoneHeadline, { color: palette.bone }]}>
+                        {questComplete.identityMilestoneUnlock.headline}
+                      </Text>
+                      <Text style={[styles.milestoneFlavor, { color: palette.fog }]}>
+                        {questComplete.identityMilestoneUnlock.universeFlavorLine}
+                      </Text>
+                    </View>
+                  )}
+
                   {questComplete.identityVoteGainLine && (
                     <View style={styles.outcomeBlock}>
                       <Text style={[styles.outcomeLabel, { color: palette.gold }]}>IDENTITY</Text>
@@ -289,6 +304,25 @@ const styles = StyleSheet.create({
     fontFamily: GameFonts.uiSemi,
     fontSize: 9,
     letterSpacing: 2,
+  },
+  milestoneEyebrow: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 9,
+    letterSpacing: 2,
+    textAlign: 'center',
+  },
+  milestoneHeadline: {
+    fontFamily: GameFonts.ui,
+    fontSize: 20,
+    letterSpacing: 1.5,
+    textAlign: 'center',
+  },
+  milestoneFlavor: {
+    fontFamily: GameFonts.displayRegular,
+    fontSize: 12,
+    lineHeight: 17,
+    fontStyle: 'italic',
+    textAlign: 'center',
   },
   identityVoteGain: {
     fontFamily: GameFonts.ui,

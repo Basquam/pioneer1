@@ -1,4 +1,5 @@
 import { getLocalDateKey } from '@/lib/daily-streak';
+import { pruneEvidenceLog } from '@/lib/evidence-log';
 import { sanitizeQuestDistractionType } from '@/lib/distraction-shield';
 import { pruneWeeklyReviewByWeek } from '@/lib/weekly-review';
 import type { DailyActivity, PlayerProgress, QuestFrictionReason, TaskCategory, UserQuest } from '@/types/narrative';
@@ -244,6 +245,7 @@ export function sanitizePersistedProgress(progress: PlayerProgress): PlayerProgr
       new Date(),
       ACTIVITY_RETENTION_DAYS,
     ),
+    evidenceLog: pruneEvidenceLog(progress.evidenceLog ?? []),
   };
 }
 
