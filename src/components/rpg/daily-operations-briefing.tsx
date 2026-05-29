@@ -34,6 +34,7 @@ export function DailyOperationsBriefing() {
     villainInfluence,
     isTodayFocusLocked,
     lockTodayFocus,
+    openQuestPackSheet,
   } = useGame();
   const visualTheme = useUniverseVisualTheme();
   const { palette } = activeUniverse;
@@ -155,6 +156,15 @@ export function DailyOperationsBriefing() {
         />
 
         <AddQuestTrigger variant="banner" />
+
+        <Pressable
+          onPress={openQuestPackSheet}
+          style={[styles.packEntry, { borderColor: panelBorder, backgroundColor: `${palette.primary}55` }]}>
+          <Text style={[styles.packEntryLabel, { color: goldAccent }]}>SUGGESTED QUEST PACKS</Text>
+          <Text style={[styles.packEntryHint, { color: palette.fog }]}>
+            Quick bundles — Morning Reset, Deep Work Sprint, Study Session, and more.
+          </Text>
+        </Pressable>
       </View>
 
       <PromiseCardSheet visible={promiseCardVisible} onClose={() => setPromiseCardVisible(false)} />
@@ -245,6 +255,22 @@ const styles = StyleSheet.create({
     fontSize: 11,
     letterSpacing: 1.5,
     textAlign: 'center',
+  },
+  packEntry: {
+    borderWidth: 1,
+    padding: 12,
+    gap: 4,
+    transform: [{ skewX: '-2deg' }],
+  },
+  packEntryLabel: {
+    fontFamily: GameFonts.ui,
+    fontSize: 11,
+    letterSpacing: 2,
+  },
+  packEntryHint: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 10,
+    lineHeight: 14,
   },
   statsGrid: {
     flexDirection: 'row',

@@ -62,7 +62,7 @@ type AddQuestSheetProps = {
 
 export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
   const ui = useUniverseUiCopy();
-  const { activeUniverse, currentChapter, playerProgress, addUserQuest, addQuestRecoveryMode, isTodayFocusLocked } = useGame();
+  const { activeUniverse, currentChapter, playerProgress, addUserQuest, addQuestRecoveryMode, isTodayFocusLocked, openQuestPackSheet } = useGame();
   const { palette } = activeUniverse;
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState<TaskCategory>('cleaning');
@@ -243,6 +243,18 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
             <Text style={[styles.sub, { color: palette.fog }]} numberOfLines={2}>
               {ui.addQuestSubtitle(currentChapter?.title)}
             </Text>
+
+            <Pressable
+              onPress={() => {
+                void Haptics.selectionAsync();
+                openQuestPackSheet();
+              }}
+              style={[styles.packEntry, { borderColor: palette.panelBorder, backgroundColor: palette.panel }]}>
+              <Text style={[styles.packEntryLabel, { color: palette.gold }]}>SUGGESTED QUEST PACKS</Text>
+              <Text style={[styles.packEntryHint, { color: palette.fog }]}>
+                Add 2–3 quests at once — Morning Reset, Deep Work, and more.
+              </Text>
+            </Pressable>
 
             <View style={[styles.focusRow, { borderColor: palette.panelBorder }]}>
               <Text style={[styles.focusLabel, { color: palette.gold }]}>
@@ -573,6 +585,22 @@ const styles = StyleSheet.create({
   close: { fontFamily: GameFonts.ui, fontSize: 18 },
   title: { fontFamily: GameFonts.display, fontSize: 24, lineHeight: 30 },
   sub: { fontFamily: GameFonts.displayRegular, fontSize: 13, fontStyle: 'italic', marginBottom: 4, lineHeight: 19 },
+  packEntry: {
+    borderWidth: 1,
+    padding: 12,
+    gap: 4,
+    marginBottom: 4,
+  },
+  packEntryLabel: {
+    fontFamily: GameFonts.ui,
+    fontSize: 11,
+    letterSpacing: 2,
+  },
+  packEntryHint: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 10,
+    lineHeight: 14,
+  },
   focusRow: {
     borderTopWidth: 1,
     borderBottomWidth: 1,

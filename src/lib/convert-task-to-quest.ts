@@ -7,7 +7,9 @@ import {
 } from '@/lib/quest-narrative-context';
 import { applyQuestVariation } from '@/lib/quest-variation-patterns';
 import { pickQuestVariation } from '@/lib/quest-variation-picker';
-import type { Chapter, Saga, TaskCategory, Universe, UserQuest } from '@/types/narrative';
+import type { Chapter, QuestRiskLevel, Saga, TaskCategory, Universe, UserQuest } from '@/types/narrative';
+
+import { getLocalDateKey } from '@/lib/daily-streak';
 
 function buildNarrativeTitle(
   originalTitle: string,
@@ -107,6 +109,39 @@ export function convertTaskToUserQuest(
 
 export function createUserQuestId(): string {
   return `user-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+}
+
+export type CreateUserQuestOptions = {
+  starterTaskTitle?: string;
+  prepStepTitle?: string;
+  afterQuestReward?: string;
+  riskLevel?: QuestRiskLevel;
+};
+
+/** Shared user-quest creation used by single and batch add flows. */
+export function createUserQuestFromTask(
+  originalTitle: string,
+  category: TaskCategory,
+  universe: Universe,
+  saga: Saga,
+  chapter: Chapter,
+  recentQuests: UserQuest[] = [],
+  options?: CreateUserQuestOptions,
+  createdOnDate: string = getLocalDateKey(),
+): UserQuest {
+  const trimmed = originalTitle.trim();
+  const converted = convertTaskToUserQuest(trimmed, category, universe, saga, chapter, recentQuests);
+
+  return {
+    ...converted,
+    id: createUserQuestId(),
+    isCompleted: false,
+    createdOnDate,
+    ...(options?.starterTaskTitle ? { starterTaskTitle: options.starterTaskTitle.trim() } : {}),
+    ...(options?.prepStepTitle ? { prepStepTitle: options.prepStepTitle.trim() } : {}),
+    ...(options?.afterQuestReward ? { afterQuestReward: options.afterQuestReward.trim() } : {}),
+    riskLevel: options?.riskLevel ?? 'standard',
+  };
 }
 
 export function isUserQuestId(id: string): boolean {

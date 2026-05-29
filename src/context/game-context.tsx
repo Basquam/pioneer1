@@ -28,7 +28,7 @@ import {
 } from '@/lib/recovery-quest';
 import { recordChapterCompleted, recordQuestCompleted } from '@/lib/weekly-recap';
 import { isHighRiskQuest } from '@/lib/quest-risk';
-import { convertTaskToUserQuest, createUserQuestId } from '@/lib/convert-task-to-quest';
+import { createUserQuestFromTask, type CreateUserQuestOptions } from '@/lib/convert-task-to-quest';
 import { formatRewardRitualUnlockedLine, getAfterQuestRewardCopy } from '@/lib/after-quest-reward';
 import { markQuestStarted } from '@/lib/decisive-moment';
 import { castIdentityVote } from '@/lib/identity-votes';
@@ -152,13 +152,14 @@ type GameContextValue = {
   addUserQuest: (
     originalTitle: string,
     category: TaskCategory,
-    options?: {
-      starterTaskTitle?: string;
-      prepStepTitle?: string;
-      afterQuestReward?: string;
-      riskLevel?: QuestRiskLevel;
-    },
+    options?: CreateUserQuestOptions,
   ) => void;
+  addUserQuestPack: (
+    items: Array<{ originalTitle: string; category: TaskCategory; options?: CreateUserQuestOptions }>,
+  ) => void;
+  questPackSheetOpen: boolean;
+  openQuestPackSheet: () => void;
+  closeQuestPackSheet: () => void;
   openAddQuestSheet: () => void;
   openRecoveryQuestSheet: () => void;
   lockTodayFocus: () => void;
@@ -228,6 +229,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [questComplete, setQuestComplete] = useState<QuestCompleteState | null>(null);
   const [questCreated, setQuestCreated] = useState<UserQuest | null>(null);
   const [addQuestSheetOpen, setAddQuestSheetOpen] = useState(false);
+  const [questPackSheetOpen, setQuestPackSheetOpen] = useState(false);
   const [addQuestRecoveryMode, setAddQuestRecoveryMode] = useState(false);
   const [focusQuestId, setFocusQuestId] = useState<string | null>(null);
   const [focusDecisiveMoment, setFocusDecisiveMoment] = useState(false);
@@ -444,39 +446,20 @@ export function GameProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const addUserQuest = useCallback(
-    (
-      originalTitle: string,
-      category: TaskCategory,
-      options?: {
-        starterTaskTitle?: string;
-        prepStepTitle?: string;
-        afterQuestReward?: string;
-        riskLevel?: QuestRiskLevel;
-      },
-    ) => {
+    (originalTitle: string, category: TaskCategory, options?: CreateUserQuestOptions) => {
       const trimmed = originalTitle.trim();
       if (!trimmed || !currentChapter) return;
 
       setProgress((prev) => {
-        const converted = convertTaskToUserQuest(
+        const quest = createUserQuestFromTask(
           trimmed,
           category,
           activeUniverse,
           activeSaga,
           currentChapter,
           prev.userQuests,
+          options,
         );
-
-        const quest: UserQuest = {
-          ...converted,
-          id: createUserQuestId(),
-          isCompleted: false,
-          createdOnDate: getLocalDateKey(),
-          ...(options?.starterTaskTitle ? { starterTaskTitle: options.starterTaskTitle.trim() } : {}),
-          ...(options?.prepStepTitle ? { prepStepTitle: options.prepStepTitle.trim() } : {}),
-          ...(options?.afterQuestReward ? { afterQuestReward: options.afterQuestReward.trim() } : {}),
-          riskLevel: options?.riskLevel ?? 'standard',
-        };
 
         setAddQuestSheetOpen(false);
         setQuestCreated(quest);
@@ -489,6 +472,54 @@ export function GameProvider({ children }: { children: ReactNode }) {
     },
     [activeSaga, activeUniverse, currentChapter],
   );
+
+  const addUserQuestPack = useCallback(
+    (items: Array<{ originalTitle: string; category: TaskCategory; options?: CreateUserQuestOptions }>) => {
+      if (!currentChapter || items.length === 0) return;
+
+      setProgress((prev) => {
+        const created: UserQuest[] = [];
+        let workingQuests = prev.userQuests;
+
+        for (const item of items) {
+          const trimmed = item.originalTitle.trim();
+          if (!trimmed) continue;
+
+          const quest = createUserQuestFromTask(
+            trimmed,
+            item.category,
+            activeUniverse,
+            activeSaga,
+            currentChapter,
+            workingQuests,
+            item.options,
+          );
+          created.push(quest);
+          workingQuests = [...workingQuests, quest];
+        }
+
+        if (created.length === 0) return prev;
+
+        setAddQuestSheetOpen(false);
+        setQuestPackSheetOpen(false);
+
+        return {
+          ...prev,
+          userQuests: pruneUserQuests([...prev.userQuests, ...created]),
+        };
+      });
+    },
+    [activeSaga, activeUniverse, currentChapter],
+  );
+
+  const openQuestPackSheet = useCallback(() => {
+    setAddQuestSheetOpen(false);
+    setQuestPackSheetOpen(true);
+  }, []);
+
+  const closeQuestPackSheet = useCallback(() => {
+    setQuestPackSheetOpen(false);
+  }, []);
 
   const openAddQuestSheet = useCallback(() => {
     setAddQuestRecoveryMode(false);
@@ -1186,6 +1217,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
       switchSaga,
       completeOnboarding,
       addUserQuest,
+      addUserQuestPack,
+      questPackSheetOpen,
+      openQuestPackSheet,
+      closeQuestPackSheet,
       openAddQuestSheet,
       openRecoveryQuestSheet,
       lockTodayFocus: lockTodayFocusCommit,
@@ -1239,7 +1274,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
       addQuestRecoveryMode,
       addQuestSheetOpen,
       addUserQuest,
+      addUserQuestPack,
       allQuestsComplete,
+      closeQuestPackSheet,
       archiveUserQuest,
       chapters,
       characters,
@@ -1283,12 +1320,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
       openFrictionReview,
       openImproveQuest,
       openQuestFocus,
+      openQuestPackSheet,
       openRecoveryQuestSheet,
       player,
       narrativeStateValid,
       progress,
       questComplete,
       questCreated,
+      questPackSheetOpen,
       quests,
       recordFrictionReview,
       recordFocusDistraction,
