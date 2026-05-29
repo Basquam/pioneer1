@@ -1,10 +1,11 @@
 import { type Href, router } from 'expo-router';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Alert, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { AddQuestTrigger } from '@/components/rpg/add-quest-trigger';
 import { DailyStreakDisplay } from '@/components/rpg/daily-streak-display';
+import { PromiseCardSheet } from '@/components/rpg/promise-card-sheet';
 import { TodayFocusDisplay } from '@/components/rpg/today-focus-display';
 import { GlowButton } from '@/components/rpg/glow-button';
 import { PanelChrome } from '@/components/rpg/panel-chrome';
@@ -19,6 +20,7 @@ import { useGame } from '@/hooks/use-game';
 import { useUniverseVisualTheme } from '@/hooks/use-universe-visual-theme';
 import { useUniverseUiCopy } from '@/lib/universe-ui-copy';
 import { canLockTodayFocus, getFocusLockCopy } from '@/lib/focus-lock';
+import { buildPromiseCard } from '@/lib/promise-card';
 
 export function DailyOperationsBriefing() {
   const ui = useUniverseUiCopy();
@@ -40,6 +42,15 @@ export function DailyOperationsBriefing() {
   const goldAccent = getPanelAccentColor(palette, visualTheme, 'gold');
   const focusLockCopy = getFocusLockCopy(activeUniverse.id);
   const showLockButton = canLockTodayFocus(playerProgress, activeUniverse.id);
+  const [promiseCardVisible, setPromiseCardVisible] = useState(false);
+
+  const promiseCard = useMemo(
+    () =>
+      isTodayFocusLocked
+        ? buildPromiseCard(playerProgress, activeUniverse, activeSaga, quests)
+        : null,
+    [activeSaga, activeUniverse, isTodayFocusLocked, playerProgress, quests],
+  );
 
   const handleLockFocus = () => {
     const confirm = () => lockTodayFocus();
@@ -98,6 +109,13 @@ export function DailyOperationsBriefing() {
           <View style={[styles.lockedBlock, { borderColor: goldAccent, backgroundColor: `${palette.primary}33` }]}>
             <Text style={[styles.lockedTitle, { color: palette.bone }]}>{focusLockCopy.lockedMessage}</Text>
             <Text style={[styles.lockedFlavor, { color: palette.gold }]}>{focusLockCopy.lockedFlavor}</Text>
+            {promiseCard ? (
+              <Pressable
+                onPress={() => setPromiseCardVisible(true)}
+                style={[styles.promiseButton, { borderColor: palette.gold, backgroundColor: palette.night }]}>
+                <Text style={[styles.promiseButtonText, { color: palette.bone }]}>VIEW PROMISE CARD</Text>
+              </Pressable>
+            ) : null}
           </View>
         ) : showLockButton ? (
           <Pressable
@@ -138,6 +156,8 @@ export function DailyOperationsBriefing() {
 
         <AddQuestTrigger variant="banner" />
       </View>
+
+      <PromiseCardSheet visible={promiseCardVisible} onClose={() => setPromiseCardVisible(false)} />
     </Animated.View>
   );
 }
@@ -200,6 +220,18 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 18,
     fontStyle: 'italic',
+  },
+  promiseButton: {
+    borderWidth: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  promiseButtonText: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 10,
+    letterSpacing: 1.5,
   },
   lockButton: {
     borderWidth: 1,

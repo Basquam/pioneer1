@@ -27,6 +27,7 @@ import {
   shouldShowRecoveryPrompt,
 } from '@/lib/recovery-quest';
 import { recordChapterCompleted, recordQuestCompleted } from '@/lib/weekly-recap';
+import { isHighRiskQuest } from '@/lib/quest-risk';
 import { convertTaskToUserQuest, createUserQuestId } from '@/lib/convert-task-to-quest';
 import { formatRewardRitualUnlockedLine, getAfterQuestRewardCopy } from '@/lib/after-quest-reward';
 import { markQuestStarted } from '@/lib/decisive-moment';
@@ -37,7 +38,13 @@ import {
   recordDailyAwarenessAnswer,
   shouldShowDailyAwarenessCheck,
 } from '@/lib/daily-awareness';
-import type { DailyAwarenessBlocker, QuestFrictionReason } from '@/types/narrative';
+import { recordWeeklyReview } from '@/lib/weekly-review';
+import type {
+  DailyAwarenessBlocker,
+  QuestFrictionReason,
+  WeeklyReviewHelpedFactor,
+  WeeklyReviewSlowdownFactor,
+} from '@/types/narrative';
 import {
   affinityToTier,
   getCharacter,
@@ -90,6 +97,7 @@ import type {
   TaskCategory,
   Universe,
   UserQuest,
+  QuestRiskLevel,
 } from '@/types/narrative';
 
 export type XpBurst = { id: string; amount: number };
@@ -143,7 +151,12 @@ type GameContextValue = {
   addUserQuest: (
     originalTitle: string,
     category: TaskCategory,
-    options?: { starterTaskTitle?: string; prepStepTitle?: string; afterQuestReward?: string },
+    options?: {
+      starterTaskTitle?: string;
+      prepStepTitle?: string;
+      afterQuestReward?: string;
+      riskLevel?: QuestRiskLevel;
+    },
   ) => void;
   openAddQuestSheet: () => void;
   openRecoveryQuestSheet: () => void;
@@ -165,6 +178,10 @@ type GameContextValue = {
   archiveUserQuest: (questId: string) => void;
   submitDailyAwareness: (blocker: DailyAwarenessBlocker) => void;
   dismissDailyAwarenessCheck: () => void;
+  submitWeeklyReview: (
+    helpedFactors: WeeklyReviewHelpedFactor[],
+    slowdownFactor: WeeklyReviewSlowdownFactor,
+  ) => void;
   dismissXpBurst: () => void;
   markChapterIntroSeen: () => void;
   dismissHqTutorial: () => void;
@@ -428,7 +445,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
     (
       originalTitle: string,
       category: TaskCategory,
-      options?: { starterTaskTitle?: string; prepStepTitle?: string; afterQuestReward?: string },
+      options?: {
+        starterTaskTitle?: string;
+        prepStepTitle?: string;
+        afterQuestReward?: string;
+        riskLevel?: QuestRiskLevel;
+      },
     ) => {
       const trimmed = originalTitle.trim();
       if (!trimmed || !currentChapter) return;
@@ -451,6 +473,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
           ...(options?.starterTaskTitle ? { starterTaskTitle: options.starterTaskTitle.trim() } : {}),
           ...(options?.prepStepTitle ? { prepStepTitle: options.prepStepTitle.trim() } : {}),
           ...(options?.afterQuestReward ? { afterQuestReward: options.afterQuestReward.trim() } : {}),
+          ...(options?.riskLevel ? { riskLevel: options.riskLevel } : {}),
         };
 
         setAddQuestSheetOpen(false);
@@ -620,6 +643,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setProgress((prev) => dismissDailyAwarenessForToday(prev));
   }, []);
 
+  const submitWeeklyReview = useCallback(
+    (helpedFactors: WeeklyReviewHelpedFactor[], slowdownFactor: WeeklyReviewSlowdownFactor) => {
+      setProgress((prev) => recordWeeklyReview(prev, helpedFactors, slowdownFactor));
+    },
+    [],
+  );
+
   const lockTodayFocusCommit = useCallback(() => {
     setProgress((prev) => lockTodayFocus(prev, activeUniverse.id));
   }, [activeUniverse.id]);
@@ -766,6 +796,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
           },
           boardQuest.xpReward,
           boardQuest.reputationReward,
+          getLocalDateKey(),
+          {
+            highRisk:
+              boardQuest.source === 'user' && isHighRiskQuest(boardQuest.riskLevel),
+          },
         );
       });
 
@@ -1157,6 +1192,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       archiveUserQuest,
       submitDailyAwareness,
       dismissDailyAwarenessCheck,
+      submitWeeklyReview,
       dismissXpBurst,
       markChapterIntroSeen,
       dismissHqTutorial,
@@ -1254,6 +1290,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       startUnlockedSagaFromChapterComplete,
       storyLine,
       submitDailyAwareness,
+      submitWeeklyReview,
       startQuestNow,
       switchSaga,
       updateUserQuest,

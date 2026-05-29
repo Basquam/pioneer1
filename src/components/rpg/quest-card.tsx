@@ -28,6 +28,7 @@ import {
   type ReadinessItemKey,
 } from '@/lib/quest-readiness';
 import { formatStarterMoveLine } from '@/lib/two-minute-starter';
+import { formatQuestRiskCardLine, resolveQuestRiskLevel } from '@/lib/quest-risk';
 import { getTaskCategoryMeta } from '@/lib/task-categories';
 import type { BoardQuest } from '@/types/narrative';
 
@@ -207,6 +208,11 @@ export function QuestCard({ quest, index }: QuestCardProps) {
             {formatAfterRewardCardLine(quest.afterQuestReward, activeUniverse.id)}
           </Text>
         )}
+        {quest.source === 'user' && (
+          <Text style={[styles.riskLine, { color: palette.fog }]} numberOfLines={1}>
+            {formatQuestRiskCardLine(resolveQuestRiskLevel(quest.riskLevel), activeUniverse.id)}
+          </Text>
+        )}
         {quest.source === 'user' && quest.readinessScore != null && quest.readinessChecklist && (
           <View style={[styles.readinessRow, { borderTopColor: 'rgba(255,255,255,0.08)' }]}>
             <Text style={[styles.readinessTitle, { color: palette.gold }]}>
@@ -328,6 +334,13 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
   afterReward: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 10,
+    letterSpacing: 0.5,
+    lineHeight: 14,
+    fontStyle: 'italic',
+  },
+  riskLine: {
     fontFamily: GameFonts.uiSemi,
     fontSize: 10,
     letterSpacing: 0.5,

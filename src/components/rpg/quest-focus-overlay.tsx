@@ -36,6 +36,7 @@ import {
 } from '@/lib/decisive-moment';
 import { getAfterQuestRewardCopy } from '@/lib/after-quest-reward';
 import { formatStarterMoveLine } from '@/lib/two-minute-starter';
+import { formatQuestRiskFocusLine, resolveQuestRiskLevel } from '@/lib/quest-risk';
 
 type RitualStep = 0 | 1 | 2 | 3 | 4;
 
@@ -196,6 +197,15 @@ export function QuestFocusOverlay() {
             </View>
 
             <Text style={[styles.narrativeTitle, { color: palette.bone }]}>{focusQuest.narrativeTitle}</Text>
+
+            {focusQuest.source === 'user' && (
+              <Text style={[styles.riskFocusLine, { color: palette.fog }]}>
+                {formatQuestRiskFocusLine(
+                  resolveQuestRiskLevel(focusQuest.riskLevel),
+                  activeUniverse.id,
+                )}
+              </Text>
+            )}
 
             <View style={[styles.section, { borderColor: palette.panelBorder }]}>
               <Text style={[styles.sectionLabel, { color: palette.gold }]}>{taskSectionLabel}</Text>
@@ -410,6 +420,13 @@ const styles = StyleSheet.create({
     fontSize: 26,
     lineHeight: 32,
     letterSpacing: 0.5,
+  },
+  riskFocusLine: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 11,
+    letterSpacing: 0.5,
+    lineHeight: 16,
+    fontStyle: 'italic',
   },
   section: {
     borderTopWidth: 1,

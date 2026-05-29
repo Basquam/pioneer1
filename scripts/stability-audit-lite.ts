@@ -57,6 +57,7 @@ function baseProgress(): PlayerProgress {
     dailyAwarenessByDate: {},
     dailyAwarenessDismissedDates: [],
     templateQuestStartedAt: {},
+    weeklyReviewByWeek: {},
   } as PlayerProgress;
 
   for (const universe of UNIVERSES) {

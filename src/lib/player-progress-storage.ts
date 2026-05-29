@@ -9,6 +9,7 @@ import {
   sanitizeDailyAwarenessByDate,
   sanitizeDailyAwarenessDismissedDates,
 } from '@/lib/daily-awareness';
+import { pruneWeeklyReviewByWeek, sanitizeWeeklyReviewByWeek } from '@/lib/weekly-review';
 import { findUniverse } from '@/lib/narrative-state';
 import { narrativeWarn } from '@/lib/narrative-state-debug';
 import type { PlayerProgress } from '@/types/narrative';
@@ -164,6 +165,7 @@ export function createInitialProgress(): PlayerProgress {
     dailyAwarenessByDate: {},
     dailyAwarenessDismissedDates: [],
     templateQuestStartedAt: {},
+    weeklyReviewByWeek: {},
   };
 }
 
@@ -206,6 +208,7 @@ function normalizeProgress(raw: Partial<PlayerProgress> & Record<string, unknown
       raw.dailyAwarenessDismissedDates,
     ),
     templateQuestStartedAt: sanitizeTemplateQuestStartedAt(raw.templateQuestStartedAt),
+    weeklyReviewByWeek: sanitizeWeeklyReviewByWeek(raw.weeklyReviewByWeek),
   };
 
   const universeForMigration = findUniverse(merged.selectedUniverseId) ?? DUST_AND_IRON_UNIVERSE;

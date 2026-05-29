@@ -1,4 +1,5 @@
 import { getLocalDateKey } from '@/lib/daily-streak';
+import { pruneWeeklyReviewByWeek } from '@/lib/weekly-review';
 import type { DailyActivity, PlayerProgress, QuestFrictionReason, TaskCategory, UserQuest } from '@/types/narrative';
 
 export const MAX_STORED_USER_QUESTS = 300;
@@ -20,6 +21,7 @@ const EMPTY_ACTIVITY: DailyActivity = {
   xpEarned: 0,
   reputationEarned: 0,
   chaptersCompleted: 0,
+  highRiskQuestsCompleted: 0,
 };
 
 function isTaskCategory(value: unknown): value is TaskCategory {
@@ -103,6 +105,11 @@ export function sanitizeUserQuest(raw: unknown): UserQuest | null {
     sanitized.afterQuestReward = quest.afterQuestReward;
   }
 
+  const riskLevel = typeof quest.riskLevel === 'string' ? quest.riskLevel : null;
+  if (riskLevel === 'low' || riskLevel === 'standard' || riskLevel === 'high') {
+    sanitized.riskLevel = riskLevel;
+  }
+
   if (Array.isArray(quest.frictionReviews)) {
     const reviews = quest.frictionReviews
       .map((entry) => sanitizeFrictionReview(entry))
@@ -180,6 +187,8 @@ function sanitizeDailyActivity(raw: unknown): DailyActivity | null {
       typeof activity.reputationEarned === 'number' ? activity.reputationEarned : 0,
     chaptersCompleted:
       typeof activity.chaptersCompleted === 'number' ? activity.chaptersCompleted : 0,
+    highRiskQuestsCompleted:
+      typeof activity.highRiskQuestsCompleted === 'number' ? activity.highRiskQuestsCompleted : 0,
   };
 }
 
@@ -217,6 +226,11 @@ export function sanitizePersistedProgress(progress: PlayerProgress): PlayerProgr
     activityByDate: sanitizeActivityByDate(progress.activityByDate),
     dailyAwarenessByDate,
     dailyAwarenessDismissedDates,
+    weeklyReviewByWeek: pruneWeeklyReviewByWeek(
+      progress.weeklyReviewByWeek ?? {},
+      new Date(),
+      ACTIVITY_RETENTION_DAYS,
+    ),
   };
 }
 

@@ -46,7 +46,13 @@ import {
   getDefaultRecoveryTaskTitle,
   RECOVERY_QUEST_CATEGORIES,
 } from '@/lib/recovery-quest';
-import type { TaskCategory } from '@/types/narrative';
+import {
+  DEFAULT_QUEST_RISK_LEVEL,
+  getHighRiskSuggestionLines,
+  getQuestRiskFlavorLabel,
+  getQuestRiskOptions,
+} from '@/lib/quest-risk';
+import type { QuestRiskLevel, TaskCategory } from '@/types/narrative';
 
 type AddQuestSheetProps = {
   visible: boolean;
@@ -66,12 +72,24 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
   const [prepStepTitle, setPrepStepTitle] = useState('');
   const [rewardEnabled, setRewardEnabled] = useState(false);
   const [rewardTitle, setRewardTitle] = useState('');
+  const [riskLevel, setRiskLevel] = useState<QuestRiskLevel>(DEFAULT_QUEST_RISK_LEVEL);
 
   const starterCopy = getStarterToggleCopy(activeUniverse.id);
   const prepCopy = getQuestPrepCopy(activeUniverse.id);
   const rewardCopy = getAfterQuestRewardCopy(activeUniverse.id);
   const focusLockCopy = getFocusLockCopy(activeUniverse.id);
   const prepPresets = useMemo(() => getPrepPresets(category), [category]);
+  const riskOptions = useMemo(() => getQuestRiskOptions(), []);
+  const highRiskSuggestions = useMemo(
+    () =>
+      riskLevel === 'high'
+        ? getHighRiskSuggestionLines({
+            starterEnabled: easierToStart,
+            prepEnabled,
+          })
+        : [],
+    [easierToStart, prepEnabled, riskLevel],
+  );
   const categoryOptions = addQuestRecoveryMode ? RECOVERY_QUEST_CATEGORIES : TASK_CATEGORIES;
   const trimmedTitle = title.trim();
   const suggestedStarter = useMemo(
@@ -99,6 +117,7 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
     setPrepStepTitle('');
     setRewardEnabled(false);
     setRewardTitle('');
+    setRiskLevel(DEFAULT_QUEST_RISK_LEVEL);
   };
 
   const handleClose = () => {
@@ -116,6 +135,7 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
       ...(starter ? { starterTaskTitle: starter } : {}),
       ...(prep ? { prepStepTitle: prep } : {}),
       ...(reward ? { afterQuestReward: reward } : {}),
+      riskLevel,
     });
     resetForm();
   };
@@ -349,6 +369,55 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
               })}
             </ScrollView>
             <Text style={[styles.categoryHint, { color: palette.fog }]}>{selectedMeta.description}</Text>
+
+            <Text style={[styles.label, { color: palette.gold }]}>QUEST RISK</Text>
+            <Text style={[styles.categoryHelper, { color: palette.fog }]}>
+              Optional — pick what feels just right, not too easy or too heavy.
+            </Text>
+            <View style={styles.riskOptions}>
+              {riskOptions.map((option) => {
+                const selected = riskLevel === option.level;
+                const flavorLabel = getQuestRiskFlavorLabel(option.level, activeUniverse.id);
+                return (
+                  <Pressable
+                    key={option.level}
+                    onPress={() => {
+                      void Haptics.selectionAsync();
+                      setRiskLevel(option.level);
+                    }}
+                    style={[
+                      styles.riskChip,
+                      {
+                        backgroundColor: selected ? palette.primary : palette.panel,
+                        borderColor: selected ? palette.gold : palette.panelBorder,
+                      },
+                    ]}>
+                    <Text style={[styles.riskSimple, { color: selected ? palette.bone : palette.fog }]}>
+                      {option.simpleLabel}
+                    </Text>
+                    <Text style={[styles.riskFlavor, { color: selected ? palette.gold : `${palette.fog}cc` }]}>
+                      {flavorLabel}
+                    </Text>
+                    <Text
+                      style={[styles.riskDescription, { color: selected ? palette.fog : `${palette.fog}aa` }]}
+                      numberOfLines={2}>
+                      {option.description}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+
+            {highRiskSuggestions.length > 0 && (
+              <View style={[styles.highRiskBox, { backgroundColor: palette.panel, borderColor: palette.accent }]}>
+                <Text style={[styles.highRiskTitle, { color: palette.gold }]}>HIGH-RISK TIPS</Text>
+                {highRiskSuggestions.map((line) => (
+                  <Text key={line} style={[styles.highRiskLine, { color: palette.bone }]}>
+                    · {line}
+                  </Text>
+                ))}
+              </View>
+            )}
 
             <View style={[styles.toggleRow, { borderColor: palette.panelBorder }]}>
               <View style={styles.toggleCopy}>
@@ -683,5 +752,48 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     lineHeight: 17,
     marginTop: -4,
+  },
+  riskOptions: {
+    gap: 8,
+  },
+  riskChip: {
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    gap: 2,
+    transform: [{ skewX: '-2deg' }],
+  },
+  riskSimple: {
+    fontFamily: GameFonts.ui,
+    fontSize: 12,
+    letterSpacing: 1,
+  },
+  riskFlavor: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 10,
+    letterSpacing: 0.5,
+  },
+  riskDescription: {
+    fontFamily: GameFonts.displayRegular,
+    fontSize: 11,
+    lineHeight: 15,
+    fontStyle: 'italic',
+  },
+  highRiskBox: {
+    borderWidth: 1,
+    padding: 12,
+    gap: 6,
+    transform: [{ skewX: '-2deg' }],
+  },
+  highRiskTitle: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 10,
+    letterSpacing: 2,
+  },
+  highRiskLine: {
+    fontFamily: GameFonts.displayRegular,
+    fontSize: 12,
+    lineHeight: 17,
+    fontStyle: 'italic',
   },
 });

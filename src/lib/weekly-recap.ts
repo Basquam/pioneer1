@@ -11,6 +11,7 @@ export type WeeklyRecapStats = {
   xpEarned: number;
   reputationEarned: number;
   chaptersCompleted: number;
+  highRiskQuestsCompleted: number;
   dailyStreak: number;
   flavorLine: string;
 };
@@ -32,6 +33,11 @@ export function getCurrentWeekDateKeys(date = new Date()): string[] {
     day.setDate(weekStart.getDate() + index);
     return getLocalDateKey(day);
   });
+}
+
+/** Local week key — Sunday start date (YYYY-MM-DD) in the user's timezone. */
+export function getLocalWeekKey(date = new Date()): string {
+  return getCurrentWeekDateKeys(date)[0]!;
 }
 
 export function formatWeekRange(startKey: string, endKey: string): string {
@@ -79,12 +85,15 @@ export function recordQuestCompleted(
   xpEarned: number,
   reputationEarned: number,
   dateKey: string = getLocalDateKey(),
+  options?: { highRisk?: boolean },
 ): PlayerProgress {
   return upsertDailyActivity(progress, dateKey, (current) => ({
+    ...current,
     questsCompleted: current.questsCompleted + 1,
     xpEarned: current.xpEarned + xpEarned,
     reputationEarned: current.reputationEarned + reputationEarned,
-    chaptersCompleted: current.chaptersCompleted,
+    highRiskQuestsCompleted:
+      current.highRiskQuestsCompleted + (options?.highRisk ? 1 : 0),
   }));
 }
 
@@ -111,6 +120,7 @@ export function computeWeeklyRecap(
   let xpEarned = 0;
   let reputationEarned = 0;
   let chaptersCompleted = 0;
+  let highRiskQuestsCompleted = 0;
 
   for (const dateKey of weekKeys) {
     const day = activity[dateKey];
@@ -119,6 +129,7 @@ export function computeWeeklyRecap(
     xpEarned += day.xpEarned;
     reputationEarned += day.reputationEarned;
     chaptersCompleted += day.chaptersCompleted;
+    highRiskQuestsCompleted += day.highRiskQuestsCompleted;
   }
 
   return {
@@ -127,6 +138,7 @@ export function computeWeeklyRecap(
     xpEarned,
     reputationEarned,
     chaptersCompleted,
+    highRiskQuestsCompleted,
     dailyStreak: progress.dailyStreak,
     flavorLine: getWeeklyRecapFlavor(selectedSagaId, universeId),
   };

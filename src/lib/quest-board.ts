@@ -1,6 +1,7 @@
 import type { BoardQuest, Chapter, PlayerProgress, QuestTemplate, Saga, UserQuest } from '@/types/narrative';
 
 import { resolveQuestCreatedOnDate } from '@/lib/daily-focus';
+import { resolveQuestRiskLevel } from '@/lib/quest-risk';
 import { getLocalDateKey } from '@/lib/daily-streak';
 import { isUserQuestArchived, shouldShowFrictionReview } from '@/lib/quest-friction';
 import { getLockedFocusQuestIdSet } from '@/lib/focus-lock';
@@ -65,6 +66,7 @@ export function userQuestToBoardQuest(
     ...(quest.afterCurrentHabit ? { afterCurrentHabit: quest.afterCurrentHabit } : {}),
     ...(quest.startedAt ? { startedAt: quest.startedAt, isStarted: true } : {}),
     ...(quest.afterQuestReward ? { afterQuestReward: quest.afterQuestReward } : {}),
+    riskLevel: resolveQuestRiskLevel(quest.riskLevel),
   };
 
   if (!boardQuest.createdOnDate) {

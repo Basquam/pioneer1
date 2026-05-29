@@ -256,7 +256,11 @@ export type UserQuest = {
   startedAt?: string;
   /** Optional real-life reward paired with completing this quest. */
   afterQuestReward?: string;
+  /** Goldilocks risk sizing — low, standard, or high. */
+  riskLevel?: QuestRiskLevel;
 };
+
+export type QuestRiskLevel = 'low' | 'standard' | 'high';
 
 export type QuestReadinessChecklist = {
   starter: boolean;
@@ -309,6 +313,7 @@ export type BoardQuest = {
   /** True when the quest has a recorded start moment. */
   isStarted?: boolean;
   afterQuestReward?: string;
+  riskLevel?: QuestRiskLevel;
 };
 
 export type DailyActivity = {
@@ -316,6 +321,7 @@ export type DailyActivity = {
   xpEarned: number;
   reputationEarned: number;
   chaptersCompleted: number;
+  highRiskQuestsCompleted: number;
 };
 
 export type DailyAwarenessBlocker =
@@ -330,6 +336,31 @@ export type DailyAwarenessEntry = {
   date: string;
   selectedBlocker: DailyAwarenessBlocker;
   createdAt: string;
+};
+
+export type WeeklyReviewHelpedFactor =
+  | 'focus-mode'
+  | 'starter-moves'
+  | 'prep-steps'
+  | 'locked-focus'
+  | 'character-story'
+  | 'ambience'
+  | 'reward-rituals';
+
+export type WeeklyReviewSlowdownFactor =
+  | 'too-many-quests'
+  | 'tasks-too-vague'
+  | 'low-energy'
+  | 'wrong-timing'
+  | 'messy-environment'
+  | 'emotional-resistance'
+  | 'distractions';
+
+export type WeeklyReviewEntry = {
+  weekKey: string;
+  helpedFactors: WeeklyReviewHelpedFactor[];
+  slowdownFactor: WeeklyReviewSlowdownFactor;
+  submittedAt: string;
 };
 
 export type PlayerProgress = {
@@ -388,4 +419,6 @@ export type PlayerProgress = {
   dailyAwarenessDismissedDates: string[];
   /** Chapter bounty template quest ids → ISO timestamp when START NOW was tapped. */
   templateQuestStartedAt: Record<string, string>;
+  /** Weekly reflection answers keyed by local week (Sunday start date YYYY-MM-DD). */
+  weeklyReviewByWeek: Record<string, WeeklyReviewEntry>;
 };
