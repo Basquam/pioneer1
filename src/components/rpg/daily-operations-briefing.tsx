@@ -23,6 +23,7 @@ import { canLockTodayFocus, getFocusLockCopy } from '@/lib/focus-lock';
 import { buildPromiseCard } from '@/lib/promise-card';
 import { getDailyCrewCodeLine } from '@/lib/crew-code';
 import { QuickCaptureInput } from '@/components/rpg/quick-capture-input';
+import { TraitAlignedSuggestionsPanel } from '@/components/rpg/trait-aligned-suggestions';
 
 export function DailyOperationsBriefing() {
   const ui = useUniverseUiCopy();
@@ -116,6 +117,8 @@ export function DailyOperationsBriefing() {
         <TodayFocusDisplay variant="briefing" />
 
         <QuickCaptureInput />
+
+        <TraitAlignedSuggestionsPanel />
 
         {isTodayFocusLocked ? (
           <View style={[styles.lockedBlock, { borderColor: goldAccent, backgroundColor: `${palette.primary}33` }]}>

@@ -164,6 +164,11 @@ export function QuestCompleteOverlay() {
                   {questComplete.identityVoteGainLine && (
                     <View style={styles.outcomeBlock}>
                       <Text style={[styles.outcomeLabel, { color: palette.gold }]}>IDENTITY</Text>
+                      {questComplete.desiredIdentityHighlightLine ? (
+                        <Text style={[styles.desiredIdentityHighlight, { color: palette.gold }]}>
+                          {questComplete.desiredIdentityHighlightLine}
+                        </Text>
+                      ) : null}
                       <Text style={[styles.identityVoteGain, { color: palette.bone }]}>
                         {questComplete.identityVoteGainLine}
                       </Text>
@@ -375,6 +380,14 @@ const styles = StyleSheet.create({
     fontSize: 18,
     letterSpacing: 1.5,
     textAlign: 'center',
+  },
+  desiredIdentityHighlight: {
+    fontFamily: GameFonts.displayRegular,
+    fontSize: 12,
+    lineHeight: 17,
+    fontStyle: 'italic',
+    textAlign: 'center',
+    marginBottom: 4,
   },
   identityUniverseLine: {
     fontFamily: GameFonts.displayRegular,

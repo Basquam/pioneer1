@@ -7,6 +7,7 @@ import {
   getUniverseEvidenceFlavorLine,
   groupEvidenceByDate,
 } from '@/lib/evidence-log';
+import { isDesiredIdentityTraitLabel } from '@/lib/identity-compass';
 import { getTaskCategoryMeta } from '@/lib/task-categories';
 
 export function EvidenceTimelinePanel() {
@@ -31,11 +32,21 @@ export function EvidenceTimelinePanel() {
           {group.events.map((event) => {
             const categoryMeta = getTaskCategoryMeta(event.category);
             const flavorLine = getUniverseEvidenceFlavorLine(event.universeId);
+            const isDesired = isDesiredIdentityTraitLabel(
+              event.identityTraitGained,
+              playerProgress.desiredIdentityTraits,
+            );
 
             return (
               <View
                 key={event.id}
-                style={[styles.eventRow, { borderColor: palette.panelBorder, backgroundColor: palette.panel }]}>
+                style={[
+                  styles.eventRow,
+                  {
+                    borderColor: isDesired ? palette.gold : palette.panelBorder,
+                    backgroundColor: isDesired ? `${palette.primary}22` : palette.panel,
+                  },
+                ]}>
                 <Text style={[styles.questTitle, { color: palette.bone }]} numberOfLines={2}>
                   {event.questTitle}
                 </Text>
@@ -48,8 +59,9 @@ export function EvidenceTimelinePanel() {
 
                 <View style={styles.metaRow}>
                   {event.identityTraitGained ? (
-                    <Text style={[styles.traitLabel, { color: palette.accent }]}>
+                    <Text style={[styles.traitLabel, { color: isDesired ? palette.gold : palette.accent }]}>
                       +1 {event.identityTraitGained}
+                      {isDesired ? ' · Compass' : ''}
                     </Text>
                   ) : null}
                   <Text style={[styles.rewards, { color: palette.gold }]}>

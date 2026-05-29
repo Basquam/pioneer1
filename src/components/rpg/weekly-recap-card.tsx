@@ -17,6 +17,10 @@ import {
   WEEKLY_REVIEW_HELPED_OPTIONS,
   WEEKLY_REVIEW_SLOWDOWN_OPTIONS,
 } from '@/lib/weekly-review';
+import {
+  formatDesiredTraitWeeklyLine,
+  getDesiredTraitWeeklyProgress,
+} from '@/lib/identity-compass';
 import type { WeeklyReviewHelpedFactor, WeeklyReviewSlowdownFactor } from '@/types/narrative';
 
 export function WeeklyRecapCard() {
@@ -36,6 +40,10 @@ export function WeeklyRecapCard() {
   const recap = useMemo(
     () => computeWeeklyRecap(playerProgress, activeSaga.id, new Date(), activeUniverse.id),
     [activeSaga.id, activeUniverse.id, playerProgress],
+  );
+  const desiredTraitProgress = useMemo(
+    () => getDesiredTraitWeeklyProgress(playerProgress),
+    [playerProgress],
   );
 
   const isQuietWeek =
@@ -83,6 +91,12 @@ export function WeeklyRecapCard() {
         <Text style={[styles.eyebrow, { color: palette.gold }]}>WEEKLY REVIEW</Text>
         <Text style={[styles.weekLabel, { color: palette.fog }]}>{recap.weekLabel}</Text>
         <Text style={[styles.flavor, { color: palette.bone }]}>{recap.flavorLine}</Text>
+
+        {desiredTraitProgress ? (
+          <Text style={[styles.compassLine, { color: palette.gold }]}>
+            {formatDesiredTraitWeeklyLine(desiredTraitProgress)}
+          </Text>
+        ) : null}
 
         {isQuietWeek ? (
           <Text style={[styles.quietHint, { color: palette.fog }]}>
@@ -270,6 +284,12 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 22,
     fontStyle: 'italic',
+  },
+  compassLine: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 11,
+    letterSpacing: 0.4,
+    lineHeight: 16,
   },
   quietHint: {
     fontFamily: GameFonts.displayRegular,

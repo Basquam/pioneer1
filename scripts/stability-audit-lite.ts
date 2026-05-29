@@ -11,6 +11,19 @@ import {
 import { resolveNarrativeState } from '../src/lib/narrative-state';
 import { createEmptyIdentityVotes } from '../src/lib/identity-votes';
 import {
+  formatDesiredIdentityHighlight,
+  getDesiredTraitWeeklyProgress,
+  getIdentityCompassFlavor,
+  isDesiredIdentityTrait,
+  sanitizeDesiredIdentityTraits,
+  toggleDesiredIdentityTrait,
+} from '../src/lib/identity-compass';
+import {
+  getTraitAlignedSuggestions,
+  getTraitSuggestionFlavor,
+  TRAIT_TO_SUGGESTED_CATEGORIES,
+} from '../src/lib/trait-aligned-suggestions';
+import {
   appendEvidenceEvent,
   createEvidenceEvent,
   groupEvidenceByDate,
@@ -119,6 +132,7 @@ function baseProgress(): PlayerProgress {
     activityByDate: {},
     lastSagaByUniverseId: {},
     identityVotes: createEmptyIdentityVotes(),
+    desiredIdentityTraits: [],
     lastMissedDate: null,
     recoveryQuestOfferedForDate: null,
     recoveryQuestCompletedDates: [],
@@ -558,6 +572,47 @@ assert(chainBuilt.childQuests[0]?.xpReward === 25, 'child split xp');
 const chainProgress = computeChainProgress(chainBuilt.updatedParent, chainBuilt.childQuests);
 assert(chainProgress?.completed === 0 && chainProgress.total === 4, 'chain progress initial');
 assert(formatChainProgressLabel(2, 4) === 'Quest Chain: 2/4 steps cleared', 'chain progress label');
+
+// Identity compass
+assert(getIdentityCompassFlavor('neuronet') === 'Choose the signal you want to strengthen.', 'compass flavor');
+assert(sanitizeDesiredIdentityTraits(['reliable', 'invalid', 'reliable']).length === 1, 'sanitize desired traits');
+assert(toggleDesiredIdentityTrait(['organized'], 'curious').length === 2, 'toggle desired trait');
+assert(isDesiredIdentityTrait('reliable', ['reliable', 'curious']), 'desired trait match');
+assert(
+  formatDesiredIdentityHighlight('reliable') === "You reinforced Reliable — a trait you're building toward.",
+  'desired highlight line',
+);
+const compassProgress = {
+  ...baseProgress(),
+  desiredIdentityTraits: sanitizeDesiredIdentityTraits(['reliable', 'organized']),
+  evidenceLog: [
+    createEvidenceEvent({
+      universeId: 'dust-and-iron',
+      sagaId: dustSaga.id,
+      chapterId: dustChapter.id,
+      questTitle: 'Handle operations',
+      category: 'work',
+      identityTraitGained: 'Reliable',
+      xpEarned: 10,
+      reputationEarned: 2,
+      source: 'userQuest',
+      date: '2026-05-27',
+    }),
+  ],
+};
+const weeklyCompass = getDesiredTraitWeeklyProgress(compassProgress, new Date('2026-05-27T12:00:00'));
+assert(weeklyCompass?.traitKey === 'reliable', 'weekly desired trait progress');
+const legacyCompass = sanitizePersistedProgress({ ...baseProgress(), desiredIdentityTraits: undefined as never });
+assert(Array.isArray(legacyCompass.desiredIdentityTraits), 'legacy import defaults desired traits');
+
+// Trait-aligned suggestions
+assert(TRAIT_TO_SUGGESTED_CATEGORIES.reliable.includes('work'), 'reliable maps to work');
+const traitSuggestions = getTraitAlignedSuggestions(['reliable', 'organized']);
+assert(traitSuggestions.length === 2, 'two trait suggestions');
+assert(traitSuggestions[0]?.title === 'Review one important work item', 'reliable suggestion title');
+assert(traitSuggestions[1]?.category === 'cleaning', 'organized suggestion category');
+assert(getTraitSuggestionFlavor('dust-and-iron') === 'Choose a trail that proves your badge.', 'trait suggestion flavor');
+assert(getTraitAlignedSuggestions([]).length === 0, 'empty desired traits yields no suggestions');
 
 if (failures.length) {
   console.error('FAILED:\n' + failures.map((f) => ` - ${f}`).join('\n'));

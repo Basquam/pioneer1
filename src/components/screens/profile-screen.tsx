@@ -1,6 +1,6 @@
 import { type Href, router } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View, Pressable } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { AmbientAudioToggle } from '@/components/rpg/ambient-audio-toggle';
@@ -9,6 +9,7 @@ import { CharacterCard } from '@/components/rpg/character-card';
 import { CinematicEmptyState } from '@/components/rpg/cinematic-empty-state';
 import { DailyStreakDisplay } from '@/components/rpg/daily-streak-display';
 import { BecomingPathPanel } from '@/components/rpg/identity-evidence-panel';
+import { IdentityCompassSheet } from '@/components/rpg/identity-compass-sheet';
 import { EvidenceTimelinePanel } from '@/components/rpg/evidence-timeline-panel';
 import { MomentumReservePanel } from '@/components/rpg/momentum-reserve-panel';
 import { TodayFocusDisplay } from '@/components/rpg/today-focus-display';
@@ -39,6 +40,7 @@ import { getSagaActiveChapter } from '@/lib/saga-progress';
 export function ProfileScreen() {
   const ui = useUniverseUiCopy();
   const [glossaryVisible, setGlossaryVisible] = useState(false);
+  const [identityCompassVisible, setIdentityCompassVisible] = useState(false);
   const {
     activeUniverse,
     activeSaga,
@@ -176,6 +178,13 @@ export function ProfileScreen() {
         <ProfileSection
           title="BECOMING"
           hint="Every quest is evidence of who you are becoming.">
+          <Pressable
+            onPress={() => setIdentityCompassVisible(true)}
+            style={[styles.compassEditButton, { borderColor: activeUniverse.palette.gold }]}>
+            <Text style={[styles.compassEditLabel, { color: activeUniverse.palette.gold }]}>
+              EDIT IDENTITY COMPASS
+            </Text>
+          </Pressable>
           <BecomingPathPanel />
         </ProfileSection>
 
@@ -246,6 +255,10 @@ export function ProfileScreen() {
         </ProfileSection>
 
         <GlossarySheet visible={glossaryVisible} onClose={() => setGlossaryVisible(false)} />
+        <IdentityCompassSheet
+          visible={identityCompassVisible}
+          onClose={() => setIdentityCompassVisible(false)}
+        />
 
         <ProfileSection title="BACKUP" badge="experimental">
           <ProgressBackupPanel embedded />
@@ -306,6 +319,19 @@ function OriginRow({
 const styles = StyleSheet.create({
   firstSection: {
     marginTop: 0,
+  },
+  compassEditButton: {
+    alignSelf: 'flex-start',
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    transform: [{ skewX: '-4deg' }],
+    marginBottom: 4,
+  },
+  compassEditLabel: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 9,
+    letterSpacing: 1.5,
   },
   card: {
     alignItems: 'center',

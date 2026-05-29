@@ -58,6 +58,7 @@ import {
   resolveAddQuestDefaults,
 } from '@/lib/quest-defaults';
 import { suggestTaskCategory } from '@/lib/suggest-task-category';
+import { formatTraitSuggestionLabel } from '@/lib/trait-aligned-suggestions';
 import type { QuestRiskLevel, RecurrenceType, TaskCategory, WeekdayKey } from '@/types/narrative';
 import {
   getWeekdayKeyForDate,
@@ -78,6 +79,7 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
     addUserQuest,
     addQuestRecoveryMode,
     addQuestInboxPrefill,
+    addQuestTraitSuggestionPrefill,
     isTodayFocusLocked,
     openQuestPackSheet,
   } = useGame();
@@ -128,6 +130,7 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
   );
   const showCategorySuggestion =
     !addQuestRecoveryMode &&
+    !addQuestTraitSuggestionPrefill &&
     !categoryManuallySelected &&
     suggestedTaskCategory != null &&
     category !== suggestedTaskCategory;
@@ -311,7 +314,7 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
   }, [visible]);
 
   useEffect(() => {
-    if (!visible || !addQuestInboxPrefill || addQuestRecoveryMode) return;
+    if (!visible || !addQuestInboxPrefill || addQuestRecoveryMode || addQuestTraitSuggestionPrefill) return;
 
     setTitle(addQuestInboxPrefill.title);
     setCategoryManuallySelected(false);
@@ -321,7 +324,23 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
       setCategory(null);
     }
     setBehaviorToolsOpen(true);
-  }, [visible, addQuestInboxPrefill, addQuestRecoveryMode]);
+  }, [visible, addQuestInboxPrefill, addQuestRecoveryMode, addQuestTraitSuggestionPrefill]);
+
+  useEffect(() => {
+    if (!visible || !addQuestTraitSuggestionPrefill || addQuestRecoveryMode) return;
+
+    const prefill = addQuestTraitSuggestionPrefill;
+    setTitle(prefill.title);
+    setCategory(prefill.category);
+    setCategoryManuallySelected(true);
+    setEasierToStart(prefill.enableStarter);
+    if (prefill.enableStarter) {
+      setStarterTitle(generateStarterTaskTitle(prefill.title, prefill.category));
+    } else {
+      setStarterTitle('');
+    }
+    setBehaviorToolsOpen(true);
+  }, [visible, addQuestTraitSuggestionPrefill, addQuestRecoveryMode]);
 
   useEffect(() => {
     if (!visible || addQuestRecoveryMode || category == null) return;
@@ -455,6 +474,21 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
               ]}
               autoFocus
             />
+
+            {addQuestTraitSuggestionPrefill ? (
+              <View
+                style={[
+                  styles.traitSuggestionBox,
+                  { borderColor: palette.gold, backgroundColor: palette.panel },
+                ]}>
+                <Text style={[styles.traitSuggestionLabel, { color: palette.gold }]}>
+                  Building toward: {formatTraitSuggestionLabel(addQuestTraitSuggestionPrefill.traitKey)}
+                </Text>
+                <Text style={[styles.traitSuggestionReason, { color: palette.fog }]}>
+                  {addQuestTraitSuggestionPrefill.reason}
+                </Text>
+              </View>
+            ) : null}
 
             {showCategorySuggestion && suggestedTaskCategory ? (
               <View
@@ -1014,6 +1048,24 @@ const styles = StyleSheet.create({
     fontFamily: GameFonts.uiSemi,
     fontSize: 9,
     letterSpacing: 1.5,
+  },
+  traitSuggestionBox: {
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    gap: 4,
+    transform: [{ skewX: '-2deg' }],
+  },
+  traitSuggestionLabel: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 11,
+    letterSpacing: 0.6,
+  },
+  traitSuggestionReason: {
+    fontFamily: GameFonts.displayRegular,
+    fontSize: 11,
+    lineHeight: 16,
+    fontStyle: 'italic',
   },
   toggleRow: {
     borderTopWidth: 1,

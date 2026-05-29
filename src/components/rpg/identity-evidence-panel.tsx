@@ -6,12 +6,14 @@ import {
   formatNextMilestoneLabel,
   getAllTraitBecomingProgress,
 } from '@/lib/identity-milestones';
+import { isDesiredIdentityTrait } from '@/lib/identity-compass';
 import { getTotalIdentityVotes } from '@/lib/identity-votes';
 
 export function BecomingPathPanel() {
   const { activeUniverse, playerProgress } = useGame();
   const { palette } = activeUniverse;
   const votes = playerProgress.identityVotes;
+  const desiredTraits = playerProgress.desiredIdentityTraits ?? [];
   const total = getTotalIdentityVotes(votes);
   const traits = getAllTraitBecomingProgress(votes);
 
@@ -27,15 +29,27 @@ export function BecomingPathPanel() {
         {traits.map((entry) => {
           const tierLabel = entry.currentTier?.label ?? 'Awaiting';
           const showProgress = entry.nextTier !== null;
+          const isDesired = isDesiredIdentityTrait(entry.trait.key, desiredTraits);
 
           return (
             <View
               key={entry.trait.key}
-              style={[styles.traitRow, { borderColor: palette.panelBorder, backgroundColor: palette.panel }]}>
+              style={[
+                styles.traitRow,
+                {
+                  borderColor: isDesired ? palette.gold : palette.panelBorder,
+                  backgroundColor: isDesired ? `${palette.primary}33` : palette.panel,
+                },
+              ]}>
               <View style={styles.traitHeader}>
-                <Text style={[styles.traitName, { color: palette.bone }]} numberOfLines={1}>
-                  {entry.trait.label}
-                </Text>
+                <View style={styles.traitTitleWrap}>
+                  <Text style={[styles.traitName, { color: palette.bone }]} numberOfLines={1}>
+                    {entry.trait.label}
+                  </Text>
+                  {isDesired ? (
+                    <Text style={[styles.compassBadge, { color: palette.gold }]}>COMPASS</Text>
+                  ) : null}
+                </View>
                 <Text style={[styles.voteCount, { color: palette.gold }]}>{entry.voteCount}</Text>
               </View>
 
@@ -94,6 +108,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: 10,
+  },
+  traitTitleWrap: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    minWidth: 0,
+  },
+  compassBadge: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 8,
+    letterSpacing: 1.2,
   },
   traitName: {
     fontFamily: GameFonts.ui,

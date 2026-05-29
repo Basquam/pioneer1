@@ -218,6 +218,8 @@ export type QuestCompleteState = {
   };
   /** Shown when the final step of a quest chain clears the parent. */
   questChainCompleteLine?: string;
+  /** Shown when a gained identity vote matches a desired compass trait. */
+  desiredIdentityHighlightLine?: string;
 };
 
 export type QuestFrictionReason =
@@ -538,6 +540,8 @@ export type PlayerProgress = {
   lastSagaByUniverseId: Record<string, string>;
   /** Per-trait identity votes — only increase on quest completion. */
   identityVotes: IdentityVotes;
+  /** Priority traits the user wants to reinforce (1–3). */
+  desiredIdentityTraits: IdentityTraitKey[];
   /** Local date when the user locked today's focus quests. */
   focusLockedDate: string | null;
   /** User quest ids pinned when focus was locked for focusLockedDate. */

@@ -24,8 +24,8 @@ export function OnboardingSagaScreen() {
         footer={
           <GlowButton
             label="BEGIN PROLOGUE"
-            hint={`MEET ${activeUniverse.mentorName.toUpperCase()}`}
-            onPress={() => router.push('/onboarding/intro' as Href)}
+            hint={`NEXT: IDENTITY COMPASS`}
+            onPress={() => router.push('/onboarding/compass' as Href)}
           />
         }>
         <Animated.View entering={FadeInDown.duration(500)}>

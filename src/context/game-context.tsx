@@ -136,6 +136,11 @@ import {
   markInboxItemConverted,
 } from '@/lib/quest-inbox';
 import {
+  formatDesiredIdentityHighlight,
+  isDesiredIdentityTrait,
+  sanitizeDesiredIdentityTraits,
+} from '@/lib/identity-compass';
+import {
   buildQuestChainFromParent,
   formatChainCompleteLine,
   isQuestChainParentBlocked,
@@ -156,6 +161,7 @@ import type {
   Universe,
   UserQuest,
   QuestRiskLevel,
+  IdentityTraitKey,
   CategoryQuestDefaults,
   QuestDefaultsPresetId,
   QuestInboxItem,
@@ -167,6 +173,14 @@ export type AddQuestInboxPrefill = {
   title: string;
   inboxItemId: string;
   suggestedCategory?: TaskCategory;
+};
+
+export type AddQuestTraitSuggestionPrefill = {
+  title: string;
+  category: TaskCategory;
+  traitKey: IdentityTraitKey;
+  reason: string;
+  enableStarter: boolean;
 };
 
 type GameContextValue = {
@@ -200,6 +214,7 @@ type GameContextValue = {
   addQuestSheetOpen: boolean;
   addQuestRecoveryMode: boolean;
   addQuestInboxPrefill: AddQuestInboxPrefill | null;
+  addQuestTraitSuggestionPrefill: AddQuestTraitSuggestionPrefill | null;
   activeInboxItems: QuestInboxItem[];
   improveQuestId: string | null;
   splitQuestChainId: string | null;
@@ -226,6 +241,12 @@ type GameContextValue = {
   openQuestPackSheet: () => void;
   closeQuestPackSheet: () => void;
   openAddQuestSheet: () => void;
+  openAddQuestFromTraitSuggestion: (
+    suggestion: Pick<
+      AddQuestTraitSuggestionPrefill,
+      'title' | 'category' | 'traitKey' | 'reason' | 'enableStarter'
+    >,
+  ) => void;
   openRecoveryQuestSheet: () => void;
   captureInboxTask: (title: string) => void;
   convertInboxItem: (inboxItemId: string) => void;
@@ -259,6 +280,7 @@ type GameContextValue = {
     updates: Partial<CategoryQuestDefaults>,
   ) => void;
   applyQuestDefaultsPreset: (presetId: QuestDefaultsPresetId) => void;
+  setDesiredIdentityTraits: (traits: IdentityTraitKey[]) => void;
   recordFocusDistraction: (questId: string, distraction: QuestDistractionType) => void;
   markFrictionShieldApplied: (questId: string) => void;
   submitDailyAwareness: (blocker: DailyAwarenessBlocker) => void;
@@ -314,6 +336,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [questPackSheetOpen, setQuestPackSheetOpen] = useState(false);
   const [addQuestRecoveryMode, setAddQuestRecoveryMode] = useState(false);
   const [addQuestInboxPrefill, setAddQuestInboxPrefill] = useState<AddQuestInboxPrefill | null>(null);
+  const [addQuestTraitSuggestionPrefill, setAddQuestTraitSuggestionPrefill] =
+    useState<AddQuestTraitSuggestionPrefill | null>(null);
   const [focusQuestId, setFocusQuestId] = useState<string | null>(null);
   const [focusDecisiveMoment, setFocusDecisiveMoment] = useState(false);
   const [improveQuestId, setImproveQuestId] = useState<string | null>(null);
@@ -596,6 +620,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
         setAddQuestSheetOpen(false);
         setAddQuestInboxPrefill(null);
+        setAddQuestTraitSuggestionPrefill(null);
         setQuestCreated(quest);
 
         const questInbox = convertFromInboxItemId
@@ -634,6 +659,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setProgress((prev) => ({
       ...prev,
       questDefaults: buildQuestDefaultsPreset(presetId),
+    }));
+  }, []);
+
+  const setDesiredIdentityTraits = useCallback((traits: IdentityTraitKey[]) => {
+    setProgress((prev) => ({
+      ...prev,
+      desiredIdentityTraits: sanitizeDesiredIdentityTraits(traits),
     }));
   }, []);
 
@@ -696,12 +728,33 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const openAddQuestSheet = useCallback(() => {
     setAddQuestRecoveryMode(false);
     setAddQuestInboxPrefill(null);
+    setAddQuestTraitSuggestionPrefill(null);
     setAddQuestSheetOpen(true);
   }, []);
+
+  const openAddQuestFromTraitSuggestion = useCallback(
+    (suggestion: Pick<
+      AddQuestTraitSuggestionPrefill,
+      'title' | 'category' | 'traitKey' | 'reason' | 'enableStarter'
+    >) => {
+      setAddQuestRecoveryMode(false);
+      setAddQuestInboxPrefill(null);
+      setAddQuestTraitSuggestionPrefill({
+        title: suggestion.title,
+        category: suggestion.category,
+        traitKey: suggestion.traitKey,
+        reason: suggestion.reason,
+        enableStarter: suggestion.enableStarter,
+      });
+      setAddQuestSheetOpen(true);
+    },
+    [],
+  );
 
   const openRecoveryQuestSheet = useCallback(() => {
     setAddQuestRecoveryMode(true);
     setAddQuestInboxPrefill(null);
+    setAddQuestTraitSuggestionPrefill(null);
     setAddQuestSheetOpen(true);
   }, []);
 
@@ -1000,6 +1053,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setAddQuestSheetOpen(false);
     setAddQuestRecoveryMode(false);
     setAddQuestInboxPrefill(null);
+    setAddQuestTraitSuggestionPrefill(null);
   }, []);
 
   const viewCreatedQuestOnBoard = useCallback(() => {
@@ -1232,6 +1286,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
       const afterQuestReward =
         boardQuest.source === 'user' ? boardQuest.afterQuestReward?.trim() : undefined;
       const rewardCopy = getAfterQuestRewardCopy(activeUniverse.id);
+      const desiredIdentityHighlightLine = isDesiredIdentityTrait(traitKey, progress.desiredIdentityTraits)
+        ? formatDesiredIdentityHighlight(traitKey)
+        : undefined;
       setQuestComplete({
         questId,
         source: boardQuest.source,
@@ -1266,6 +1323,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
             }
           : {}),
         ...(questChainCompleteLine ? { questChainCompleteLine } : {}),
+        ...(desiredIdentityHighlightLine ? { desiredIdentityHighlightLine } : {}),
       });
     },
     [activeSaga, activeUniverse, chapterComplete, currentChapter, progress, questComplete, quests, sagaCompletedQuestIds],
@@ -1576,6 +1634,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       addQuestSheetOpen,
       addQuestRecoveryMode,
       addQuestInboxPrefill,
+      addQuestTraitSuggestionPrefill,
       activeInboxItems,
       improveQuestId,
       splitQuestChainId,
@@ -1600,6 +1659,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       openQuestPackSheet,
       closeQuestPackSheet,
       openAddQuestSheet,
+      openAddQuestFromTraitSuggestion,
       openRecoveryQuestSheet,
       captureInboxTask,
       convertInboxItem,
@@ -1626,6 +1686,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       disableRecurringQuest,
       updateCategoryQuestDefaults,
       applyQuestDefaultsPreset,
+      setDesiredIdentityTraits,
       recordFocusDistraction,
       markFrictionShieldApplied,
       submitDailyAwareness,
@@ -1661,6 +1722,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       addAnotherQuest,
       addQuestRecoveryMode,
       addQuestInboxPrefill,
+      addQuestTraitSuggestionPrefill,
       addQuestSheetOpen,
       activeInboxItems,
       addUserQuest,
@@ -1674,6 +1736,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       disableRecurringQuest,
       updateCategoryQuestDefaults,
       applyQuestDefaultsPreset,
+      setDesiredIdentityTraits,
       chapters,
       characters,
       chapterComplete,
@@ -1716,6 +1779,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       maybeShowVillainTaunt,
       narrativeMoment,
       openAddQuestSheet,
+      openAddQuestFromTraitSuggestion,
       openFrictionReview,
       openImproveQuest,
       openSplitQuestChain,

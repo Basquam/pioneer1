@@ -3,6 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DUST_AND_IRON_UNIVERSE, UNIVERSES } from '@/data/narrative/universes';
 import { sanitizeLockedFocusQuestIds } from '@/lib/focus-lock';
 import { createEmptyIdentityVotes, sanitizeIdentityVotes } from '@/lib/identity-votes';
+import { sanitizeDesiredIdentityTraits } from '@/lib/identity-compass';
 import { sanitizeRecoveryQuestCompletedDates } from '@/lib/recovery-quest';
 import { sanitizeRecurringQuestTemplates } from '@/lib/recurring-quests';
 import { sanitizeEvidenceLog } from '@/lib/evidence-log';
@@ -166,6 +167,7 @@ export function createInitialProgress(): PlayerProgress {
     activityByDate: {},
     lastSagaByUniverseId: createDefaultLastSagaByUniverseId(),
     identityVotes: createEmptyIdentityVotes(),
+    desiredIdentityTraits: [],
     focusLockedDate: null,
     lockedFocusQuestIds: [],
     lastMissedDate: null,
@@ -213,6 +215,9 @@ function normalizeProgress(raw: Partial<PlayerProgress> & Record<string, unknown
     onboardingCompletedAt:
       typeof raw.onboardingCompletedAt === 'string' ? raw.onboardingCompletedAt : null,
     identityVotes: sanitizeIdentityVotes(raw.identityVotes ?? raw.identityVotesByCategory),
+    desiredIdentityTraits: sanitizeDesiredIdentityTraits(
+      raw.desiredIdentityTraits ?? base.desiredIdentityTraits,
+    ),
     focusLockedDate: typeof raw.focusLockedDate === 'string' ? raw.focusLockedDate : null,
     lockedFocusQuestIds: sanitizeLockedFocusQuestIds(raw.lockedFocusQuestIds),
     lastMissedDate: typeof raw.lastMissedDate === 'string' ? raw.lastMissedDate : null,
