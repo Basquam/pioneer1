@@ -14,6 +14,7 @@ import { WeeklyRecapCard } from '@/components/rpg/weekly-recap-card';
 import { DevToolsPanel } from '@/components/rpg/dev-tools-panel';
 import { GlossaryHelpButton } from '@/components/rpg/glossary-help-button';
 import { GlossarySheet } from '@/components/rpg/glossary-sheet';
+import { RecurringQuestsPanel } from '@/components/rpg/recurring-quests-panel';
 import { ProfileAppInfo } from '@/components/rpg/profile-app-info';
 import { ProfileSection } from '@/components/rpg/profile-section';
 import { ProgressBackupPanel } from '@/components/rpg/progress-backup-panel';
@@ -177,6 +178,10 @@ export function ProfileScreen() {
           <DailyStreakDisplay variant="profile" />
           <TodayFocusDisplay variant="profile" />
           <WeeklyRecapCard />
+        </ProfileSection>
+
+        <ProfileSection title="RECURRING QUESTS">
+          <RecurringQuestsPanel />
         </ProfileSection>
 
         <ProfileSection title="RELATIONSHIPS">

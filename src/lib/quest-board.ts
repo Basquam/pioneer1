@@ -68,6 +68,7 @@ export function userQuestToBoardQuest(
     ...(quest.afterQuestReward ? { afterQuestReward: quest.afterQuestReward } : {}),
     riskLevel: resolveQuestRiskLevel(quest.riskLevel),
     ...(quest.lastFocusDistraction ? { lastFocusDistraction: quest.lastFocusDistraction } : {}),
+    ...(quest.generatedFromRecurringQuestId ? { isRecurring: true } : {}),
   };
 
   if (!boardQuest.createdOnDate) {

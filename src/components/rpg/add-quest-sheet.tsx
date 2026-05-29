@@ -53,7 +53,11 @@ import {
   getQuestRiskFlavorLabel,
   getQuestRiskOptions,
 } from '@/lib/quest-risk';
-import type { QuestRiskLevel, TaskCategory } from '@/types/narrative';
+import type { QuestRiskLevel, RecurrenceType, TaskCategory, WeekdayKey } from '@/types/narrative';
+import {
+  getWeekdayKeyForDate,
+  WEEKDAY_OPTIONS,
+} from '@/lib/recurring-quests';
 
 type AddQuestSheetProps = {
   visible: boolean;
@@ -75,6 +79,9 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
   const [rewardTitle, setRewardTitle] = useState('');
   const [riskLevel, setRiskLevel] = useState<QuestRiskLevel>(DEFAULT_QUEST_RISK_LEVEL);
   const [behaviorToolsOpen, setBehaviorToolsOpen] = useState(false);
+  const [repeatMode, setRepeatMode] = useState<'none' | RecurrenceType>('none');
+  const [preferredDays, setPreferredDays] = useState<Set<WeekdayKey>>(new Set());
+  const [preferredTimeLabel, setPreferredTimeLabel] = useState('');
 
   const starterCopy = getStarterToggleCopy(activeUniverse.id);
   const prepCopy = getQuestPrepCopy(activeUniverse.id);
@@ -121,6 +128,9 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
     setRewardTitle('');
     setRiskLevel(DEFAULT_QUEST_RISK_LEVEL);
     setBehaviorToolsOpen(false);
+    setRepeatMode('none');
+    setPreferredDays(new Set());
+    setPreferredTimeLabel('');
   };
 
   const handleClose = () => {
@@ -133,12 +143,25 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
     const starter = easierToStart ? starterTitle.trim() || suggestedStarter : '';
     const prep = prepEnabled ? prepStepTitle.trim() : '';
     const reward = rewardEnabled ? rewardTitle.trim() : '';
+    const todayWeekday = getWeekdayKeyForDate(getLocalDateKey());
+    const weeklyDays =
+      preferredDays.size > 0 ? Array.from(preferredDays) : [todayWeekday];
+    const recurring =
+      repeatMode === 'none'
+        ? undefined
+        : {
+            recurrenceType: repeatMode,
+            ...(preferredTimeLabel.trim() ? { preferredTimeLabel: preferredTimeLabel.trim() } : {}),
+            ...(repeatMode === 'weekly' ? { preferredDays: weeklyDays } : {}),
+          };
+
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     addUserQuest(trimmedTitle, category, {
       ...(starter ? { starterTaskTitle: starter } : {}),
       ...(prep ? { prepStepTitle: prep } : {}),
       ...(reward ? { afterQuestReward: reward } : {}),
       riskLevel,
+      ...(recurring ? { recurring } : {}),
     });
     resetForm();
   };
@@ -353,6 +376,99 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
               })}
             </ScrollView>
             <Text style={[styles.categoryHint, { color: palette.fog }]}>{selectedMeta.description}</Text>
+
+            <Text style={[styles.label, { color: palette.gold }]}>REPEAT THIS QUEST</Text>
+            <View style={styles.repeatOptions}>
+              {(
+                [
+                  { id: 'none', label: 'No repeat' },
+                  { id: 'daily', label: 'Daily' },
+                  { id: 'weekly', label: 'Weekly' },
+                  { id: 'monthly', label: 'Monthly' },
+                ] as const
+              ).map((option) => {
+                const selected = repeatMode === option.id;
+                return (
+                  <Pressable
+                    key={option.id}
+                    onPress={() => {
+                      void Haptics.selectionAsync();
+                      setRepeatMode(option.id);
+                      if (option.id !== 'weekly') {
+                        setPreferredDays(new Set());
+                      }
+                    }}
+                    style={[
+                      styles.repeatChip,
+                      {
+                        backgroundColor: selected ? palette.primary : palette.panel,
+                        borderColor: selected ? palette.gold : palette.panelBorder,
+                      },
+                    ]}>
+                    <Text style={[styles.repeatChipText, { color: selected ? palette.bone : palette.fog }]}>
+                      {option.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+
+            {repeatMode === 'weekly' && (
+              <View style={styles.weekdayRow}>
+                {WEEKDAY_OPTIONS.map((day) => {
+                  const selected = preferredDays.has(day.key);
+                  return (
+                    <Pressable
+                      key={day.key}
+                      onPress={() => {
+                        void Haptics.selectionAsync();
+                        setPreferredDays((prev) => {
+                          const next = new Set(prev);
+                          if (next.has(day.key)) {
+                            next.delete(day.key);
+                          } else {
+                            next.add(day.key);
+                          }
+                          return next;
+                        });
+                      }}
+                      style={[
+                        styles.weekdayChip,
+                        {
+                          backgroundColor: selected ? palette.primary : palette.night,
+                          borderColor: selected ? palette.gold : palette.panelBorder,
+                        },
+                      ]}>
+                      <Text style={[styles.weekdayChipText, { color: selected ? palette.bone : palette.fog }]}>
+                        {day.label}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            )}
+
+            {repeatMode !== 'none' && (
+              <>
+                <Text style={[styles.repeatHint, { color: palette.fog }]}>
+                  {repeatMode === 'weekly'
+                    ? 'Pick days for this routine. If none selected, today’s weekday is used.'
+                    : repeatMode === 'monthly'
+                      ? 'Generates on the same day of the month you create it.'
+                      : 'Generates a fresh quest each day under Your Quests.'}
+                </Text>
+                <TextInput
+                  value={preferredTimeLabel}
+                  onChangeText={setPreferredTimeLabel}
+                  placeholder="Preferred time (optional) — e.g. Morning"
+                  placeholderTextColor={`${palette.fog}88`}
+                  style={[
+                    styles.input,
+                    { color: palette.bone, borderColor: palette.panelBorder, backgroundColor: palette.panel },
+                  ]}
+                />
+              </>
+            )}
 
             <CollapsibleSection
               title="Optional behavior tools"
@@ -778,6 +894,45 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     lineHeight: 17,
     marginTop: -4,
+  },
+  repeatOptions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  repeatChip: {
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    transform: [{ skewX: '-2deg' }],
+  },
+  repeatChipText: {
+    fontFamily: GameFonts.ui,
+    fontSize: 11,
+    letterSpacing: 1,
+  },
+  weekdayRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  weekdayChip: {
+    borderWidth: 1,
+    minWidth: 42,
+    paddingHorizontal: 8,
+    paddingVertical: 8,
+    alignItems: 'center',
+  },
+  weekdayChipText: {
+    fontFamily: GameFonts.ui,
+    fontSize: 10,
+    letterSpacing: 0.5,
+  },
+  repeatHint: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 10,
+    lineHeight: 14,
+    fontStyle: 'italic',
   },
   toolsLabel: {
     fontFamily: GameFonts.uiSemi,

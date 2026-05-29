@@ -116,6 +116,13 @@ export function sanitizeUserQuest(raw: unknown): UserQuest | null {
     sanitized.lastFocusDistraction = lastFocusDistraction;
   }
 
+  if (
+    typeof quest.generatedFromRecurringQuestId === 'string' &&
+    quest.generatedFromRecurringQuestId.startsWith('recurring-')
+  ) {
+    sanitized.generatedFromRecurringQuestId = quest.generatedFromRecurringQuestId;
+  }
+
   if (Array.isArray(quest.frictionReviews)) {
     const reviews = quest.frictionReviews
       .map((entry) => sanitizeFrictionReview(entry))

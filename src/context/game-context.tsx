@@ -29,6 +29,12 @@ import {
 import { recordChapterCompleted, recordQuestCompleted } from '@/lib/weekly-recap';
 import { isHighRiskQuest } from '@/lib/quest-risk';
 import { createUserQuestFromTask, type CreateUserQuestOptions } from '@/lib/convert-task-to-quest';
+import {
+  createRecurringQuestTemplate,
+  disableRecurringQuestTemplate,
+  generateRecurringQuestInstances,
+  type AddUserQuestOptions,
+} from '@/lib/recurring-quests';
 import { formatRewardRitualUnlockedLine, getAfterQuestRewardCopy } from '@/lib/after-quest-reward';
 import { markQuestStarted } from '@/lib/decisive-moment';
 import { castIdentityVote } from '@/lib/identity-votes';
@@ -149,11 +155,7 @@ type GameContextValue = {
   selectSaga: (sagaId: string) => void;
   switchSaga: (sagaId: string, options?: { forceFirstChapter?: boolean }) => void;
   completeOnboarding: () => void;
-  addUserQuest: (
-    originalTitle: string,
-    category: TaskCategory,
-    options?: CreateUserQuestOptions,
-  ) => void;
+  addUserQuest: (originalTitle: string, category: TaskCategory, options?: AddUserQuestOptions) => void;
   addUserQuestPack: (
     items: Array<{ originalTitle: string; category: TaskCategory; options?: CreateUserQuestOptions }>,
   ) => void;
@@ -178,6 +180,7 @@ type GameContextValue = {
   recordFrictionReview: (questId: string, reason: QuestFrictionReason) => void;
   markFrictionFixApplied: (questId: string) => void;
   archiveUserQuest: (questId: string) => void;
+  disableRecurringQuest: (templateId: string) => void;
   recordFocusDistraction: (questId: string, distraction: QuestDistractionType) => void;
   submitDailyAwareness: (blocker: DailyAwarenessBlocker) => void;
   dismissDailyAwarenessCheck: () => void;
@@ -254,18 +257,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!isHydrated) return;
-
-    const handleAppStateChange = (state: AppStateStatus) => {
-      if (state !== 'active') return;
-      setProgress((prev) => applySessionOnOpen(prev));
-    };
-
-    const subscription = AppState.addEventListener('change', handleAppStateChange);
-    return () => subscription.remove();
-  }, [isHydrated]);
-
-  useEffect(() => {
-    if (!isHydrated) return;
     void savePlayerProgress(progress);
   }, [isHydrated, progress]);
 
@@ -278,6 +269,39 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const characters = activeSaga.characters;
   const isSagaPreview = isSagaInPreview(activeSaga);
   const sagaCompletedQuestIds = progress.completedQuestIdsBySagaId[activeSaga.id] ?? [];
+
+  useEffect(() => {
+    if (!isHydrated) return;
+
+    const handleAppStateChange = (state: AppStateStatus) => {
+      if (state !== 'active') return;
+      setProgress((prev) => {
+        let next = applySessionOnOpen(prev);
+        if (currentChapter) {
+          next = generateRecurringQuestInstances(next, {
+            universe: activeUniverse,
+            saga: activeSaga,
+            chapter: currentChapter,
+          });
+        }
+        return next;
+      });
+    };
+
+    const subscription = AppState.addEventListener('change', handleAppStateChange);
+    return () => subscription.remove();
+  }, [isHydrated, activeUniverse, activeSaga, currentChapter]);
+
+  useEffect(() => {
+    if (!isHydrated || !currentChapter) return;
+    setProgress((prev) =>
+      generateRecurringQuestInstances(prev, {
+        universe: activeUniverse,
+        saga: activeSaga,
+        chapter: currentChapter,
+      }),
+    );
+  }, [isHydrated, activeUniverse, activeSaga, currentChapter]);
 
   useEffect(() => {
     if (!isHydrated || narrativeStateValid) return;
@@ -446,11 +470,21 @@ export function GameProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const addUserQuest = useCallback(
-    (originalTitle: string, category: TaskCategory, options?: CreateUserQuestOptions) => {
+    (originalTitle: string, category: TaskCategory, options?: AddUserQuestOptions) => {
       const trimmed = originalTitle.trim();
       if (!trimmed || !currentChapter) return;
 
       setProgress((prev) => {
+        const { recurring, ...questOptions } = options ?? {};
+        let recurringQuestTemplates = prev.recurringQuestTemplates;
+        let generatedFromRecurringQuestId = questOptions.generatedFromRecurringQuestId;
+
+        if (recurring) {
+          const template = createRecurringQuestTemplate(trimmed, category, recurring, questOptions);
+          recurringQuestTemplates = [...recurringQuestTemplates, template];
+          generatedFromRecurringQuestId = template.id;
+        }
+
         const quest = createUserQuestFromTask(
           trimmed,
           category,
@@ -458,7 +492,16 @@ export function GameProvider({ children }: { children: ReactNode }) {
           activeSaga,
           currentChapter,
           prev.userQuests,
-          options,
+          {
+            ...questOptions,
+            ...(generatedFromRecurringQuestId
+              ? {
+                  generatedFromRecurringQuestId,
+                  plannedTimeLabel:
+                    questOptions.plannedTimeLabel ?? recurring?.preferredTimeLabel?.trim(),
+                }
+              : {}),
+          },
         );
 
         setAddQuestSheetOpen(false);
@@ -466,12 +509,17 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
         return {
           ...prev,
+          recurringQuestTemplates,
           userQuests: pruneUserQuests([...prev.userQuests, quest]),
         };
       });
     },
     [activeSaga, activeUniverse, currentChapter],
   );
+
+  const disableRecurringQuest = useCallback((templateId: string) => {
+    setProgress((prev) => disableRecurringQuestTemplate(prev, templateId));
+  }, []);
 
   const addUserQuestPack = useCallback(
     (items: Array<{ originalTitle: string; category: TaskCategory; options?: CreateUserQuestOptions }>) => {
@@ -1239,6 +1287,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       recordFrictionReview,
       markFrictionFixApplied,
       archiveUserQuest,
+      disableRecurringQuest,
       recordFocusDistraction,
       submitDailyAwareness,
       dismissDailyAwarenessCheck,
@@ -1278,6 +1327,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       allQuestsComplete,
       closeQuestPackSheet,
       archiveUserQuest,
+      disableRecurringQuest,
       chapters,
       characters,
       chapterComplete,

@@ -116,6 +116,8 @@ export type CreateUserQuestOptions = {
   prepStepTitle?: string;
   afterQuestReward?: string;
   riskLevel?: QuestRiskLevel;
+  generatedFromRecurringQuestId?: string;
+  plannedTimeLabel?: string;
 };
 
 /** Shared user-quest creation used by single and batch add flows. */
@@ -141,6 +143,10 @@ export function createUserQuestFromTask(
     ...(options?.prepStepTitle ? { prepStepTitle: options.prepStepTitle.trim() } : {}),
     ...(options?.afterQuestReward ? { afterQuestReward: options.afterQuestReward.trim() } : {}),
     riskLevel: options?.riskLevel ?? 'standard',
+    ...(options?.generatedFromRecurringQuestId
+      ? { generatedFromRecurringQuestId: options.generatedFromRecurringQuestId }
+      : {}),
+    ...(options?.plannedTimeLabel ? { plannedTimeLabel: options.plannedTimeLabel.trim() } : {}),
   };
 }
 

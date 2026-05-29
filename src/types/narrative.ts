@@ -260,6 +260,8 @@ export type UserQuest = {
   riskLevel?: QuestRiskLevel;
   /** Last distraction noted in Focus Mode — optional session note. */
   lastFocusDistraction?: QuestDistractionType;
+  /** Links a generated instance back to its recurring routine template. */
+  generatedFromRecurringQuestId?: string;
 };
 
 export type QuestDistractionType =
@@ -272,6 +274,26 @@ export type QuestDistractionType =
   | 'other';
 
 export type QuestRiskLevel = 'low' | 'standard' | 'high';
+
+export type RecurrenceType = 'daily' | 'weekly' | 'monthly';
+
+export type WeekdayKey = 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun';
+
+export type RecurringQuestTemplate = {
+  id: string;
+  originalTitle: string;
+  category: TaskCategory;
+  recurrenceType: RecurrenceType;
+  preferredTimeLabel?: string;
+  preferredDays?: WeekdayKey[];
+  /** ISO timestamp when the routine was created. */
+  createdAt: string;
+  isActive: boolean;
+  starterTaskTitle?: string;
+  prepStepTitle?: string;
+  afterQuestReward?: string;
+  riskLevel?: QuestRiskLevel;
+};
 
 export type QuestReadinessChecklist = {
   starter: boolean;
@@ -326,6 +348,8 @@ export type BoardQuest = {
   afterQuestReward?: string;
   riskLevel?: QuestRiskLevel;
   lastFocusDistraction?: QuestDistractionType;
+  /** True when this quest was spawned from a recurring routine. */
+  isRecurring?: boolean;
 };
 
 export type DailyActivity = {
@@ -433,4 +457,6 @@ export type PlayerProgress = {
   templateQuestStartedAt: Record<string, string>;
   /** Weekly reflection answers keyed by local week (Sunday start date YYYY-MM-DD). */
   weeklyReviewByWeek: Record<string, WeeklyReviewEntry>;
+  /** Local recurring routine templates — spawn user quest instances on schedule. */
+  recurringQuestTemplates: RecurringQuestTemplate[];
 };

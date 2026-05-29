@@ -152,6 +152,13 @@ export function QuestCard({ quest, index }: QuestCardProps) {
                 </Text>
               </View>
             )}
+            {quest.source === 'user' && quest.isRecurring && (
+              <View style={[styles.badge, { backgroundColor: palette.primary, borderWidth: 1, borderColor: palette.accent }]}>
+                <Text style={[styles.badgeText, { color: palette.accent }]} numberOfLines={1}>
+                  RECURRING
+                </Text>
+              </View>
+            )}
             {quest.isStarted && (
               <View style={[styles.badge, { backgroundColor: palette.night, borderWidth: 1, borderColor: palette.accent }]}>
                 <Text style={[styles.badgeText, { color: palette.accent }]} numberOfLines={1}>
