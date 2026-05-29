@@ -1,3 +1,4 @@
+import * as Haptics from 'expo-haptics';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, {
   FadeInDown,
@@ -31,7 +32,7 @@ type QuestCardProps = {
 
 export function QuestCard({ quest, index }: QuestCardProps) {
   const ui = useUniverseUiCopy();
-  const { activeUniverse, completeQuest } = useGame();
+  const { activeUniverse, completeQuest, openQuestFocus } = useGame();
   const visualTheme = useUniverseVisualTheme();
   const { palette } = activeUniverse;
   const scale = useSharedValue(1);
@@ -75,6 +76,11 @@ export function QuestCard({ quest, index }: QuestCardProps) {
       scale.value = withSpring(1);
     });
     completeQuest(quest.id);
+  };
+
+  const handleFocusPress = () => {
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    openQuestFocus(quest.id);
   };
 
   return (
@@ -148,7 +154,17 @@ export function QuestCard({ quest, index }: QuestCardProps) {
             {formatPrepStepLine(quest.prepStepTitle)}
           </Text>
         )}
-        <Text style={[styles.tap, { color: palette.accent }]}>TAP TO COMPLETE ›</Text>
+        <View style={styles.actionRow}>
+          <Pressable
+            onPress={(event) => {
+              event.stopPropagation();
+              handleFocusPress();
+            }}
+            style={[styles.focusButton, { borderColor: palette.gold, backgroundColor: palette.primary }]}>
+            <Text style={[styles.focusButtonText, { color: palette.bone }]}>START FOCUS</Text>
+          </Pressable>
+          <Text style={[styles.tap, { color: palette.accent }]}>TAP TO COMPLETE ›</Text>
+        </View>
       </View>
     </AnimatedPressable>
   );
@@ -203,7 +219,25 @@ const styles = StyleSheet.create({
     lineHeight: 14,
     fontStyle: 'italic',
   },
-  tap: { fontFamily: GameFonts.ui, fontSize: 11, letterSpacing: 2, textAlign: 'right' },
+  actionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 10,
+    marginTop: 2,
+  },
+  focusButton: {
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    transform: [{ skewX: '-6deg' }],
+  },
+  focusButtonText: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 10,
+    letterSpacing: 1.5,
+  },
+  tap: { fontFamily: GameFonts.ui, fontSize: 11, letterSpacing: 2, textAlign: 'right', flex: 1 },
   stamp: { fontFamily: GameFonts.ui, fontSize: 11, letterSpacing: 3 },
   focusStamp: { fontFamily: GameFonts.uiSemi, fontSize: 9, letterSpacing: 2, marginTop: 2 },
   doneTitle: { fontFamily: GameFonts.displayRegular, fontSize: 14, fontStyle: 'italic', marginTop: 4 },

@@ -75,6 +75,10 @@ export function sanitizeUserQuest(raw: unknown): UserQuest | null {
     sanitized.prepStepTitle = quest.prepStepTitle;
   }
 
+  if (typeof quest.implementationIntention === 'string' && quest.implementationIntention.length > 0) {
+    sanitized.implementationIntention = quest.implementationIntention;
+  }
+
   return sanitized;
 }
 

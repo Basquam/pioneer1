@@ -40,6 +40,7 @@ export function userQuestToBoardQuest(quest: UserQuest, isDailyFocus = false): B
     isDailyFocus,
     ...(quest.starterTaskTitle ? { starterTaskTitle: quest.starterTaskTitle } : {}),
     ...(quest.prepStepTitle ? { prepStepTitle: quest.prepStepTitle } : {}),
+    ...(quest.implementationIntention ? { implementationIntention: quest.implementationIntention } : {}),
   };
 }
 

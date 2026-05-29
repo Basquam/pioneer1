@@ -221,6 +221,8 @@ export type UserQuest = {
   starterTaskTitle?: string;
   /** Optional environment priming step to do before starting later. */
   prepStepTitle?: string;
+  /** Optional implementation intention — how the user plans to execute the task. */
+  implementationIntention?: string;
 };
 
 export type IdentityTraitKey =
@@ -250,6 +252,7 @@ export type BoardQuest = {
   isDailyFocus?: boolean;
   starterTaskTitle?: string;
   prepStepTitle?: string;
+  implementationIntention?: string;
 };
 
 export type DailyActivity = {

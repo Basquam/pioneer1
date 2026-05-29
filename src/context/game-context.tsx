@@ -108,6 +108,7 @@ type GameContextValue = {
   questCreated: UserQuest | null;
   addQuestSheetOpen: boolean;
   addQuestRecoveryMode: boolean;
+  focusQuest: BoardQuest | null;
   showRecoveryPrompt: boolean;
   showChapterIntro: boolean;
   showHqTutorial: boolean;
@@ -125,6 +126,8 @@ type GameContextValue = {
   ) => void;
   openAddQuestSheet: () => void;
   openRecoveryQuestSheet: () => void;
+  openQuestFocus: (questId: string) => void;
+  closeQuestFocus: () => void;
   closeAddQuestSheet: () => void;
   viewCreatedQuestOnBoard: () => void;
   addAnotherQuest: () => void;
@@ -173,6 +176,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [questCreated, setQuestCreated] = useState<UserQuest | null>(null);
   const [addQuestSheetOpen, setAddQuestSheetOpen] = useState(false);
   const [addQuestRecoveryMode, setAddQuestRecoveryMode] = useState(false);
+  const [focusQuestId, setFocusQuestId] = useState<string | null>(null);
   const pendingChapterCompleteRef = useRef<ChapterCompleteState | null>(null);
 
   useEffect(() => {
@@ -244,6 +248,16 @@ export function GameProvider({ children }: { children: ReactNode }) {
   );
 
   const completedQuestCount = quests.filter((q) => q.completed).length;
+  const focusQuest = useMemo(
+    () => (focusQuestId ? quests.find((quest) => quest.id === focusQuestId) ?? null : null),
+    [focusQuestId, quests],
+  );
+
+  useEffect(() => {
+    if (focusQuestId && !focusQuest) {
+      setFocusQuestId(null);
+    }
+  }, [focusQuest, focusQuestId]);
   const completedTemplateCount = currentChapter
     ? countCompletedTemplates(currentChapter, sagaCompletedQuestIds)
     : 0;
@@ -401,6 +415,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const openRecoveryQuestSheet = useCallback(() => {
     setAddQuestRecoveryMode(true);
     setAddQuestSheetOpen(true);
+  }, []);
+
+  const closeQuestFocus = useCallback(() => {
+    setFocusQuestId(null);
+  }, []);
+
+  const openQuestFocus = useCallback((questId: string) => {
+    setFocusQuestId(questId);
   }, []);
 
   const closeAddQuestSheet = useCallback(() => {
@@ -886,6 +908,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       questCreated,
       addQuestSheetOpen,
       addQuestRecoveryMode,
+      focusQuest,
       showRecoveryPrompt,
       showChapterIntro,
       showHqTutorial,
@@ -899,6 +922,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       addUserQuest,
       openAddQuestSheet,
       openRecoveryQuestSheet,
+      openQuestFocus,
+      closeQuestFocus,
       closeAddQuestSheet,
       viewCreatedQuestOnBoard,
       addAnotherQuest,
@@ -938,6 +963,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       characters,
       chapterComplete,
       closeAddQuestSheet,
+      closeQuestFocus,
       completeOnboarding,
       completeQuest,
       completedQuestCount,
@@ -956,12 +982,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
       dismissNarrativeMoment,
       dismissQuestComplete,
       dismissXpBurst,
+      focusQuest,
       isHydrated,
       isSagaPreview,
       markChapterIntroSeen,
       maybeShowVillainTaunt,
       narrativeMoment,
       openAddQuestSheet,
+      openQuestFocus,
       openRecoveryQuestSheet,
       player,
       narrativeStateValid,
