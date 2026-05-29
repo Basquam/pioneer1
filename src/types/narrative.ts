@@ -216,6 +216,8 @@ export type QuestCompleteState = {
     message: string;
     label: string;
   };
+  /** Shown when the final step of a quest chain clears the parent. */
+  questChainCompleteLine?: string;
 };
 
 export type QuestFrictionReason =
@@ -294,6 +296,16 @@ export type UserQuest = {
   routineVariationTone?: QuestVariationIntensity;
   /** Optional fresh-angle line for repeated routines. */
   routineFreshAngleLine?: string;
+  /** Parent quest id when this quest is a chain step. */
+  parentQuestId?: string;
+  /** Child quest ids when this quest is a chain parent. */
+  childQuestIds?: string[];
+  /** True when this quest was split into a chain of smaller steps. */
+  isQuestChainParent?: boolean;
+  /** Step order within a quest chain (1-based). */
+  chainStepOrder?: number;
+  /** Shared chain label — usually the parent original title. */
+  chainTitle?: string;
 };
 
 export type RoutineRepetitionRecord = {
@@ -406,6 +418,15 @@ export type BoardQuest = {
   routineFreshnessHint?: string;
   usedVariationId?: string;
   generatedFromRecurringQuestId?: string;
+  parentQuestId?: string;
+  childQuestIds?: string[];
+  isQuestChainParent?: boolean;
+  chainStepOrder?: number;
+  chainTitle?: string;
+  chainProgress?: {
+    completed: number;
+    total: number;
+  };
 };
 
 export type DailyActivity = {

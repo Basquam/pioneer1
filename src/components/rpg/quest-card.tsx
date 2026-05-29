@@ -29,6 +29,7 @@ import {
   MOTION_GUARD_CARD_PROMPT,
 } from '@/lib/motion-vs-action';
 import { getTaskCategoryMeta } from '@/lib/task-categories';
+import { formatChainProgressLabel, isQuestChainParentBlocked, isQuestChainSplittable, shouldHighlightQuestChainSplit } from '@/lib/quest-chain';
 import type { BoardQuest } from '@/types/narrative';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -36,11 +37,20 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 type QuestCardProps = {
   quest: BoardQuest;
   index: number;
+  variant?: 'default' | 'chain-child';
 };
 
-export function QuestCard({ quest, index }: QuestCardProps) {
+export function QuestCard({ quest, index, variant = 'default' }: QuestCardProps) {
   const ui = useUniverseUiCopy();
-  const { activeUniverse, completeQuest, openQuestFocus, startQuestNow, openImproveQuest, openFrictionReview } = useGame();
+  const {
+    activeUniverse,
+    completeQuest,
+    openQuestFocus,
+    startQuestNow,
+    openImproveQuest,
+    openFrictionReview,
+    openSplitQuestChain,
+  } = useGame();
   const visualTheme = useUniverseVisualTheme();
   const { palette } = activeUniverse;
   const scale = useSharedValue(1);
@@ -91,7 +101,19 @@ export function QuestCard({ quest, index }: QuestCardProps) {
         })
       : null;
 
+  const isChainChild = variant === 'chain-child' || quest.parentQuestId != null;
+  const isChainParent = quest.isQuestChainParent === true;
+  const chainBlocked = isQuestChainParentBlocked(quest);
+  const canSplit = quest.source === 'user' && isQuestChainSplittable({
+    id: quest.id,
+    isCompleted: quest.completed,
+    isQuestChainParent: quest.isQuestChainParent,
+    parentQuestId: quest.parentQuestId,
+  });
+  const highlightSplit = canSplit && shouldHighlightQuestChainSplit(quest);
+
   const handlePress = () => {
+    if (chainBlocked) return;
     scale.value = withSpring(0.94, { damping: 10 }, () => {
       scale.value = withSpring(1);
     });
@@ -122,12 +144,18 @@ export function QuestCard({ quest, index }: QuestCardProps) {
     startQuestNow(quest.id);
   };
 
+  const handleSplitPress = () => {
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    openSplitQuestChain(quest.id);
+  };
+
   return (
     <AnimatedPressable
       entering={FadeInDown.delay(index * 100).springify()}
       onPress={handlePress}
       style={[
         styles.wrapper,
+        isChainChild && styles.wrapperChainChild,
         cardStyle,
         {
           backgroundColor: lockedFocus ? `${palette.primary}44` : palette.panel,
@@ -175,15 +203,43 @@ export function QuestCard({ quest, index }: QuestCardProps) {
                 </Text>
               </View>
             )}
+            {isChainChild && quest.chainStepOrder != null && (
+              <View style={[styles.badge, { backgroundColor: palette.night, borderWidth: 1, borderColor: palette.gold }]}>
+                <Text style={[styles.badgeText, { color: palette.gold }]} numberOfLines={1}>
+                  STEP {quest.chainStepOrder}
+                </Text>
+              </View>
+            )}
+            {isChainParent && (
+              <View style={[styles.badge, { backgroundColor: palette.primary, borderWidth: 1, borderColor: palette.gold }]}>
+                <Text style={[styles.badgeText, { color: palette.bone }]} numberOfLines={1}>
+                  CHAIN
+                </Text>
+              </View>
+            )}
           </View>
-          <Text style={[styles.xp, { color: goldAccent }]} numberOfLines={1}>
-            +{quest.xpReward} XP
-          </Text>
+          {!isChainParent ? (
+            <Text style={[styles.xp, { color: goldAccent }]} numberOfLines={1}>
+              +{quest.xpReward} XP
+            </Text>
+          ) : null}
         </View>
 
         <Text style={[styles.title, { color: palette.bone }]} numberOfLines={3}>
           {quest.narrativeTitle}
         </Text>
+
+        {isChainParent && quest.chainProgress ? (
+          <Text style={[styles.chainProgress, { color: palette.gold }]}>
+            {formatChainProgressLabel(quest.chainProgress.completed, quest.chainProgress.total)}
+          </Text>
+        ) : null}
+
+        {isChainChild && quest.chainTitle ? (
+          <Text style={[styles.chainChildHint, { color: palette.fog }]} numberOfLines={1}>
+            Part of: {quest.chainTitle}
+          </Text>
+        ) : null}
 
         {quest.source === 'user' && quest.routineFreshnessHint ? (
           <Text style={[styles.freshnessHint, { color: palette.fog }]} numberOfLines={2}>
@@ -255,7 +311,7 @@ export function QuestCard({ quest, index }: QuestCardProps) {
             </Pressable>
           )}
 
-          {quest.source === 'user' && (
+          {quest.source === 'user' && !isChainChild && (
             <Pressable
               onPress={(event) => {
                 event.stopPropagation();
@@ -263,6 +319,29 @@ export function QuestCard({ quest, index }: QuestCardProps) {
               }}
               style={[styles.secondaryButton, { borderColor: palette.panelBorder, backgroundColor: palette.night }]}>
               <Text style={[styles.secondaryButtonText, { color: palette.fog }]}>IMPROVE</Text>
+            </Pressable>
+          )}
+
+          {canSplit && (
+            <Pressable
+              onPress={(event) => {
+                event.stopPropagation();
+                handleSplitPress();
+              }}
+              style={[
+                styles.secondaryButton,
+                {
+                  borderColor: highlightSplit ? palette.gold : palette.panelBorder,
+                  backgroundColor: highlightSplit ? palette.primary : palette.night,
+                },
+              ]}>
+              <Text
+                style={[
+                  styles.secondaryButtonText,
+                  { color: highlightSplit ? palette.bone : palette.fog },
+                ]}>
+                SPLIT
+              </Text>
             </Pressable>
           )}
 
@@ -277,7 +356,11 @@ export function QuestCard({ quest, index }: QuestCardProps) {
             </Pressable>
           )}
 
-          <Text style={[styles.tap, { color: palette.accent }]}>TAP TO COMPLETE ›</Text>
+          {!chainBlocked ? (
+            <Text style={[styles.tap, { color: palette.accent }]}>TAP TO COMPLETE ›</Text>
+          ) : (
+            <Text style={[styles.tap, { color: palette.fog }]}>CLEAR ALL STEPS ›</Text>
+          )}
         </View>
       </View>
     </AnimatedPressable>
@@ -291,6 +374,11 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     padding: 16,
   },
+  wrapperChainChild: {
+    marginBottom: 8,
+    paddingVertical: 14,
+    borderStyle: 'dashed',
+  },
   accent: { position: 'absolute', left: 0, top: 0, bottom: 0 },
   inner: { paddingLeft: 8, gap: 8, minWidth: 0 },
   innerUnskew: { transform: [{ skewX: '2deg' }] },
@@ -300,6 +388,18 @@ const styles = StyleSheet.create({
   badgeText: { fontFamily: GameFonts.uiSemi, fontSize: 9, letterSpacing: 2 },
   xp: { fontFamily: GameFonts.ui, fontSize: 13, letterSpacing: 2, flexShrink: 0 },
   title: { fontFamily: GameFonts.display, fontSize: 18, lineHeight: 24 },
+  chainProgress: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 11,
+    letterSpacing: 0.6,
+    lineHeight: 15,
+  },
+  chainChildHint: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 10,
+    letterSpacing: 0.4,
+    lineHeight: 14,
+  },
   freshnessHint: {
     fontFamily: GameFonts.displayRegular,
     fontSize: 11,

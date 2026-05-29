@@ -34,6 +34,14 @@ import {
 } from '../src/lib/quest-inbox';
 import { suggestTaskCategory } from '../src/lib/suggest-task-category';
 import {
+  buildQuestChainFromParent,
+  computeChainProgress,
+  formatChainProgressLabel,
+  getQuestChainFlavor,
+  isQuestChainSplittable,
+  splitChildXpReward,
+} from '../src/lib/quest-chain';
+import {
   buildRoutineAwareNarrative,
   getRoutineFreshnessHint,
   pickRoutineVariationTone,
@@ -507,6 +515,49 @@ assert(sanitizeQuestInbox(inboxCaptured).length === 1, 'sanitize inbox items');
 const { questInbox: _legacyInbox, ...legacyWithoutInbox } = baseProgress();
 const legacyProgress = sanitizePersistedProgress(legacyWithoutInbox as PlayerProgress);
 assert(Array.isArray(legacyProgress.questInbox), 'legacy import defaults inbox');
+
+// Quest chain
+assert(getQuestChainFlavor('dust-and-iron') === 'Break the trail into smaller rides.', 'chain flavor');
+assert(splitChildXpReward(100, 4) === 25, 'split child xp');
+assert(isQuestChainSplittable({
+  id: 'user-test',
+  isCompleted: false,
+  isQuestChainParent: false,
+}) === true, 'splittable quest');
+assert(isQuestChainSplittable({
+  id: 'user-test',
+  isCompleted: false,
+  isQuestChainParent: true,
+}) === false, 'chain parent not splittable');
+const chainParent = {
+  ...richQuest,
+  id: 'user-chain-parent',
+  originalTitle: 'Clean entire room',
+  xpReward: 100,
+  reputationReward: 8,
+};
+const chainBuilt = buildQuestChainFromParent(
+  chainParent,
+  [
+    { title: 'Clear one visible surface' },
+    { title: 'Put laundry away' },
+    { title: 'Take trash out' },
+    { title: 'Vacuum floor' },
+  ],
+  dustUniverse,
+  dustSaga,
+  dustChapter,
+  [chainParent],
+  boardProgress,
+  '2026-05-27',
+);
+assert(chainBuilt.updatedParent.isQuestChainParent === true, 'parent marked chain');
+assert(chainBuilt.childQuests.length === 4, 'four chain children');
+assert(chainBuilt.childQuests[0]?.parentQuestId === chainParent.id, 'child links parent');
+assert(chainBuilt.childQuests[0]?.xpReward === 25, 'child split xp');
+const chainProgress = computeChainProgress(chainBuilt.updatedParent, chainBuilt.childQuests);
+assert(chainProgress?.completed === 0 && chainProgress.total === 4, 'chain progress initial');
+assert(formatChainProgressLabel(2, 4) === 'Quest Chain: 2/4 steps cleared', 'chain progress label');
 
 if (failures.length) {
   console.error('FAILED:\n' + failures.map((f) => ` - ${f}`).join('\n'));

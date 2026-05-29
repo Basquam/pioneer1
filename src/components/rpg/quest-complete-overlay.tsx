@@ -132,6 +132,14 @@ export function QuestCompleteOverlay() {
                 </Animated.Text>
               )}
 
+              {questComplete.questChainCompleteLine && (
+                <Animated.Text
+                  entering={FadeInUp.duration(450).delay(480)}
+                  style={[styles.chainCompleteLine, { color: palette.gold }]}>
+                  {questComplete.questChainCompleteLine}
+                </Animated.Text>
+              )}
+
               {(questComplete.identityVoteGainLine ||
                 questComplete.identityMilestoneUnlock ||
                 questComplete.rewardRitualUnlockedLine ||
@@ -321,6 +329,13 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
     textAlign: 'center',
     fontStyle: 'italic',
+  },
+  chainCompleteLine: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 11,
+    letterSpacing: 0.6,
+    textAlign: 'center',
+    lineHeight: 16,
   },
   outcomesBox: {
     borderWidth: 1,

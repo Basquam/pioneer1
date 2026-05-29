@@ -12,6 +12,7 @@ import {
 import { sanitizeRoutineRepetitionByKey } from '@/lib/routine-boredom-guard';
 import { sanitizeQuestDefaultsSettings } from '@/lib/quest-defaults';
 import { sanitizeQuestInbox } from '@/lib/quest-inbox';
+import { sanitizeChildQuestIds } from '@/lib/quest-chain';
 import { pruneWeeklyReviewByWeek } from '@/lib/weekly-review';
 import type { DailyActivity, PlayerProgress, QuestFrictionReason, TaskCategory, UserQuest } from '@/types/narrative';
 
@@ -164,6 +165,27 @@ export function sanitizeUserQuest(raw: unknown): UserQuest | null {
 
   if (typeof quest.routineFreshAngleLine === 'string' && quest.routineFreshAngleLine.length > 0) {
     sanitized.routineFreshAngleLine = quest.routineFreshAngleLine;
+  }
+
+  if (typeof quest.parentQuestId === 'string' && quest.parentQuestId.startsWith('user-')) {
+    sanitized.parentQuestId = quest.parentQuestId;
+  }
+
+  const childQuestIds = sanitizeChildQuestIds(quest.childQuestIds);
+  if (childQuestIds) {
+    sanitized.childQuestIds = childQuestIds;
+  }
+
+  if (quest.isQuestChainParent === true) {
+    sanitized.isQuestChainParent = true;
+  }
+
+  if (typeof quest.chainStepOrder === 'number' && quest.chainStepOrder >= 1 && quest.chainStepOrder <= 5) {
+    sanitized.chainStepOrder = Math.floor(quest.chainStepOrder);
+  }
+
+  if (typeof quest.chainTitle === 'string' && quest.chainTitle.trim().length > 0) {
+    sanitized.chainTitle = quest.chainTitle.trim();
   }
 
   if (Array.isArray(quest.frictionReviews)) {

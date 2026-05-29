@@ -135,6 +135,14 @@ import {
   markInboxItemArchived,
   markInboxItemConverted,
 } from '@/lib/quest-inbox';
+import {
+  buildQuestChainFromParent,
+  formatChainCompleteLine,
+  isQuestChainParentBlocked,
+  isQuestChainSplittable,
+  markQuestChainParentComplete,
+  type QuestChainStepInput,
+} from '@/lib/quest-chain';
 import type {
   BoardQuest,
   Chapter,
@@ -194,6 +202,7 @@ type GameContextValue = {
   addQuestInboxPrefill: AddQuestInboxPrefill | null;
   activeInboxItems: QuestInboxItem[];
   improveQuestId: string | null;
+  splitQuestChainId: string | null;
   frictionReviewQuestId: string | null;
   focusQuest: BoardQuest | null;
   focusDecisiveMoment: boolean;
@@ -236,6 +245,9 @@ type GameContextValue = {
   ) => void;
   openImproveQuest: (questId: string) => void;
   closeImproveQuest: () => void;
+  openSplitQuestChain: (questId: string) => void;
+  closeSplitQuestChain: () => void;
+  splitUserQuestIntoChain: (parentQuestId: string, steps: QuestChainStepInput[]) => void;
   openFrictionReview: (questId: string) => void;
   closeFrictionReview: () => void;
   recordFrictionReview: (questId: string, reason: QuestFrictionReason) => void;
@@ -305,6 +317,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [focusQuestId, setFocusQuestId] = useState<string | null>(null);
   const [focusDecisiveMoment, setFocusDecisiveMoment] = useState(false);
   const [improveQuestId, setImproveQuestId] = useState<string | null>(null);
+  const [splitQuestChainId, setSplitQuestChainId] = useState<string | null>(null);
   const [frictionReviewQuestId, setFrictionReviewQuestId] = useState<string | null>(null);
   const pendingChapterCompleteRef = useRef<ChapterCompleteState | null>(null);
 
@@ -768,6 +781,51 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setImproveQuestId(null);
   }, []);
 
+  const openSplitQuestChain = useCallback((questId: string) => {
+    setSplitQuestChainId(questId);
+  }, []);
+
+  const closeSplitQuestChain = useCallback(() => {
+    setSplitQuestChainId(null);
+  }, []);
+
+  const splitUserQuestIntoChain = useCallback(
+    (parentQuestId: string, steps: QuestChainStepInput[]) => {
+      if (!currentChapter) return;
+
+      setProgress((prev) => {
+        const parent = prev.userQuests.find((quest) => quest.id === parentQuestId);
+        if (!parent || !isQuestChainSplittable(parent)) return prev;
+
+        try {
+          const { updatedParent, childQuests } = buildQuestChainFromParent(
+            parent,
+            steps,
+            activeUniverse,
+            activeSaga,
+            currentChapter,
+            prev.userQuests,
+            prev,
+            getLocalDateKey(),
+          );
+
+          return {
+            ...prev,
+            userQuests: pruneUserQuests([
+              ...prev.userQuests.map((quest) => (quest.id === parentQuestId ? updatedParent : quest)),
+              ...childQuests,
+            ]),
+          };
+        } catch {
+          return prev;
+        }
+      });
+
+      setSplitQuestChainId(null);
+    },
+    [activeSaga, activeUniverse, currentChapter],
+  );
+
   const openFrictionReview = useCallback((questId: string) => {
     setFrictionReviewQuestId(questId);
   }, []);
@@ -1010,8 +1068,28 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
       const boardQuest = findBoardQuest(quests, questId);
       if (!boardQuest || boardQuest.completed) return;
+      if (isQuestChainParentBlocked(boardQuest)) return;
 
       triggerQuestCompleteHaptic();
+
+      const completingUserQuest =
+        boardQuest.source === 'user' ? progress.userQuests.find((quest) => quest.id === questId) : null;
+      const chainParent =
+        completingUserQuest?.parentQuestId != null
+          ? progress.userQuests.find((quest) => quest.id === completingUserQuest.parentQuestId)
+          : null;
+      const chainChildIds = chainParent?.childQuestIds ?? [];
+      const willCompleteChain =
+        chainParent?.isQuestChainParent === true &&
+        chainChildIds.length > 0 &&
+        chainChildIds.every((childId) => {
+          if (childId === questId) return true;
+          return progress.userQuests.find((quest) => quest.id === childId)?.isCompleted === true;
+        });
+      const questChainCompleteLine =
+        willCompleteChain && chainParent?.chainTitle
+          ? formatChainCompleteLine(chainParent.chainTitle, chainChildIds.length)
+          : undefined;
 
       const updatedInfluence = Math.max(
         0,
@@ -1122,7 +1200,15 @@ export function GameProvider({ children }: { children: ReactNode }) {
               })
             : withActivity;
 
-        return applyMomentumGain(withRoutine, momentumGain).progress;
+        const withChainParent =
+          willCompleteChain && chainParent
+            ? {
+                ...withRoutine,
+                userQuests: markQuestChainParentComplete(withRoutine.userQuests, chainParent.id),
+              }
+            : withRoutine;
+
+        return applyMomentumGain(withChainParent, momentumGain).progress;
       });
 
       const chapterAllDone = chapterDoneCount === currentChapter.questTemplates.length;
@@ -1179,6 +1265,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
               },
             }
           : {}),
+        ...(questChainCompleteLine ? { questChainCompleteLine } : {}),
       });
     },
     [activeSaga, activeUniverse, chapterComplete, currentChapter, progress, questComplete, quests, sagaCompletedQuestIds],
@@ -1491,6 +1578,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       addQuestInboxPrefill,
       activeInboxItems,
       improveQuestId,
+      splitQuestChainId,
       frictionReviewQuestId,
       focusQuest,
       focusDecisiveMoment,
@@ -1527,6 +1615,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
       updateUserQuest,
       openImproveQuest,
       closeImproveQuest,
+      openSplitQuestChain,
+      closeSplitQuestChain,
+      splitUserQuestIntoChain,
       openFrictionReview,
       closeFrictionReview,
       recordFrictionReview,
@@ -1589,6 +1680,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       closeAddQuestSheet,
       closeFrictionReview,
       closeImproveQuest,
+      closeSplitQuestChain,
       closeQuestFocus,
       completeOnboarding,
       completeQuest,
@@ -1613,6 +1705,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       focusQuest,
       frictionReviewQuestId,
       improveQuestId,
+      splitQuestChainId,
       isHydrated,
       isSagaPreview,
       todayFocusLocked,
@@ -1625,6 +1718,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       openAddQuestSheet,
       openFrictionReview,
       openImproveQuest,
+      openSplitQuestChain,
       openQuestFocus,
       openQuestPackSheet,
       openRecoveryQuestSheet,
@@ -1653,6 +1747,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       submitDailyAwareness,
       submitWeeklyReview,
       startQuestNow,
+      splitUserQuestIntoChain,
       switchSaga,
       updateUserQuest,
       viewCreatedQuestOnBoard,

@@ -26,6 +26,7 @@ import {
   getFrictionReasonLabel,
 } from '@/lib/quest-friction';
 import { generateStarterTaskTitle } from '@/lib/two-minute-starter';
+import { isQuestChainSplittable } from '@/lib/quest-chain';
 import type { QuestFrictionReason } from '@/types/narrative';
 
 type FrictionReviewSheetProps = {
@@ -43,6 +44,7 @@ export function FrictionReviewSheet({ questId, onClose }: FrictionReviewSheetPro
     markFrictionFixApplied,
     updateUserQuest,
     archiveUserQuest,
+    openSplitQuestChain,
   } = useGame();
   const { palette } = activeUniverse;
   const modalBottomInset = useModalBottomInset(32);
@@ -212,6 +214,17 @@ export function FrictionReviewSheet({ questId, onClose }: FrictionReviewSheetPro
               style={[styles.applyButton, { borderColor: palette.gold, backgroundColor: palette.primary }]}>
               <Text style={[styles.applyButtonText, { color: palette.bone }]}>SAVE STARTER</Text>
             </Pressable>
+            {selectedReason === 'too-big' && isQuestChainSplittable(userQuest) ? (
+              <Pressable
+                onPress={() => {
+                  void Haptics.selectionAsync();
+                  onClose();
+                  openSplitQuestChain(questId);
+                }}
+                style={[styles.applyButton, { borderColor: palette.accent, backgroundColor: palette.night }]}>
+                <Text style={[styles.applyButtonText, { color: palette.accent }]}>SPLIT INTO QUEST CHAIN</Text>
+              </Pressable>
+            ) : null}
           </View>
         );
       case 'plan':

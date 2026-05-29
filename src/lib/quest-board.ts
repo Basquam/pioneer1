@@ -8,6 +8,7 @@ import { getLockedFocusQuestIdSet } from '@/lib/focus-lock';
 import { computeQuestReadiness } from '@/lib/quest-readiness';
 import { isTooMuchMotion } from '@/lib/motion-vs-action';
 import { getRoutineFreshnessHint } from '@/lib/routine-boredom-guard';
+import { computeChainProgress } from '@/lib/quest-chain';
 
 export type QuestBoardProgress = Pick<
   PlayerProgress,
@@ -84,6 +85,11 @@ export function userQuestToBoardQuest(
     ...(quest.generatedFromRecurringQuestId
       ? { generatedFromRecurringQuestId: quest.generatedFromRecurringQuestId }
       : {}),
+    ...(quest.parentQuestId ? { parentQuestId: quest.parentQuestId } : {}),
+    ...(quest.childQuestIds?.length ? { childQuestIds: quest.childQuestIds } : {}),
+    ...(quest.isQuestChainParent ? { isQuestChainParent: true } : {}),
+    ...(typeof quest.chainStepOrder === 'number' ? { chainStepOrder: quest.chainStepOrder } : {}),
+    ...(quest.chainTitle ? { chainTitle: quest.chainTitle } : {}),
   };
 
   if (!boardQuest.createdOnDate) {
@@ -109,6 +115,13 @@ export function userQuestToBoardQuest(
     const freshnessHint = getRoutineFreshnessHint(quest, boardProgress);
     if (freshnessHint) {
       boardQuest.routineFreshnessHint = freshnessHint;
+    }
+
+    if (quest.isQuestChainParent && quest.childQuestIds?.length) {
+      const chainProgress = computeChainProgress(quest, boardProgress.userQuests);
+      if (chainProgress) {
+        boardQuest.chainProgress = chainProgress;
+      }
     }
   }
 

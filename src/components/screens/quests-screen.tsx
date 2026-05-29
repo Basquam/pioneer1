@@ -9,6 +9,7 @@ import { CinematicEmptyState } from '@/components/rpg/cinematic-empty-state';
 import { DialoguePanel } from '@/components/rpg/dialogue-panel';
 import { GameHud } from '@/components/rpg/game-hud';
 import { NarrativeMomentOverlay } from '@/components/rpg/narrative-moment-overlay';
+import { QuestChainGroup } from '@/components/rpg/quest-chain-group';
 import { QuestInboxPanel } from '@/components/rpg/quest-inbox-panel';
 import { QuestCard } from '@/components/rpg/quest-card';
 import { SagaPreviewEmptyState } from '@/components/rpg/saga-preview-empty-state';
@@ -21,6 +22,7 @@ import { XpPopup } from '@/components/rpg/xp-popup';
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
 import { useUniverseUiCopy } from '@/lib/universe-ui-copy';
+import { buildUserQuestBoardEntries } from '@/lib/quest-chain';
 
 export function QuestsScreen() {
   const ui = useUniverseUiCopy();
@@ -49,6 +51,8 @@ export function QuestsScreen() {
     }),
     [quests],
   );
+
+  const userQuestEntries = useMemo(() => buildUserQuestBoardEntries(userQuests), [userQuests]);
 
   const hasPersonalQuests = playerProgress.userQuests.some(
     (quest) => quest.sourceSagaId === activeSaga.id,
@@ -105,7 +109,18 @@ export function QuestsScreen() {
             onPrimaryPress={openAddQuestSheet}
           />
         ) : (
-          userQuests.map((quest, index) => <QuestCard key={quest.id} quest={quest} index={index} />)
+          userQuestEntries.map((entry, index) =>
+            entry.kind === 'chain' ? (
+              <QuestChainGroup
+                key={entry.parent.id}
+                parent={entry.parent}
+                children={entry.children}
+                startIndex={index}
+              />
+            ) : (
+              <QuestCard key={entry.quest.id} quest={entry.quest} index={index} />
+            ),
+          )
         )}
 
         <SectionLabel>{ui.chapterTemplatesLabel}</SectionLabel>
