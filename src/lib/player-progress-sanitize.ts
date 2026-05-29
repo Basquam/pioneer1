@@ -11,6 +11,7 @@ import {
 } from '@/lib/momentum-reserve';
 import { sanitizeRoutineRepetitionByKey } from '@/lib/routine-boredom-guard';
 import { sanitizeQuestDefaultsSettings } from '@/lib/quest-defaults';
+import { sanitizeQuestInbox } from '@/lib/quest-inbox';
 import { pruneWeeklyReviewByWeek } from '@/lib/weekly-review';
 import type { DailyActivity, PlayerProgress, QuestFrictionReason, TaskCategory, UserQuest } from '@/types/narrative';
 
@@ -291,6 +292,7 @@ export function sanitizePersistedProgress(progress: PlayerProgress): PlayerProgr
     momentumMilestonesReached: sanitizeMomentumMilestonesReached(progress.momentumMilestonesReached),
     routineRepetitionByKey: sanitizeRoutineRepetitionByKey(progress.routineRepetitionByKey),
     questDefaults: sanitizeQuestDefaultsSettings(progress.questDefaults),
+    questInbox: sanitizeQuestInbox(progress.questInbox),
   };
 }
 

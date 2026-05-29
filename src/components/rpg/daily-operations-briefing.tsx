@@ -22,6 +22,7 @@ import { useUniverseUiCopy } from '@/lib/universe-ui-copy';
 import { canLockTodayFocus, getFocusLockCopy } from '@/lib/focus-lock';
 import { buildPromiseCard } from '@/lib/promise-card';
 import { getDailyCrewCodeLine } from '@/lib/crew-code';
+import { QuickCaptureInput } from '@/components/rpg/quick-capture-input';
 
 export function DailyOperationsBriefing() {
   const ui = useUniverseUiCopy();
@@ -113,6 +114,8 @@ export function DailyOperationsBriefing() {
         <DailyStreakDisplay variant="briefing" />
 
         <TodayFocusDisplay variant="briefing" />
+
+        <QuickCaptureInput />
 
         {isTodayFocusLocked ? (
           <View style={[styles.lockedBlock, { borderColor: goldAccent, backgroundColor: `${palette.primary}33` }]}>

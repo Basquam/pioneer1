@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { DailyAwarenessCheck } from '@/components/rpg/daily-awareness-check';
+import { QuestInboxPanel } from '@/components/rpg/quest-inbox-panel';
 import { DailyOperationsBriefing } from '@/components/rpg/daily-operations-briefing';
 import { DialoguePanel } from '@/components/rpg/dialogue-panel';
 import { NarrativeMomentOverlay } from '@/components/rpg/narrative-moment-overlay';
@@ -58,6 +59,9 @@ export function HqScreen() {
         </Animated.View>
 
         <DailyOperationsBriefing />
+
+        <SectionLabel>QUEST INBOX</SectionLabel>
+        <QuestInboxPanel />
 
         <DailyAwarenessCheck />
 

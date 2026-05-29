@@ -128,6 +128,13 @@ import {
   updateCategoryQuestDefaultsInSettings,
 } from '@/lib/quest-defaults';
 import { getUniverseUiCopy } from '@/lib/universe-ui-copy';
+import {
+  captureQuestInboxItem,
+  findInboxItem,
+  getActiveInboxItems,
+  markInboxItemArchived,
+  markInboxItemConverted,
+} from '@/lib/quest-inbox';
 import type {
   BoardQuest,
   Chapter,
@@ -143,9 +150,16 @@ import type {
   QuestRiskLevel,
   CategoryQuestDefaults,
   QuestDefaultsPresetId,
+  QuestInboxItem,
 } from '@/types/narrative';
 
 export type XpBurst = { id: string; amount: number };
+
+export type AddQuestInboxPrefill = {
+  title: string;
+  inboxItemId: string;
+  suggestedCategory?: TaskCategory;
+};
 
 type GameContextValue = {
   universes: Universe[];
@@ -177,6 +191,8 @@ type GameContextValue = {
   questCreated: UserQuest | null;
   addQuestSheetOpen: boolean;
   addQuestRecoveryMode: boolean;
+  addQuestInboxPrefill: AddQuestInboxPrefill | null;
+  activeInboxItems: QuestInboxItem[];
   improveQuestId: string | null;
   frictionReviewQuestId: string | null;
   focusQuest: BoardQuest | null;
@@ -202,6 +218,9 @@ type GameContextValue = {
   closeQuestPackSheet: () => void;
   openAddQuestSheet: () => void;
   openRecoveryQuestSheet: () => void;
+  captureInboxTask: (title: string) => void;
+  convertInboxItem: (inboxItemId: string) => void;
+  archiveInboxItem: (inboxItemId: string) => void;
   lockTodayFocus: () => void;
   openQuestFocus: (questId: string) => void;
   startQuestNow: (questId: string) => void;
@@ -282,6 +301,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [addQuestSheetOpen, setAddQuestSheetOpen] = useState(false);
   const [questPackSheetOpen, setQuestPackSheetOpen] = useState(false);
   const [addQuestRecoveryMode, setAddQuestRecoveryMode] = useState(false);
+  const [addQuestInboxPrefill, setAddQuestInboxPrefill] = useState<AddQuestInboxPrefill | null>(null);
   const [focusQuestId, setFocusQuestId] = useState<string | null>(null);
   const [focusDecisiveMoment, setFocusDecisiveMoment] = useState(false);
   const [improveQuestId, setImproveQuestId] = useState<string | null>(null);
@@ -377,6 +397,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
       progress.templateQuestStartedAt,
       progress.userQuests,
     ],
+  );
+
+  const activeInboxItems = useMemo(
+    () => getActiveInboxItems(progress.questInbox),
+    [progress.questInbox],
   );
 
   const quests = useMemo(
@@ -525,7 +550,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       if (!trimmed || !currentChapter) return;
 
       setProgress((prev) => {
-        const { recurring, ...questOptions } = options ?? {};
+        const { recurring, convertFromInboxItemId, ...questOptions } = options ?? {};
         let recurringQuestTemplates = prev.recurringQuestTemplates;
         let generatedFromRecurringQuestId = questOptions.generatedFromRecurringQuestId;
 
@@ -557,12 +582,18 @@ export function GameProvider({ children }: { children: ReactNode }) {
         );
 
         setAddQuestSheetOpen(false);
+        setAddQuestInboxPrefill(null);
         setQuestCreated(quest);
+
+        const questInbox = convertFromInboxItemId
+          ? markInboxItemConverted(prev.questInbox, convertFromInboxItemId)
+          : prev.questInbox;
 
         return recordRoutineQuestSpawned(
           {
             ...prev,
             recurringQuestTemplates,
+            questInbox,
             userQuests: pruneUserQuests([...prev.userQuests, quest]),
           },
           quest,
@@ -651,12 +682,47 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   const openAddQuestSheet = useCallback(() => {
     setAddQuestRecoveryMode(false);
+    setAddQuestInboxPrefill(null);
     setAddQuestSheetOpen(true);
   }, []);
 
   const openRecoveryQuestSheet = useCallback(() => {
     setAddQuestRecoveryMode(true);
+    setAddQuestInboxPrefill(null);
     setAddQuestSheetOpen(true);
+  }, []);
+
+  const captureInboxTask = useCallback((title: string) => {
+    const trimmed = title.trim();
+    if (!trimmed) return;
+
+    setProgress((prev) => ({
+      ...prev,
+      questInbox: captureQuestInboxItem(prev.questInbox, trimmed),
+    }));
+  }, []);
+
+  const convertInboxItem = useCallback(
+    (inboxItemId: string) => {
+      const item = findInboxItem(progress.questInbox, inboxItemId);
+      if (!item || item.status !== 'inbox') return;
+
+      setAddQuestRecoveryMode(false);
+      setAddQuestInboxPrefill({
+        title: item.title,
+        inboxItemId: item.id,
+        ...(item.suggestedCategory ? { suggestedCategory: item.suggestedCategory } : {}),
+      });
+      setAddQuestSheetOpen(true);
+    },
+    [progress.questInbox],
+  );
+
+  const archiveInboxItem = useCallback((inboxItemId: string) => {
+    setProgress((prev) => ({
+      ...prev,
+      questInbox: markInboxItemArchived(prev.questInbox, inboxItemId),
+    }));
   }, []);
 
   const closeQuestFocus = useCallback(() => {
@@ -875,6 +941,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const closeAddQuestSheet = useCallback(() => {
     setAddQuestSheetOpen(false);
     setAddQuestRecoveryMode(false);
+    setAddQuestInboxPrefill(null);
   }, []);
 
   const viewCreatedQuestOnBoard = useCallback(() => {
@@ -1421,6 +1488,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       questCreated,
       addQuestSheetOpen,
       addQuestRecoveryMode,
+      addQuestInboxPrefill,
+      activeInboxItems,
       improveQuestId,
       frictionReviewQuestId,
       focusQuest,
@@ -1444,6 +1513,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
       closeQuestPackSheet,
       openAddQuestSheet,
       openRecoveryQuestSheet,
+      captureInboxTask,
+      convertInboxItem,
+      archiveInboxItem,
       lockTodayFocus: lockTodayFocusCommit,
       openQuestFocus,
       startQuestNow,
@@ -1497,12 +1569,17 @@ export function GameProvider({ children }: { children: ReactNode }) {
       activeUniverse,
       addAnotherQuest,
       addQuestRecoveryMode,
+      addQuestInboxPrefill,
       addQuestSheetOpen,
+      activeInboxItems,
       addUserQuest,
       addUserQuestPack,
       allQuestsComplete,
       closeQuestPackSheet,
       archiveUserQuest,
+      archiveInboxItem,
+      captureInboxTask,
+      convertInboxItem,
       disableRecurringQuest,
       updateCategoryQuestDefaults,
       applyQuestDefaultsPreset,

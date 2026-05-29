@@ -24,6 +24,16 @@ import {
   sanitizeQuestDefaultsSettings,
 } from '../src/lib/quest-defaults';
 import {
+  captureQuestInboxItem,
+  getActiveInboxItems,
+  getQuickCaptureFlavor,
+  markInboxItemArchived,
+  markInboxItemConverted,
+  QUEST_INBOX_EMPTY_MESSAGE,
+  sanitizeQuestInbox,
+} from '../src/lib/quest-inbox';
+import { suggestTaskCategory } from '../src/lib/suggest-task-category';
+import {
   buildRoutineAwareNarrative,
   getRoutineFreshnessHint,
   pickRoutineVariationTone,
@@ -116,6 +126,7 @@ function baseProgress(): PlayerProgress {
     momentumMilestonesReached: [],
     routineRepetitionByKey: {},
     questDefaults: createEmptyQuestDefaultsSettings(),
+    questInbox: [],
   } as PlayerProgress;
 
   for (const universe of UNIVERSES) {
@@ -461,6 +472,41 @@ assert(
   'recovery reward default',
 );
 assert(sanitizeQuestDefaultsSettings(undefined).byCategory != null, 'sanitize empty quest defaults');
+
+// Category suggestion
+assert(suggestTaskCategory('Clean kitchen') === 'cleaning', 'single cleaning match');
+assert(suggestTaskCategory('Buy groceries') === 'errand', 'single errand match');
+assert(suggestTaskCategory('Write report') === null, 'ambiguous creative/work returns null');
+assert(suggestTaskCategory('Call about groceries') === null, 'ambiguous social/errand returns null');
+assert(suggestTaskCategory('') === null, 'empty title returns null');
+
+// Quest inbox
+assert(QUEST_INBOX_EMPTY_MESSAGE === 'No loose tasks captured.', 'inbox empty message');
+assert(
+  getQuickCaptureFlavor('dust-and-iron') === 'Jot it on the bounty board.',
+  'dust quick capture flavor',
+);
+assert(
+  getQuickCaptureFlavor('neuronet') === 'Capture the signal before it decays.',
+  'neuronet quick capture flavor',
+);
+const inboxCaptured = captureQuestInboxItem([], 'Buy groceries');
+assert(inboxCaptured.length === 1, 'capture inbox item');
+assert(inboxCaptured[0]?.status === 'inbox', 'inbox item active');
+assert(inboxCaptured[0]?.suggestedCategory === 'errand', 'inbox category suggestion');
+const activeInbox = getActiveInboxItems(inboxCaptured);
+assert(activeInbox.length === 1, 'active inbox filter');
+const inboxId = inboxCaptured[0]!.id;
+const inboxConverted = markInboxItemConverted(inboxCaptured, inboxId);
+assert(getActiveInboxItems(inboxConverted).length === 0, 'converted leaves active inbox');
+assert(inboxConverted[0]?.status === 'converted', 'inbox item converted status');
+const inboxArchived = markInboxItemArchived(inboxCaptured, inboxId);
+assert(inboxArchived[0]?.status === 'archived', 'inbox item archived status');
+assert(sanitizeQuestInbox(undefined).length === 0, 'sanitize missing inbox');
+assert(sanitizeQuestInbox(inboxCaptured).length === 1, 'sanitize inbox items');
+const { questInbox: _legacyInbox, ...legacyWithoutInbox } = baseProgress();
+const legacyProgress = sanitizePersistedProgress(legacyWithoutInbox as PlayerProgress);
+assert(Array.isArray(legacyProgress.questInbox), 'legacy import defaults inbox');
 
 if (failures.length) {
   console.error('FAILED:\n' + failures.map((f) => ` - ${f}`).join('\n'));

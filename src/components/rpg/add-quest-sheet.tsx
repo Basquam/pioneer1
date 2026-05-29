@@ -57,6 +57,7 @@ import {
   QUEST_DEFAULTS_APPLIED_COPY,
   resolveAddQuestDefaults,
 } from '@/lib/quest-defaults';
+import { suggestTaskCategory } from '@/lib/suggest-task-category';
 import type { QuestRiskLevel, RecurrenceType, TaskCategory, WeekdayKey } from '@/types/narrative';
 import {
   getWeekdayKeyForDate,
@@ -70,10 +71,20 @@ type AddQuestSheetProps = {
 
 export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
   const ui = useUniverseUiCopy();
-  const { activeUniverse, currentChapter, playerProgress, addUserQuest, addQuestRecoveryMode, isTodayFocusLocked, openQuestPackSheet } = useGame();
+  const {
+    activeUniverse,
+    currentChapter,
+    playerProgress,
+    addUserQuest,
+    addQuestRecoveryMode,
+    addQuestInboxPrefill,
+    isTodayFocusLocked,
+    openQuestPackSheet,
+  } = useGame();
   const { palette } = activeUniverse;
   const [title, setTitle] = useState('');
-  const [category, setCategory] = useState<TaskCategory>('cleaning');
+  const [category, setCategory] = useState<TaskCategory | null>(null);
+  const [categoryManuallySelected, setCategoryManuallySelected] = useState(false);
   const [confirmOverLimit, setConfirmOverLimit] = useState(false);
   const [easierToStart, setEasierToStart] = useState(false);
   const [starterTitle, setStarterTitle] = useState('');
@@ -97,7 +108,7 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
   const prepCopy = getQuestPrepCopy(activeUniverse.id);
   const rewardCopy = getAfterQuestRewardCopy(activeUniverse.id);
   const focusLockCopy = getFocusLockCopy(activeUniverse.id);
-  const prepPresets = useMemo(() => getPrepPresets(category), [category]);
+  const prepPresets = useMemo(() => (category ? getPrepPresets(category) : []), [category]);
   const riskOptions = useMemo(() => getQuestRiskOptions(), []);
   const highRiskSuggestions = useMemo(
     () =>
@@ -111,12 +122,21 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
   );
   const categoryOptions = addQuestRecoveryMode ? RECOVERY_QUEST_CATEGORIES : TASK_CATEGORIES;
   const trimmedTitle = title.trim();
+  const suggestedTaskCategory = useMemo(
+    () => (trimmedTitle ? suggestTaskCategory(trimmedTitle) : null),
+    [trimmedTitle],
+  );
+  const showCategorySuggestion =
+    !addQuestRecoveryMode &&
+    !categoryManuallySelected &&
+    suggestedTaskCategory != null &&
+    category !== suggestedTaskCategory;
   const suggestedStarter = useMemo(
-    () => (trimmedTitle ? generateStarterTaskTitle(trimmedTitle, category) : ''),
+    () => (trimmedTitle && category ? generateStarterTaskTitle(trimmedTitle, category) : ''),
     [trimmedTitle, category],
   );
 
-  const selectedMeta = getTaskCategoryMeta(category);
+  const selectedMeta = category ? getTaskCategoryMeta(category) : null;
   const modalBottomInset = useModalBottomInset(32);
   const focusLimit = getDailyFocusLimit(playerProgress);
   const todayFocusCount = countTodayUserQuests(
@@ -128,7 +148,8 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
 
   const resetForm = () => {
     setTitle('');
-    setCategory('cleaning');
+    setCategory(null);
+    setCategoryManuallySelected(false);
     setConfirmOverLimit(false);
     setEasierToStart(false);
     setStarterTitle('');
@@ -200,8 +221,17 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
     onClose();
   };
 
+  const handleApplySuggestedCategory = () => {
+    if (!suggestedTaskCategory) return;
+
+    void Haptics.selectionAsync();
+    setCategory(suggestedTaskCategory);
+    setCategoryManuallySelected(true);
+    applyCategoryDefaults(suggestedTaskCategory, trimmedTitle);
+  };
+
   const submitQuest = () => {
-    if (!trimmedTitle) return;
+    if (!trimmedTitle || !category) return;
     const starter = easierToStart ? starterTitle.trim() || suggestedStarter : '';
     const prep = prepEnabled ? prepStepTitle.trim() : '';
     const reward = rewardEnabled ? rewardTitle.trim() : '';
@@ -229,12 +259,15 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
       ...(afterCurrentHabit.trim() ? { afterCurrentHabit: afterCurrentHabit.trim() } : {}),
       ...(planText.trim() ? { implementationIntention: planText.trim() } : {}),
       ...(markAsFocus ? { focusPinned: true } : {}),
+      ...(addQuestInboxPrefill?.inboxItemId
+        ? { convertFromInboxItemId: addQuestInboxPrefill.inboxItemId }
+        : {}),
     });
     resetForm();
   };
 
   const handleCreate = () => {
-    if (!trimmedTitle) return;
+    if (!trimmedTitle || !category) return;
     if (atFocusLimit && !confirmOverLimit) {
       setConfirmOverLimit(true);
       return;
@@ -255,7 +288,7 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
   const handleTogglePrep = (enabled: boolean) => {
     void Haptics.selectionAsync();
     setPrepEnabled(enabled);
-    if (enabled) {
+    if (enabled && category) {
       setPrepStepTitle(getDefaultPrepPreset(category));
     } else {
       setPrepStepTitle('');
@@ -278,12 +311,25 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
   }, [visible]);
 
   useEffect(() => {
-    if (!visible || addQuestRecoveryMode) return;
+    if (!visible || !addQuestInboxPrefill || addQuestRecoveryMode) return;
+
+    setTitle(addQuestInboxPrefill.title);
+    setCategoryManuallySelected(false);
+    if (addQuestInboxPrefill.suggestedCategory) {
+      setCategory(addQuestInboxPrefill.suggestedCategory);
+    } else {
+      setCategory(null);
+    }
+    setBehaviorToolsOpen(true);
+  }, [visible, addQuestInboxPrefill, addQuestRecoveryMode]);
+
+  useEffect(() => {
+    if (!visible || addQuestRecoveryMode || category == null) return;
     applyCategoryDefaults(category, trimmedTitle);
   }, [category, visible, addQuestRecoveryMode, playerProgress.questDefaults]);
 
   useEffect(() => {
-    if (!visible || addQuestRecoveryMode || !defaultsApplied || !trimmedTitle) return;
+    if (!visible || addQuestRecoveryMode || !defaultsApplied || !trimmedTitle || category == null) return;
     const resolved = resolveAddQuestDefaults(playerProgress.questDefaults, category, trimmedTitle);
     if (resolved.starterEnabled) {
       setStarterTitle(resolved.starterTitle ?? generateStarterTaskTitle(trimmedTitle, category));
@@ -307,6 +353,7 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
     const recoveryTitle = getDefaultRecoveryTaskTitle(recoveryCategory);
     setEasierToStart(true);
     setCategory(recoveryCategory);
+    setCategoryManuallySelected(true);
     setTitle(recoveryTitle);
     setStarterTitle(generateStarterTaskTitle(recoveryTitle, recoveryCategory));
     setPrepEnabled(false);
@@ -322,7 +369,7 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
   }, [easierToStart, suggestedStarter, trimmedTitle]);
 
   useEffect(() => {
-    if (!prepEnabled) return;
+    if (!prepEnabled || category == null) return;
     const isKnownPreset = prepStepTitle.trim().length > 0 &&
       TASK_CATEGORIES.some((cat) => isPrepPreset(prepStepTitle, cat));
     if (!prepStepTitle.trim() || (isKnownPreset && !isPrepPreset(prepStepTitle, category))) {
@@ -409,6 +456,23 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
               autoFocus
             />
 
+            {showCategorySuggestion && suggestedTaskCategory ? (
+              <View
+                style={[
+                  styles.categorySuggestionBox,
+                  { borderColor: palette.panelBorder, backgroundColor: palette.panel },
+                ]}>
+                <Text style={[styles.categorySuggestionText, { color: palette.bone }]}>
+                  Suggested category: {getTaskCategoryMeta(suggestedTaskCategory).realWorldLabel}
+                </Text>
+                <Pressable
+                  onPress={handleApplySuggestedCategory}
+                  style={[styles.categorySuggestionApply, { borderColor: palette.gold, backgroundColor: palette.primary }]}>
+                  <Text style={[styles.categorySuggestionApplyText, { color: palette.bone }]}>APPLY</Text>
+                </Pressable>
+              </View>
+            ) : null}
+
             {addQuestRecoveryMode && (
               <View style={[styles.recoveryHintBox, { borderColor: palette.gold, backgroundColor: palette.panel }]}>
                 <Text style={[styles.recoveryHint, { color: palette.bone }]}>
@@ -430,6 +494,7 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
                     key={cat}
                     onPress={() => {
                       void Haptics.selectionAsync();
+                      setCategoryManuallySelected(true);
                       setCategory(cat);
                       if (addQuestRecoveryMode) {
                         const recoveryTitle = getDefaultRecoveryTaskTitle(cat);
@@ -467,7 +532,13 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
                 );
               })}
             </ScrollView>
-            <Text style={[styles.categoryHint, { color: palette.fog }]}>{selectedMeta.description}</Text>
+            {selectedMeta ? (
+              <Text style={[styles.categoryHint, { color: palette.fog }]}>{selectedMeta.description}</Text>
+            ) : (
+              <Text style={[styles.categoryHint, { color: palette.fog }]}>
+                Select a category to continue.
+              </Text>
+            )}
 
             {defaultsApplied && !addQuestRecoveryMode ? (
               <Text style={[styles.defaultsHint, { color: palette.accent }]}>{QUEST_DEFAULTS_APPLIED_COPY}</Text>
@@ -689,7 +760,7 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
                   <TextInput
                     value={prepStepTitle}
                     onChangeText={setPrepStepTitle}
-                    placeholder={getDefaultPrepPreset(category)}
+                    placeholder={category ? getDefaultPrepPreset(category) : 'Prep step…'}
                     placeholderTextColor={`${palette.fog}88`}
                     style={[
                       styles.input,
@@ -815,7 +886,13 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
 
             <GlowButton
               label={confirmOverLimit ? 'CONTINUE ANYWAY' : ui.addQuestCreateLabel}
-              hint={confirmOverLimit ? ui.addQuestConfirmOverLimitHint : ui.addQuestCreateHint}
+              hint={
+                !category
+                  ? 'Pick a category first.'
+                  : confirmOverLimit
+                    ? ui.addQuestConfirmOverLimitHint
+                    : ui.addQuestCreateHint
+              }
               onPress={handleCreate}
             />
             {confirmOverLimit && (
@@ -910,6 +987,33 @@ const styles = StyleSheet.create({
     fontFamily: GameFonts.ui,
     fontSize: 15,
     letterSpacing: 0.5,
+  },
+  categorySuggestionBox: {
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 10,
+    transform: [{ skewX: '-2deg' }],
+  },
+  categorySuggestionText: {
+    flex: 1,
+    fontFamily: GameFonts.ui,
+    fontSize: 12,
+    letterSpacing: 0.4,
+    lineHeight: 17,
+  },
+  categorySuggestionApply: {
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+  },
+  categorySuggestionApplyText: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 9,
+    letterSpacing: 1.5,
   },
   toggleRow: {
     borderTopWidth: 1,

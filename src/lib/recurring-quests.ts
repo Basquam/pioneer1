@@ -33,6 +33,8 @@ export type RecurringQuestSetup = {
 
 export type AddUserQuestOptions = CreateUserQuestOptions & {
   recurring?: RecurringQuestSetup;
+  /** Marks a quest inbox item converted after successful creation. */
+  convertFromInboxItemId?: string;
 };
 
 export type RecurringQuestContext = {

@@ -9,6 +9,7 @@ import { CinematicEmptyState } from '@/components/rpg/cinematic-empty-state';
 import { DialoguePanel } from '@/components/rpg/dialogue-panel';
 import { GameHud } from '@/components/rpg/game-hud';
 import { NarrativeMomentOverlay } from '@/components/rpg/narrative-moment-overlay';
+import { QuestInboxPanel } from '@/components/rpg/quest-inbox-panel';
 import { QuestCard } from '@/components/rpg/quest-card';
 import { SagaPreviewEmptyState } from '@/components/rpg/saga-preview-empty-state';
 import { ScreenScroll } from '@/components/rpg/screen-scroll';
@@ -91,6 +92,9 @@ export function QuestsScreen() {
         </Text>
 
         <AddQuestTrigger variant="banner" />
+
+        <SectionLabel>QUEST INBOX</SectionLabel>
+        <QuestInboxPanel />
 
         <SectionLabel>{ui.userQuestsLabel}</SectionLabel>
         {!hasPersonalQuests ? (

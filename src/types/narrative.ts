@@ -547,6 +547,8 @@ export type PlayerProgress = {
   routineRepetitionByKey: Record<string, RoutineRepetitionRecord>;
   /** Optional per-category defaults for new quest creation. */
   questDefaults: QuestDefaultsSettings;
+  /** Quick-captured tasks waiting to become quests. */
+  questInbox: QuestInboxItem[];
 };
 
 export type CategoryQuestDefaults = {
@@ -565,4 +567,14 @@ export type QuestDefaultsPresetId = 'low-friction' | 'deep-work' | 'recovery';
 export type QuestDefaultsSettings = {
   byCategory: Partial<Record<TaskCategory, CategoryQuestDefaults>>;
   activePresetId?: QuestDefaultsPresetId;
+};
+
+export type QuestInboxItemStatus = 'inbox' | 'converted' | 'archived';
+
+export type QuestInboxItem = {
+  id: string;
+  title: string;
+  createdAt: string;
+  suggestedCategory?: TaskCategory;
+  status: QuestInboxItemStatus;
 };
