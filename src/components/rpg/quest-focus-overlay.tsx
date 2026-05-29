@@ -11,6 +11,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { CharacterPortrait } from '@/components/rpg/character-portrait';
+import { CollapsibleSection } from '@/components/rpg/collapsible-section';
 import { GlowButton } from '@/components/rpg/glow-button';
 import { GameLayout } from '@/constants/layout';
 import { GameFonts } from '@/constants/typography';
@@ -62,14 +63,14 @@ export function QuestFocusOverlay() {
   const rewardCopy = getAfterQuestRewardCopy(activeUniverse.id);
   const [ritualStep, setRitualStep] = useState<RitualStep>(0);
   const [selectedDistraction, setSelectedDistraction] = useState<QuestDistractionType | null>(null);
-  const [shieldSkipped, setShieldSkipped] = useState(false);
+  const [shieldExpanded, setShieldExpanded] = useState(false);
   const completePulse = useSharedValue(1);
   const ritualComplete = ritualStep === 4;
 
   useEffect(() => {
     setRitualStep(0);
     setSelectedDistraction(focusQuest?.lastFocusDistraction ?? null);
-    setShieldSkipped(false);
+    setShieldExpanded(Boolean(focusQuest?.lastFocusDistraction));
     completePulse.value = 1;
   }, [focusQuest?.id, focusQuest?.lastFocusDistraction, completePulse]);
 
@@ -125,10 +126,17 @@ export function QuestFocusOverlay() {
   const handleSelectDistraction = (type: QuestDistractionType) => {
     void Haptics.selectionAsync();
     setSelectedDistraction(type);
+    setShieldExpanded(true);
     if (focusQuest.source === 'user') {
       recordFocusDistraction(focusQuest.id, type);
     }
   };
+
+  const hasQuestSupports =
+    Boolean(focusQuest.starterTaskTitle && !showDecisiveStarter) ||
+    Boolean(focusQuest.implementationIntention) ||
+    Boolean(focusQuest.prepStepTitle) ||
+    hasRewardRitual;
 
   const ritualStepContent =
     ritualStep === 1
@@ -216,7 +224,7 @@ export function QuestFocusOverlay() {
 
             <Text style={[styles.narrativeTitle, { color: palette.bone }]}>{focusQuest.narrativeTitle}</Text>
 
-            {focusQuest.source === 'user' && (
+            {focusQuest.source === 'user' && resolveQuestRiskLevel(focusQuest.riskLevel) !== 'standard' && (
               <Text style={[styles.riskFocusLine, { color: palette.fog }]}>
                 {formatQuestRiskFocusLine(
                   resolveQuestRiskLevel(focusQuest.riskLevel),
@@ -230,46 +238,50 @@ export function QuestFocusOverlay() {
               <Text style={[styles.sectionBody, { color: palette.bone }]}>{focusQuest.originalTitle}</Text>
             </View>
 
-            {focusQuest.starterTaskTitle && !showDecisiveStarter ? (
-              <View style={[styles.section, { borderColor: palette.panelBorder }]}>
-                <Text style={[styles.sectionLabel, { color: palette.gold }]}>STARTER MOVE</Text>
-                <Text style={[styles.sectionBody, { color: palette.bone }]}>
-                  {formatStarterMoveLine(focusQuest.starterTaskTitle, activeUniverse.id)}
-                </Text>
+            {hasQuestSupports && !isCompleted ? (
+              <View style={[styles.supportsBlock, { borderColor: palette.panelBorder }]}>
+                <Text style={[styles.supportsLabel, { color: palette.gold }]}>QUEST SUPPORTS</Text>
+
+                {focusQuest.starterTaskTitle && !showDecisiveStarter ? (
+                  <View style={styles.supportItem}>
+                    <Text style={[styles.supportItemLabel, { color: palette.fog }]}>Starter move</Text>
+                    <Text style={[styles.supportItemBody, { color: palette.bone }]}>
+                      {formatStarterMoveLine(focusQuest.starterTaskTitle, activeUniverse.id)}
+                    </Text>
+                  </View>
+                ) : null}
+
+                {focusQuest.implementationIntention ? (
+                  <View style={styles.supportItem}>
+                    <Text style={[styles.supportItemLabel, { color: palette.fog }]}>When / where plan</Text>
+                    <Text style={[styles.supportItemBody, { color: palette.bone }]}>
+                      {focusQuest.implementationIntention}
+                    </Text>
+                  </View>
+                ) : null}
+
+                {focusQuest.prepStepTitle ? (
+                  <View style={styles.supportItem}>
+                    <Text style={[styles.supportItemLabel, { color: palette.fog }]}>Prep step</Text>
+                    <Text style={[styles.supportItemBody, { color: palette.bone }]}>
+                      {formatPrepStepLine(focusQuest.prepStepTitle)}
+                    </Text>
+                  </View>
+                ) : null}
+
+                {hasRewardRitual ? (
+                  <View style={styles.supportItem}>
+                    <Text style={[styles.supportItemLabel, { color: palette.fog }]}>Reward ritual</Text>
+                    <Text style={[styles.supportItemBody, { color: palette.bone }]}>
+                      {focusQuest.afterQuestReward}
+                    </Text>
+                    <Text style={[styles.supportItemHint, { color: palette.fog }]}>
+                      {rewardCopy.universeHint}
+                    </Text>
+                  </View>
+                ) : null}
               </View>
             ) : null}
-
-            {focusQuest.implementationIntention ? (
-              <View style={[styles.section, { borderColor: palette.panelBorder }]}>
-                <Text style={[styles.sectionLabel, { color: palette.gold }]}>PLAN</Text>
-                <Text style={[styles.sectionBody, { color: palette.bone }]}>
-                  {focusQuest.implementationIntention}
-                </Text>
-              </View>
-            ) : null}
-
-            {focusQuest.prepStepTitle ? (
-              <View style={[styles.section, { borderColor: palette.panelBorder }]}>
-                <Text style={[styles.sectionLabel, { color: palette.gold }]}>PREP</Text>
-                <Text style={[styles.sectionBody, { color: palette.bone }]}>
-                  {formatPrepStepLine(focusQuest.prepStepTitle)}
-                </Text>
-              </View>
-            ) : null}
-
-            {hasRewardRitual && !isCompleted && (
-              <View style={[styles.rewardRitualBox, { borderColor: palette.accent, backgroundColor: `${palette.primary}55` }]}>
-                <Text style={[styles.rewardRitualLine, { color: palette.bone }]}>
-                  {rewardCopy.focusRitualLine}
-                </Text>
-                <Text style={[styles.rewardRitualReward, { color: palette.gold }]}>
-                  {focusQuest.afterQuestReward}
-                </Text>
-                <Text style={[styles.rewardRitualHint, { color: palette.fog }]}>
-                  {rewardCopy.universeHint}
-                </Text>
-              </View>
-            )}
           </Animated.View>
 
           {!isCompleted && character && (
@@ -281,19 +293,14 @@ export function QuestFocusOverlay() {
                 <Text style={[styles.motivationBadge, { color: palette.gold }]}>{copy.motivationBadge}</Text>
                 <Text style={[styles.motivationName, { color: palette.bone }]}>{character.name}</Text>
                 <Text style={[styles.motivationLine, { color: palette.bone }]}>{motivationLine}</Text>
+                <View style={[styles.identityInline, { borderColor: palette.panelBorder }]}>
+                  <Text style={[styles.identityLabel, { color: palette.gold }]}>{copy.identityVoteLabel}</Text>
+                  <Text style={[styles.identityVote, { color: palette.bone }]}>
+                    {formatFocusIdentityVotePreview(trait.label)}
+                  </Text>
+                  <Text style={[styles.identityHint, { color: palette.fog }]}>{trait.encouragingLine}</Text>
+                </View>
               </View>
-            </Animated.View>
-          )}
-
-          {!isCompleted && (
-            <Animated.View
-              entering={FadeInDown.duration(450).delay(280)}
-              style={[styles.identityCard, { borderColor: palette.panelBorder }]}>
-              <Text style={[styles.identityLabel, { color: palette.gold }]}>{copy.identityVoteLabel}</Text>
-              <Text style={[styles.identityVote, { color: palette.bone }]}>
-                {formatFocusIdentityVotePreview(trait.label)}
-              </Text>
-              <Text style={[styles.identityHint, { color: palette.fog }]}>{trait.encouragingLine}</Text>
             </Animated.View>
           )}
 
@@ -305,52 +312,49 @@ export function QuestFocusOverlay() {
             </Animated.Text>
           )}
 
-          {!isCompleted && !shieldSkipped && (
-            <Animated.View
-              entering={FadeInDown.duration(450).delay(310)}
-              style={[styles.shieldCard, { backgroundColor: palette.panel, borderColor: palette.panelBorder }]}>
-              <Text style={[styles.shieldEyebrow, { color: palette.gold }]}>DISTRACTION SHIELD</Text>
-              <Text style={[styles.shieldQuestion, { color: palette.bone }]}>
-                What might pull you away?
-              </Text>
-              <Text style={[styles.shieldHint, { color: palette.fog }]}>
-                Optional — pick one if it helps, or skip anytime.
-              </Text>
-
-              <View style={styles.shieldOptions}>
-                {DISTRACTION_SHIELD_OPTIONS.map((option) => {
-                  const selected = selectedDistraction === option.type;
-                  return (
-                    <Pressable
-                      key={option.type}
-                      onPress={() => handleSelectDistraction(option.type)}
-                      style={[
-                        styles.shieldChip,
-                        {
-                          borderColor: selected ? palette.gold : palette.panelBorder,
-                          backgroundColor: selected ? palette.primary : palette.night,
-                        },
-                      ]}>
-                      <Text style={[styles.shieldChipText, { color: selected ? palette.bone : palette.fog }]}>
-                        {option.label}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
-
-              {selectedDistraction ? (
-                <View style={[styles.shieldSuggestionBox, { borderColor: palette.gold, backgroundColor: `${palette.primary}44` }]}>
-                  <Text style={[styles.shieldSuggestionLabel, { color: palette.gold }]}>TRY THIS SHIELD</Text>
-                  <Text style={[styles.shieldSuggestionText, { color: palette.bone }]}>
-                    {getDistractionShieldSuggestion(selectedDistraction)}
-                  </Text>
+          {!isCompleted && (
+            <Animated.View entering={FadeInDown.duration(450).delay(300)}>
+              <CollapsibleSection
+                title="Distraction shield"
+                hint="Optional — what might pull you away?"
+                expanded={shieldExpanded}
+                onToggle={() => setShieldExpanded((open) => !open)}
+                palette={palette}>
+                <View style={styles.shieldOptions}>
+                  {DISTRACTION_SHIELD_OPTIONS.map((option) => {
+                    const selected = selectedDistraction === option.type;
+                    return (
+                      <Pressable
+                        key={option.type}
+                        onPress={() => handleSelectDistraction(option.type)}
+                        style={[
+                          styles.shieldChip,
+                          {
+                            borderColor: selected ? palette.gold : palette.panelBorder,
+                            backgroundColor: selected ? palette.primary : palette.night,
+                          },
+                        ]}>
+                        <Text style={[styles.shieldChipText, { color: selected ? palette.bone : palette.fog }]}>
+                          {option.label}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
                 </View>
-              ) : null}
 
-              <Pressable onPress={() => setShieldSkipped(true)} hitSlop={8} style={styles.shieldSkip}>
-                <Text style={[styles.shieldSkipText, { color: palette.fog }]}>Skip for now</Text>
-              </Pressable>
+                {selectedDistraction ? (
+                  <View style={[styles.shieldSuggestionBox, { borderColor: palette.gold, backgroundColor: `${palette.primary}44` }]}>
+                    <Text style={[styles.shieldSuggestionLabel, { color: palette.gold }]}>TRY THIS SHIELD</Text>
+                    <Text style={[styles.shieldSuggestionText, { color: palette.bone }]}>
+                      {getDistractionShieldSuggestion(selectedDistraction)}
+                    </Text>
+                  </View>
+                ) : (
+                  <Text style={[styles.shieldHint, { color: palette.fog }]}>
+                    Pick one if it helps — or leave this closed and begin.
+                  </Text>
+                )}
+              </CollapsibleSection>
             </Animated.View>
           )}
 
@@ -507,29 +511,32 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
     lineHeight: 20,
   },
-  rewardRitualBox: {
-    borderWidth: 1,
-    padding: 12,
-    gap: 6,
-    marginTop: 4,
+  supportsBlock: {
+    borderTopWidth: 1,
+    paddingTop: 10,
+    gap: 10,
   },
-  rewardRitualLine: {
-    fontFamily: GameFonts.ui,
-    fontSize: 14,
-    letterSpacing: 0.3,
-    lineHeight: 20,
-  },
-  rewardRitualReward: {
-    fontFamily: GameFonts.displayRegular,
-    fontSize: 14,
-    lineHeight: 20,
-    fontStyle: 'italic',
-  },
-  rewardRitualHint: {
+  supportsLabel: {
     fontFamily: GameFonts.uiSemi,
-    fontSize: 10,
-    letterSpacing: 0.5,
-    lineHeight: 14,
+    fontSize: 9,
+    letterSpacing: 2,
+  },
+  supportItem: { gap: 3 },
+  supportItemLabel: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 9,
+    letterSpacing: 1.5,
+  },
+  supportItemBody: {
+    fontFamily: GameFonts.ui,
+    fontSize: 13,
+    letterSpacing: 0.3,
+    lineHeight: 18,
+  },
+  supportItemHint: {
+    fontFamily: GameFonts.displayRegular,
+    fontSize: 11,
+    lineHeight: 15,
     fontStyle: 'italic',
   },
   motivationCard: {
@@ -549,25 +556,20 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     fontStyle: 'italic',
   },
-  identityCard: {
-    borderWidth: 1,
+  identityInline: {
     borderTopWidth: 1,
-    borderBottomWidth: 1,
-    paddingVertical: 12,
-    alignItems: 'center',
+    paddingTop: 10,
+    marginTop: 4,
     gap: 4,
-    transform: [{ skewX: '-2deg' }],
   },
   identityLabel: { fontFamily: GameFonts.uiSemi, fontSize: 9, letterSpacing: 2 },
-  identityVote: { fontFamily: GameFonts.ui, fontSize: 22, letterSpacing: 2 },
+  identityVote: { fontFamily: GameFonts.ui, fontSize: 18, letterSpacing: 1.5 },
   identityHint: {
     fontFamily: GameFonts.uiSemi,
     fontSize: 11,
     letterSpacing: 0.3,
     lineHeight: 15,
     fontStyle: 'italic',
-    textAlign: 'center',
-    paddingHorizontal: 12,
   },
   completedHint: {
     fontFamily: GameFonts.displayRegular,
@@ -576,29 +578,6 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     textAlign: 'center',
     paddingHorizontal: 8,
-  },
-  shieldCard: {
-    borderWidth: 1,
-    padding: 16,
-    gap: 10,
-    transform: [{ skewX: '-2deg' }],
-  },
-  shieldEyebrow: {
-    fontFamily: GameFonts.uiSemi,
-    fontSize: 9,
-    letterSpacing: 2,
-  },
-  shieldQuestion: {
-    fontFamily: GameFonts.ui,
-    fontSize: 15,
-    letterSpacing: 0.5,
-    lineHeight: 21,
-  },
-  shieldHint: {
-    fontFamily: GameFonts.displayRegular,
-    fontSize: 12,
-    lineHeight: 17,
-    fontStyle: 'italic',
   },
   shieldOptions: {
     flexDirection: 'row',
@@ -634,14 +613,10 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     fontStyle: 'italic',
   },
-  shieldSkip: {
-    alignSelf: 'center',
-    paddingVertical: 4,
-  },
-  shieldSkipText: {
-    fontFamily: GameFonts.uiSemi,
-    fontSize: 10,
-    letterSpacing: 1,
+  shieldHint: {
+    fontFamily: GameFonts.displayRegular,
+    fontSize: 12,
+    lineHeight: 17,
     fontStyle: 'italic',
   },
   actions: { gap: 12, marginTop: 4 },

@@ -173,7 +173,7 @@ export function ProfileScreen() {
           <IdentityEvidencePanel />
         </ProfileSection>
 
-        <ProfileSection title="DAILY / WEEKLY ACTIVITY">
+        <ProfileSection title="HABITS & REFLECTION">
           <DailyStreakDisplay variant="profile" />
           <TodayFocusDisplay variant="profile" />
           <WeeklyRecapCard />

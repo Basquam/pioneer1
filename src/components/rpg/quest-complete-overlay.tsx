@@ -114,46 +114,52 @@ export function QuestCompleteOverlay() {
                 </Animated.Text>
               )}
 
-              {questComplete.identityVoteGainLine && (
+              {(questComplete.identityVoteGainLine ||
+                questComplete.rewardRitualUnlockedLine ||
+                questComplete.recoveryCompleteLine) && (
                 <Animated.View
                   entering={FadeInUp.duration(450).delay(460)}
-                  style={[styles.identityVoteBox, { borderColor: palette.panelBorder }]}>
-                  <Text style={[styles.identityVoteGain, { color: palette.gold }]}>
-                    {questComplete.identityVoteGainLine}
-                  </Text>
-                  {questComplete.identityUniverseLine && (
-                    <Text style={[styles.identityUniverseLine, { color: palette.bone }]}>
-                      {questComplete.identityUniverseLine}
-                    </Text>
+                  style={[styles.outcomesBox, { borderColor: palette.panelBorder }]}>
+                  {questComplete.identityVoteGainLine && (
+                    <View style={styles.outcomeBlock}>
+                      <Text style={[styles.outcomeLabel, { color: palette.gold }]}>IDENTITY</Text>
+                      <Text style={[styles.identityVoteGain, { color: palette.bone }]}>
+                        {questComplete.identityVoteGainLine}
+                      </Text>
+                      {questComplete.identityUniverseLine && (
+                        <Text style={[styles.identityUniverseLine, { color: palette.fog }]}>
+                          {questComplete.identityUniverseLine}
+                        </Text>
+                      )}
+                    </View>
                   )}
-                </Animated.View>
-              )}
 
-              {questComplete.recoveryCompleteLine && (
-                <Animated.Text
-                  entering={FadeInUp.duration(450).delay(500)}
-                  style={[styles.recoveryComplete, { color: palette.accent }]}>
-                  {questComplete.recoveryCompleteLine}
-                </Animated.Text>
-              )}
+                  {questComplete.rewardRitualUnlockedLine && (
+                    <View style={styles.outcomeBlock}>
+                      <Text style={[styles.outcomeLabel, { color: palette.gold }]}>REWARD</Text>
+                      <Text style={[styles.rewardRitualUnlocked, { color: palette.bone }]}>
+                        {questComplete.rewardRitualUnlockedLine}
+                      </Text>
+                      {questComplete.rewardRitualFlavorLine && (
+                        <Text style={[styles.rewardRitualFlavor, { color: palette.fog }]}>
+                          {questComplete.rewardRitualFlavorLine}
+                        </Text>
+                      )}
+                    </View>
+                  )}
 
-              {questComplete.rewardRitualUnlockedLine && (
-                <Animated.View
-                  entering={FadeInUp.duration(450).delay(520)}
-                  style={[styles.rewardRitualBox, { borderColor: palette.gold }]}>
-                  <Text style={[styles.rewardRitualUnlocked, { color: palette.bone }]}>
-                    {questComplete.rewardRitualUnlockedLine}
-                  </Text>
-                  {questComplete.rewardRitualFlavorLine && (
-                    <Text style={[styles.rewardRitualFlavor, { color: palette.fog }]}>
-                      {questComplete.rewardRitualFlavorLine}
-                    </Text>
+                  {questComplete.recoveryCompleteLine && (
+                    <View style={styles.outcomeBlock}>
+                      <Text style={[styles.recoveryComplete, { color: palette.accent }]}>
+                        {questComplete.recoveryCompleteLine}
+                      </Text>
+                    </View>
                   )}
                 </Animated.View>
               )}
 
               <Animated.Text
-                entering={FadeInUp.duration(400).delay(560)}
+                entering={FadeInUp.duration(400).delay(520)}
                 style={[styles.tapHint, { color: palette.accent }]}>
                 TAP TO CONTINUE ›
               </Animated.Text>
@@ -270,25 +276,30 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     textAlign: 'center',
   },
-  identityVoteBox: {
+  outcomesBox: {
     borderWidth: 1,
     paddingHorizontal: 14,
-    paddingVertical: 10,
-    gap: 4,
+    paddingVertical: 12,
+    gap: 12,
     width: '100%',
     transform: [{ skewX: '-2deg' }],
-    alignItems: 'center',
+  },
+  outcomeBlock: { gap: 4, alignItems: 'center' },
+  outcomeLabel: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 9,
+    letterSpacing: 2,
   },
   identityVoteGain: {
     fontFamily: GameFonts.ui,
-    fontSize: 20,
-    letterSpacing: 2,
+    fontSize: 18,
+    letterSpacing: 1.5,
     textAlign: 'center',
   },
   identityUniverseLine: {
     fontFamily: GameFonts.displayRegular,
-    fontSize: 13,
-    lineHeight: 19,
+    fontSize: 12,
+    lineHeight: 17,
     fontStyle: 'italic',
     textAlign: 'center',
   },
@@ -297,15 +308,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     letterSpacing: 1.5,
     textAlign: 'center',
-  },
-  rewardRitualBox: {
-    borderWidth: 1,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    gap: 4,
-    width: '100%',
-    transform: [{ skewX: '-2deg' }],
-    alignItems: 'center',
   },
   rewardRitualUnlocked: {
     fontFamily: GameFonts.ui,

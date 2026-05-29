@@ -26,6 +26,7 @@ import {
   serializeProgressBackup,
   validateProgressBackupJson,
 } from '@/lib/progress-backup';
+import { restorePlayerProgress } from '@/lib/player-progress-storage';
 
 const IMPORT_CONFIRM_TITLE = 'Replace Current Save?';
 const IMPORT_CONFIRM_MESSAGE =
@@ -60,7 +61,7 @@ export function ProgressBackupPanel({ embedded = false }: ProgressBackupPanelPro
   };
 
   const handleExport = async () => {
-    const json = serializeProgressBackup(playerProgress);
+    const json = serializeProgressBackup(restorePlayerProgress(playerProgress));
     setExportJson(json);
 
     if (Platform.OS === 'web') {

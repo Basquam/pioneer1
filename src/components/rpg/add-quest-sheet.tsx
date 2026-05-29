@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 
 import { GlowButton } from '@/components/rpg/glow-button';
+import { CollapsibleSection } from '@/components/rpg/collapsible-section';
 import { GameLayout } from '@/constants/layout';
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
@@ -73,6 +74,7 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
   const [rewardEnabled, setRewardEnabled] = useState(false);
   const [rewardTitle, setRewardTitle] = useState('');
   const [riskLevel, setRiskLevel] = useState<QuestRiskLevel>(DEFAULT_QUEST_RISK_LEVEL);
+  const [behaviorToolsOpen, setBehaviorToolsOpen] = useState(false);
 
   const starterCopy = getStarterToggleCopy(activeUniverse.id);
   const prepCopy = getQuestPrepCopy(activeUniverse.id);
@@ -118,6 +120,7 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
     setRewardEnabled(false);
     setRewardTitle('');
     setRiskLevel(DEFAULT_QUEST_RISK_LEVEL);
+    setBehaviorToolsOpen(false);
   };
 
   const handleClose = () => {
@@ -197,6 +200,7 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
     setPrepStepTitle('');
     setRewardEnabled(false);
     setRewardTitle('');
+    setBehaviorToolsOpen(true);
   }, [visible, addQuestRecoveryMode]);
 
   useEffect(() => {
@@ -280,38 +284,6 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
               autoFocus
             />
 
-            <View style={[styles.toggleRow, { borderColor: palette.panelBorder }]}>
-              <View style={styles.toggleCopy}>
-                <Text style={[styles.toggleLabel, { color: palette.bone }]}>{starterCopy.toggleLabel}</Text>
-                <Text style={[styles.toggleHint, { color: palette.fog }]}>{starterCopy.universeHint}</Text>
-              </View>
-              <Switch
-                value={easierToStart}
-                onValueChange={handleToggleEasier}
-                trackColor={{ false: palette.panelBorder, true: palette.primary }}
-                thumbColor={easierToStart ? palette.gold : palette.fog}
-              />
-            </View>
-
-            {easierToStart && (
-              <View style={[styles.starterBox, { backgroundColor: palette.panel, borderColor: palette.gold }]}>
-                <Text style={[styles.starterLabel, { color: palette.gold }]}>STARTER TASK</Text>
-                <TextInput
-                  value={starterTitle}
-                  onChangeText={setStarterTitle}
-                  placeholder={suggestedStarter}
-                  placeholderTextColor={`${palette.fog}88`}
-                  style={[
-                    styles.input,
-                    { color: palette.bone, borderColor: palette.panelBorder, backgroundColor: palette.night },
-                  ]}
-                />
-                <Text style={[styles.starterHint, { color: palette.fog }]}>
-                  Main task stays: {trimmedTitle || 'enter a task above'}
-                </Text>
-              </View>
-            )}
-
             {addQuestRecoveryMode && (
               <View style={[styles.recoveryHintBox, { borderColor: palette.gold, backgroundColor: palette.panel }]}>
                 <Text style={[styles.recoveryHint, { color: palette.bone }]}>
@@ -370,168 +342,194 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
             </ScrollView>
             <Text style={[styles.categoryHint, { color: palette.fog }]}>{selectedMeta.description}</Text>
 
-            <Text style={[styles.label, { color: palette.gold }]}>QUEST RISK</Text>
-            <Text style={[styles.categoryHelper, { color: palette.fog }]}>
-              Optional — pick what feels just right, not too easy or too heavy.
-            </Text>
-            <View style={styles.riskOptions}>
-              {riskOptions.map((option) => {
-                const selected = riskLevel === option.level;
-                const flavorLabel = getQuestRiskFlavorLabel(option.level, activeUniverse.id);
-                return (
-                  <Pressable
-                    key={option.level}
-                    onPress={() => {
-                      void Haptics.selectionAsync();
-                      setRiskLevel(option.level);
-                    }}
+            <CollapsibleSection
+              title="Optional behavior tools"
+              hint="Starter, prep, risk, and rewards — expand if helpful."
+              expanded={behaviorToolsOpen}
+              onToggle={() => setBehaviorToolsOpen((open) => !open)}
+              palette={palette}>
+              <View style={[styles.toggleRow, { borderColor: palette.panelBorder }]}>
+                <View style={styles.toggleCopy}>
+                  <Text style={[styles.toggleLabel, { color: palette.bone }]}>{starterCopy.toggleLabel}</Text>
+                  <Text style={[styles.toggleHint, { color: palette.fog }]}>{starterCopy.universeHint}</Text>
+                </View>
+                <Switch
+                  value={easierToStart}
+                  onValueChange={handleToggleEasier}
+                  trackColor={{ false: palette.panelBorder, true: palette.primary }}
+                  thumbColor={easierToStart ? palette.gold : palette.fog}
+                />
+              </View>
+
+              {easierToStart && (
+                <View style={[styles.starterBox, { backgroundColor: palette.night, borderColor: palette.gold }]}>
+                  <Text style={[styles.starterLabel, { color: palette.gold }]}>STARTER TASK</Text>
+                  <TextInput
+                    value={starterTitle}
+                    onChangeText={setStarterTitle}
+                    placeholder={suggestedStarter}
+                    placeholderTextColor={`${palette.fog}88`}
                     style={[
-                      styles.riskChip,
-                      {
-                        backgroundColor: selected ? palette.primary : palette.panel,
-                        borderColor: selected ? palette.gold : palette.panelBorder,
-                      },
-                    ]}>
-                    <Text style={[styles.riskSimple, { color: selected ? palette.bone : palette.fog }]}>
-                      {option.simpleLabel}
-                    </Text>
-                    <Text style={[styles.riskFlavor, { color: selected ? palette.gold : `${palette.fog}cc` }]}>
-                      {flavorLabel}
-                    </Text>
-                    <Text
-                      style={[styles.riskDescription, { color: selected ? palette.fog : `${palette.fog}aa` }]}
-                      numberOfLines={2}>
-                      {option.description}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-
-            {highRiskSuggestions.length > 0 && (
-              <View style={[styles.highRiskBox, { backgroundColor: palette.panel, borderColor: palette.accent }]}>
-                <Text style={[styles.highRiskTitle, { color: palette.gold }]}>HIGH-RISK TIPS</Text>
-                {highRiskSuggestions.map((line) => (
-                  <Text key={line} style={[styles.highRiskLine, { color: palette.bone }]}>
-                    · {line}
+                      styles.input,
+                      { color: palette.bone, borderColor: palette.panelBorder, backgroundColor: palette.panel },
+                    ]}
+                  />
+                  <Text style={[styles.starterHint, { color: palette.fog }]}>
+                    Main task stays: {trimmedTitle || 'enter a task above'}
                   </Text>
-                ))}
-              </View>
-            )}
-
-            <View style={[styles.toggleRow, { borderColor: palette.panelBorder }]}>
-              <View style={styles.toggleCopy}>
-                <Text style={[styles.toggleLabel, { color: palette.bone }]}>{prepCopy.sectionLabel}</Text>
-                <Text style={[styles.toggleHint, { color: palette.fog }]}>{prepCopy.helperText}</Text>
-                <Text style={[styles.toggleUniverseHint, { color: palette.gold }]}>{prepCopy.universeHint}</Text>
-              </View>
-              <Switch
-                value={prepEnabled}
-                onValueChange={handleTogglePrep}
-                trackColor={{ false: palette.panelBorder, true: palette.primary }}
-                thumbColor={prepEnabled ? palette.gold : palette.fog}
-              />
-            </View>
-
-            {prepEnabled && (
-              <View style={[styles.prepBox, { backgroundColor: palette.panel, borderColor: palette.gold }]}>
-                <Text style={[styles.prepLabel, { color: palette.gold }]}>PREP STEP</Text>
-                <View style={styles.presetList}>
-                  {prepPresets.map((preset) => {
-                    const selected = prepStepTitle === preset;
-                    return (
-                      <Pressable
-                        key={preset}
-                        onPress={() => {
-                          void Haptics.selectionAsync();
-                          setPrepStepTitle(preset);
-                        }}
-                        style={[
-                          styles.presetChip,
-                          {
-                            backgroundColor: selected ? palette.primary : palette.night,
-                            borderColor: selected ? palette.gold : palette.panelBorder,
-                          },
-                        ]}>
-                        <Text
-                          style={[styles.presetChipText, { color: selected ? palette.bone : palette.fog }]}
-                          numberOfLines={3}>
-                          {preset}
-                        </Text>
-                      </Pressable>
-                    );
-                  })}
                 </View>
-                <Text style={[styles.prepCustomLabel, { color: palette.fog }]}>Or write your own</Text>
-                <TextInput
-                  value={prepStepTitle}
-                  onChangeText={setPrepStepTitle}
-                  placeholder={getDefaultPrepPreset(category)}
-                  placeholderTextColor={`${palette.fog}88`}
-                  style={[
-                    styles.input,
-                    { color: palette.bone, borderColor: palette.panelBorder, backgroundColor: palette.night },
-                  ]}
+              )}
+
+              <Text style={[styles.toolsLabel, { color: palette.gold }]}>QUEST RISK</Text>
+              <View style={styles.riskOptions}>
+                {riskOptions.map((option) => {
+                  const selected = riskLevel === option.level;
+                  const flavorLabel = getQuestRiskFlavorLabel(option.level, activeUniverse.id);
+                  return (
+                    <Pressable
+                      key={option.level}
+                      onPress={() => {
+                        void Haptics.selectionAsync();
+                        setRiskLevel(option.level);
+                      }}
+                      style={[
+                        styles.riskChip,
+                        {
+                          backgroundColor: selected ? palette.primary : palette.night,
+                          borderColor: selected ? palette.gold : palette.panelBorder,
+                        },
+                      ]}>
+                      <Text style={[styles.riskSimple, { color: selected ? palette.bone : palette.fog }]}>
+                        {option.simpleLabel}
+                      </Text>
+                      <Text style={[styles.riskFlavor, { color: selected ? palette.gold : `${palette.fog}cc` }]}>
+                        {flavorLabel}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+
+              {highRiskSuggestions.length > 0 && (
+                <View style={[styles.highRiskBox, { backgroundColor: palette.night, borderColor: palette.accent }]}>
+                  {highRiskSuggestions.map((line) => (
+                    <Text key={line} style={[styles.highRiskLine, { color: palette.bone }]}>
+                      · {line}
+                    </Text>
+                  ))}
+                </View>
+              )}
+
+              <View style={[styles.toggleRow, { borderColor: palette.panelBorder }]}>
+                <View style={styles.toggleCopy}>
+                  <Text style={[styles.toggleLabel, { color: palette.bone }]}>{prepCopy.sectionLabel}</Text>
+                  <Text style={[styles.toggleHint, { color: palette.fog }]}>{prepCopy.helperText}</Text>
+                </View>
+                <Switch
+                  value={prepEnabled}
+                  onValueChange={handleTogglePrep}
+                  trackColor={{ false: palette.panelBorder, true: palette.primary }}
+                  thumbColor={prepEnabled ? palette.gold : palette.fog}
                 />
               </View>
-            )}
 
-            <View style={[styles.toggleRow, { borderColor: palette.panelBorder }]}>
-              <View style={styles.toggleCopy}>
-                <Text style={[styles.toggleLabel, { color: palette.bone }]}>{rewardCopy.sectionPrompt}</Text>
-                <Text style={[styles.toggleHint, { color: palette.fog }]}>{rewardCopy.helperText}</Text>
-                <Text style={[styles.toggleUniverseHint, { color: palette.gold }]}>{rewardCopy.universeHint}</Text>
-              </View>
-              <Switch
-                value={rewardEnabled}
-                onValueChange={handleToggleReward}
-                trackColor={{ false: palette.panelBorder, true: palette.primary }}
-                thumbColor={rewardEnabled ? palette.gold : palette.fog}
-              />
-            </View>
-
-            {rewardEnabled && (
-              <View style={[styles.prepBox, { backgroundColor: palette.panel, borderColor: palette.gold }]}>
-                <Text style={[styles.prepLabel, { color: palette.gold }]}>REWARD RITUAL</Text>
-                <View style={styles.presetList}>
-                  {AFTER_QUEST_REWARD_PRESETS.map((preset) => {
-                    const selected = rewardTitle === preset;
-                    return (
-                      <Pressable
-                        key={preset}
-                        onPress={() => {
-                          void Haptics.selectionAsync();
-                          setRewardTitle(preset);
-                        }}
-                        style={[
-                          styles.presetChip,
-                          {
-                            backgroundColor: selected ? palette.primary : palette.night,
-                            borderColor: selected ? palette.gold : palette.panelBorder,
-                          },
-                        ]}>
-                        <Text
-                          style={[styles.presetChipText, { color: selected ? palette.bone : palette.fog }]}
-                          numberOfLines={2}>
-                          {preset}
-                        </Text>
-                      </Pressable>
-                    );
-                  })}
+              {prepEnabled && (
+                <View style={[styles.prepBox, { backgroundColor: palette.night, borderColor: palette.gold }]}>
+                  <Text style={[styles.prepLabel, { color: palette.gold }]}>PREP STEP</Text>
+                  <View style={styles.presetList}>
+                    {prepPresets.map((preset) => {
+                      const selected = prepStepTitle === preset;
+                      return (
+                        <Pressable
+                          key={preset}
+                          onPress={() => {
+                            void Haptics.selectionAsync();
+                            setPrepStepTitle(preset);
+                          }}
+                          style={[
+                            styles.presetChip,
+                            {
+                              backgroundColor: selected ? palette.primary : palette.panel,
+                              borderColor: selected ? palette.gold : palette.panelBorder,
+                            },
+                          ]}>
+                          <Text
+                            style={[styles.presetChipText, { color: selected ? palette.bone : palette.fog }]}
+                            numberOfLines={3}>
+                            {preset}
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                  <TextInput
+                    value={prepStepTitle}
+                    onChangeText={setPrepStepTitle}
+                    placeholder={getDefaultPrepPreset(category)}
+                    placeholderTextColor={`${palette.fog}88`}
+                    style={[
+                      styles.input,
+                      { color: palette.bone, borderColor: palette.panelBorder, backgroundColor: palette.panel },
+                    ]}
+                  />
                 </View>
-                <Text style={[styles.prepCustomLabel, { color: palette.fog }]}>Custom reward</Text>
-                <TextInput
-                  value={isPresetAfterQuestReward(rewardTitle) ? '' : rewardTitle}
-                  onChangeText={setRewardTitle}
-                  placeholder="Your own reward…"
-                  placeholderTextColor={`${palette.fog}88`}
-                  style={[
-                    styles.input,
-                    { color: palette.bone, borderColor: palette.panelBorder, backgroundColor: palette.night },
-                  ]}
+              )}
+
+              <View style={[styles.toggleRow, { borderColor: palette.panelBorder }]}>
+                <View style={styles.toggleCopy}>
+                  <Text style={[styles.toggleLabel, { color: palette.bone }]}>{rewardCopy.sectionPrompt}</Text>
+                  <Text style={[styles.toggleHint, { color: palette.fog }]}>{rewardCopy.helperText}</Text>
+                </View>
+                <Switch
+                  value={rewardEnabled}
+                  onValueChange={handleToggleReward}
+                  trackColor={{ false: palette.panelBorder, true: palette.primary }}
+                  thumbColor={rewardEnabled ? palette.gold : palette.fog}
                 />
               </View>
-            )}
+
+              {rewardEnabled && (
+                <View style={[styles.prepBox, { backgroundColor: palette.night, borderColor: palette.gold }]}>
+                  <Text style={[styles.prepLabel, { color: palette.gold }]}>REWARD RITUAL</Text>
+                  <View style={styles.presetList}>
+                    {AFTER_QUEST_REWARD_PRESETS.map((preset) => {
+                      const selected = rewardTitle === preset;
+                      return (
+                        <Pressable
+                          key={preset}
+                          onPress={() => {
+                            void Haptics.selectionAsync();
+                            setRewardTitle(preset);
+                          }}
+                          style={[
+                            styles.presetChip,
+                            {
+                              backgroundColor: selected ? palette.primary : palette.panel,
+                              borderColor: selected ? palette.gold : palette.panelBorder,
+                            },
+                          ]}>
+                          <Text
+                            style={[styles.presetChipText, { color: selected ? palette.bone : palette.fog }]}
+                            numberOfLines={2}>
+                            {preset}
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                  <TextInput
+                    value={isPresetAfterQuestReward(rewardTitle) ? '' : rewardTitle}
+                    onChangeText={setRewardTitle}
+                    placeholder="Your own reward…"
+                    placeholderTextColor={`${palette.fog}88`}
+                    style={[
+                      styles.input,
+                      { color: palette.bone, borderColor: palette.panelBorder, backgroundColor: palette.panel },
+                    ]}
+                  />
+                </View>
+              )}
+            </CollapsibleSection>
 
             <GlowButton
               label={confirmOverLimit ? 'CONTINUE ANYWAY' : ui.addQuestCreateLabel}
@@ -752,6 +750,11 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     lineHeight: 17,
     marginTop: -4,
+  },
+  toolsLabel: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 10,
+    letterSpacing: 2,
   },
   riskOptions: {
     gap: 8,
