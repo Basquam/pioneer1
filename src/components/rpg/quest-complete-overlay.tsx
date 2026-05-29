@@ -114,6 +114,24 @@ export function QuestCompleteOverlay() {
                 </Animated.Text>
               )}
 
+              {questComplete.momentumGainLine && (
+                <Animated.Text
+                  entering={FadeInUp.duration(450).delay(440)}
+                  style={[styles.momentumGain, { color: palette.gold }]}>
+                  {questComplete.momentumGainLine}
+                </Animated.Text>
+              )}
+
+              {questComplete.momentumMilestoneUnlock && (
+                <Animated.Text
+                  entering={FadeInUp.duration(450).delay(470)}
+                  style={[styles.momentumMilestone, { color: palette.fog }]}>
+                  {questComplete.momentumMilestoneUnlock.message}
+                  {' · '}
+                  {questComplete.momentumMilestoneUnlock.label}
+                </Animated.Text>
+              )}
+
               {(questComplete.identityVoteGainLine ||
                 questComplete.identityMilestoneUnlock ||
                 questComplete.rewardRitualUnlockedLine ||
@@ -290,6 +308,19 @@ const styles = StyleSheet.create({
     fontSize: 11,
     letterSpacing: 1,
     textAlign: 'center',
+  },
+  momentumGain: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 12,
+    letterSpacing: 1.2,
+    textAlign: 'center',
+  },
+  momentumMilestone: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 10,
+    letterSpacing: 0.5,
+    textAlign: 'center',
+    fontStyle: 'italic',
   },
   outcomesBox: {
     borderWidth: 1,

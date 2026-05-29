@@ -18,6 +18,10 @@ import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
 import { useUniverseUiCopy } from '@/lib/universe-ui-copy';
 import { getDailyCrewCodeLine } from '@/lib/crew-code';
+import {
+  getMotionGuardUniverseFlavor,
+  MOTION_GUARD_FOCUS_PROMPT,
+} from '@/lib/motion-vs-action';
 import { getIdentityTraitMeta, getTraitForCategory } from '@/lib/identity-votes';
 import { getCharacter, pickCharacterLine } from '@/lib/narrative-helpers';
 import { formatPrepStepLine } from '@/lib/quest-prep';
@@ -103,6 +107,8 @@ export function QuestFocusOverlay() {
     : shortenMotivationLine(ui.questCompleteFallbackLine);
   const trait = getIdentityTraitMeta(getTraitForCategory(focusQuest.category));
   const crewCodeLine = getDailyCrewCodeLine(activeSaga);
+  const motionGuardActive = focusQuest.isTooMuchMotion === true;
+  const motionGuardFlavor = getMotionGuardUniverseFlavor(activeUniverse.id);
 
   const handleComplete = () => {
     if (isCompleted) return;
@@ -199,6 +205,15 @@ export function QuestFocusOverlay() {
               style={[styles.crewCodeBlock, { borderColor: palette.panelBorder, backgroundColor: palette.panel }]}>
               <Text style={[styles.crewCodeLabel, { color: palette.gold }]}>CODE OF THE ROLE</Text>
               <Text style={[styles.crewCodeLine, { color: palette.bone }]}>{crewCodeLine}</Text>
+            </Animated.View>
+          ) : null}
+
+          {!isCompleted && motionGuardActive ? (
+            <Animated.View
+              entering={FadeInDown.duration(400).delay(180)}
+              style={[styles.motionGuardBlock, { borderColor: palette.accent, backgroundColor: `${palette.primary}33` }]}>
+              <Text style={[styles.motionGuardPrompt, { color: palette.bone }]}>{MOTION_GUARD_FOCUS_PROMPT}</Text>
+              <Text style={[styles.motionGuardFlavor, { color: palette.fog }]}>{motionGuardFlavor}</Text>
             </Animated.View>
           ) : null}
 
@@ -516,6 +531,26 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 18,
     fontStyle: 'italic',
+    textAlign: 'center',
+  },
+  motionGuardBlock: {
+    borderWidth: 1,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    gap: 4,
+    transform: [{ skewX: '-2deg' }],
+  },
+  motionGuardPrompt: {
+    fontFamily: GameFonts.displayRegular,
+    fontSize: 13,
+    lineHeight: 18,
+    fontStyle: 'italic',
+    textAlign: 'center',
+  },
+  motionGuardFlavor: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 11,
+    letterSpacing: 0.5,
     textAlign: 'center',
   },
   decisiveCard: {

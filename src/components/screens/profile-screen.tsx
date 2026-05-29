@@ -10,6 +10,7 @@ import { CinematicEmptyState } from '@/components/rpg/cinematic-empty-state';
 import { DailyStreakDisplay } from '@/components/rpg/daily-streak-display';
 import { BecomingPathPanel } from '@/components/rpg/identity-evidence-panel';
 import { EvidenceTimelinePanel } from '@/components/rpg/evidence-timeline-panel';
+import { MomentumReservePanel } from '@/components/rpg/momentum-reserve-panel';
 import { TodayFocusDisplay } from '@/components/rpg/today-focus-display';
 import { WeeklyRecapCard } from '@/components/rpg/weekly-recap-card';
 import { DevToolsPanel } from '@/components/rpg/dev-tools-panel';
@@ -179,6 +180,10 @@ export function ProfileScreen() {
 
         <ProfileSection title="EVIDENCE TIMELINE" hint="Small wins become proof.">
           <EvidenceTimelinePanel />
+        </ProfileSection>
+
+        <ProfileSection title="STORED EFFORT" hint="Progress you cannot see yet still counts.">
+          <MomentumReservePanel />
         </ProfileSection>
 
         <ProfileSection title="HABITS & REFLECTION">

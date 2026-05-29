@@ -24,6 +24,10 @@ import {
   getQuestReadinessSuggestion,
 } from '@/lib/quest-readiness';
 import { formatQuestRiskCardLine, resolveQuestRiskLevel } from '@/lib/quest-risk';
+import {
+  MOTION_GUARD_CARD_CTA,
+  MOTION_GUARD_CARD_PROMPT,
+} from '@/lib/motion-vs-action';
 import { getTaskCategoryMeta } from '@/lib/task-categories';
 import type { BoardQuest } from '@/types/narrative';
 
@@ -110,6 +114,11 @@ export function QuestCard({ quest, index }: QuestCardProps) {
   };
 
   const handleStartNowPress = () => {
+    startQuestNow(quest.id);
+  };
+
+  const handleStartFirstMovePress = () => {
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     startQuestNow(quest.id);
   };
 
@@ -202,6 +211,20 @@ export function QuestCard({ quest, index }: QuestCardProps) {
                 {readinessSuggestion}
               </Text>
             ) : null}
+          </View>
+        )}
+
+        {quest.source === 'user' && quest.isTooMuchMotion && (
+          <View style={[styles.motionGuardBox, { borderColor: palette.accent, backgroundColor: `${palette.primary}33` }]}>
+            <Text style={[styles.motionGuardPrompt, { color: palette.bone }]}>{MOTION_GUARD_CARD_PROMPT}</Text>
+            <Pressable
+              onPress={(event) => {
+                event.stopPropagation();
+                handleStartFirstMovePress();
+              }}
+              style={[styles.motionGuardButton, { borderColor: palette.gold, backgroundColor: palette.primary }]}>
+              <Text style={[styles.motionGuardButtonText, { color: palette.bone }]}>{MOTION_GUARD_CARD_CTA}</Text>
+            </Pressable>
           </View>
         )}
 
@@ -298,6 +321,30 @@ const styles = StyleSheet.create({
     fontSize: 11,
     lineHeight: 15,
     fontStyle: 'italic',
+  },
+  motionGuardBox: {
+    borderWidth: 1,
+    padding: 10,
+    gap: 8,
+    marginTop: 2,
+  },
+  motionGuardPrompt: {
+    fontFamily: GameFonts.displayRegular,
+    fontSize: 12,
+    lineHeight: 17,
+    fontStyle: 'italic',
+  },
+  motionGuardButton: {
+    alignSelf: 'flex-start',
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    transform: [{ skewX: '-6deg' }],
+  },
+  motionGuardButtonText: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 10,
+    letterSpacing: 1.5,
   },
   actionRow: {
     flexDirection: 'row',

@@ -1,6 +1,14 @@
 import { getLocalDateKey } from '@/lib/daily-streak';
-import { pruneEvidenceLog } from '@/lib/evidence-log';
+import {
+  sanitizePlanningTimestamp,
+  sanitizePlanningTimestampList,
+} from '@/lib/motion-vs-action';
 import { sanitizeQuestDistractionType } from '@/lib/distraction-shield';
+import { pruneEvidenceLog } from '@/lib/evidence-log';
+import {
+  sanitizeMomentumMilestonesReached,
+  sanitizeMomentumReserve,
+} from '@/lib/momentum-reserve';
 import { pruneWeeklyReviewByWeek } from '@/lib/weekly-review';
 import type { DailyActivity, PlayerProgress, QuestFrictionReason, TaskCategory, UserQuest } from '@/types/narrative';
 
@@ -120,6 +128,21 @@ export function sanitizeUserQuest(raw: unknown): UserQuest | null {
   if (typeof quest.frictionShieldAppliedAt === 'string' && quest.frictionShieldAppliedAt.length > 0) {
     sanitized.frictionShieldAppliedAt = quest.frictionShieldAppliedAt;
   }
+
+  const improvedAt = sanitizePlanningTimestampList(quest.improvedAt);
+  if (improvedAt.length > 0) sanitized.improvedAt = improvedAt;
+
+  const readinessUpdatedAt = sanitizePlanningTimestampList(quest.readinessUpdatedAt);
+  if (readinessUpdatedAt.length > 0) sanitized.readinessUpdatedAt = readinessUpdatedAt;
+
+  const frictionReviewedAt = sanitizePlanningTimestampList(quest.frictionReviewedAt);
+  if (frictionReviewedAt.length > 0) sanitized.frictionReviewedAt = frictionReviewedAt;
+
+  const focusStartedAt = sanitizePlanningTimestamp(quest.focusStartedAt);
+  if (focusStartedAt) sanitized.focusStartedAt = focusStartedAt;
+
+  const completedAt = sanitizePlanningTimestamp(quest.completedAt);
+  if (completedAt) sanitized.completedAt = completedAt;
 
   if (
     typeof quest.generatedFromRecurringQuestId === 'string' &&
@@ -250,6 +273,8 @@ export function sanitizePersistedProgress(progress: PlayerProgress): PlayerProgr
       ACTIVITY_RETENTION_DAYS,
     ),
     evidenceLog: pruneEvidenceLog(progress.evidenceLog ?? []),
+    momentumReserve: sanitizeMomentumReserve(progress.momentumReserve),
+    momentumMilestonesReached: sanitizeMomentumMilestonesReached(progress.momentumMilestonesReached),
   };
 }
 

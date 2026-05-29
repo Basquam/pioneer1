@@ -6,6 +6,10 @@ import { createEmptyIdentityVotes, sanitizeIdentityVotes } from '@/lib/identity-
 import { sanitizeRecoveryQuestCompletedDates } from '@/lib/recovery-quest';
 import { sanitizeRecurringQuestTemplates } from '@/lib/recurring-quests';
 import { sanitizeEvidenceLog } from '@/lib/evidence-log';
+import {
+  sanitizeMomentumMilestonesReached,
+  sanitizeMomentumReserve,
+} from '@/lib/momentum-reserve';
 import { sanitizeTemplateQuestStartedAt } from '@/lib/decisive-moment';
 import {
   sanitizeDailyAwarenessByDate,
@@ -170,6 +174,8 @@ export function createInitialProgress(): PlayerProgress {
     weeklyReviewByWeek: {},
     recurringQuestTemplates: [],
     evidenceLog: [],
+    momentumReserve: 0,
+    momentumMilestonesReached: [],
   };
 }
 
@@ -217,6 +223,10 @@ function normalizeProgress(raw: Partial<PlayerProgress> & Record<string, unknown
       raw.recurringQuestTemplates ?? base.recurringQuestTemplates,
     ),
     evidenceLog: sanitizeEvidenceLog(raw.evidenceLog ?? base.evidenceLog),
+    momentumReserve: sanitizeMomentumReserve(raw.momentumReserve ?? base.momentumReserve),
+    momentumMilestonesReached: sanitizeMomentumMilestonesReached(
+      raw.momentumMilestonesReached ?? base.momentumMilestonesReached,
+    ),
   };
 
   const universeForMigration = findUniverse(merged.selectedUniverseId) ?? DUST_AND_IRON_UNIVERSE;

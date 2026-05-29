@@ -148,7 +148,7 @@ export function ImproveQuestSheet({ questId, onClose }: ImproveQuestSheetProps) 
     };
 
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    updateUserQuest(questId, updates);
+    updateUserQuest(questId, updates, { planningSource: 'improve' });
     onClose();
   };
 

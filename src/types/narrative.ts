@@ -209,6 +209,13 @@ export type QuestCompleteState = {
     headline: string;
     universeFlavorLine: string;
   };
+  /** Universe-flavored momentum gain line, e.g. "+1 Frontier Momentum". */
+  momentumGainLine?: string;
+  /** Shown when momentum crosses a stored-effort milestone. */
+  momentumMilestoneUnlock?: {
+    message: string;
+    label: string;
+  };
 };
 
 export type QuestFrictionReason =
@@ -269,6 +276,16 @@ export type UserQuest = {
   lastFocusDistraction?: QuestDistractionType;
   /** ISO timestamp when the user applied a friction shield in Focus Mode. */
   frictionShieldAppliedAt?: string;
+  /** ISO timestamps when Improve Quest was saved. */
+  improvedAt?: string[];
+  /** ISO timestamps when readiness/planning fields were updated. */
+  readinessUpdatedAt?: string[];
+  /** ISO timestamps when friction was reviewed. */
+  frictionReviewedAt?: string[];
+  /** ISO timestamp when Quest Focus Mode was first opened. */
+  focusStartedAt?: string;
+  /** ISO timestamp when the quest was completed. */
+  completedAt?: string;
   /** Links a generated instance back to its recurring routine template. */
   generatedFromRecurringQuestId?: string;
 };
@@ -359,6 +376,14 @@ export type BoardQuest = {
   riskLevel?: QuestRiskLevel;
   lastFocusDistraction?: QuestDistractionType;
   frictionShieldAppliedAt?: string;
+  improvedAt?: string[];
+  readinessUpdatedAt?: string[];
+  frictionReviewedAt?: string[];
+  frictionReviews?: QuestFrictionReview[];
+  focusStartedAt?: string;
+  completedAt?: string;
+  /** True when planning activity exceeds the motion guard threshold. */
+  isTooMuchMotion?: boolean;
   /** True when this quest was spawned from a recurring routine. */
   isRecurring?: boolean;
 };
@@ -494,4 +519,8 @@ export type PlayerProgress = {
   recurringQuestTemplates: RecurringQuestTemplate[];
   /** Recent quest completion events for the evidence timeline. */
   evidenceLog: EvidenceEvent[];
+  /** Stored effort from completed quests — a psychological progress indicator, not currency. */
+  momentumReserve: number;
+  /** Momentum milestone thresholds already reached (10, 25, 50, 100). */
+  momentumMilestonesReached: number[];
 };

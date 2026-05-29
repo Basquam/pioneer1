@@ -163,7 +163,7 @@ export function FrictionReviewSheet({ questId, onClose }: FrictionReviewSheetPro
     }
 
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    updateUserQuest(questId, updates);
+    updateUserQuest(questId, updates, { planningSource: 'readiness' });
     markFrictionFixApplied(questId);
     if (closeAfter) onClose();
   };

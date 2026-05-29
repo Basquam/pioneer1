@@ -18,6 +18,22 @@ import {
 } from '../src/lib/evidence-log';
 import { getCrewCodeLines, getDailyCrewCodeLine } from '../src/lib/crew-code';
 import {
+  applyMomentumGain,
+  computeMomentumGain,
+  detectMomentumMilestoneUnlock,
+  formatMomentumGainOverlayLine,
+  getMomentumUniverseCopy,
+  MOMENTUM_MILESTONES,
+} from '../src/lib/momentum-reserve';
+import {
+  countPlanningActions,
+  getMotionGuardUniverseFlavor,
+  isTooMuchMotion,
+  recordFrictionReviewActivity,
+  recordImproveActivity,
+  recordReadinessUpdateActivity,
+} from '../src/lib/motion-vs-action';
+import {
   detectIdentityMilestoneUnlock,
   getMilestoneTierForVotes,
   getTraitBecomingProgress,
@@ -82,6 +98,8 @@ function baseProgress(): PlayerProgress {
     weeklyReviewByWeek: {},
     recurringQuestTemplates: [],
     evidenceLog: [],
+    momentumReserve: 0,
+    momentumMilestonesReached: [],
   } as PlayerProgress;
 
   for (const universe of UNIVERSES) {
@@ -234,6 +252,25 @@ const staleEntry = findBoardQuest(
 )!;
 assert(shouldShowFrictionReview(staleEntry, '2026-05-27'), 'friction eligible');
 
+// Motion vs Action guard
+const motionQuest = recordReadinessUpdateActivity(
+  recordImproveActivity(
+    recordFrictionReviewActivity({ ...richQuest, isCompleted: false }),
+    '2026-05-27T10:00:00.000Z',
+  ),
+  '2026-05-27T11:00:00.000Z',
+);
+assert(countPlanningActions(motionQuest) === 3, 'planning action count');
+assert(isTooMuchMotion(motionQuest, '2026-05-27'), 'too much motion when 3 planning actions');
+assert(!isTooMuchMotion({ ...motionQuest, isCompleted: true }, '2026-05-27'), 'completed quest not flagged');
+assert(!isTooMuchMotion({ ...richQuest, improvedAt: ['t1'] }, '2026-05-27'), 'under threshold not flagged');
+const motionBoard = findBoardQuest(
+  buildBoardQuests(dustChapter, dustSaga, { ...boardProgress, userQuests: [motionQuest] }),
+  motionQuest.id,
+)!;
+assert(motionBoard.isTooMuchMotion === true, 'board quest too much motion flag');
+assert(getMotionGuardUniverseFlavor('neuronet').includes('Execute'), 'neuronet motion flavor');
+
 const doneEntry = findBoardQuest(
   buildBoardQuests(dustChapter, dustSaga, {
     ...boardProgress,
@@ -321,6 +358,22 @@ assert(vultureSaga != null && getCrewCodeLines(vultureSaga).length >= 2, 'vultur
 const lineA = getDailyCrewCodeLine(vultureSaga!, '2026-05-27');
 const lineB = getDailyCrewCodeLine(vultureSaga!, '2026-05-27');
 assert(lineA != null && lineA === lineB, 'crew code daily line stable');
+
+// Momentum reserve
+assert(computeMomentumGain('user', 'standard') === 1, 'user quest momentum');
+assert(computeMomentumGain('template', 'standard') === 2, 'template quest momentum');
+assert(computeMomentumGain('user', 'high') === 3, 'high-risk user momentum bonus');
+const momentumApplied = applyMomentumGain(baseProgress(), 2);
+assert(momentumApplied.progress.momentumReserve === 2, 'momentum accumulates');
+assert(
+  detectMomentumMilestoneUnlock(8, 11, [])?.label === MOMENTUM_MILESTONES[0]?.label,
+  'momentum milestone at 10',
+);
+assert(
+  formatMomentumGainOverlayLine('neuronet', 1) === '+1 Signal Charge',
+  'neuronet momentum overlay line',
+);
+assert(getMomentumUniverseCopy('neon-ashes').label === 'Case Pressure', 'neon ashes momentum label');
 
 if (failures.length) {
   console.error('FAILED:\n' + failures.map((f) => ` - ${f}`).join('\n'));

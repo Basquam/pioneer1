@@ -1,12 +1,12 @@
 import type { BoardQuest, Chapter, PlayerProgress, QuestTemplate, Saga, UserQuest } from '@/types/narrative';
 
-import { resolveQuestCreatedOnDate } from '@/lib/daily-focus';
+import { getDailyFocusLimit, getDailyFocusQuestIds, resolveQuestCreatedOnDate } from '@/lib/daily-focus';
 import { resolveQuestRiskLevel } from '@/lib/quest-risk';
 import { getLocalDateKey } from '@/lib/daily-streak';
 import { isUserQuestArchived, shouldShowFrictionReview } from '@/lib/quest-friction';
 import { getLockedFocusQuestIdSet } from '@/lib/focus-lock';
 import { computeQuestReadiness } from '@/lib/quest-readiness';
-import { getDailyFocusLimit, getDailyFocusQuestIds } from './daily-focus';
+import { isTooMuchMotion } from '@/lib/motion-vs-action';
 
 export type QuestBoardProgress = Pick<
   PlayerProgress,
@@ -69,6 +69,12 @@ export function userQuestToBoardQuest(
     riskLevel: resolveQuestRiskLevel(quest.riskLevel),
     ...(quest.lastFocusDistraction ? { lastFocusDistraction: quest.lastFocusDistraction } : {}),
     ...(quest.frictionShieldAppliedAt ? { frictionShieldAppliedAt: quest.frictionShieldAppliedAt } : {}),
+    ...(quest.improvedAt?.length ? { improvedAt: quest.improvedAt } : {}),
+    ...(quest.readinessUpdatedAt?.length ? { readinessUpdatedAt: quest.readinessUpdatedAt } : {}),
+    ...(quest.frictionReviewedAt?.length ? { frictionReviewedAt: quest.frictionReviewedAt } : {}),
+    ...(quest.frictionReviews?.length ? { frictionReviews: quest.frictionReviews } : {}),
+    ...(quest.focusStartedAt ? { focusStartedAt: quest.focusStartedAt } : {}),
+    ...(quest.completedAt ? { completedAt: quest.completedAt } : {}),
     ...(quest.generatedFromRecurringQuestId ? { isRecurring: true } : {}),
   };
 
@@ -85,6 +91,10 @@ export function userQuestToBoardQuest(
 
   if (shouldShowFrictionReview(boardQuest)) {
     boardQuest.showFrictionReview = true;
+  }
+
+  if (isTooMuchMotion(quest, getLocalDateKey())) {
+    boardQuest.isTooMuchMotion = true;
   }
 
   return boardQuest;
