@@ -1,10 +1,17 @@
 import type { BoardQuest, Chapter, PlayerProgress, QuestTemplate, Saga, UserQuest } from '@/types/narrative';
 
+import { getLocalDateKey } from '@/lib/daily-streak';
+import { getLockedFocusQuestIdSet } from '@/lib/focus-lock';
 import { getDailyFocusLimit, getDailyFocusQuestIds } from './daily-focus';
 
 export type QuestBoardProgress = Pick<
   PlayerProgress,
-  'userQuests' | 'completedQuestIdsBySagaId' | 'selectedUniverseId' | 'dailyFocusLimit'
+  | 'userQuests'
+  | 'completedQuestIdsBySagaId'
+  | 'selectedUniverseId'
+  | 'dailyFocusLimit'
+  | 'focusLockedDate'
+  | 'lockedFocusQuestIds'
 >;
 
 export function templateToBoardQuest(
@@ -25,7 +32,11 @@ export function templateToBoardQuest(
   };
 }
 
-export function userQuestToBoardQuest(quest: UserQuest, isDailyFocus = false): BoardQuest {
+export function userQuestToBoardQuest(
+  quest: UserQuest,
+  isDailyFocus = false,
+  isFocusLocked = false,
+): BoardQuest {
   return {
     id: quest.id,
     source: 'user',
@@ -38,6 +49,7 @@ export function userQuestToBoardQuest(quest: UserQuest, isDailyFocus = false): B
     reactionCharacterId: quest.reactionCharacterId,
     completed: quest.isCompleted,
     isDailyFocus,
+    ...(isFocusLocked ? { isFocusLocked: true } : {}),
     ...(quest.starterTaskTitle ? { starterTaskTitle: quest.starterTaskTitle } : {}),
     ...(quest.prepStepTitle ? { prepStepTitle: quest.prepStepTitle } : {}),
     ...(quest.implementationIntention ? { implementationIntention: quest.implementationIntention } : {}),
@@ -54,16 +66,24 @@ export function buildBoardQuests(
     templateToBoardQuest(template, completedQuestIds),
   );
 
+  const today = getLocalDateKey();
   const focusQuestIds = getDailyFocusQuestIds(
     progress.userQuests,
     getDailyFocusLimit(progress),
-    undefined,
+    today,
     progress.selectedUniverseId,
   );
+  const lockedFocusQuestIds = getLockedFocusQuestIdSet(progress, today);
 
   const userQuests = progress.userQuests
     .filter((quest) => quest.sourceSagaId === saga.id && quest.sourceChapterId === chapter.id)
-    .map((quest) => userQuestToBoardQuest(quest, focusQuestIds.has(quest.id)));
+    .map((quest) =>
+      userQuestToBoardQuest(
+        quest,
+        focusQuestIds.has(quest.id),
+        lockedFocusQuestIds.has(quest.id),
+      ),
+    );
 
   return [...templates, ...userQuests];
 }

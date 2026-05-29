@@ -19,6 +19,7 @@ import { useGame } from '@/hooks/use-game';
 import { useUniverseVisualTheme } from '@/hooks/use-universe-visual-theme';
 import { useUniverseUiCopy } from '@/lib/universe-ui-copy';
 import { formatPrepStepLine } from '@/lib/quest-prep';
+import { getFocusLockCopy } from '@/lib/focus-lock';
 import { formatStarterMoveLine } from '@/lib/two-minute-starter';
 import { getTaskCategoryMeta } from '@/lib/task-categories';
 import type { BoardQuest } from '@/types/narrative';
@@ -70,6 +71,8 @@ export function QuestCard({ quest, index }: QuestCardProps) {
   }
 
   const categoryMeta = getTaskCategoryMeta(quest.category);
+  const focusLockCopy = getFocusLockCopy(activeUniverse.id);
+  const lockedFocus = quest.isFocusLocked === true;
 
   const handlePress = () => {
     scale.value = withSpring(0.94, { damping: 10 }, () => {
@@ -91,9 +94,9 @@ export function QuestCard({ quest, index }: QuestCardProps) {
         styles.wrapper,
         cardStyle,
         {
-          backgroundColor: palette.panel,
-          borderColor: panelBorder,
-          borderWidth: visualTheme.panelBorderWidth,
+          backgroundColor: lockedFocus ? `${palette.primary}44` : palette.panel,
+          borderColor: lockedFocus ? goldAccent : panelBorder,
+          borderWidth: lockedFocus ? Math.max(visualTheme.panelBorderWidth, 2) : visualTheme.panelBorderWidth,
           transform: skewTransform(visualTheme.cardSkew),
         },
         getPanelShadow(palette, visualTheme),
@@ -112,6 +115,13 @@ export function QuestCard({ quest, index }: QuestCardProps) {
               <View style={[styles.badge, { backgroundColor: goldAccent }]}>
                 <Text style={[styles.badgeText, { color: palette.void }]} numberOfLines={1}>
                   {ui.focusQuestLabel}
+                </Text>
+              </View>
+            )}
+            {lockedFocus && (
+              <View style={[styles.badge, { backgroundColor: palette.primary, borderWidth: 1, borderColor: goldAccent }]}>
+                <Text style={[styles.badgeText, { color: goldAccent }]} numberOfLines={1}>
+                  {focusLockCopy.lockedQuestBadge}
                 </Text>
               </View>
             )}

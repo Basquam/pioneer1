@@ -34,6 +34,7 @@ export function DevToolsPanel({ embedded = false }: { embedded?: boolean }) {
     devSwitchToNeuroNet,
     devSwitchToNeonAshes,
     devSwitchToDustAndIron,
+    devUnlockTodayFocus,
     resetProgress,
   } = useGame();
   const { palette } = activeUniverse;
@@ -103,6 +104,11 @@ export function DevToolsPanel({ embedded = false }: { embedded?: boolean }) {
       label: 'SWITCH TO DUST & IRON',
       hint: 'Return to Dust & Iron and restore last active saga/chapter',
       onPress: devSwitchToDustAndIron,
+    },
+    {
+      label: 'UNLOCK TODAY\'S FOCUS',
+      hint: 'Clear focus lock for today (testing only)',
+      onPress: devUnlockTodayFocus,
     },
     {
       label: 'RESET PROGRESS',

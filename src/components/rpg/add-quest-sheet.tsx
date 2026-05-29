@@ -26,6 +26,7 @@ import {
   getDailyFocusLimit,
   getDailyFocusOverLimitMessage,
 } from '@/lib/daily-focus';
+import { getFocusLockCopy } from '@/lib/focus-lock';
 import { getTaskCategoryMeta, TASK_CATEGORIES } from '@/lib/task-categories';
 import { generateStarterTaskTitle, getStarterToggleCopy } from '@/lib/two-minute-starter';
 import {
@@ -48,7 +49,7 @@ type AddQuestSheetProps = {
 
 export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
   const ui = useUniverseUiCopy();
-  const { activeUniverse, currentChapter, playerProgress, addUserQuest, addQuestRecoveryMode } = useGame();
+  const { activeUniverse, currentChapter, playerProgress, addUserQuest, addQuestRecoveryMode, isTodayFocusLocked } = useGame();
   const { palette } = activeUniverse;
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState<TaskCategory>('cleaning');
@@ -60,6 +61,7 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
 
   const starterCopy = getStarterToggleCopy(activeUniverse.id);
   const prepCopy = getQuestPrepCopy(activeUniverse.id);
+  const focusLockCopy = getFocusLockCopy(activeUniverse.id);
   const prepPresets = useMemo(() => getPrepPresets(category), [category]);
   const categoryOptions = addQuestRecoveryMode ? RECOVERY_QUEST_CATEGORIES : TASK_CATEGORIES;
   const trimmedTitle = title.trim();
@@ -208,6 +210,14 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
               <View style={[styles.warningBox, { backgroundColor: palette.panel, borderColor: palette.accent }]}>
                 <Text style={[styles.warningText, { color: palette.bone }]}>
                   {getDailyFocusOverLimitMessage(focusLimit, activeUniverse.id)}
+                </Text>
+              </View>
+            )}
+
+            {isTodayFocusLocked && (
+              <View style={[styles.focusLockedBox, { backgroundColor: palette.panel, borderColor: palette.gold }]}>
+                <Text style={[styles.focusLockedText, { color: palette.bone }]}>
+                  {focusLockCopy.addQuestLockedHint}
                 </Text>
               </View>
             )}
@@ -536,6 +546,17 @@ const styles = StyleSheet.create({
     transform: [{ skewX: '-2deg' }],
   },
   recoveryHint: {
+    fontFamily: GameFonts.displayRegular,
+    fontSize: 13,
+    lineHeight: 19,
+    fontStyle: 'italic',
+  },
+  focusLockedBox: {
+    borderWidth: 1,
+    padding: 12,
+    transform: [{ skewX: '-2deg' }],
+  },
+  focusLockedText: {
     fontFamily: GameFonts.displayRegular,
     fontSize: 13,
     lineHeight: 19,

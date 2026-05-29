@@ -1,5 +1,56 @@
 import type { BoardQuest } from '@/types/narrative';
 
+export type QuestStartRitualCopy = {
+  startButtonLabel: string;
+  step1Prompt: string;
+  step2Prompt: string;
+  step3Prompt: string;
+  advanceLabel: string;
+  readyHint: string;
+};
+
+const QUEST_START_RITUAL_COPY: Record<string, QuestStartRitualCopy> = {
+  'dust-and-iron': {
+    startButtonLabel: 'START RITUAL',
+    step1Prompt: 'Read the trail.',
+    step2Prompt: 'Take the first move.',
+    step3Prompt: 'Ride.',
+    advanceLabel: 'NEXT',
+    readyHint: 'Ready when you are.',
+  },
+  neuronet: {
+    startButtonLabel: 'START RITUAL',
+    step1Prompt: 'Scan the operation.',
+    step2Prompt: 'Run the smallest executable action.',
+    step3Prompt: 'Execute.',
+    advanceLabel: 'NEXT',
+    readyHint: 'Ready when you are.',
+  },
+  'neon-ashes': {
+    startButtonLabel: 'START RITUAL',
+    step1Prompt: 'Review the lead.',
+    step2Prompt: 'Follow the first clue.',
+    step3Prompt: 'Begin the case.',
+    advanceLabel: 'NEXT',
+    readyHint: 'Ready when you are.',
+  },
+};
+
+export function getQuestStartRitualCopy(universeId: string): QuestStartRitualCopy {
+  return QUEST_START_RITUAL_COPY[universeId] ?? QUEST_START_RITUAL_COPY['dust-and-iron'];
+}
+
+export function getRitualMissionLine(quest: Pick<BoardQuest, 'narrativeTitle'>): string {
+  return quest.narrativeTitle;
+}
+
+export function getRitualFirstMoveLine(
+  quest: Pick<BoardQuest, 'starterTaskTitle' | 'originalTitle' | 'narrativeTitle'>,
+): string {
+  if (quest.starterTaskTitle?.trim()) return quest.starterTaskTitle.trim();
+  return quest.originalTitle.trim() || quest.narrativeTitle;
+}
+
 export type QuestFocusCopy = {
   tagline: string;
   completeLabel: string;

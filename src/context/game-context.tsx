@@ -13,6 +13,12 @@ import {
 import { narrativeWarn } from '@/lib/narrative-state-debug';
 import { getLocalDateKey } from '@/lib/daily-streak';
 import {
+  canLockTodayFocus,
+  isTodayFocusLocked,
+  lockTodayFocus,
+  unlockTodayFocus,
+} from '@/lib/focus-lock';
+import {
   applySessionOnOpen,
   getRecoveryQuestCopy,
   markRecoveryQuestComplete,
@@ -110,6 +116,7 @@ type GameContextValue = {
   addQuestRecoveryMode: boolean;
   focusQuest: BoardQuest | null;
   showRecoveryPrompt: boolean;
+  isTodayFocusLocked: boolean;
   showChapterIntro: boolean;
   showHqTutorial: boolean;
   completedQuestCount: number;
@@ -126,6 +133,7 @@ type GameContextValue = {
   ) => void;
   openAddQuestSheet: () => void;
   openRecoveryQuestSheet: () => void;
+  lockTodayFocus: () => void;
   openQuestFocus: (questId: string) => void;
   closeQuestFocus: () => void;
   closeAddQuestSheet: () => void;
@@ -146,6 +154,7 @@ type GameContextValue = {
   restoreDefaultStory: () => void;
   devAddXp: (amount: number) => void;
   devCompleteCurrentChapter: () => void;
+  devUnlockTodayFocus: () => void;
   devUnlockVultureGangChapters: () => void;
   devUnlockIronRailwayCompany: () => void;
   devUnlockNeuroNet: () => void;
@@ -232,10 +241,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
       completedQuestIdsBySagaId: progress.completedQuestIdsBySagaId,
       selectedUniverseId: progress.selectedUniverseId,
       dailyFocusLimit: progress.dailyFocusLimit,
+      focusLockedDate: progress.focusLockedDate,
+      lockedFocusQuestIds: progress.lockedFocusQuestIds,
     }),
     [
       progress.completedQuestIdsBySagaId,
       progress.dailyFocusLimit,
+      progress.focusLockedDate,
+      progress.lockedFocusQuestIds,
       progress.selectedUniverseId,
       progress.userQuests,
     ],
@@ -283,6 +296,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   const showRecoveryPrompt = useMemo(
     () => isHydrated && shouldShowRecoveryPrompt(progress),
+    [isHydrated, progress],
+  );
+
+  const todayFocusLocked = useMemo(
+    () => isHydrated && isTodayFocusLocked(progress),
     [isHydrated, progress],
   );
 
@@ -423,6 +441,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   const openQuestFocus = useCallback((questId: string) => {
     setFocusQuestId(questId);
+  }, []);
+
+  const lockTodayFocusCommit = useCallback(() => {
+    setProgress((prev) => lockTodayFocus(prev, activeUniverse.id));
+  }, [activeUniverse.id]);
+
+  const devUnlockTodayFocus = useCallback(() => {
+    setProgress((prev) => unlockTodayFocus(prev));
   }, []);
 
   const closeAddQuestSheet = useCallback(() => {
@@ -910,6 +936,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       addQuestRecoveryMode,
       focusQuest,
       showRecoveryPrompt,
+      isTodayFocusLocked: todayFocusLocked,
       showChapterIntro,
       showHqTutorial,
       completedQuestCount,
@@ -922,6 +949,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       addUserQuest,
       openAddQuestSheet,
       openRecoveryQuestSheet,
+      lockTodayFocus: lockTodayFocusCommit,
       openQuestFocus,
       closeQuestFocus,
       closeAddQuestSheet,
@@ -942,6 +970,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       restoreDefaultStory,
       devAddXp,
       devCompleteCurrentChapter,
+      devUnlockTodayFocus,
       devUnlockVultureGangChapters,
       devUnlockIronRailwayCompany,
       devUnlockNeuroNet,
@@ -985,6 +1014,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       focusQuest,
       isHydrated,
       isSagaPreview,
+      todayFocusLocked,
+      lockTodayFocusCommit,
       markChapterIntroSeen,
       maybeShowVillainTaunt,
       narrativeMoment,
@@ -1005,6 +1036,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       showChapterIntro,
       showHqTutorial,
       showRecoveryPrompt,
+      todayFocusLocked,
       startHqTutorialAddQuest,
       startUnlockedSagaFromChapterComplete,
       storyLine,

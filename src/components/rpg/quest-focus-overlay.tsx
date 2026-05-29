@@ -1,6 +1,14 @@
 import * as Haptics from 'expo-haptics';
+import { useEffect, useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
+import Animated, {
+  FadeIn,
+  FadeInDown,
+  useAnimatedStyle,
+  useSharedValue,
+  withSequence,
+  withSpring,
+} from 'react-native-reanimated';
 
 import { CharacterPortrait } from '@/components/rpg/character-portrait';
 import { GlowButton } from '@/components/rpg/glow-button';
@@ -16,9 +24,14 @@ import {
   getQuestFocusClearedLabel,
   getQuestFocusCopy,
   getQuestFocusSourceLabel,
+  getQuestStartRitualCopy,
+  getRitualFirstMoveLine,
+  getRitualMissionLine,
   shortenMotivationLine,
 } from '@/lib/quest-focus-mode';
 import { formatStarterMoveLine } from '@/lib/two-minute-starter';
+
+type RitualStep = 0 | 1 | 2 | 3 | 4;
 
 export function QuestFocusOverlay() {
   const ui = useUniverseUiCopy();
@@ -31,10 +44,20 @@ export function QuestFocusOverlay() {
   } = useGame();
   const { palette } = activeUniverse;
   const copy = getQuestFocusCopy(activeUniverse.id);
+  const ritualCopy = getQuestStartRitualCopy(activeUniverse.id);
+  const [ritualStep, setRitualStep] = useState<RitualStep>(0);
+  const completePulse = useSharedValue(1);
+
+  useEffect(() => {
+    setRitualStep(0);
+    completePulse.value = 1;
+  }, [focusQuest?.id, completePulse]);
 
   if (!focusQuest) return null;
 
   const isCompleted = focusQuest.completed;
+  const ritualComplete = ritualStep === 4;
+  const ritualActive = ritualStep >= 1 && ritualStep <= 3;
   const sourceLabel = getQuestFocusSourceLabel(focusQuest, ui);
   const clearedLabel = getQuestFocusClearedLabel(focusQuest, ui);
   const taskSectionLabel =
@@ -45,12 +68,54 @@ export function QuestFocusOverlay() {
     : shortenMotivationLine(ui.questCompleteFallbackLine);
   const trait = getIdentityTraitMeta(getTraitForCategory(focusQuest.category));
 
+  const completeWrapStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: completePulse.value }],
+    opacity: ritualComplete ? 1 : 0.72,
+  }));
+
   const handleComplete = () => {
     if (isCompleted) return;
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     completeQuest(focusQuest.id);
     closeQuestFocus();
   };
+
+  const handleStartRitual = () => {
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setRitualStep(1);
+  };
+
+  const handleAdvanceRitual = () => {
+    void Haptics.selectionAsync();
+    setRitualStep((current) => {
+      const next = Math.min(4, current + 1) as RitualStep;
+      if (next === 4) {
+        void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        completePulse.value = withSequence(
+          withSpring(1.08, { damping: 8, stiffness: 220 }),
+          withSpring(1, { damping: 12, stiffness: 180 }),
+        );
+      }
+      return next;
+    });
+  };
+
+  const ritualStepContent =
+    ritualStep === 1
+      ? getRitualMissionLine(focusQuest)
+      : ritualStep === 2
+        ? getRitualFirstMoveLine(focusQuest)
+        : null;
+
+  const ritualStepPrompt =
+    ritualStep === 1
+      ? ritualCopy.step1Prompt
+      : ritualStep === 2
+        ? ritualCopy.step2Prompt
+        : ritualCopy.step3Prompt;
+
+  const ritualAdvanceLabel =
+    ritualStep === 3 ? ritualCopy.step3Prompt.toUpperCase() : ritualCopy.advanceLabel;
 
   return (
     <Modal visible transparent animationType="fade" statusBarTranslucent onRequestClose={closeQuestFocus}>
@@ -158,9 +223,62 @@ export function QuestFocusOverlay() {
           )}
 
           <Animated.View entering={FadeInDown.duration(450).delay(340)} style={styles.actions}>
-            {!isCompleted && (
-              <GlowButton label={copy.completeLabel} hint="Uses your existing quest rewards" onPress={handleComplete} />
+            {!isCompleted && ritualActive && (
+              <Animated.View
+                key={`ritual-step-${ritualStep}`}
+                entering={FadeInDown.duration(280)}
+                style={[styles.ritualCard, { backgroundColor: palette.panel, borderColor: palette.gold }]}>
+                <Text style={[styles.ritualStepLabel, { color: palette.gold }]}>
+                  STEP {ritualStep} / 3
+                </Text>
+                <Text style={[styles.ritualPrompt, { color: palette.bone }]}>{ritualStepPrompt}</Text>
+                {ritualStepContent ? (
+                  <Text style={[styles.ritualContent, { color: palette.fog }]}>{ritualStepContent}</Text>
+                ) : (
+                  <Text style={[styles.ritualBreath, { color: palette.fog }]}>
+                    Take one breath. Then begin.
+                  </Text>
+                )}
+                <Pressable
+                  onPress={handleAdvanceRitual}
+                  style={[styles.ritualAdvance, { borderColor: palette.gold, backgroundColor: palette.primary }]}>
+                  <Text style={[styles.ritualAdvanceText, { color: palette.bone }]}>
+                    {ritualAdvanceLabel}
+                  </Text>
+                </Pressable>
+              </Animated.View>
             )}
+
+            {!isCompleted && ritualComplete && (
+              <Animated.Text entering={FadeIn.duration(250)} style={[styles.ritualReady, { color: palette.accent }]}>
+                {ritualCopy.readyHint}
+              </Animated.Text>
+            )}
+
+            {!isCompleted && ritualStep === 0 && (
+              <Pressable
+                onPress={handleStartRitual}
+                style={[styles.ritualStart, { borderColor: palette.gold, backgroundColor: palette.primary }]}>
+                <Text style={[styles.ritualStartText, { color: palette.bone }]}>
+                  {ritualCopy.startButtonLabel}
+                </Text>
+              </Pressable>
+            )}
+
+            {!isCompleted && (
+              <Animated.View style={completeWrapStyle}>
+                <GlowButton
+                  label={copy.completeLabel}
+                  hint={
+                    ritualComplete
+                      ? 'You are ready to complete'
+                      : 'Optional — skip the ritual anytime'
+                  }
+                  onPress={handleComplete}
+                />
+              </Animated.View>
+            )}
+
             <Pressable onPress={closeQuestFocus} style={styles.exitLink}>
               <Text style={[styles.exitText, { color: palette.fog }]}>{copy.exitLabel}</Text>
             </Pressable>
@@ -273,6 +391,66 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   actions: { gap: 12, marginTop: 4 },
+  ritualStart: {
+    borderWidth: 1,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    transform: [{ skewX: '-4deg' }],
+  },
+  ritualStartText: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 12,
+    letterSpacing: 2,
+  },
+  ritualCard: {
+    borderWidth: 1,
+    padding: 16,
+    gap: 10,
+    transform: [{ skewX: '-2deg' }],
+  },
+  ritualStepLabel: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 9,
+    letterSpacing: 2,
+  },
+  ritualPrompt: {
+    fontFamily: GameFonts.ui,
+    fontSize: 16,
+    letterSpacing: 0.5,
+    lineHeight: 22,
+  },
+  ritualContent: {
+    fontFamily: GameFonts.displayRegular,
+    fontSize: 14,
+    lineHeight: 20,
+    fontStyle: 'italic',
+  },
+  ritualBreath: {
+    fontFamily: GameFonts.displayRegular,
+    fontSize: 13,
+    lineHeight: 18,
+    fontStyle: 'italic',
+  },
+  ritualAdvance: {
+    borderWidth: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    alignItems: 'center',
+    marginTop: 4,
+    transform: [{ skewX: '-4deg' }],
+  },
+  ritualAdvanceText: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 11,
+    letterSpacing: 2,
+  },
+  ritualReady: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 11,
+    letterSpacing: 1.5,
+    textAlign: 'center',
+  },
   exitLink: { alignItems: 'center', paddingVertical: 8 },
   exitText: { fontFamily: GameFonts.uiSemi, fontSize: 11, letterSpacing: 2 },
 });

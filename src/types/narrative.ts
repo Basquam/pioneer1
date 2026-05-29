@@ -250,6 +250,8 @@ export type BoardQuest = {
   completed: boolean;
   /** First N user quests created today — highlighted on the board. */
   isDailyFocus?: boolean;
+  /** Pinned as part of today's locked focus commitment. */
+  isFocusLocked?: boolean;
   starterTaskTitle?: string;
   prepStepTitle?: string;
   implementationIntention?: string;
@@ -302,6 +304,10 @@ export type PlayerProgress = {
   lastSagaByUniverseId: Record<string, string>;
   /** Per-trait identity votes — only increase on quest completion. */
   identityVotes: IdentityVotes;
+  /** Local date when the user locked today's focus quests. */
+  focusLockedDate: string | null;
+  /** User quest ids pinned when focus was locked for focusLockedDate. */
+  lockedFocusQuestIds: string[];
   /** Last local date active before a missed-day gap was detected. */
   lastMissedDate: string | null;
   /** Return date when a recovery quest was offered after a missed day. */

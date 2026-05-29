@@ -1,6 +1,6 @@
 import { type Href, router } from 'expo-router';
 import { useMemo } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Alert, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { AddQuestTrigger } from '@/components/rpg/add-quest-trigger';
@@ -18,15 +18,44 @@ import {
 import { useGame } from '@/hooks/use-game';
 import { useUniverseVisualTheme } from '@/hooks/use-universe-visual-theme';
 import { useUniverseUiCopy } from '@/lib/universe-ui-copy';
+import { canLockTodayFocus, getFocusLockCopy } from '@/lib/focus-lock';
 
 export function DailyOperationsBriefing() {
   const ui = useUniverseUiCopy();
-  const { activeUniverse, activeSaga, currentChapter, player, quests, villainInfluence } = useGame();
+  const {
+    activeUniverse,
+    activeSaga,
+    currentChapter,
+    player,
+    playerProgress,
+    quests,
+    villainInfluence,
+    isTodayFocusLocked,
+    lockTodayFocus,
+  } = useGame();
   const visualTheme = useUniverseVisualTheme();
   const { palette } = activeUniverse;
   const panelBorder = getPanelBorderColor(palette, visualTheme);
   const accentColor = getPanelAccentColor(palette, visualTheme);
   const goldAccent = getPanelAccentColor(palette, visualTheme, 'gold');
+  const focusLockCopy = getFocusLockCopy(activeUniverse.id);
+  const showLockButton = canLockTodayFocus(playerProgress, activeUniverse.id);
+
+  const handleLockFocus = () => {
+    const confirm = () => lockTodayFocus();
+
+    if (Platform.OS === 'web') {
+      if (window.confirm(`${focusLockCopy.lockConfirmTitle}\n\n${focusLockCopy.lockConfirmMessage}`)) {
+        confirm();
+      }
+      return;
+    }
+
+    Alert.alert(focusLockCopy.lockConfirmTitle, focusLockCopy.lockConfirmMessage, [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Lock Focus', onPress: confirm },
+    ]);
+  };
 
   const { remainingBounties, userQuestCount } = useMemo(() => {
     const templates = quests.filter((quest) => quest.source === 'template');
@@ -64,6 +93,19 @@ export function DailyOperationsBriefing() {
         <DailyStreakDisplay variant="briefing" />
 
         <TodayFocusDisplay variant="briefing" />
+
+        {isTodayFocusLocked ? (
+          <View style={[styles.lockedBlock, { borderColor: goldAccent, backgroundColor: `${palette.primary}33` }]}>
+            <Text style={[styles.lockedTitle, { color: palette.bone }]}>{focusLockCopy.lockedMessage}</Text>
+            <Text style={[styles.lockedFlavor, { color: palette.gold }]}>{focusLockCopy.lockedFlavor}</Text>
+          </View>
+        ) : showLockButton ? (
+          <Pressable
+            onPress={handleLockFocus}
+            style={[styles.lockButton, { borderColor: palette.gold, backgroundColor: palette.primary }]}>
+            <Text style={[styles.lockButtonText, { color: palette.bone }]}>{focusLockCopy.lockButtonLabel}</Text>
+          </Pressable>
+        ) : null}
 
         <View style={[styles.chapterBlock, { borderColor: panelBorder }]}>
           <Text style={[styles.chapterLabel, { color: palette.accent }]}>{ui.todaySectorLabel}</Text>
@@ -142,6 +184,36 @@ const styles = StyleSheet.create({
   },
   chapterLabel: { fontFamily: GameFonts.uiSemi, fontSize: 9, letterSpacing: 2 },
   chapterTitle: { fontFamily: GameFonts.ui, fontSize: 16, letterSpacing: 1 },
+  lockedBlock: {
+    borderWidth: 1,
+    padding: 12,
+    gap: 4,
+    transform: [{ skewX: '-2deg' }],
+  },
+  lockedTitle: {
+    fontFamily: GameFonts.ui,
+    fontSize: 14,
+    letterSpacing: 1,
+  },
+  lockedFlavor: {
+    fontFamily: GameFonts.displayRegular,
+    fontSize: 13,
+    lineHeight: 18,
+    fontStyle: 'italic',
+  },
+  lockButton: {
+    borderWidth: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    alignItems: 'center',
+    transform: [{ skewX: '-4deg' }],
+  },
+  lockButtonText: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 11,
+    letterSpacing: 1.5,
+    textAlign: 'center',
+  },
   statsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
