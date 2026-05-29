@@ -95,6 +95,14 @@ export function sanitizeUserQuest(raw: unknown): UserQuest | null {
     sanitized.archivedAt = quest.archivedAt;
   }
 
+  if (typeof quest.startedAt === 'string' && quest.startedAt.length > 0) {
+    sanitized.startedAt = quest.startedAt;
+  }
+
+  if (typeof quest.afterQuestReward === 'string' && quest.afterQuestReward.length > 0) {
+    sanitized.afterQuestReward = quest.afterQuestReward;
+  }
+
   if (Array.isArray(quest.frictionReviews)) {
     const reviews = quest.frictionReviews
       .map((entry) => sanitizeFrictionReview(entry))

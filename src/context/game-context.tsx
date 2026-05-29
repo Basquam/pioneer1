@@ -1,5 +1,6 @@
 import { createContext, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { AppState, type AppStateStatus } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { type Href, router } from 'expo-router';
 
 import { UNIVERSES } from '@/data/narrative/universes';
@@ -27,6 +28,8 @@ import {
 } from '@/lib/recovery-quest';
 import { recordChapterCompleted, recordQuestCompleted } from '@/lib/weekly-recap';
 import { convertTaskToUserQuest, createUserQuestId } from '@/lib/convert-task-to-quest';
+import { formatRewardRitualUnlockedLine, getAfterQuestRewardCopy } from '@/lib/after-quest-reward';
+import { markQuestStarted } from '@/lib/decisive-moment';
 import { castIdentityVote } from '@/lib/identity-votes';
 import type { UserQuestReadinessUpdates } from '@/lib/quest-readiness';
 import {
@@ -124,6 +127,7 @@ type GameContextValue = {
   improveQuestId: string | null;
   frictionReviewQuestId: string | null;
   focusQuest: BoardQuest | null;
+  focusDecisiveMoment: boolean;
   showRecoveryPrompt: boolean;
   showDailyAwarenessCheck: boolean;
   isTodayFocusLocked: boolean;
@@ -139,12 +143,13 @@ type GameContextValue = {
   addUserQuest: (
     originalTitle: string,
     category: TaskCategory,
-    options?: { starterTaskTitle?: string; prepStepTitle?: string },
+    options?: { starterTaskTitle?: string; prepStepTitle?: string; afterQuestReward?: string },
   ) => void;
   openAddQuestSheet: () => void;
   openRecoveryQuestSheet: () => void;
   lockTodayFocus: () => void;
   openQuestFocus: (questId: string) => void;
+  startQuestNow: (questId: string) => void;
   closeQuestFocus: () => void;
   closeAddQuestSheet: () => void;
   viewCreatedQuestOnBoard: () => void;
@@ -206,6 +211,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [addQuestSheetOpen, setAddQuestSheetOpen] = useState(false);
   const [addQuestRecoveryMode, setAddQuestRecoveryMode] = useState(false);
   const [focusQuestId, setFocusQuestId] = useState<string | null>(null);
+  const [focusDecisiveMoment, setFocusDecisiveMoment] = useState(false);
   const [improveQuestId, setImproveQuestId] = useState<string | null>(null);
   const [frictionReviewQuestId, setFrictionReviewQuestId] = useState<string | null>(null);
   const pendingChapterCompleteRef = useRef<ChapterCompleteState | null>(null);
@@ -265,6 +271,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       dailyFocusLimit: progress.dailyFocusLimit,
       focusLockedDate: progress.focusLockedDate,
       lockedFocusQuestIds: progress.lockedFocusQuestIds,
+      templateQuestStartedAt: progress.templateQuestStartedAt,
     }),
     [
       progress.completedQuestIdsBySagaId,
@@ -272,6 +279,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       progress.focusLockedDate,
       progress.lockedFocusQuestIds,
       progress.selectedUniverseId,
+      progress.templateQuestStartedAt,
       progress.userQuests,
     ],
   );
@@ -420,7 +428,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     (
       originalTitle: string,
       category: TaskCategory,
-      options?: { starterTaskTitle?: string; prepStepTitle?: string },
+      options?: { starterTaskTitle?: string; prepStepTitle?: string; afterQuestReward?: string },
     ) => {
       const trimmed = originalTitle.trim();
       if (!trimmed || !currentChapter) return;
@@ -442,6 +450,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
           createdOnDate: getLocalDateKey(),
           ...(options?.starterTaskTitle ? { starterTaskTitle: options.starterTaskTitle.trim() } : {}),
           ...(options?.prepStepTitle ? { prepStepTitle: options.prepStepTitle.trim() } : {}),
+          ...(options?.afterQuestReward ? { afterQuestReward: options.afterQuestReward.trim() } : {}),
         };
 
         setAddQuestSheetOpen(false);
@@ -468,9 +477,18 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   const closeQuestFocus = useCallback(() => {
     setFocusQuestId(null);
+    setFocusDecisiveMoment(false);
   }, []);
 
   const openQuestFocus = useCallback((questId: string) => {
+    setFocusDecisiveMoment(false);
+    setFocusQuestId(questId);
+  }, []);
+
+  const startQuestNow = useCallback((questId: string) => {
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setProgress((prev) => markQuestStarted(prev, questId));
+    setFocusDecisiveMoment(true);
     setFocusQuestId(questId);
   }, []);
 
@@ -769,6 +787,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
       const reactor = getCharacter(activeSaga, charId);
       const ui = getUniverseUiCopy(activeUniverse);
+      const afterQuestReward =
+        boardQuest.source === 'user' ? boardQuest.afterQuestReward?.trim() : undefined;
+      const rewardCopy = getAfterQuestRewardCopy(activeUniverse.id);
       setQuestComplete({
         questId,
         source: boardQuest.source,
@@ -783,6 +804,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
         identityUniverseLine: identityVote.universeLine,
         ...(completingRecovery
           ? { recoveryCompleteLine: getRecoveryQuestCopy(activeUniverse.id).completeMessage }
+          : {}),
+        ...(afterQuestReward
+          ? {
+              rewardRitualUnlockedLine: formatRewardRitualUnlockedLine(afterQuestReward),
+              rewardRitualFlavorLine: rewardCopy.universeHint,
+            }
           : {}),
       });
     },
@@ -1096,6 +1123,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       improveQuestId,
       frictionReviewQuestId,
       focusQuest,
+      focusDecisiveMoment,
       showRecoveryPrompt,
       showDailyAwarenessCheck,
       isTodayFocusLocked: todayFocusLocked,
@@ -1113,6 +1141,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       openRecoveryQuestSheet,
       lockTodayFocus: lockTodayFocusCommit,
       openQuestFocus,
+      startQuestNow,
       closeQuestFocus,
       closeAddQuestSheet,
       viewCreatedQuestOnBoard,
@@ -1187,6 +1216,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       dismissNarrativeMoment,
       dismissQuestComplete,
       dismissXpBurst,
+      focusDecisiveMoment,
       focusQuest,
       frictionReviewQuestId,
       improveQuestId,
@@ -1224,6 +1254,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       startUnlockedSagaFromChapterComplete,
       storyLine,
       submitDailyAwareness,
+      startQuestNow,
       switchSaga,
       updateUserQuest,
       viewCreatedQuestOnBoard,

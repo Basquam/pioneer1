@@ -15,12 +15,15 @@ export type QuestBoardProgress = Pick<
   | 'dailyFocusLimit'
   | 'focusLockedDate'
   | 'lockedFocusQuestIds'
+  | 'templateQuestStartedAt'
 >;
 
 export function templateToBoardQuest(
   template: QuestTemplate,
   completedQuestIds: string[],
+  templateQuestStartedAt: Record<string, string> = {},
 ): BoardQuest {
+  const startedAt = templateQuestStartedAt[template.id];
   return {
     id: template.id,
     source: 'template',
@@ -32,6 +35,7 @@ export function templateToBoardQuest(
     reputationReward: template.reputationImpact,
     reactionCharacterId: template.reactionCharacterId,
     completed: completedQuestIds.includes(template.id),
+    ...(startedAt ? { startedAt, isStarted: true } : {}),
   };
 }
 
@@ -59,6 +63,8 @@ export function userQuestToBoardQuest(
     ...(quest.implementationIntention ? { implementationIntention: quest.implementationIntention } : {}),
     ...(quest.plannedTimeLabel ? { plannedTimeLabel: quest.plannedTimeLabel } : {}),
     ...(quest.afterCurrentHabit ? { afterCurrentHabit: quest.afterCurrentHabit } : {}),
+    ...(quest.startedAt ? { startedAt: quest.startedAt, isStarted: true } : {}),
+    ...(quest.afterQuestReward ? { afterQuestReward: quest.afterQuestReward } : {}),
   };
 
   if (!boardQuest.createdOnDate) {
@@ -86,7 +92,7 @@ export function buildBoardQuests(
 ): BoardQuest[] {
   const completedQuestIds = progress.completedQuestIdsBySagaId[saga.id] ?? [];
   const templates = chapter.questTemplates.map((template) =>
-    templateToBoardQuest(template, completedQuestIds),
+    templateToBoardQuest(template, completedQuestIds, progress.templateQuestStartedAt),
   );
 
   const today = getLocalDateKey();

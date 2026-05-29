@@ -19,6 +19,7 @@ import { useGame } from '@/hooks/use-game';
 import { useUniverseVisualTheme } from '@/hooks/use-universe-visual-theme';
 import { useUniverseUiCopy } from '@/lib/universe-ui-copy';
 import { formatPrepStepLine } from '@/lib/quest-prep';
+import { formatAfterRewardCardLine } from '@/lib/after-quest-reward';
 import { getFocusLockCopy } from '@/lib/focus-lock';
 import {
   formatReadinessLabel,
@@ -41,7 +42,7 @@ type QuestCardProps = {
 
 export function QuestCard({ quest, index }: QuestCardProps) {
   const ui = useUniverseUiCopy();
-  const { activeUniverse, completeQuest, openQuestFocus, openImproveQuest, openFrictionReview } = useGame();
+  const { activeUniverse, completeQuest, openQuestFocus, startQuestNow, openImproveQuest, openFrictionReview } = useGame();
   const visualTheme = useUniverseVisualTheme();
   const { palette } = activeUniverse;
   const scale = useSharedValue(1);
@@ -112,6 +113,10 @@ export function QuestCard({ quest, index }: QuestCardProps) {
     openFrictionReview(quest.id);
   };
 
+  const handleStartNowPress = () => {
+    startQuestNow(quest.id);
+  };
+
   return (
     <AnimatedPressable
       entering={FadeInDown.delay(index * 100).springify()}
@@ -148,6 +153,13 @@ export function QuestCard({ quest, index }: QuestCardProps) {
               <View style={[styles.badge, { backgroundColor: palette.primary, borderWidth: 1, borderColor: goldAccent }]}>
                 <Text style={[styles.badgeText, { color: goldAccent }]} numberOfLines={1}>
                   {focusLockCopy.lockedQuestBadge}
+                </Text>
+              </View>
+            )}
+            {quest.isStarted && (
+              <View style={[styles.badge, { backgroundColor: palette.night, borderWidth: 1, borderColor: palette.accent }]}>
+                <Text style={[styles.badgeText, { color: palette.accent }]} numberOfLines={1}>
+                  STARTED
                 </Text>
               </View>
             )}
@@ -190,6 +202,11 @@ export function QuestCard({ quest, index }: QuestCardProps) {
             {formatPrepStepLine(quest.prepStepTitle)}
           </Text>
         )}
+        {quest.source === 'user' && quest.afterQuestReward && (
+          <Text style={[styles.afterReward, { color: palette.fog }]} numberOfLines={2}>
+            {formatAfterRewardCardLine(quest.afterQuestReward, activeUniverse.id)}
+          </Text>
+        )}
         {quest.source === 'user' && quest.readinessScore != null && quest.readinessChecklist && (
           <View style={[styles.readinessRow, { borderTopColor: 'rgba(255,255,255,0.08)' }]}>
             <Text style={[styles.readinessTitle, { color: palette.gold }]}>
@@ -218,6 +235,14 @@ export function QuestCard({ quest, index }: QuestCardProps) {
           </View>
         )}
         <View style={styles.actionRow}>
+          <Pressable
+            onPress={(event) => {
+              event.stopPropagation();
+              handleStartNowPress();
+            }}
+            style={[styles.startNowButton, { borderColor: palette.accent, backgroundColor: palette.primary }]}>
+            <Text style={[styles.startNowButtonText, { color: palette.bone }]}>START NOW</Text>
+          </Pressable>
           {quest.source === 'user' && quest.showFrictionReview && (
             <Pressable
               onPress={(event) => {
@@ -302,6 +327,13 @@ const styles = StyleSheet.create({
     lineHeight: 14,
     fontStyle: 'italic',
   },
+  afterReward: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 10,
+    letterSpacing: 0.5,
+    lineHeight: 14,
+    fontStyle: 'italic',
+  },
   readinessRow: {
     borderTopWidth: 1,
     paddingTop: 8,
@@ -332,10 +364,21 @@ const styles = StyleSheet.create({
   actionRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
     gap: 8,
     marginTop: 2,
     flexWrap: 'wrap',
+  },
+  startNowButton: {
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    transform: [{ skewX: '-6deg' }],
+  },
+  startNowButtonText: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 9,
+    letterSpacing: 1.5,
   },
   improveButton: {
     borderWidth: 1,

@@ -29,6 +29,12 @@ import {
   getRitualMissionLine,
   shortenMotivationLine,
 } from '@/lib/quest-focus-mode';
+import {
+  hasStarterMove,
+  shouldHighlightDecisiveMoment,
+  SMALLEST_STEP_PROMPT,
+} from '@/lib/decisive-moment';
+import { getAfterQuestRewardCopy } from '@/lib/after-quest-reward';
 import { formatStarterMoveLine } from '@/lib/two-minute-starter';
 
 type RitualStep = 0 | 1 | 2 | 3 | 4;
@@ -39,12 +45,14 @@ export function QuestFocusOverlay() {
     activeUniverse,
     activeSaga,
     focusQuest,
+    focusDecisiveMoment,
     closeQuestFocus,
     completeQuest,
   } = useGame();
   const { palette } = activeUniverse;
   const copy = getQuestFocusCopy(activeUniverse.id);
   const ritualCopy = getQuestStartRitualCopy(activeUniverse.id);
+  const rewardCopy = getAfterQuestRewardCopy(activeUniverse.id);
   const [ritualStep, setRitualStep] = useState<RitualStep>(0);
   const completePulse = useSharedValue(1);
   const ritualComplete = ritualStep === 4;
@@ -59,31 +67,13 @@ export function QuestFocusOverlay() {
     opacity: ritualComplete ? 1 : 0.72,
   }));
 
-  // #region agent log
-  fetch('http://127.0.0.1:7741/ingest/fadf9cf1-36c7-4082-8b2c-abc1a1998bfb', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'b770d9' },
-    body: JSON.stringify({
-      sessionId: 'b770d9',
-      runId: 'hooks-fix',
-      hypothesisId: 'A',
-      location: 'quest-focus-overlay.tsx:render',
-      message: 'QuestFocusOverlay render after all hooks',
-      data: {
-        hasFocusQuest: focusQuest != null,
-        focusQuestId: focusQuest?.id ?? null,
-        ritualStep,
-        hookCountStable: true,
-      },
-      timestamp: Date.now(),
-    }),
-  }).catch(() => {});
-  // #endregion
-
   if (!focusQuest) return null;
 
   const isCompleted = focusQuest.completed;
+  const showDecisiveHighlight = shouldHighlightDecisiveMoment(focusDecisiveMoment, focusQuest);
+  const showDecisiveStarter = showDecisiveHighlight && hasStarterMove(focusQuest);
   const ritualActive = ritualStep >= 1 && ritualStep <= 3;
+  const hasRewardRitual = Boolean(focusQuest.afterQuestReward?.trim());
   const sourceLabel = getQuestFocusSourceLabel(focusQuest, ui);
   const clearedLabel = getQuestFocusClearedLabel(focusQuest, ui);
   const taskSectionLabel =
@@ -158,6 +148,36 @@ export function QuestFocusOverlay() {
             {copy.tagline}
           </Animated.Text>
 
+          {showDecisiveHighlight && (
+            <Animated.View
+              entering={FadeInDown.duration(420).delay(120)}
+              style={[
+                styles.decisiveCard,
+                {
+                  backgroundColor: `${palette.primary}cc`,
+                  borderColor: palette.gold,
+                },
+              ]}>
+              {showDecisiveStarter ? (
+                <>
+                  <Text style={[styles.decisiveLabel, { color: palette.gold }]}>START HERE</Text>
+                  <Text style={[styles.decisiveBody, { color: palette.bone }]}>
+                    {formatStarterMoveLine(focusQuest.starterTaskTitle!, activeUniverse.id)}
+                  </Text>
+                </>
+              ) : (
+                <>
+                  <Text style={[styles.decisivePrompt, { color: palette.bone }]}>
+                    {SMALLEST_STEP_PROMPT}
+                  </Text>
+                  <Text style={[styles.decisiveBody, { color: palette.fog }]}>
+                    {focusQuest.originalTitle}
+                  </Text>
+                </>
+              )}
+            </Animated.View>
+          )}
+
           <Animated.View
             entering={FadeInDown.duration(450).delay(140)}
             style={[
@@ -182,7 +202,7 @@ export function QuestFocusOverlay() {
               <Text style={[styles.sectionBody, { color: palette.bone }]}>{focusQuest.originalTitle}</Text>
             </View>
 
-            {focusQuest.starterTaskTitle ? (
+            {focusQuest.starterTaskTitle && !showDecisiveStarter ? (
               <View style={[styles.section, { borderColor: palette.panelBorder }]}>
                 <Text style={[styles.sectionLabel, { color: palette.gold }]}>STARTER MOVE</Text>
                 <Text style={[styles.sectionBody, { color: palette.bone }]}>
@@ -208,6 +228,20 @@ export function QuestFocusOverlay() {
                 </Text>
               </View>
             ) : null}
+
+            {hasRewardRitual && !isCompleted && (
+              <View style={[styles.rewardRitualBox, { borderColor: palette.accent, backgroundColor: `${palette.primary}55` }]}>
+                <Text style={[styles.rewardRitualLine, { color: palette.bone }]}>
+                  {rewardCopy.focusRitualLine}
+                </Text>
+                <Text style={[styles.rewardRitualReward, { color: palette.gold }]}>
+                  {focusQuest.afterQuestReward}
+                </Text>
+                <Text style={[styles.rewardRitualHint, { color: palette.fog }]}>
+                  {rewardCopy.universeHint}
+                </Text>
+              </View>
+            )}
           </Animated.View>
 
           {!isCompleted && character && (
@@ -333,6 +367,29 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     textAlign: 'center',
   },
+  decisiveCard: {
+    borderWidth: 2,
+    padding: 16,
+    gap: 8,
+    transform: [{ skewX: '-2deg' }],
+  },
+  decisiveLabel: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 10,
+    letterSpacing: 2,
+  },
+  decisivePrompt: {
+    fontFamily: GameFonts.ui,
+    fontSize: 15,
+    lineHeight: 22,
+    letterSpacing: 0.3,
+    fontStyle: 'italic',
+  },
+  decisiveBody: {
+    fontFamily: GameFonts.displayRegular,
+    fontSize: 14,
+    lineHeight: 20,
+  },
   questCard: {
     borderWidth: 2,
     padding: 18,
@@ -365,6 +422,31 @@ const styles = StyleSheet.create({
     fontSize: 14,
     letterSpacing: 0.5,
     lineHeight: 20,
+  },
+  rewardRitualBox: {
+    borderWidth: 1,
+    padding: 12,
+    gap: 6,
+    marginTop: 4,
+  },
+  rewardRitualLine: {
+    fontFamily: GameFonts.ui,
+    fontSize: 14,
+    letterSpacing: 0.3,
+    lineHeight: 20,
+  },
+  rewardRitualReward: {
+    fontFamily: GameFonts.displayRegular,
+    fontSize: 14,
+    lineHeight: 20,
+    fontStyle: 'italic',
+  },
+  rewardRitualHint: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 10,
+    letterSpacing: 0.5,
+    lineHeight: 14,
+    fontStyle: 'italic',
   },
   motivationCard: {
     borderWidth: 1,

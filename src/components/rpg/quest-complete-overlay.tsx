@@ -137,6 +137,21 @@ export function QuestCompleteOverlay() {
                 </Animated.Text>
               )}
 
+              {questComplete.rewardRitualUnlockedLine && (
+                <Animated.View
+                  entering={FadeInUp.duration(450).delay(520)}
+                  style={[styles.rewardRitualBox, { borderColor: palette.gold }]}>
+                  <Text style={[styles.rewardRitualUnlocked, { color: palette.bone }]}>
+                    {questComplete.rewardRitualUnlockedLine}
+                  </Text>
+                  {questComplete.rewardRitualFlavorLine && (
+                    <Text style={[styles.rewardRitualFlavor, { color: palette.fog }]}>
+                      {questComplete.rewardRitualFlavorLine}
+                    </Text>
+                  )}
+                </Animated.View>
+              )}
+
               <Animated.Text
                 entering={FadeInUp.duration(400).delay(560)}
                 style={[styles.tapHint, { color: palette.accent }]}>
@@ -281,6 +296,29 @@ const styles = StyleSheet.create({
     fontFamily: GameFonts.uiSemi,
     fontSize: 12,
     letterSpacing: 1.5,
+    textAlign: 'center',
+  },
+  rewardRitualBox: {
+    borderWidth: 1,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    gap: 4,
+    width: '100%',
+    transform: [{ skewX: '-2deg' }],
+    alignItems: 'center',
+  },
+  rewardRitualUnlocked: {
+    fontFamily: GameFonts.ui,
+    fontSize: 14,
+    letterSpacing: 0.5,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  rewardRitualFlavor: {
+    fontFamily: GameFonts.displayRegular,
+    fontSize: 12,
+    lineHeight: 17,
+    fontStyle: 'italic',
     textAlign: 'center',
   },
   tapHint: {

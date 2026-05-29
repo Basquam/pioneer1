@@ -36,6 +36,12 @@ import {
   isPrepPreset,
 } from '@/lib/quest-prep';
 import {
+  AFTER_QUEST_REWARD_PRESETS,
+  getAfterQuestRewardCopy,
+  getDefaultAfterQuestRewardPreset,
+  isPresetAfterQuestReward,
+} from '@/lib/after-quest-reward';
+import {
   getDefaultRecoveryCategory,
   getDefaultRecoveryTaskTitle,
   RECOVERY_QUEST_CATEGORIES,
@@ -58,9 +64,12 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
   const [starterTitle, setStarterTitle] = useState('');
   const [prepEnabled, setPrepEnabled] = useState(false);
   const [prepStepTitle, setPrepStepTitle] = useState('');
+  const [rewardEnabled, setRewardEnabled] = useState(false);
+  const [rewardTitle, setRewardTitle] = useState('');
 
   const starterCopy = getStarterToggleCopy(activeUniverse.id);
   const prepCopy = getQuestPrepCopy(activeUniverse.id);
+  const rewardCopy = getAfterQuestRewardCopy(activeUniverse.id);
   const focusLockCopy = getFocusLockCopy(activeUniverse.id);
   const prepPresets = useMemo(() => getPrepPresets(category), [category]);
   const categoryOptions = addQuestRecoveryMode ? RECOVERY_QUEST_CATEGORIES : TASK_CATEGORIES;
@@ -88,6 +97,8 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
     setStarterTitle('');
     setPrepEnabled(false);
     setPrepStepTitle('');
+    setRewardEnabled(false);
+    setRewardTitle('');
   };
 
   const handleClose = () => {
@@ -99,10 +110,12 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
     if (!trimmedTitle) return;
     const starter = easierToStart ? starterTitle.trim() || suggestedStarter : '';
     const prep = prepEnabled ? prepStepTitle.trim() : '';
+    const reward = rewardEnabled ? rewardTitle.trim() : '';
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     addUserQuest(trimmedTitle, category, {
       ...(starter ? { starterTaskTitle: starter } : {}),
       ...(prep ? { prepStepTitle: prep } : {}),
+      ...(reward ? { afterQuestReward: reward } : {}),
     });
     resetForm();
   };
@@ -136,6 +149,16 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
     }
   };
 
+  const handleToggleReward = (enabled: boolean) => {
+    void Haptics.selectionAsync();
+    setRewardEnabled(enabled);
+    if (enabled) {
+      setRewardTitle(getDefaultAfterQuestRewardPreset());
+    } else {
+      setRewardTitle('');
+    }
+  };
+
   useEffect(() => {
     if (visible) return;
     resetForm();
@@ -152,6 +175,8 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
     setStarterTitle(generateStarterTaskTitle(recoveryTitle, recoveryCategory));
     setPrepEnabled(false);
     setPrepStepTitle('');
+    setRewardEnabled(false);
+    setRewardTitle('');
   }, [visible, addQuestRecoveryMode]);
 
   useEffect(() => {
@@ -373,6 +398,63 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
                   value={prepStepTitle}
                   onChangeText={setPrepStepTitle}
                   placeholder={getDefaultPrepPreset(category)}
+                  placeholderTextColor={`${palette.fog}88`}
+                  style={[
+                    styles.input,
+                    { color: palette.bone, borderColor: palette.panelBorder, backgroundColor: palette.night },
+                  ]}
+                />
+              </View>
+            )}
+
+            <View style={[styles.toggleRow, { borderColor: palette.panelBorder }]}>
+              <View style={styles.toggleCopy}>
+                <Text style={[styles.toggleLabel, { color: palette.bone }]}>{rewardCopy.sectionPrompt}</Text>
+                <Text style={[styles.toggleHint, { color: palette.fog }]}>{rewardCopy.helperText}</Text>
+                <Text style={[styles.toggleUniverseHint, { color: palette.gold }]}>{rewardCopy.universeHint}</Text>
+              </View>
+              <Switch
+                value={rewardEnabled}
+                onValueChange={handleToggleReward}
+                trackColor={{ false: palette.panelBorder, true: palette.primary }}
+                thumbColor={rewardEnabled ? palette.gold : palette.fog}
+              />
+            </View>
+
+            {rewardEnabled && (
+              <View style={[styles.prepBox, { backgroundColor: palette.panel, borderColor: palette.gold }]}>
+                <Text style={[styles.prepLabel, { color: palette.gold }]}>REWARD RITUAL</Text>
+                <View style={styles.presetList}>
+                  {AFTER_QUEST_REWARD_PRESETS.map((preset) => {
+                    const selected = rewardTitle === preset;
+                    return (
+                      <Pressable
+                        key={preset}
+                        onPress={() => {
+                          void Haptics.selectionAsync();
+                          setRewardTitle(preset);
+                        }}
+                        style={[
+                          styles.presetChip,
+                          {
+                            backgroundColor: selected ? palette.primary : palette.night,
+                            borderColor: selected ? palette.gold : palette.panelBorder,
+                          },
+                        ]}>
+                        <Text
+                          style={[styles.presetChipText, { color: selected ? palette.bone : palette.fog }]}
+                          numberOfLines={2}>
+                          {preset}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+                <Text style={[styles.prepCustomLabel, { color: palette.fog }]}>Custom reward</Text>
+                <TextInput
+                  value={isPresetAfterQuestReward(rewardTitle) ? '' : rewardTitle}
+                  onChangeText={setRewardTitle}
+                  placeholder="Your own reward…"
                   placeholderTextColor={`${palette.fog}88`}
                   style={[
                     styles.input,

@@ -198,6 +198,10 @@ export type QuestCompleteState = {
   identityUniverseLine?: string;
   /** Encouraging line when a recovery quest cycle is completed. */
   recoveryCompleteLine?: string;
+  /** Temptation-bundled reward unlocked after completing a user quest. */
+  rewardRitualUnlockedLine?: string;
+  /** Universe-flavored reward ritual line. */
+  rewardRitualFlavorLine?: string;
 };
 
 export type QuestFrictionReason =
@@ -248,6 +252,10 @@ export type UserQuest = {
   frictionReviews?: QuestFrictionReview[];
   /** Hidden from the board when set — archived, not deleted. */
   archivedAt?: string;
+  /** ISO timestamp when the user tapped START NOW — first decisive moment. */
+  startedAt?: string;
+  /** Optional real-life reward paired with completing this quest. */
+  afterQuestReward?: string;
 };
 
 export type QuestReadinessChecklist = {
@@ -296,6 +304,11 @@ export type BoardQuest = {
   showFrictionReview?: boolean;
   plannedTimeLabel?: string;
   afterCurrentHabit?: string;
+  /** ISO timestamp when START NOW was tapped. */
+  startedAt?: string;
+  /** True when the quest has a recorded start moment. */
+  isStarted?: boolean;
+  afterQuestReward?: string;
 };
 
 export type DailyActivity = {
@@ -373,4 +386,6 @@ export type PlayerProgress = {
   dailyAwarenessByDate: Record<string, DailyAwarenessEntry>;
   /** Local dates when the user dismissed the awareness check without answering. */
   dailyAwarenessDismissedDates: string[];
+  /** Chapter bounty template quest ids → ISO timestamp when START NOW was tapped. */
+  templateQuestStartedAt: Record<string, string>;
 };

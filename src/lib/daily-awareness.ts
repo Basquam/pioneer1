@@ -27,7 +27,7 @@ const BLOCKER_RECOMMENDATIONS: Record<DailyAwarenessBlocker, string> = {
   'unclear-priorities': 'Pick one Focus Quest before adding more.',
   'messy-environment': 'Add a prep step before starting.',
   'emotional-resistance': 'Use Focus Mode and begin with the starter move.',
-  ready: 'Choose one quest and ride.',
+  ready: 'Choose one quest and begin.',
 };
 
 export function getDailyAwarenessTagline(universeId: string): string {
