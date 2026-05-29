@@ -24,6 +24,11 @@ import {
   TRAIT_TO_SUGGESTED_CATEGORIES,
 } from '../src/lib/trait-aligned-suggestions';
 import {
+  buildQuestCalendarDays,
+  getQuestCalendarIntensity,
+  QUEST_CALENDAR_DAYS,
+} from '../src/lib/quest-calendar';
+import {
   appendEvidenceEvent,
   createEvidenceEvent,
   groupEvidenceByDate,
@@ -613,6 +618,24 @@ assert(traitSuggestions[0]?.title === 'Review one important work item', 'reliabl
 assert(traitSuggestions[1]?.category === 'cleaning', 'organized suggestion category');
 assert(getTraitSuggestionFlavor('dust-and-iron') === 'Choose a trail that proves your badge.', 'trait suggestion flavor');
 assert(getTraitAlignedSuggestions([]).length === 0, 'empty desired traits yields no suggestions');
+
+// Quest calendar
+assert(getQuestCalendarIntensity(0) === 'none', 'calendar intensity none');
+assert(getQuestCalendarIntensity(1) === 'light', 'calendar intensity light');
+assert(getQuestCalendarIntensity(3) === 'medium', 'calendar intensity medium');
+assert(getQuestCalendarIntensity(4) === 'strong', 'calendar intensity strong');
+const calendarDays = buildQuestCalendarDays({
+  '2026-05-27': {
+    questsCompleted: 2,
+    xpEarned: 20,
+    reputationEarned: 4,
+    chaptersCompleted: 0,
+    highRiskQuestsCompleted: 0,
+  },
+});
+assert(calendarDays.length === QUEST_CALENDAR_DAYS, 'calendar day count');
+const todayEntry = calendarDays[calendarDays.length - 1];
+assert(todayEntry?.isToday === true, 'calendar marks today');
 
 if (failures.length) {
   console.error('FAILED:\n' + failures.map((f) => ` - ${f}`).join('\n'));
