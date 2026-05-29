@@ -16,6 +16,7 @@ import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
 import { useUniverseUiCopy } from '@/lib/universe-ui-copy';
 import { getActiveChapterId, getChapterStatus, type ChapterStatus } from '@/lib/chapter-progress';
+import { getCrewCodeLines } from '@/lib/crew-code';
 import type { Chapter } from '@/types/narrative';
 
 export function StoryScreen() {
@@ -40,6 +41,7 @@ export function StoryScreen() {
   const completedCount = chapterRows.filter((row) => row.status === 'completed').length;
   const sagaComplete = chapters.length > 0 && completedCount === chapters.length;
   const activeChapter = chapters.find((chapter) => chapter.id === activeChapterId);
+  const crewCodeLines = useMemo(() => getCrewCodeLines(activeSaga), [activeSaga]);
 
   const handleChapterPress = (chapter: Chapter, status: ChapterStatus) => {
     if (status === 'completed') {
@@ -95,6 +97,16 @@ export function StoryScreen() {
             </Text>
           )}
           <Text style={[styles.progressSub, { color: palette.fog }]}>{activeSaga.summary}</Text>
+          {crewCodeLines.length > 0 ? (
+            <View style={[styles.crewCodeBlock, { borderColor: palette.panelBorder }]}>
+              <Text style={[styles.crewCodeTitle, { color: palette.gold }]}>CREW CODE</Text>
+              {crewCodeLines.map((line) => (
+                <Text key={line} style={[styles.crewCodeLine, { color: palette.bone }]}>
+                  {line}
+                </Text>
+              ))}
+            </View>
+          ) : null}
         </View>
 
         {sagaComplete && (
@@ -203,6 +215,23 @@ const styles = StyleSheet.create({
     fontFamily: GameFonts.displayRegular,
     fontSize: 13,
     lineHeight: 19,
+    fontStyle: 'italic',
+  },
+  crewCodeBlock: {
+    borderTopWidth: 1,
+    paddingTop: 10,
+    marginTop: 4,
+    gap: 6,
+  },
+  crewCodeTitle: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 9,
+    letterSpacing: 2,
+  },
+  crewCodeLine: {
+    fontFamily: GameFonts.displayRegular,
+    fontSize: 12,
+    lineHeight: 17,
     fontStyle: 'italic',
   },
   trail: { gap: 0 },

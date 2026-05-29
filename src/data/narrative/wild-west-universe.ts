@@ -57,6 +57,10 @@ const vultureGangSaga: Saga = {
   summary:
     'Outlaws prey on Dustfall where order is fragile — one skipped duty and the whole town learns how fast courage unravels.',
   rankTitles: ['Rookie Deputy', 'Trail Marshal', 'Frontier Legend'],
+  crewCode: [
+    'A deputy keeps order before chaos asks permission.',
+    'The town holds when someone shows up.',
+  ],
   characters: VULTURE_GANG_CHARACTERS,
   chapters: VULTURE_GANG_CHAPTERS,
 };
@@ -74,6 +78,10 @@ const ironRailwayCompanySaga: Saga = {
   summary:
     'Build and defend a railway lifeline knowing progress always costs something — steel, sweat, and the compromises no one puts on the manifest.',
   rankTitles: ['Junior Logistics Manager', 'Route Marshal', 'Network Warden'],
+  crewCode: [
+    'The line runs because someone checks the details.',
+    'A delayed shipment is a broken promise.',
+  ],
   characters: IRON_RAILWAY_CHARACTERS,
   chapters: IRON_RAILWAY_CHAPTERS,
 };
@@ -91,6 +99,10 @@ const honestBusinessmanSaga: Saga = {
   summary:
     'Build a legitimate business in Dustfall while gangs, corrupt officials, and railway monopolies squeeze every honest coin — because honesty is expensive.',
   rankTitles: ['Frontier Shop Owner', 'Young Entrepreneur', 'Honest Businessman'],
+  crewCode: [
+    'Honesty is expensive, but debt costs more.',
+    'A clean ledger is a quiet weapon.',
+  ],
   characters: HONEST_BUSINESSMAN_CHARACTERS,
   chapters: HONEST_BUSINESSMAN_CHAPTERS,
 };

@@ -64,6 +64,10 @@ const hollowSyndicateSaga: Saga = {
   summary:
     'Work the shadows as a private investigator and expose a city-wide criminal conspiracy before the truth is buried for good.',
   rankTitles: ['Private Investigator', 'Conspiracy Breaker', 'City Truthfinder'],
+  crewCode: [
+    'A detective follows the lead no one wants found.',
+    'Truth waits for the one who returns.',
+  ],
   characters: HOLLOW_SYNDICATE_CHARACTERS,
   chapters: HOLLOW_SYNDICATE_CHAPTERS,
 };
@@ -81,6 +85,10 @@ const campusMurdersSaga: Saga = {
   summary:
     'Arrive as a visiting investigator at a prestigious academy where polished halls hide a series of murders no one wants solved.',
   rankTitles: ['Visiting Investigator', 'Campus Sleuth', 'Academy Reckoner'],
+  crewCode: [
+    'Knowledge has a body count. So does silence.',
+    'A good investigator studies what others avoid.',
+  ],
   characters: CAMPUS_MURDERS_CHARACTERS,
   chapters: CAMPUS_MURDERS_CHAPTERS,
 };
@@ -98,6 +106,10 @@ const jazzClubSecretsSaga: Saga = {
   summary:
     'Patrol the after-hours city as a night detective and uncover secrets buried beneath smoke, saxophone, and silence.',
   rankTitles: ['Night Detective', 'After-Hours Sleuth', 'City Confessor'],
+  crewCode: [
+    'Every song hides a statement.',
+    'A night detective listens after the applause dies.',
+  ],
   characters: JAZZ_CLUB_SECRETS_CHARACTERS,
   chapters: JAZZ_CLUB_SECRETS_CHAPTERS,
 };

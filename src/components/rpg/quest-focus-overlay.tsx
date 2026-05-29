@@ -17,6 +17,7 @@ import { GameLayout } from '@/constants/layout';
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
 import { useUniverseUiCopy } from '@/lib/universe-ui-copy';
+import { getDailyCrewCodeLine } from '@/lib/crew-code';
 import { getIdentityTraitMeta, getTraitForCategory } from '@/lib/identity-votes';
 import { getCharacter, pickCharacterLine } from '@/lib/narrative-helpers';
 import { formatPrepStepLine } from '@/lib/quest-prep';
@@ -38,7 +39,8 @@ import {
 import { getAfterQuestRewardCopy } from '@/lib/after-quest-reward';
 import {
   DISTRACTION_SHIELD_OPTIONS,
-  getDistractionShieldSuggestion,
+  FRICTION_SHIELD_APPLIED_MESSAGE,
+  getFrictionShieldAction,
 } from '@/lib/distraction-shield';
 import { formatStarterMoveLine } from '@/lib/two-minute-starter';
 import { formatQuestRiskFocusLine, resolveQuestRiskLevel } from '@/lib/quest-risk';
@@ -56,6 +58,7 @@ export function QuestFocusOverlay() {
     closeQuestFocus,
     completeQuest,
     recordFocusDistraction,
+    markFrictionShieldApplied,
   } = useGame();
   const { palette } = activeUniverse;
   const copy = getQuestFocusCopy(activeUniverse.id);
@@ -64,15 +67,19 @@ export function QuestFocusOverlay() {
   const [ritualStep, setRitualStep] = useState<RitualStep>(0);
   const [selectedDistraction, setSelectedDistraction] = useState<QuestDistractionType | null>(null);
   const [shieldExpanded, setShieldExpanded] = useState(false);
+  const [sessionShieldApplied, setSessionShieldApplied] = useState(false);
   const completePulse = useSharedValue(1);
   const ritualComplete = ritualStep === 4;
+  const shieldApplied =
+    sessionShieldApplied || Boolean(focusQuest?.frictionShieldAppliedAt);
 
   useEffect(() => {
     setRitualStep(0);
     setSelectedDistraction(focusQuest?.lastFocusDistraction ?? null);
     setShieldExpanded(Boolean(focusQuest?.lastFocusDistraction));
+    setSessionShieldApplied(false);
     completePulse.value = 1;
-  }, [focusQuest?.id, focusQuest?.lastFocusDistraction, completePulse]);
+  }, [focusQuest?.id, focusQuest?.lastFocusDistraction, focusQuest?.frictionShieldAppliedAt, completePulse]);
 
   const completeWrapStyle = useAnimatedStyle(() => ({
     transform: [{ scale: completePulse.value }],
@@ -95,6 +102,7 @@ export function QuestFocusOverlay() {
     ? shortenMotivationLine(pickCharacterLine(character, 'questComplete', focusQuest.id.length))
     : shortenMotivationLine(ui.questCompleteFallbackLine);
   const trait = getIdentityTraitMeta(getTraitForCategory(focusQuest.category));
+  const crewCodeLine = getDailyCrewCodeLine(activeSaga);
 
   const handleComplete = () => {
     if (isCompleted) return;
@@ -126,9 +134,19 @@ export function QuestFocusOverlay() {
   const handleSelectDistraction = (type: QuestDistractionType) => {
     void Haptics.selectionAsync();
     setSelectedDistraction(type);
+    setSessionShieldApplied(false);
     setShieldExpanded(true);
     if (focusQuest.source === 'user') {
       recordFocusDistraction(focusQuest.id, type);
+    }
+  };
+
+  const handleApplyFrictionShield = () => {
+    if (!selectedDistraction) return;
+    void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    setSessionShieldApplied(true);
+    if (focusQuest.source === 'user') {
+      markFrictionShieldApplied(focusQuest.id);
     }
   };
 
@@ -174,6 +192,15 @@ export function QuestFocusOverlay() {
             style={[styles.tagline, { color: palette.fog }]}>
             {copy.tagline}
           </Animated.Text>
+
+          {!isCompleted && crewCodeLine ? (
+            <Animated.View
+              entering={FadeInDown.duration(400).delay(140)}
+              style={[styles.crewCodeBlock, { borderColor: palette.panelBorder, backgroundColor: palette.panel }]}>
+              <Text style={[styles.crewCodeLabel, { color: palette.gold }]}>CODE OF THE ROLE</Text>
+              <Text style={[styles.crewCodeLine, { color: palette.bone }]}>{crewCodeLine}</Text>
+            </Animated.View>
+          ) : null}
 
           {showDecisiveHighlight && (
             <Animated.View
@@ -327,8 +354,8 @@ export function QuestFocusOverlay() {
           {!isCompleted && (
             <Animated.View entering={FadeInDown.duration(450).delay(300)}>
               <CollapsibleSection
-                title="Distraction shield"
-                hint="Optional — what might pull you away?"
+                title="Friction Shield"
+                hint="Optional — make one distraction harder before you begin."
                 expanded={shieldExpanded}
                 onToggle={() => setShieldExpanded((open) => !open)}
                 palette={palette}>
@@ -356,10 +383,21 @@ export function QuestFocusOverlay() {
 
                 {selectedDistraction ? (
                   <View style={[styles.shieldSuggestionBox, { borderColor: palette.gold, backgroundColor: `${palette.primary}44` }]}>
-                    <Text style={[styles.shieldSuggestionLabel, { color: palette.gold }]}>TRY THIS SHIELD</Text>
+                    <Text style={[styles.shieldSuggestionLabel, { color: palette.gold }]}>FRICTION ACTION</Text>
                     <Text style={[styles.shieldSuggestionText, { color: palette.bone }]}>
-                      {getDistractionShieldSuggestion(selectedDistraction)}
+                      {getFrictionShieldAction(selectedDistraction)}
                     </Text>
+                    {shieldApplied ? (
+                      <Text style={[styles.shieldAppliedText, { color: palette.accent }]}>
+                        {FRICTION_SHIELD_APPLIED_MESSAGE}
+                      </Text>
+                    ) : (
+                      <Pressable
+                        onPress={handleApplyFrictionShield}
+                        style={[styles.shieldApplyButton, { borderColor: palette.gold, backgroundColor: palette.primary }]}>
+                        <Text style={[styles.shieldApplyButtonText, { color: palette.bone }]}>I DID THIS</Text>
+                      </Pressable>
+                    )}
                   </View>
                 ) : (
                   <Text style={[styles.shieldHint, { color: palette.fog }]}>
@@ -457,6 +495,26 @@ const styles = StyleSheet.create({
     fontFamily: GameFonts.displayRegular,
     fontSize: 15,
     lineHeight: 22,
+    fontStyle: 'italic',
+    textAlign: 'center',
+  },
+  crewCodeBlock: {
+    borderWidth: 1,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    gap: 4,
+    transform: [{ skewX: '-2deg' }],
+  },
+  crewCodeLabel: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 9,
+    letterSpacing: 2,
+    textAlign: 'center',
+  },
+  crewCodeLine: {
+    fontFamily: GameFonts.displayRegular,
+    fontSize: 13,
+    lineHeight: 18,
     fontStyle: 'italic',
     textAlign: 'center',
   },
@@ -631,6 +689,26 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     fontStyle: 'italic',
+  },
+  shieldApplyButton: {
+    borderWidth: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    alignItems: 'center',
+    marginTop: 4,
+    transform: [{ skewX: '-4deg' }],
+  },
+  shieldApplyButtonText: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 11,
+    letterSpacing: 2,
+  },
+  shieldAppliedText: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 11,
+    letterSpacing: 1,
+    textAlign: 'center',
+    marginTop: 6,
   },
   shieldHint: {
     fontFamily: GameFonts.displayRegular,

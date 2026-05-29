@@ -117,6 +117,10 @@ export function sanitizeUserQuest(raw: unknown): UserQuest | null {
     sanitized.lastFocusDistraction = lastFocusDistraction;
   }
 
+  if (typeof quest.frictionShieldAppliedAt === 'string' && quest.frictionShieldAppliedAt.length > 0) {
+    sanitized.frictionShieldAppliedAt = quest.frictionShieldAppliedAt;
+  }
+
   if (
     typeof quest.generatedFromRecurringQuestId === 'string' &&
     quest.generatedFromRecurringQuestId.startsWith('recurring-')

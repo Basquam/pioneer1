@@ -16,6 +16,7 @@ import {
   groupEvidenceByDate,
   sanitizeEvidenceLog,
 } from '../src/lib/evidence-log';
+import { getCrewCodeLines, getDailyCrewCodeLine } from '../src/lib/crew-code';
 import {
   detectIdentityMilestoneUnlock,
   getMilestoneTierForVotes,
@@ -313,6 +314,13 @@ assert(withEvidence.evidenceLog.length === 1, 'append evidence event');
 assert(withEvidence.evidenceLog[0]?.questTitle === 'Secure the supply room', 'evidence quest title');
 assert(sanitizeEvidenceLog(withEvidence.evidenceLog).length === 1, 'sanitize evidence log');
 assert(groupEvidenceByDate(withEvidence.evidenceLog, '2026-05-27')[0]?.label === 'Today', 'group today');
+
+// Crew code
+const vultureSaga = UNIVERSES[0]?.sagas[0];
+assert(vultureSaga != null && getCrewCodeLines(vultureSaga).length >= 2, 'vulture crew code lines');
+const lineA = getDailyCrewCodeLine(vultureSaga!, '2026-05-27');
+const lineB = getDailyCrewCodeLine(vultureSaga!, '2026-05-27');
+assert(lineA != null && lineA === lineB, 'crew code daily line stable');
 
 if (failures.length) {
   console.error('FAILED:\n' + failures.map((f) => ` - ${f}`).join('\n'));

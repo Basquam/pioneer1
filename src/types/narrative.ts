@@ -141,6 +141,8 @@ export type Saga = {
   unlockRequirementLabel?: string;
   summary: string;
   rankTitles: [string, string, string];
+  /** Short role-standard lines expressing the crew code for this saga. */
+  crewCode?: string[];
   characters: NarrativeCharacter[];
   chapters: Chapter[];
 };
@@ -265,6 +267,8 @@ export type UserQuest = {
   riskLevel?: QuestRiskLevel;
   /** Last distraction noted in Focus Mode — optional session note. */
   lastFocusDistraction?: QuestDistractionType;
+  /** ISO timestamp when the user applied a friction shield in Focus Mode. */
+  frictionShieldAppliedAt?: string;
   /** Links a generated instance back to its recurring routine template. */
   generatedFromRecurringQuestId?: string;
 };
@@ -275,6 +279,7 @@ export type QuestDistractionType =
   | 'games'
   | 'bed-couch'
   | 'notifications'
+  | 'random-tabs'
   | 'unclear-next-step'
   | 'other';
 
@@ -353,6 +358,7 @@ export type BoardQuest = {
   afterQuestReward?: string;
   riskLevel?: QuestRiskLevel;
   lastFocusDistraction?: QuestDistractionType;
+  frictionShieldAppliedAt?: string;
   /** True when this quest was spawned from a recurring routine. */
   isRecurring?: boolean;
 };

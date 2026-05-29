@@ -190,6 +190,7 @@ type GameContextValue = {
   archiveUserQuest: (questId: string) => void;
   disableRecurringQuest: (templateId: string) => void;
   recordFocusDistraction: (questId: string, distraction: QuestDistractionType) => void;
+  markFrictionShieldApplied: (questId: string) => void;
   submitDailyAwareness: (blocker: DailyAwarenessBlocker) => void;
   dismissDailyAwarenessCheck: () => void;
   submitWeeklyReview: (
@@ -729,12 +730,24 @@ export function GameProvider({ children }: { children: ReactNode }) {
       setProgress((prev) => ({
         ...prev,
         userQuests: prev.userQuests.map((quest) =>
-          quest.id === questId ? { ...quest, lastFocusDistraction: distraction } : quest,
+          quest.id === questId
+            ? { ...quest, lastFocusDistraction: distraction, frictionShieldAppliedAt: undefined }
+            : quest,
         ),
       }));
     },
     [],
   );
+
+  const markFrictionShieldApplied = useCallback((questId: string) => {
+    const appliedAt = new Date().toISOString();
+    setProgress((prev) => ({
+      ...prev,
+      userQuests: prev.userQuests.map((quest) =>
+        quest.id === questId ? { ...quest, frictionShieldAppliedAt: appliedAt } : quest,
+      ),
+    }));
+  }, []);
 
   const submitDailyAwareness = useCallback((blocker: DailyAwarenessBlocker) => {
     setProgress((prev) => recordDailyAwarenessAnswer(prev, blocker));
@@ -1317,6 +1330,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       archiveUserQuest,
       disableRecurringQuest,
       recordFocusDistraction,
+      markFrictionShieldApplied,
       submitDailyAwareness,
       dismissDailyAwarenessCheck,
       submitWeeklyReview,
@@ -1392,6 +1406,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       lockTodayFocusCommit,
       markChapterIntroSeen,
       markFrictionFixApplied,
+      markFrictionShieldApplied,
       maybeShowVillainTaunt,
       narrativeMoment,
       openAddQuestSheet,

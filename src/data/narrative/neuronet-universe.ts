@@ -64,6 +64,10 @@ const ghostProtocolSaga: Saga = {
   summary:
     'Smuggle dangerous memories through the Neon Spire as a Memory Runner — your mind is the battlefield, and every packet leaves a trace.',
   rankTitles: ['Memory Runner', 'Ghost Courier', 'Protocol Breaker'],
+  crewCode: [
+    'A runner protects the signal before the city edits it.',
+    'Memory survives when discipline holds.',
+  ],
   characters: GHOST_PROTOCOL_CHARACTERS,
   chapters: GHOST_PROTOCOL_CHAPTERS,
 };
@@ -81,6 +85,10 @@ const zenithCorporationSaga: Saga = {
   summary:
     'Climb inside a mega-corporation while discovering that productivity metrics are being used to control human memory and behavior.',
   rankTitles: ['Junior Systems Analyst', 'Compliance Lead', 'Network Architect'],
+  crewCode: [
+    'Metrics obey whoever controls the system.',
+    'Efficiency is not obedience when you choose it.',
+  ],
   characters: ZENITH_CORPORATION_CHARACTERS,
   chapters: ZENITH_CORPORATION_CHAPTERS,
 };
@@ -98,6 +106,10 @@ const neonDeliverySaga: Saga = {
   summary:
     'Survive high-risk deliveries across the neon city while discovering that every package carries someone’s secret.',
   rankTitles: ['Courier Rider', 'Route Phantom', 'Neon Legend'],
+  crewCode: [
+    'Every route is a promise in motion.',
+    'A courier survives by moving before doubt arrives.',
+  ],
   characters: NEON_DELIVERY_CHARACTERS,
   chapters: NEON_DELIVERY_CHAPTERS,
 };

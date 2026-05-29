@@ -21,6 +21,7 @@ import { useUniverseVisualTheme } from '@/hooks/use-universe-visual-theme';
 import { useUniverseUiCopy } from '@/lib/universe-ui-copy';
 import { canLockTodayFocus, getFocusLockCopy } from '@/lib/focus-lock';
 import { buildPromiseCard } from '@/lib/promise-card';
+import { getDailyCrewCodeLine } from '@/lib/crew-code';
 
 export function DailyOperationsBriefing() {
   const ui = useUniverseUiCopy();
@@ -44,6 +45,7 @@ export function DailyOperationsBriefing() {
   const focusLockCopy = getFocusLockCopy(activeUniverse.id);
   const showLockButton = canLockTodayFocus(playerProgress, activeUniverse.id);
   const [promiseCardVisible, setPromiseCardVisible] = useState(false);
+  const crewCodeLine = useMemo(() => getDailyCrewCodeLine(activeSaga), [activeSaga]);
 
   const promiseCard = useMemo(
     () =>
@@ -101,6 +103,12 @@ export function DailyOperationsBriefing() {
         <Text style={[styles.subtitle, { color: palette.fog }]}>
           {activeUniverse.locationName} · {activeSaga.title}
         </Text>
+
+        {crewCodeLine ? (
+          <Text style={[styles.crewCodeLine, { color: palette.gold }]} numberOfLines={3}>
+            {crewCodeLine}
+          </Text>
+        ) : null}
 
         <DailyStreakDisplay variant="briefing" />
 
@@ -206,6 +214,13 @@ const styles = StyleSheet.create({
   eyebrow: { fontFamily: GameFonts.ui, fontSize: 10, letterSpacing: 3 },
   title: { fontFamily: GameFonts.display, fontSize: 28, letterSpacing: 2, lineHeight: 34 },
   subtitle: { fontFamily: GameFonts.uiSemi, fontSize: 11, letterSpacing: 1 },
+  crewCodeLine: {
+    fontFamily: GameFonts.displayRegular,
+    fontSize: 12,
+    lineHeight: 17,
+    fontStyle: 'italic',
+    marginTop: -4,
+  },
   chapterBlock: {
     borderTopWidth: 1,
     borderBottomWidth: 1,
