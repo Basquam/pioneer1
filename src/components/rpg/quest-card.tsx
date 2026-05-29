@@ -20,11 +20,19 @@ import { useUniverseVisualTheme } from '@/hooks/use-universe-visual-theme';
 import { useUniverseUiCopy } from '@/lib/universe-ui-copy';
 import { formatPrepStepLine } from '@/lib/quest-prep';
 import { getFocusLockCopy } from '@/lib/focus-lock';
+import {
+  formatReadinessLabel,
+  getQuestReadinessSuggestion,
+  getReadinessItemLabel,
+  type ReadinessItemKey,
+} from '@/lib/quest-readiness';
 import { formatStarterMoveLine } from '@/lib/two-minute-starter';
 import { getTaskCategoryMeta } from '@/lib/task-categories';
 import type { BoardQuest } from '@/types/narrative';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
+const READINESS_KEYS: ReadinessItemKey[] = ['starter', 'plan', 'prep', 'focus'];
 
 type QuestCardProps = {
   quest: BoardQuest;
@@ -33,7 +41,7 @@ type QuestCardProps = {
 
 export function QuestCard({ quest, index }: QuestCardProps) {
   const ui = useUniverseUiCopy();
-  const { activeUniverse, completeQuest, openQuestFocus } = useGame();
+  const { activeUniverse, completeQuest, openQuestFocus, openImproveQuest, openFrictionReview } = useGame();
   const visualTheme = useUniverseVisualTheme();
   const { palette } = activeUniverse;
   const scale = useSharedValue(1);
@@ -73,6 +81,14 @@ export function QuestCard({ quest, index }: QuestCardProps) {
   const categoryMeta = getTaskCategoryMeta(quest.category);
   const focusLockCopy = getFocusLockCopy(activeUniverse.id);
   const lockedFocus = quest.isFocusLocked === true;
+  const readinessSuggestion =
+    quest.readinessScore != null && quest.readinessChecklist
+      ? getQuestReadinessSuggestion({
+          score: quest.readinessScore,
+          maxScore: 4,
+          checklist: quest.readinessChecklist,
+        })
+      : null;
 
   const handlePress = () => {
     scale.value = withSpring(0.94, { damping: 10 }, () => {
@@ -84,6 +100,16 @@ export function QuestCard({ quest, index }: QuestCardProps) {
   const handleFocusPress = () => {
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     openQuestFocus(quest.id);
+  };
+
+  const handleImprovePress = () => {
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    openImproveQuest(quest.id);
+  };
+
+  const handleFrictionPress = () => {
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    openFrictionReview(quest.id);
   };
 
   return (
@@ -164,7 +190,54 @@ export function QuestCard({ quest, index }: QuestCardProps) {
             {formatPrepStepLine(quest.prepStepTitle)}
           </Text>
         )}
+        {quest.source === 'user' && quest.readinessScore != null && quest.readinessChecklist && (
+          <View style={[styles.readinessRow, { borderTopColor: 'rgba(255,255,255,0.08)' }]}>
+            <Text style={[styles.readinessTitle, { color: palette.gold }]}>
+              {formatReadinessLabel(quest.readinessScore)}
+            </Text>
+            <View style={styles.readinessChips}>
+              {READINESS_KEYS.map((key) => {
+                const active = quest.readinessChecklist?.[key];
+                return (
+                  <Text
+                    key={key}
+                    style={[
+                      styles.readinessChip,
+                      { color: active ? palette.bone : palette.fog, opacity: active ? 1 : 0.45 },
+                    ]}>
+                    {getReadinessItemLabel(key)}
+                  </Text>
+                );
+              })}
+            </View>
+            {readinessSuggestion ? (
+              <Text style={[styles.readinessHint, { color: palette.fog }]} numberOfLines={2}>
+                {readinessSuggestion}
+              </Text>
+            ) : null}
+          </View>
+        )}
         <View style={styles.actionRow}>
+          {quest.source === 'user' && quest.showFrictionReview && (
+            <Pressable
+              onPress={(event) => {
+                event.stopPropagation();
+                handleFrictionPress();
+              }}
+              style={[styles.frictionButton, { borderColor: palette.accent, backgroundColor: palette.night }]}>
+              <Text style={[styles.frictionButtonText, { color: palette.accent }]}>REVIEW FRICTION</Text>
+            </Pressable>
+          )}
+          {quest.source === 'user' && (
+            <Pressable
+              onPress={(event) => {
+                event.stopPropagation();
+                handleImprovePress();
+              }}
+              style={[styles.improveButton, { borderColor: palette.panelBorder, backgroundColor: palette.night }]}>
+              <Text style={[styles.improveButtonText, { color: palette.fog }]}>IMPROVE</Text>
+            </Pressable>
+          )}
           <Pressable
             onPress={(event) => {
               event.stopPropagation();
@@ -229,12 +302,62 @@ const styles = StyleSheet.create({
     lineHeight: 14,
     fontStyle: 'italic',
   },
+  readinessRow: {
+    borderTopWidth: 1,
+    paddingTop: 8,
+    gap: 6,
+  },
+  readinessTitle: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 10,
+    letterSpacing: 1.5,
+  },
+  readinessChips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  readinessChip: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 9,
+    letterSpacing: 1,
+    opacity: 0.95,
+  },
+  readinessHint: {
+    fontFamily: GameFonts.displayRegular,
+    fontSize: 11,
+    lineHeight: 15,
+    fontStyle: 'italic',
+  },
   actionRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 10,
+    gap: 8,
     marginTop: 2,
+    flexWrap: 'wrap',
+  },
+  improveButton: {
+    borderWidth: 1,
+    paddingHorizontal: 8,
+    paddingVertical: 8,
+    transform: [{ skewX: '-6deg' }],
+  },
+  improveButtonText: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 9,
+    letterSpacing: 1.5,
+  },
+  frictionButton: {
+    borderWidth: 1,
+    paddingHorizontal: 8,
+    paddingVertical: 8,
+    transform: [{ skewX: '-6deg' }],
+  },
+  frictionButtonText: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 8,
+    letterSpacing: 1,
   },
   focusButton: {
     borderWidth: 1,

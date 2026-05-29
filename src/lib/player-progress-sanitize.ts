@@ -1,5 +1,5 @@
 import { getLocalDateKey } from '@/lib/daily-streak';
-import type { DailyActivity, PlayerProgress, TaskCategory, UserQuest } from '@/types/narrative';
+import type { DailyActivity, PlayerProgress, QuestFrictionReason, TaskCategory, UserQuest } from '@/types/narrative';
 
 export const MAX_STORED_USER_QUESTS = 300;
 export const ACTIVITY_RETENTION_DAYS = 90;
@@ -79,7 +79,53 @@ export function sanitizeUserQuest(raw: unknown): UserQuest | null {
     sanitized.implementationIntention = quest.implementationIntention;
   }
 
+  if (quest.focusPinned === true) {
+    sanitized.focusPinned = true;
+  }
+
+  if (typeof quest.plannedTimeLabel === 'string' && quest.plannedTimeLabel.length > 0) {
+    sanitized.plannedTimeLabel = quest.plannedTimeLabel;
+  }
+
+  if (typeof quest.afterCurrentHabit === 'string' && quest.afterCurrentHabit.length > 0) {
+    sanitized.afterCurrentHabit = quest.afterCurrentHabit;
+  }
+
+  if (typeof quest.archivedAt === 'string' && quest.archivedAt.length > 0) {
+    sanitized.archivedAt = quest.archivedAt;
+  }
+
+  if (Array.isArray(quest.frictionReviews)) {
+    const reviews = quest.frictionReviews
+      .map((entry) => sanitizeFrictionReview(entry))
+      .filter((entry): entry is NonNullable<typeof entry> => entry !== null)
+      .slice(-10);
+    if (reviews.length > 0) sanitized.frictionReviews = reviews;
+  }
+
   return sanitized;
+}
+
+const FRICTION_REASONS = new Set([
+  'too-big',
+  'too-vague',
+  'wrong-time',
+  'forgot',
+  'low-energy',
+  'not-important',
+]);
+
+function sanitizeFrictionReview(raw: unknown) {
+  if (!raw || typeof raw !== 'object') return null;
+  const review = raw as Record<string, unknown>;
+  if (typeof review.reason !== 'string' || !FRICTION_REASONS.has(review.reason)) return null;
+  if (typeof review.reviewedAt !== 'string' || review.reviewedAt.length === 0) return null;
+
+  return {
+    reason: review.reason as QuestFrictionReason,
+    reviewedAt: review.reviewedAt,
+    ...(review.suggestedFixApplied === true ? { suggestedFixApplied: true } : {}),
+  };
 }
 
 export function sanitizeUserQuestList(userQuests: unknown): UserQuest[] {
@@ -146,10 +192,23 @@ function sanitizeActivityByDate(raw: unknown): Record<string, DailyActivity> {
 
 /** Trim growth-prone fields before persisting or after loading saved progress. */
 export function sanitizePersistedProgress(progress: PlayerProgress): PlayerProgress {
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - ACTIVITY_RETENTION_DAYS);
+  const cutoffKey = getLocalDateKey(cutoff);
+
+  const dailyAwarenessByDate = Object.fromEntries(
+    Object.entries(progress.dailyAwarenessByDate).filter(([dateKey]) => dateKey >= cutoffKey),
+  );
+  const dailyAwarenessDismissedDates = progress.dailyAwarenessDismissedDates.filter(
+    (dateKey) => dateKey >= cutoffKey,
+  );
+
   return {
     ...progress,
     userQuests: pruneUserQuests(sanitizeUserQuestList(progress.userQuests)),
     activityByDate: sanitizeActivityByDate(progress.activityByDate),
+    dailyAwarenessByDate,
+    dailyAwarenessDismissedDates,
   };
 }
 

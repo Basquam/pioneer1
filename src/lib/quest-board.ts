@@ -1,7 +1,10 @@
 import type { BoardQuest, Chapter, PlayerProgress, QuestTemplate, Saga, UserQuest } from '@/types/narrative';
 
+import { resolveQuestCreatedOnDate } from '@/lib/daily-focus';
 import { getLocalDateKey } from '@/lib/daily-streak';
+import { isUserQuestArchived, shouldShowFrictionReview } from '@/lib/quest-friction';
 import { getLockedFocusQuestIdSet } from '@/lib/focus-lock';
+import { computeQuestReadiness } from '@/lib/quest-readiness';
 import { getDailyFocusLimit, getDailyFocusQuestIds } from './daily-focus';
 
 export type QuestBoardProgress = Pick<
@@ -37,7 +40,7 @@ export function userQuestToBoardQuest(
   isDailyFocus = false,
   isFocusLocked = false,
 ): BoardQuest {
-  return {
+  const boardQuest: BoardQuest = {
     id: quest.id,
     source: 'user',
     category: quest.category,
@@ -50,10 +53,30 @@ export function userQuestToBoardQuest(
     completed: quest.isCompleted,
     isDailyFocus,
     ...(isFocusLocked ? { isFocusLocked: true } : {}),
+    ...(quest.createdOnDate ? { createdOnDate: quest.createdOnDate } : {}),
     ...(quest.starterTaskTitle ? { starterTaskTitle: quest.starterTaskTitle } : {}),
     ...(quest.prepStepTitle ? { prepStepTitle: quest.prepStepTitle } : {}),
     ...(quest.implementationIntention ? { implementationIntention: quest.implementationIntention } : {}),
+    ...(quest.plannedTimeLabel ? { plannedTimeLabel: quest.plannedTimeLabel } : {}),
+    ...(quest.afterCurrentHabit ? { afterCurrentHabit: quest.afterCurrentHabit } : {}),
   };
+
+  if (!boardQuest.createdOnDate) {
+    const resolvedDate = resolveQuestCreatedOnDate(quest);
+    if (resolvedDate) boardQuest.createdOnDate = resolvedDate;
+  }
+
+  const readiness = computeQuestReadiness(boardQuest);
+  if (readiness) {
+    boardQuest.readinessScore = readiness.score;
+    boardQuest.readinessChecklist = readiness.checklist;
+  }
+
+  if (shouldShowFrictionReview(boardQuest)) {
+    boardQuest.showFrictionReview = true;
+  }
+
+  return boardQuest;
 }
 
 export function buildBoardQuests(
@@ -76,7 +99,12 @@ export function buildBoardQuests(
   const lockedFocusQuestIds = getLockedFocusQuestIdSet(progress, today);
 
   const userQuests = progress.userQuests
-    .filter((quest) => quest.sourceSagaId === saga.id && quest.sourceChapterId === chapter.id)
+    .filter(
+      (quest) =>
+        !isUserQuestArchived(quest) &&
+        quest.sourceSagaId === saga.id &&
+        quest.sourceChapterId === chapter.id,
+    )
     .map((quest) =>
       userQuestToBoardQuest(
         quest,

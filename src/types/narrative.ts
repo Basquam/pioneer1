@@ -200,6 +200,21 @@ export type QuestCompleteState = {
   recoveryCompleteLine?: string;
 };
 
+export type QuestFrictionReason =
+  | 'too-big'
+  | 'too-vague'
+  | 'wrong-time'
+  | 'forgot'
+  | 'low-energy'
+  | 'not-important';
+
+export type QuestFrictionReview = {
+  reason: QuestFrictionReason;
+  /** ISO timestamp when the user reviewed friction. */
+  reviewedAt: string;
+  suggestedFixApplied?: boolean;
+};
+
 export type UserQuest = {
   id: string;
   originalTitle: string;
@@ -223,6 +238,23 @@ export type UserQuest = {
   prepStepTitle?: string;
   /** Optional implementation intention — how the user plans to execute the task. */
   implementationIntention?: string;
+  /** User pinned this quest as a daily focus commitment beyond auto-assigned slots. */
+  focusPinned?: boolean;
+  /** When the user plans to do this quest — e.g. "Tomorrow morning". */
+  plannedTimeLabel?: string;
+  /** Habit to stack this quest after — e.g. "I finish breakfast". */
+  afterCurrentHabit?: string;
+  /** Local-only friction reviews when a quest feels hard to start. */
+  frictionReviews?: QuestFrictionReview[];
+  /** Hidden from the board when set — archived, not deleted. */
+  archivedAt?: string;
+};
+
+export type QuestReadinessChecklist = {
+  starter: boolean;
+  plan: boolean;
+  prep: boolean;
+  focus: boolean;
 };
 
 export type IdentityTraitKey =
@@ -255,6 +287,15 @@ export type BoardQuest = {
   starterTaskTitle?: string;
   prepStepTitle?: string;
   implementationIntention?: string;
+  /** 0–4 Atomic Habits readiness score — user quests only. */
+  readinessScore?: number;
+  readinessChecklist?: QuestReadinessChecklist;
+  /** Local calendar date when this user quest was created. */
+  createdOnDate?: string;
+  /** Show gentle friction review action on the card. */
+  showFrictionReview?: boolean;
+  plannedTimeLabel?: string;
+  afterCurrentHabit?: string;
 };
 
 export type DailyActivity = {
@@ -262,6 +303,20 @@ export type DailyActivity = {
   xpEarned: number;
   reputationEarned: number;
   chaptersCompleted: number;
+};
+
+export type DailyAwarenessBlocker =
+  | 'low-energy'
+  | 'too-many-tasks'
+  | 'unclear-priorities'
+  | 'messy-environment'
+  | 'emotional-resistance'
+  | 'ready';
+
+export type DailyAwarenessEntry = {
+  date: string;
+  selectedBlocker: DailyAwarenessBlocker;
+  createdAt: string;
 };
 
 export type PlayerProgress = {
@@ -314,4 +369,8 @@ export type PlayerProgress = {
   recoveryQuestOfferedForDate: string | null;
   /** Local dates when the user completed a recovery quest after returning. */
   recoveryQuestCompletedDates: string[];
+  /** Daily awareness check answers keyed by local date (YYYY-MM-DD). */
+  dailyAwarenessByDate: Record<string, DailyAwarenessEntry>;
+  /** Local dates when the user dismissed the awareness check without answering. */
+  dailyAwarenessDismissedDates: string[];
 };

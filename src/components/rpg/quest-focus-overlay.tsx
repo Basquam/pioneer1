@@ -47,16 +47,42 @@ export function QuestFocusOverlay() {
   const ritualCopy = getQuestStartRitualCopy(activeUniverse.id);
   const [ritualStep, setRitualStep] = useState<RitualStep>(0);
   const completePulse = useSharedValue(1);
+  const ritualComplete = ritualStep === 4;
 
   useEffect(() => {
     setRitualStep(0);
     completePulse.value = 1;
   }, [focusQuest?.id, completePulse]);
 
+  const completeWrapStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: completePulse.value }],
+    opacity: ritualComplete ? 1 : 0.72,
+  }));
+
+  // #region agent log
+  fetch('http://127.0.0.1:7741/ingest/fadf9cf1-36c7-4082-8b2c-abc1a1998bfb', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'b770d9' },
+    body: JSON.stringify({
+      sessionId: 'b770d9',
+      runId: 'hooks-fix',
+      hypothesisId: 'A',
+      location: 'quest-focus-overlay.tsx:render',
+      message: 'QuestFocusOverlay render after all hooks',
+      data: {
+        hasFocusQuest: focusQuest != null,
+        focusQuestId: focusQuest?.id ?? null,
+        ritualStep,
+        hookCountStable: true,
+      },
+      timestamp: Date.now(),
+    }),
+  }).catch(() => {});
+  // #endregion
+
   if (!focusQuest) return null;
 
   const isCompleted = focusQuest.completed;
-  const ritualComplete = ritualStep === 4;
   const ritualActive = ritualStep >= 1 && ritualStep <= 3;
   const sourceLabel = getQuestFocusSourceLabel(focusQuest, ui);
   const clearedLabel = getQuestFocusClearedLabel(focusQuest, ui);
@@ -67,11 +93,6 @@ export function QuestFocusOverlay() {
     ? shortenMotivationLine(pickCharacterLine(character, 'questComplete', focusQuest.id.length))
     : shortenMotivationLine(ui.questCompleteFallbackLine);
   const trait = getIdentityTraitMeta(getTraitForCategory(focusQuest.category));
-
-  const completeWrapStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: completePulse.value }],
-    opacity: ritualComplete ? 1 : 0.72,
-  }));
 
   const handleComplete = () => {
     if (isCompleted) return;

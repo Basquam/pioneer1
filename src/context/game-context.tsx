@@ -28,6 +28,13 @@ import {
 import { recordChapterCompleted, recordQuestCompleted } from '@/lib/weekly-recap';
 import { convertTaskToUserQuest, createUserQuestId } from '@/lib/convert-task-to-quest';
 import { castIdentityVote } from '@/lib/identity-votes';
+import type { UserQuestReadinessUpdates } from '@/lib/quest-readiness';
+import {
+  dismissDailyAwarenessForToday,
+  recordDailyAwarenessAnswer,
+  shouldShowDailyAwarenessCheck,
+} from '@/lib/daily-awareness';
+import type { DailyAwarenessBlocker, QuestFrictionReason } from '@/types/narrative';
 import {
   affinityToTier,
   getCharacter,
@@ -114,8 +121,11 @@ type GameContextValue = {
   questCreated: UserQuest | null;
   addQuestSheetOpen: boolean;
   addQuestRecoveryMode: boolean;
+  improveQuestId: string | null;
+  frictionReviewQuestId: string | null;
   focusQuest: BoardQuest | null;
   showRecoveryPrompt: boolean;
+  showDailyAwarenessCheck: boolean;
   isTodayFocusLocked: boolean;
   showChapterIntro: boolean;
   showHqTutorial: boolean;
@@ -140,6 +150,16 @@ type GameContextValue = {
   viewCreatedQuestOnBoard: () => void;
   addAnotherQuest: () => void;
   completeQuest: (questId: string) => void;
+  updateUserQuest: (questId: string, updates: UserQuestReadinessUpdates) => void;
+  openImproveQuest: (questId: string) => void;
+  closeImproveQuest: () => void;
+  openFrictionReview: (questId: string) => void;
+  closeFrictionReview: () => void;
+  recordFrictionReview: (questId: string, reason: QuestFrictionReason) => void;
+  markFrictionFixApplied: (questId: string) => void;
+  archiveUserQuest: (questId: string) => void;
+  submitDailyAwareness: (blocker: DailyAwarenessBlocker) => void;
+  dismissDailyAwarenessCheck: () => void;
   dismissXpBurst: () => void;
   markChapterIntroSeen: () => void;
   dismissHqTutorial: () => void;
@@ -186,6 +206,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [addQuestSheetOpen, setAddQuestSheetOpen] = useState(false);
   const [addQuestRecoveryMode, setAddQuestRecoveryMode] = useState(false);
   const [focusQuestId, setFocusQuestId] = useState<string | null>(null);
+  const [improveQuestId, setImproveQuestId] = useState<string | null>(null);
+  const [frictionReviewQuestId, setFrictionReviewQuestId] = useState<string | null>(null);
   const pendingChapterCompleteRef = useRef<ChapterCompleteState | null>(null);
 
   useEffect(() => {
@@ -314,6 +336,15 @@ export function GameProvider({ children }: { children: ReactNode }) {
     questCreated === null &&
     narrativeMoment === null;
 
+  const showDailyAwarenessCheck = useMemo(
+    () =>
+      isHydrated &&
+      progress.hasOnboarded &&
+      !showHqTutorial &&
+      shouldShowDailyAwarenessCheck(progress),
+    [isHydrated, progress, showHqTutorial],
+  );
+
   const player = useMemo(
     () => ({
       level: levelInfo.level,
@@ -441,6 +472,134 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   const openQuestFocus = useCallback((questId: string) => {
     setFocusQuestId(questId);
+  }, []);
+
+  const openImproveQuest = useCallback((questId: string) => {
+    setImproveQuestId(questId);
+  }, []);
+
+  const closeImproveQuest = useCallback(() => {
+    setImproveQuestId(null);
+  }, []);
+
+  const openFrictionReview = useCallback((questId: string) => {
+    setFrictionReviewQuestId(questId);
+  }, []);
+
+  const closeFrictionReview = useCallback(() => {
+    setFrictionReviewQuestId(null);
+  }, []);
+
+  const updateUserQuest = useCallback(
+    (questId: string, updates: UserQuestReadinessUpdates) => {
+      setProgress((prev) => ({
+        ...prev,
+        userQuests: prev.userQuests.map((quest) => {
+          if (quest.id !== questId) return quest;
+
+          const next: UserQuest = { ...quest };
+
+          if ('starterTaskTitle' in updates) {
+            const value = updates.starterTaskTitle?.trim();
+            if (value) next.starterTaskTitle = value;
+            else delete next.starterTaskTitle;
+          }
+
+          if ('implementationIntention' in updates) {
+            const value = updates.implementationIntention?.trim();
+            if (value) next.implementationIntention = value;
+            else delete next.implementationIntention;
+          }
+
+          if ('prepStepTitle' in updates) {
+            const value = updates.prepStepTitle?.trim();
+            if (value) next.prepStepTitle = value;
+            else delete next.prepStepTitle;
+          }
+
+          if ('focusPinned' in updates) {
+            if (updates.focusPinned) next.focusPinned = true;
+            else delete next.focusPinned;
+          }
+
+          if ('originalTitle' in updates) {
+            const value = updates.originalTitle?.trim();
+            if (value) next.originalTitle = value;
+          }
+
+          if ('plannedTimeLabel' in updates) {
+            const value = updates.plannedTimeLabel?.trim();
+            if (value) next.plannedTimeLabel = value;
+            else delete next.plannedTimeLabel;
+          }
+
+          if ('afterCurrentHabit' in updates) {
+            const value = updates.afterCurrentHabit?.trim();
+            if (value) next.afterCurrentHabit = value;
+            else delete next.afterCurrentHabit;
+          }
+
+          return next;
+        }),
+      }));
+    },
+    [],
+  );
+
+  const recordFrictionReview = useCallback((questId: string, reason: QuestFrictionReason) => {
+    setProgress((prev) => ({
+      ...prev,
+      userQuests: prev.userQuests.map((quest) => {
+        if (quest.id !== questId) return quest;
+
+        const review = {
+          reason,
+          reviewedAt: new Date().toISOString(),
+          suggestedFixApplied: false,
+        };
+
+        return {
+          ...quest,
+          frictionReviews: [...(quest.frictionReviews ?? []), review].slice(-10),
+        };
+      }),
+    }));
+  }, []);
+
+  const markFrictionFixApplied = useCallback((questId: string) => {
+    setProgress((prev) => ({
+      ...prev,
+      userQuests: prev.userQuests.map((quest) => {
+        if (quest.id !== questId || !quest.frictionReviews?.length) return quest;
+
+        const reviews = [...quest.frictionReviews];
+        const lastIndex = reviews.length - 1;
+        const last = reviews[lastIndex];
+        if (!last || last.suggestedFixApplied) return quest;
+
+        reviews[lastIndex] = { ...last, suggestedFixApplied: true };
+        return { ...quest, frictionReviews: reviews };
+      }),
+    }));
+  }, []);
+
+  const archiveUserQuest = useCallback((questId: string) => {
+    setProgress((prev) => ({
+      ...prev,
+      userQuests: prev.userQuests.map((quest) =>
+        quest.id === questId
+          ? { ...quest, archivedAt: getLocalDateKey() }
+          : quest,
+      ),
+    }));
+  }, []);
+
+  const submitDailyAwareness = useCallback((blocker: DailyAwarenessBlocker) => {
+    setProgress((prev) => recordDailyAwarenessAnswer(prev, blocker));
+  }, []);
+
+  const dismissDailyAwarenessCheck = useCallback(() => {
+    setProgress((prev) => dismissDailyAwarenessForToday(prev));
   }, []);
 
   const lockTodayFocusCommit = useCallback(() => {
@@ -934,8 +1093,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
       questCreated,
       addQuestSheetOpen,
       addQuestRecoveryMode,
+      improveQuestId,
+      frictionReviewQuestId,
       focusQuest,
       showRecoveryPrompt,
+      showDailyAwarenessCheck,
       isTodayFocusLocked: todayFocusLocked,
       showChapterIntro,
       showHqTutorial,
@@ -956,6 +1118,16 @@ export function GameProvider({ children }: { children: ReactNode }) {
       viewCreatedQuestOnBoard,
       addAnotherQuest,
       completeQuest,
+      updateUserQuest,
+      openImproveQuest,
+      closeImproveQuest,
+      openFrictionReview,
+      closeFrictionReview,
+      recordFrictionReview,
+      markFrictionFixApplied,
+      archiveUserQuest,
+      submitDailyAwareness,
+      dismissDailyAwarenessCheck,
       dismissXpBurst,
       markChapterIntroSeen,
       dismissHqTutorial,
@@ -988,10 +1160,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
       addQuestSheetOpen,
       addUserQuest,
       allQuestsComplete,
+      archiveUserQuest,
       chapters,
       characters,
       chapterComplete,
       closeAddQuestSheet,
+      closeFrictionReview,
+      closeImproveQuest,
       closeQuestFocus,
       completeOnboarding,
       completeQuest,
@@ -1007,19 +1182,25 @@ export function GameProvider({ children }: { children: ReactNode }) {
       devSwitchToNeonAshes,
       devSwitchToDustAndIron,
       devUnlockVultureGangChapters,
+      dismissDailyAwarenessCheck,
       dismissHqTutorial,
       dismissNarrativeMoment,
       dismissQuestComplete,
       dismissXpBurst,
       focusQuest,
+      frictionReviewQuestId,
+      improveQuestId,
       isHydrated,
       isSagaPreview,
       todayFocusLocked,
       lockTodayFocusCommit,
       markChapterIntroSeen,
+      markFrictionFixApplied,
       maybeShowVillainTaunt,
       narrativeMoment,
       openAddQuestSheet,
+      openFrictionReview,
+      openImproveQuest,
       openQuestFocus,
       openRecoveryQuestSheet,
       player,
@@ -1028,19 +1209,23 @@ export function GameProvider({ children }: { children: ReactNode }) {
       questComplete,
       questCreated,
       quests,
+      recordFrictionReview,
       resetProgress,
       importProgress,
       restoreDefaultStory,
       selectSaga,
       selectUniverse,
       showChapterIntro,
+      showDailyAwarenessCheck,
       showHqTutorial,
       showRecoveryPrompt,
       todayFocusLocked,
       startHqTutorialAddQuest,
       startUnlockedSagaFromChapterComplete,
       storyLine,
+      submitDailyAwareness,
       switchSaga,
+      updateUserQuest,
       viewCreatedQuestOnBoard,
       villainInfluence,
       xpBurst,

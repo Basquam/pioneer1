@@ -1,4 +1,6 @@
 import { AddQuestSheet } from '@/components/rpg/add-quest-sheet';
+import { FrictionReviewSheet } from '@/components/rpg/friction-review-sheet';
+import { ImproveQuestSheet } from '@/components/rpg/improve-quest-sheet';
 import { ChapterCompleteOverlay } from '@/components/rpg/chapter-complete-overlay';
 import { ChapterIntroScene } from '@/components/rpg/chapter-intro-scene';
 import { HqTutorialOverlay } from '@/components/rpg/hq-tutorial-overlay';
@@ -16,6 +18,10 @@ export function GameFlowOverlays() {
     startHqTutorialAddQuest,
     addQuestSheetOpen,
     closeAddQuestSheet,
+    improveQuestId,
+    closeImproveQuest,
+    frictionReviewQuestId,
+    closeFrictionReview,
   } = useGame();
 
   return (
@@ -31,6 +37,8 @@ export function GameFlowOverlays() {
         onDismiss={dismissHqTutorial}
       />
       <AddQuestSheet visible={addQuestSheetOpen} onClose={closeAddQuestSheet} />
+      <ImproveQuestSheet questId={improveQuestId} onClose={closeImproveQuest} />
+      <FrictionReviewSheet questId={frictionReviewQuestId} onClose={closeFrictionReview} />
     </>
   );
 }

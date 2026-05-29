@@ -1,4 +1,5 @@
 import { getLocalDateKey } from '@/lib/daily-streak';
+import { isUserQuestArchived } from '@/lib/quest-friction';
 import type { PlayerProgress, UserQuest } from '@/types/narrative';
 
 export const DEFAULT_DAILY_FOCUS_LIMIT = 3;
@@ -8,7 +9,9 @@ function extractQuestCreatedTime(questId: string): number {
   return match ? Number(match[1]) : 0;
 }
 
-export function resolveQuestCreatedOnDate(quest: UserQuest): string {
+export function resolveQuestCreatedOnDate(
+  quest: Pick<UserQuest, 'id' | 'createdOnDate'>,
+): string {
   if (quest.createdOnDate) return quest.createdOnDate;
   const timestamp = extractQuestCreatedTime(quest.id);
   if (timestamp > 0) return getLocalDateKey(new Date(timestamp));
@@ -54,8 +57,19 @@ export function getDailyFocusQuestIds(
   dateKey: string = getLocalDateKey(),
   universeId?: string,
 ): Set<string> {
-  const todayQuests = getTodayUserQuests(userQuests, dateKey, universeId);
-  return new Set(todayQuests.slice(0, limit).map((quest) => quest.id));
+  const scoped = universeId ? filterUserQuestsByUniverse(userQuests, universeId) : userQuests;
+  const active = scoped.filter((quest) => !quest.isCompleted && !isUserQuestArchived(quest));
+  const pinnedIds = active
+    .filter((quest) => quest.focusPinned)
+    .map((quest) => quest.id);
+
+  const todayQuests = getTodayUserQuests(userQuests, dateKey, universeId).filter(
+    (quest) => !isUserQuestArchived(quest) && !pinnedIds.includes(quest.id),
+  );
+  const slotsForToday = Math.max(0, limit - pinnedIds.length);
+  const todayIds = todayQuests.slice(0, slotsForToday).map((quest) => quest.id);
+
+  return new Set([...pinnedIds, ...todayIds]);
 }
 
 export function isDailyFocusQuest(

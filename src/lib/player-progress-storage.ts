@@ -4,6 +4,10 @@ import { DUST_AND_IRON_UNIVERSE, UNIVERSES } from '@/data/narrative/universes';
 import { sanitizeLockedFocusQuestIds } from '@/lib/focus-lock';
 import { createEmptyIdentityVotes, sanitizeIdentityVotes } from '@/lib/identity-votes';
 import { sanitizeRecoveryQuestCompletedDates } from '@/lib/recovery-quest';
+import {
+  sanitizeDailyAwarenessByDate,
+  sanitizeDailyAwarenessDismissedDates,
+} from '@/lib/daily-awareness';
 import { findUniverse } from '@/lib/narrative-state';
 import { narrativeWarn } from '@/lib/narrative-state-debug';
 import type { PlayerProgress } from '@/types/narrative';
@@ -156,6 +160,8 @@ export function createInitialProgress(): PlayerProgress {
     lastMissedDate: null,
     recoveryQuestOfferedForDate: null,
     recoveryQuestCompletedDates: [],
+    dailyAwarenessByDate: {},
+    dailyAwarenessDismissedDates: [],
   };
 }
 
@@ -193,6 +199,10 @@ function normalizeProgress(raw: Partial<PlayerProgress> & Record<string, unknown
     recoveryQuestOfferedForDate:
       typeof raw.recoveryQuestOfferedForDate === 'string' ? raw.recoveryQuestOfferedForDate : null,
     recoveryQuestCompletedDates: sanitizeRecoveryQuestCompletedDates(raw.recoveryQuestCompletedDates),
+    dailyAwarenessByDate: sanitizeDailyAwarenessByDate(raw.dailyAwarenessByDate),
+    dailyAwarenessDismissedDates: sanitizeDailyAwarenessDismissedDates(
+      raw.dailyAwarenessDismissedDates,
+    ),
   };
 
   const universeForMigration = findUniverse(merged.selectedUniverseId) ?? DUST_AND_IRON_UNIVERSE;

@@ -54,6 +54,8 @@ function baseProgress(): PlayerProgress {
     recoveryQuestCompletedDates: [],
     focusLockedDate: null,
     lockedFocusQuestIds: [],
+    dailyAwarenessByDate: {},
+    dailyAwarenessDismissedDates: [],
   } as PlayerProgress;
 
   for (const universe of UNIVERSES) {
