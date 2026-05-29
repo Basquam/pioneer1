@@ -47,6 +47,10 @@ import {
   detectIdentityMilestoneUnlock,
 } from '@/lib/identity-milestones';
 import {
+  recordRoutineQuestCompleted,
+  recordRoutineQuestSpawned,
+} from '@/lib/routine-boredom-guard';
+import {
   applyMomentumGain,
   computeMomentumGainFromQuest,
   detectMomentumMilestoneUnlock,
@@ -119,6 +123,10 @@ import {
   NEURONET_UNIVERSE_UNLOCK_ID,
 } from '@/lib/dev-universe-switch';
 import { isSagaUnlocked, isUniverseUnlocked, unlockRewardIds } from '@/lib/reward-unlocks';
+import {
+  applyQuestDefaultsPreset as buildQuestDefaultsPreset,
+  updateCategoryQuestDefaultsInSettings,
+} from '@/lib/quest-defaults';
 import { getUniverseUiCopy } from '@/lib/universe-ui-copy';
 import type {
   BoardQuest,
@@ -133,6 +141,8 @@ import type {
   Universe,
   UserQuest,
   QuestRiskLevel,
+  CategoryQuestDefaults,
+  QuestDefaultsPresetId,
 } from '@/types/narrative';
 
 export type XpBurst = { id: string; amount: number };
@@ -213,6 +223,11 @@ type GameContextValue = {
   markFrictionFixApplied: (questId: string) => void;
   archiveUserQuest: (questId: string) => void;
   disableRecurringQuest: (templateId: string) => void;
+  updateCategoryQuestDefaults: (
+    category: TaskCategory,
+    updates: Partial<CategoryQuestDefaults>,
+  ) => void;
+  applyQuestDefaultsPreset: (presetId: QuestDefaultsPresetId) => void;
   recordFocusDistraction: (questId: string, distraction: QuestDistractionType) => void;
   markFrictionShieldApplied: (questId: string) => void;
   submitDailyAwareness: (blocker: DailyAwarenessBlocker) => void;
@@ -350,12 +365,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
       focusLockedDate: progress.focusLockedDate,
       lockedFocusQuestIds: progress.lockedFocusQuestIds,
       templateQuestStartedAt: progress.templateQuestStartedAt,
+      routineRepetitionByKey: progress.routineRepetitionByKey,
     }),
     [
       progress.completedQuestIdsBySagaId,
       progress.dailyFocusLimit,
       progress.focusLockedDate,
       progress.lockedFocusQuestIds,
+      progress.routineRepetitionByKey,
       progress.selectedUniverseId,
       progress.templateQuestStartedAt,
       progress.userQuests,
@@ -535,16 +552,21 @@ export function GameProvider({ children }: { children: ReactNode }) {
                 }
               : {}),
           },
+          getLocalDateKey(),
+          prev,
         );
 
         setAddQuestSheetOpen(false);
         setQuestCreated(quest);
 
-        return {
-          ...prev,
-          recurringQuestTemplates,
-          userQuests: pruneUserQuests([...prev.userQuests, quest]),
-        };
+        return recordRoutineQuestSpawned(
+          {
+            ...prev,
+            recurringQuestTemplates,
+            userQuests: pruneUserQuests([...prev.userQuests, quest]),
+          },
+          quest,
+        );
       });
     },
     [activeSaga, activeUniverse, currentChapter],
@@ -554,13 +576,30 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setProgress((prev) => disableRecurringQuestTemplate(prev, templateId));
   }, []);
 
+  const updateCategoryQuestDefaults = useCallback(
+    (category: TaskCategory, updates: Partial<CategoryQuestDefaults>) => {
+      setProgress((prev) => ({
+        ...prev,
+        questDefaults: updateCategoryQuestDefaultsInSettings(prev.questDefaults, category, updates),
+      }));
+    },
+    [],
+  );
+
+  const applyQuestDefaultsPreset = useCallback((presetId: QuestDefaultsPresetId) => {
+    setProgress((prev) => ({
+      ...prev,
+      questDefaults: buildQuestDefaultsPreset(presetId),
+    }));
+  }, []);
+
   const addUserQuestPack = useCallback(
     (items: Array<{ originalTitle: string; category: TaskCategory; options?: CreateUserQuestOptions }>) => {
       if (!currentChapter || items.length === 0) return;
 
       setProgress((prev) => {
-        const created: UserQuest[] = [];
         let workingQuests = prev.userQuests;
+        const created: UserQuest[] = [];
 
         for (const item of items) {
           const trimmed = item.originalTitle.trim();
@@ -574,6 +613,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
             currentChapter,
             workingQuests,
             item.options,
+            getLocalDateKey(),
+            prev,
           );
           created.push(quest);
           workingQuests = [...workingQuests, quest];
@@ -584,10 +625,16 @@ export function GameProvider({ children }: { children: ReactNode }) {
         setAddQuestSheetOpen(false);
         setQuestPackSheetOpen(false);
 
-        return {
+        let next = {
           ...prev,
           userQuests: pruneUserQuests([...prev.userQuests, ...created]),
         };
+
+        for (const quest of created) {
+          next = recordRoutineQuestSpawned(next, quest);
+        }
+
+        return next;
       });
     },
     [activeSaga, activeUniverse, currentChapter],
@@ -953,52 +1000,62 @@ export function GameProvider({ children }: { children: ReactNode }) {
           traitKey,
         });
 
-        return applyMomentumGain(
-          appendEvidenceEvent(
-            recordQuestCompleted(
-              {
-                ...withRecovery,
-                userQuests:
-                  boardQuest.source === 'user'
-                    ? prev.userQuests.map((quest) =>
-                        quest.id === questId
-                          ? recordQuestCompletedAt({ ...quest, isCompleted: true })
-                          : quest,
-                      )
-                    : prev.userQuests,
-                totalXp: nextTotalXp,
-                level: nextLevel,
-                reputation: nextReputation,
-                villainInfluenceBySaga: {
-                  ...prev.villainInfluenceBySaga,
-                  [activeSaga.id]: updatedInfluence,
-                },
-                chapterCompletions: {
-                  ...prev.chapterCompletions,
-                  [currentChapter.id]: chapterDoneCount,
-                },
-                characterAffinity: {
-                  ...prev.characterAffinity,
-                  [charId]: nextAffinity,
-                },
-                relationshipByCharacter: {
-                  ...prev.relationshipByCharacter,
-                  [charId]: affinityToTier(nextAffinity),
-                },
-                identityVotes: identityVote.identityVotes,
+        const withActivity = appendEvidenceEvent(
+          recordQuestCompleted(
+            {
+              ...withRecovery,
+              userQuests:
+                boardQuest.source === 'user'
+                  ? prev.userQuests.map((quest) =>
+                      quest.id === questId
+                        ? recordQuestCompletedAt({ ...quest, isCompleted: true })
+                        : quest,
+                    )
+                  : prev.userQuests,
+              totalXp: nextTotalXp,
+              level: nextLevel,
+              reputation: nextReputation,
+              villainInfluenceBySaga: {
+                ...prev.villainInfluenceBySaga,
+                [activeSaga.id]: updatedInfluence,
               },
-              boardQuest.xpReward,
-              boardQuest.reputationReward,
-              getLocalDateKey(),
-              {
-                highRisk:
-                  boardQuest.source === 'user' && isHighRiskQuest(boardQuest.riskLevel),
+              chapterCompletions: {
+                ...prev.chapterCompletions,
+                [currentChapter.id]: chapterDoneCount,
               },
-            ),
-            evidenceEvent,
+              characterAffinity: {
+                ...prev.characterAffinity,
+                [charId]: nextAffinity,
+              },
+              relationshipByCharacter: {
+                ...prev.relationshipByCharacter,
+                [charId]: affinityToTier(nextAffinity),
+              },
+              identityVotes: identityVote.identityVotes,
+            },
+            boardQuest.xpReward,
+            boardQuest.reputationReward,
+            getLocalDateKey(),
+            {
+              highRisk:
+                boardQuest.source === 'user' && isHighRiskQuest(boardQuest.riskLevel),
+            },
           ),
-          momentumGain,
-        ).progress;
+          evidenceEvent,
+        );
+
+        const withRoutine =
+          boardQuest.source === 'user'
+            ? recordRoutineQuestCompleted(withActivity, {
+                originalTitle: boardQuest.originalTitle,
+                category: boardQuest.category,
+                narrativeTitle: boardQuest.narrativeTitle,
+                usedVariationId: boardQuest.usedVariationId,
+                generatedFromRecurringQuestId: boardQuest.generatedFromRecurringQuestId,
+              })
+            : withActivity;
+
+        return applyMomentumGain(withRoutine, momentumGain).progress;
       });
 
       const chapterAllDone = chapterDoneCount === currentChapter.questTemplates.length;
@@ -1404,6 +1461,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       markFrictionFixApplied,
       archiveUserQuest,
       disableRecurringQuest,
+      updateCategoryQuestDefaults,
+      applyQuestDefaultsPreset,
       recordFocusDistraction,
       markFrictionShieldApplied,
       submitDailyAwareness,
@@ -1445,6 +1504,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       closeQuestPackSheet,
       archiveUserQuest,
       disableRecurringQuest,
+      updateCategoryQuestDefaults,
+      applyQuestDefaultsPreset,
       chapters,
       characters,
       chapterComplete,

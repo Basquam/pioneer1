@@ -1,58 +1,19 @@
 import {
-  buildQuestNarrativeContext,
-  capitalize,
-  CATEGORY_VERBS,
-  extractSettingFromTemplate,
-  taskNoun,
-} from '@/lib/quest-narrative-context';
-import { applyQuestVariation } from '@/lib/quest-variation-patterns';
-import { pickQuestVariation } from '@/lib/quest-variation-picker';
-import type { Chapter, QuestRiskLevel, Saga, TaskCategory, Universe, UserQuest } from '@/types/narrative';
+  buildRoutineAwareNarrative,
+  getRoutineRepetitionRecord,
+  resolveRoutineRepetitionKey,
+} from '@/lib/routine-boredom-guard';
+import type {
+  Chapter,
+  PlayerProgress,
+  QuestRiskLevel,
+  Saga,
+  TaskCategory,
+  Universe,
+  UserQuest,
+} from '@/types/narrative';
 
 import { getLocalDateKey } from '@/lib/daily-streak';
-
-function buildNarrativeTitle(
-  originalTitle: string,
-  category: TaskCategory,
-  templateTitle: string | undefined,
-): string {
-  const verb = CATEGORY_VERBS[category];
-  const noun = capitalize(taskNoun(originalTitle));
-
-  if (templateTitle) {
-    const setting = extractSettingFromTemplate(templateTitle);
-    if (setting && category === 'cleaning') {
-      return `${verb} the ${capitalize(setting)} ${noun}`;
-    }
-    const prefix = templateTitle.split('—')[0]?.trim();
-    if (prefix) {
-      return `${prefix} — ${noun}`;
-    }
-  }
-
-  return `${verb} ${noun}`;
-}
-
-function buildNarrativeDescription(
-  originalTitle: string,
-  category: TaskCategory,
-  universe: Universe,
-  saga: Saga,
-  chapter: Chapter,
-  templateHook?: string,
-): string {
-  const context = buildQuestNarrativeContext(
-    originalTitle,
-    category,
-    universe,
-    saga,
-    chapter,
-    undefined,
-    templateHook,
-  );
-  const base = `${context.Article} ${context.task} keeps ${context.location} steady before ${context.villain} ${context.stakes}.`;
-  return templateHook ? `${base} ${templateHook}` : base;
-}
 
 export function convertTaskToUserQuest(
   originalTitle: string,
@@ -61,42 +22,40 @@ export function convertTaskToUserQuest(
   saga: Saga,
   chapter: Chapter,
   recentQuests: UserQuest[] = [],
+  routineProgress?: Pick<PlayerProgress, 'routineRepetitionByKey'>,
+  generatedFromRecurringQuestId?: string,
 ): Omit<UserQuest, 'id' | 'isCompleted'> {
-  const template = chapter.questTemplates.find((entry) => entry.category === category);
-  const narrativeContext = buildQuestNarrativeContext(
-    originalTitle,
+  const trimmed = originalTitle.trim();
+  const repetitionKey = resolveRoutineRepetitionKey({
+    originalTitle: trimmed,
+    category,
+    generatedFromRecurringQuestId,
+  });
+  const repetitionRecord = routineProgress
+    ? getRoutineRepetitionRecord(routineProgress, repetitionKey)
+    : undefined;
+
+  const narrative = buildRoutineAwareNarrative({
+    originalTitle: trimmed,
     category,
     universe,
     saga,
     chapter,
-    template?.title,
-    template?.dramaticHook,
-  );
+    recentQuests,
+    repetitionRecord,
+    generatedFromRecurringQuestId,
+  });
 
-  const variation = template?.variations?.length
-    ? pickQuestVariation(template.variations, recentQuests, chapter.id, category)
-    : null;
-
-  const narrative = variation
-    ? applyQuestVariation(variation, narrativeContext)
-    : {
-        narrativeTitle: buildNarrativeTitle(originalTitle, category, template?.title),
-        narrativeDescription: buildNarrativeDescription(
-          originalTitle,
-          category,
-          universe,
-          saga,
-          chapter,
-          template?.dramaticHook,
-        ),
-      };
+  const template = chapter.questTemplates.find((entry) => entry.category === category);
 
   return {
-    originalTitle: originalTitle.trim(),
+    originalTitle: trimmed,
     category,
     narrativeTitle: narrative.narrativeTitle,
-    narrativeDescription: narrative.narrativeDescription,
-    usedVariationId: variation?.id,
+    narrativeDescription: narrative.routineFreshAngleLine
+      ? `${narrative.narrativeDescription} ${narrative.routineFreshAngleLine}`
+      : narrative.narrativeDescription,
+    usedVariationId: narrative.usedVariationId,
     sourceUniverseId: universe.id,
     sourceSagaId: saga.id,
     sourceChapterId: chapter.id,
@@ -104,6 +63,13 @@ export function convertTaskToUserQuest(
     reputationReward: template?.reputationImpact ?? 8,
     reactionCharacterId:
       template?.reactionCharacterId ?? saga.characters.find((character) => !character.isVillain)?.id ?? '',
+    ...(narrative.routineVariationTone
+      ? { routineVariationTone: narrative.routineVariationTone }
+      : {}),
+    ...(narrative.routineFreshAngleLine
+      ? { routineFreshAngleLine: narrative.routineFreshAngleLine }
+      : {}),
+    ...(generatedFromRecurringQuestId ? { generatedFromRecurringQuestId } : {}),
   };
 }
 
@@ -118,6 +84,10 @@ export type CreateUserQuestOptions = {
   riskLevel?: QuestRiskLevel;
   generatedFromRecurringQuestId?: string;
   plannedTimeLabel?: string;
+  plannedLocation?: string;
+  afterCurrentHabit?: string;
+  implementationIntention?: string;
+  focusPinned?: boolean;
 };
 
 /** Shared user-quest creation used by single and batch add flows. */
@@ -130,9 +100,19 @@ export function createUserQuestFromTask(
   recentQuests: UserQuest[] = [],
   options?: CreateUserQuestOptions,
   createdOnDate: string = getLocalDateKey(),
+  routineProgress?: Pick<PlayerProgress, 'routineRepetitionByKey'>,
 ): UserQuest {
   const trimmed = originalTitle.trim();
-  const converted = convertTaskToUserQuest(trimmed, category, universe, saga, chapter, recentQuests);
+  const converted = convertTaskToUserQuest(
+    trimmed,
+    category,
+    universe,
+    saga,
+    chapter,
+    recentQuests,
+    routineProgress,
+    options?.generatedFromRecurringQuestId,
+  );
 
   return {
     ...converted,
@@ -147,6 +127,12 @@ export function createUserQuestFromTask(
       ? { generatedFromRecurringQuestId: options.generatedFromRecurringQuestId }
       : {}),
     ...(options?.plannedTimeLabel ? { plannedTimeLabel: options.plannedTimeLabel.trim() } : {}),
+    ...(options?.plannedLocation ? { plannedLocation: options.plannedLocation.trim() } : {}),
+    ...(options?.afterCurrentHabit ? { afterCurrentHabit: options.afterCurrentHabit.trim() } : {}),
+    ...(options?.implementationIntention
+      ? { implementationIntention: options.implementationIntention.trim() }
+      : {}),
+    ...(options?.focusPinned ? { focusPinned: true } : {}),
   };
 }
 

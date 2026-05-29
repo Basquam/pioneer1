@@ -9,6 +9,8 @@ import {
   sanitizeMomentumMilestonesReached,
   sanitizeMomentumReserve,
 } from '@/lib/momentum-reserve';
+import { sanitizeRoutineRepetitionByKey } from '@/lib/routine-boredom-guard';
+import { sanitizeQuestDefaultsSettings } from '@/lib/quest-defaults';
 import { pruneWeeklyReviewByWeek } from '@/lib/weekly-review';
 import type { DailyActivity, PlayerProgress, QuestFrictionReason, TaskCategory, UserQuest } from '@/types/narrative';
 
@@ -99,6 +101,10 @@ export function sanitizeUserQuest(raw: unknown): UserQuest | null {
     sanitized.plannedTimeLabel = quest.plannedTimeLabel;
   }
 
+  if (typeof quest.plannedLocation === 'string' && quest.plannedLocation.length > 0) {
+    sanitized.plannedLocation = quest.plannedLocation;
+  }
+
   if (typeof quest.afterCurrentHabit === 'string' && quest.afterCurrentHabit.length > 0) {
     sanitized.afterCurrentHabit = quest.afterCurrentHabit;
   }
@@ -149,6 +155,14 @@ export function sanitizeUserQuest(raw: unknown): UserQuest | null {
     quest.generatedFromRecurringQuestId.startsWith('recurring-')
   ) {
     sanitized.generatedFromRecurringQuestId = quest.generatedFromRecurringQuestId;
+  }
+
+  if (quest.routineVariationTone === 'calm' || quest.routineVariationTone === 'normal' || quest.routineVariationTone === 'urgent') {
+    sanitized.routineVariationTone = quest.routineVariationTone;
+  }
+
+  if (typeof quest.routineFreshAngleLine === 'string' && quest.routineFreshAngleLine.length > 0) {
+    sanitized.routineFreshAngleLine = quest.routineFreshAngleLine;
   }
 
   if (Array.isArray(quest.frictionReviews)) {
@@ -275,6 +289,8 @@ export function sanitizePersistedProgress(progress: PlayerProgress): PlayerProgr
     evidenceLog: pruneEvidenceLog(progress.evidenceLog ?? []),
     momentumReserve: sanitizeMomentumReserve(progress.momentumReserve),
     momentumMilestonesReached: sanitizeMomentumMilestonesReached(progress.momentumMilestonesReached),
+    routineRepetitionByKey: sanitizeRoutineRepetitionByKey(progress.routineRepetitionByKey),
+    questDefaults: sanitizeQuestDefaultsSettings(progress.questDefaults),
   };
 }
 

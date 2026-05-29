@@ -28,17 +28,35 @@ export function countCategoryQuests(
   ).length;
 }
 
+export type PickQuestVariationOptions = {
+  excludeVariationIds?: string[];
+  excludeNarrativeTitle?: string;
+  preferredIntensity?: QuestTemplateVariation['intensity'];
+};
+
 /** Prefer variations not used recently; rotate deterministically among eligible options. */
 export function pickQuestVariation(
   variations: QuestTemplateVariation[],
   recentQuests: UserQuest[],
   chapterId: string,
   category: TaskCategory,
+  options?: PickQuestVariationOptions,
 ): QuestTemplateVariation | null {
   if (variations.length === 0) return null;
 
   const recentIds = getRecentVariationIds(recentQuests, chapterId, category);
-  let candidates = variations.filter((variation) => !recentIds.includes(variation.id));
+  const blockedIds = new Set([...recentIds, ...(options?.excludeVariationIds ?? [])]);
+
+  let candidates = variations.filter((variation) => !blockedIds.has(variation.id));
+
+  if (options?.preferredIntensity) {
+    const intensityMatches = candidates.filter(
+      (variation) => variation.intensity === options.preferredIntensity,
+    );
+    if (intensityMatches.length > 0) {
+      candidates = intensityMatches;
+    }
+  }
 
   if (candidates.length === 0) {
     const lastUsed = recentIds[recentIds.length - 1];
@@ -51,5 +69,15 @@ export function pickQuestVariation(
 
   const rotationIndex =
     countCategoryQuests(recentQuests, chapterId, category) % candidates.length;
-  return candidates[rotationIndex] ?? candidates[0] ?? null;
+
+  let picked = candidates[rotationIndex] ?? candidates[0] ?? null;
+
+  if (picked && options?.excludeNarrativeTitle) {
+    const alternate = candidates.find((variation) => variation.id !== picked?.id);
+    if (alternate) {
+      picked = alternate;
+    }
+  }
+
+  return picked;
 }

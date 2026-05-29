@@ -53,6 +53,10 @@ import {
   getQuestRiskFlavorLabel,
   getQuestRiskOptions,
 } from '@/lib/quest-risk';
+import {
+  QUEST_DEFAULTS_APPLIED_COPY,
+  resolveAddQuestDefaults,
+} from '@/lib/quest-defaults';
 import type { QuestRiskLevel, RecurrenceType, TaskCategory, WeekdayKey } from '@/types/narrative';
 import {
   getWeekdayKeyForDate,
@@ -82,6 +86,12 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
   const [repeatMode, setRepeatMode] = useState<'none' | RecurrenceType>('none');
   const [preferredDays, setPreferredDays] = useState<Set<WeekdayKey>>(new Set());
   const [preferredTimeLabel, setPreferredTimeLabel] = useState('');
+  const [markAsFocus, setMarkAsFocus] = useState(false);
+  const [plannedTimeLabel, setPlannedTimeLabel] = useState('');
+  const [plannedLocation, setPlannedLocation] = useState('');
+  const [afterCurrentHabit, setAfterCurrentHabit] = useState('');
+  const [planText, setPlanText] = useState('');
+  const [defaultsApplied, setDefaultsApplied] = useState(false);
 
   const starterCopy = getStarterToggleCopy(activeUniverse.id);
   const prepCopy = getQuestPrepCopy(activeUniverse.id);
@@ -131,6 +141,58 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
     setRepeatMode('none');
     setPreferredDays(new Set());
     setPreferredTimeLabel('');
+    setMarkAsFocus(false);
+    setPlannedTimeLabel('');
+    setPlannedLocation('');
+    setAfterCurrentHabit('');
+    setPlanText('');
+    setDefaultsApplied(false);
+  };
+
+  const applyCategoryDefaults = (nextCategory: TaskCategory, taskTitle: string) => {
+    if (addQuestRecoveryMode) {
+      setDefaultsApplied(false);
+      return;
+    }
+
+    const resolved = resolveAddQuestDefaults(playerProgress.questDefaults, nextCategory, taskTitle);
+    const hasDefaults = Object.keys(resolved).length > 0;
+
+    if (resolved.riskLevel) {
+      setRiskLevel(resolved.riskLevel);
+    }
+
+    if (resolved.starterEnabled != null) {
+      setEasierToStart(resolved.starterEnabled);
+      setStarterTitle(
+        resolved.starterEnabled
+          ? resolved.starterTitle ?? generateStarterTaskTitle(taskTitle, nextCategory)
+          : '',
+      );
+    }
+
+    if (resolved.prepEnabled != null) {
+      setPrepEnabled(resolved.prepEnabled);
+      setPrepStepTitle(resolved.prepEnabled ? resolved.prepStepTitle ?? getDefaultPrepPreset(nextCategory) : '');
+    }
+
+    if (resolved.rewardEnabled != null) {
+      setRewardEnabled(resolved.rewardEnabled);
+      setRewardTitle(resolved.rewardEnabled ? resolved.afterQuestReward ?? getDefaultAfterQuestRewardPreset() : '');
+    }
+
+    setPlannedTimeLabel(resolved.plannedTimeLabel ?? '');
+    setPlannedLocation(resolved.plannedLocation ?? '');
+    setAfterCurrentHabit(resolved.afterCurrentHabit ?? '');
+    setPlanText(resolved.implementationIntention ?? '');
+    setMarkAsFocus(resolved.focusPinned === true);
+
+    if (hasDefaults) {
+      setBehaviorToolsOpen(true);
+      setDefaultsApplied(true);
+    } else {
+      setDefaultsApplied(false);
+    }
   };
 
   const handleClose = () => {
@@ -162,6 +224,11 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
       ...(reward ? { afterQuestReward: reward } : {}),
       riskLevel,
       ...(recurring ? { recurring } : {}),
+      ...(plannedTimeLabel.trim() ? { plannedTimeLabel: plannedTimeLabel.trim() } : {}),
+      ...(plannedLocation.trim() ? { plannedLocation: plannedLocation.trim() } : {}),
+      ...(afterCurrentHabit.trim() ? { afterCurrentHabit: afterCurrentHabit.trim() } : {}),
+      ...(planText.trim() ? { implementationIntention: planText.trim() } : {}),
+      ...(markAsFocus ? { focusPinned: true } : {}),
     });
     resetForm();
   };
@@ -209,6 +276,29 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
     if (visible) return;
     resetForm();
   }, [visible]);
+
+  useEffect(() => {
+    if (!visible || addQuestRecoveryMode) return;
+    applyCategoryDefaults(category, trimmedTitle);
+  }, [category, visible, addQuestRecoveryMode, playerProgress.questDefaults]);
+
+  useEffect(() => {
+    if (!visible || addQuestRecoveryMode || !defaultsApplied || !trimmedTitle) return;
+    const resolved = resolveAddQuestDefaults(playerProgress.questDefaults, category, trimmedTitle);
+    if (resolved.starterEnabled) {
+      setStarterTitle(resolved.starterTitle ?? generateStarterTaskTitle(trimmedTitle, category));
+    }
+    if (resolved.implementationIntention) {
+      setPlanText(resolved.implementationIntention);
+    }
+  }, [
+    trimmedTitle,
+    defaultsApplied,
+    category,
+    visible,
+    addQuestRecoveryMode,
+    playerProgress.questDefaults,
+  ]);
 
   useEffect(() => {
     if (!visible || !addQuestRecoveryMode) return;
@@ -346,6 +436,8 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
                         setTitle(recoveryTitle);
                         setEasierToStart(true);
                         setStarterTitle(generateStarterTaskTitle(recoveryTitle, cat));
+                      } else {
+                        applyCategoryDefaults(cat, trimmedTitle);
                       }
                     }}
                     style={[
@@ -376,6 +468,10 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
               })}
             </ScrollView>
             <Text style={[styles.categoryHint, { color: palette.fog }]}>{selectedMeta.description}</Text>
+
+            {defaultsApplied && !addQuestRecoveryMode ? (
+              <Text style={[styles.defaultsHint, { color: palette.accent }]}>{QUEST_DEFAULTS_APPLIED_COPY}</Text>
+            ) : null}
 
             <Text style={[styles.label, { color: palette.gold }]}>REPEAT THIS QUEST</Text>
             <View style={styles.repeatOptions}>
@@ -657,6 +753,64 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
                   />
                 </View>
               )}
+
+              {(plannedTimeLabel || plannedLocation || afterCurrentHabit || planText || markAsFocus) && (
+                <View style={[styles.prepBox, { backgroundColor: palette.night, borderColor: palette.panelBorder }]}>
+                  <Text style={[styles.prepLabel, { color: palette.gold }]}>PLAN CONTEXT</Text>
+                  <TextInput
+                    value={plannedTimeLabel}
+                    onChangeText={setPlannedTimeLabel}
+                    placeholder="Planned time (optional)"
+                    placeholderTextColor={`${palette.fog}88`}
+                    style={[
+                      styles.input,
+                      { color: palette.bone, borderColor: palette.panelBorder, backgroundColor: palette.panel },
+                    ]}
+                  />
+                  <TextInput
+                    value={plannedLocation}
+                    onChangeText={setPlannedLocation}
+                    placeholder="Planned location (optional)"
+                    placeholderTextColor={`${palette.fog}88`}
+                    style={[
+                      styles.input,
+                      { color: palette.bone, borderColor: palette.panelBorder, backgroundColor: palette.panel },
+                    ]}
+                  />
+                  <TextInput
+                    value={afterCurrentHabit}
+                    onChangeText={setAfterCurrentHabit}
+                    placeholder="After current habit (optional)"
+                    placeholderTextColor={`${palette.fog}88`}
+                    style={[
+                      styles.input,
+                      { color: palette.bone, borderColor: palette.panelBorder, backgroundColor: palette.panel },
+                    ]}
+                  />
+                  <TextInput
+                    value={planText}
+                    onChangeText={setPlanText}
+                    placeholder="Implementation plan (optional)"
+                    placeholderTextColor={`${palette.fog}88`}
+                    style={[
+                      styles.input,
+                      { color: palette.bone, borderColor: palette.panelBorder, backgroundColor: palette.panel },
+                    ]}
+                  />
+                  <View style={[styles.toggleRow, { borderColor: palette.panelBorder }]}>
+                    <Text style={[styles.toggleLabel, { color: palette.bone }]}>Mark as daily focus</Text>
+                    <Switch
+                      value={markAsFocus}
+                      onValueChange={(enabled) => {
+                        void Haptics.selectionAsync();
+                        setMarkAsFocus(enabled);
+                      }}
+                      trackColor={{ false: palette.panelBorder, true: palette.primary }}
+                      thumbColor={markAsFocus ? palette.gold : palette.fog}
+                    />
+                  </View>
+                </View>
+              )}
             </CollapsibleSection>
 
             <GlowButton
@@ -894,6 +1048,13 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     lineHeight: 17,
     marginTop: -4,
+  },
+  defaultsHint: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 10,
+    letterSpacing: 0.4,
+    lineHeight: 14,
+    fontStyle: 'italic',
   },
   repeatOptions: {
     flexDirection: 'row',

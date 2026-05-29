@@ -7,6 +7,7 @@ import { isUserQuestArchived, shouldShowFrictionReview } from '@/lib/quest-frict
 import { getLockedFocusQuestIdSet } from '@/lib/focus-lock';
 import { computeQuestReadiness } from '@/lib/quest-readiness';
 import { isTooMuchMotion } from '@/lib/motion-vs-action';
+import { getRoutineFreshnessHint } from '@/lib/routine-boredom-guard';
 
 export type QuestBoardProgress = Pick<
   PlayerProgress,
@@ -17,6 +18,7 @@ export type QuestBoardProgress = Pick<
   | 'focusLockedDate'
   | 'lockedFocusQuestIds'
   | 'templateQuestStartedAt'
+  | 'routineRepetitionByKey'
 >;
 
 export function templateToBoardQuest(
@@ -44,6 +46,7 @@ export function userQuestToBoardQuest(
   quest: UserQuest,
   isDailyFocus = false,
   isFocusLocked = false,
+  boardProgress?: Pick<PlayerProgress, 'routineRepetitionByKey' | 'userQuests'>,
 ): BoardQuest {
   const boardQuest: BoardQuest = {
     id: quest.id,
@@ -63,6 +66,7 @@ export function userQuestToBoardQuest(
     ...(quest.prepStepTitle ? { prepStepTitle: quest.prepStepTitle } : {}),
     ...(quest.implementationIntention ? { implementationIntention: quest.implementationIntention } : {}),
     ...(quest.plannedTimeLabel ? { plannedTimeLabel: quest.plannedTimeLabel } : {}),
+    ...(quest.plannedLocation ? { plannedLocation: quest.plannedLocation } : {}),
     ...(quest.afterCurrentHabit ? { afterCurrentHabit: quest.afterCurrentHabit } : {}),
     ...(quest.startedAt ? { startedAt: quest.startedAt, isStarted: true } : {}),
     ...(quest.afterQuestReward ? { afterQuestReward: quest.afterQuestReward } : {}),
@@ -76,6 +80,10 @@ export function userQuestToBoardQuest(
     ...(quest.focusStartedAt ? { focusStartedAt: quest.focusStartedAt } : {}),
     ...(quest.completedAt ? { completedAt: quest.completedAt } : {}),
     ...(quest.generatedFromRecurringQuestId ? { isRecurring: true } : {}),
+    ...(quest.usedVariationId ? { usedVariationId: quest.usedVariationId } : {}),
+    ...(quest.generatedFromRecurringQuestId
+      ? { generatedFromRecurringQuestId: quest.generatedFromRecurringQuestId }
+      : {}),
   };
 
   if (!boardQuest.createdOnDate) {
@@ -95,6 +103,13 @@ export function userQuestToBoardQuest(
 
   if (isTooMuchMotion(quest, getLocalDateKey())) {
     boardQuest.isTooMuchMotion = true;
+  }
+
+  if (boardProgress) {
+    const freshnessHint = getRoutineFreshnessHint(quest, boardProgress);
+    if (freshnessHint) {
+      boardQuest.routineFreshnessHint = freshnessHint;
+    }
   }
 
   return boardQuest;
@@ -131,6 +146,7 @@ export function buildBoardQuests(
         quest,
         focusQuestIds.has(quest.id),
         lockedFocusQuestIds.has(quest.id),
+        progress,
       ),
     );
 

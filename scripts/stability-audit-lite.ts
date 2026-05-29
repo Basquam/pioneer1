@@ -18,6 +18,20 @@ import {
 } from '../src/lib/evidence-log';
 import { getCrewCodeLines, getDailyCrewCodeLine } from '../src/lib/crew-code';
 import {
+  applyQuestDefaultsPreset,
+  createEmptyQuestDefaultsSettings,
+  resolveAddQuestDefaults,
+  sanitizeQuestDefaultsSettings,
+} from '../src/lib/quest-defaults';
+import {
+  buildRoutineAwareNarrative,
+  getRoutineFreshnessHint,
+  pickRoutineVariationTone,
+  recordRoutineQuestCompleted,
+  recordRoutineQuestSpawned,
+} from '../src/lib/routine-boredom-guard';
+import { findRoutineTitleCatalogEntry } from '../src/data/narrative/routine-title-variations';
+import {
   applyMomentumGain,
   computeMomentumGain,
   detectMomentumMilestoneUnlock,
@@ -100,6 +114,8 @@ function baseProgress(): PlayerProgress {
     evidenceLog: [],
     momentumReserve: 0,
     momentumMilestonesReached: [],
+    routineRepetitionByKey: {},
+    questDefaults: createEmptyQuestDefaultsSettings(),
   } as PlayerProgress;
 
   for (const universe of UNIVERSES) {
@@ -374,6 +390,77 @@ assert(
   'neuronet momentum overlay line',
 );
 assert(getMomentumUniverseCopy('neon-ashes').label === 'Case Pressure', 'neon ashes momentum label');
+
+// Routine boredom guard
+assert(findRoutineTitleCatalogEntry('Drink water') != null, 'hydration catalog match');
+assert(pickRoutineVariationTone(0) === 'calm', 'routine tone calm first');
+assert(pickRoutineVariationTone(1) === 'normal', 'routine tone normal second');
+assert(pickRoutineVariationTone(3) === 'calm', 'routine tone cycles');
+const routineSpawned = recordRoutineQuestSpawned({ ...boardProgress }, {
+  ...richQuest,
+  id: createUserQuestId(),
+  originalTitle: 'Drink water',
+  category: 'health',
+  narrativeTitle: 'Refill the canteen before patrol.',
+  isCompleted: false,
+  generatedFromRecurringQuestId: 'recurring-test-1',
+});
+assert(
+  routineSpawned.routineRepetitionByKey['recurring:recurring-test-1']?.lastNarrativeTitleUsed != null,
+  'routine repetition on spawn',
+);
+const routineCompleted = recordRoutineQuestCompleted(routineSpawned, {
+  originalTitle: 'Drink water',
+  category: 'health',
+  narrativeTitle: 'Refill the canteen before patrol.',
+  generatedFromRecurringQuestId: 'recurring-test-1',
+});
+assert(
+  routineCompleted.routineRepetitionByKey['recurring:recurring-test-1']?.completionCount === 1,
+  'routine completion count',
+);
+const repeatNarrative = buildRoutineAwareNarrative({
+  originalTitle: 'Drink water',
+  category: 'health',
+  universe: dustUniverse,
+  saga: dustSaga,
+  chapter: dustChapter,
+  recentQuests: [],
+  repetitionRecord: {
+    originalTitle: 'Drink water',
+    category: 'health',
+    lastNarrativeTitleUsed: 'Refill the canteen before patrol.',
+    recentVariationIds: [],
+    completionCount: 2,
+  },
+});
+assert(
+  repeatNarrative.narrativeTitle !== 'Refill the canteen before patrol.',
+  'routine catalog rotates title',
+);
+const freshnessHint = getRoutineFreshnessHint(
+  {
+    id: 'user-test',
+    originalTitle: 'Drink water',
+    category: 'health',
+    generatedFromRecurringQuestId: 'recurring-test-1',
+  },
+  routineCompleted,
+);
+assert(freshnessHint != null, 'routine freshness hint');
+
+// Quest defaults
+const deepWorkDefaults = applyQuestDefaultsPreset('deep-work');
+assert(deepWorkDefaults.byCategory.work?.defaultPlannedLocation === 'Desk', 'deep work desk default');
+const resolvedDefaults = resolveAddQuestDefaults(deepWorkDefaults, 'work', 'Write report');
+assert(resolvedDefaults.focusPinned === true, 'deep work focus default');
+assert(resolvedDefaults.plannedLocation === 'Desk', 'deep work location resolved');
+const recoveryDefaults = applyQuestDefaultsPreset('recovery');
+assert(
+  recoveryDefaults.byCategory.health?.defaultAfterQuestReward === 'Rest for 5 minutes',
+  'recovery reward default',
+);
+assert(sanitizeQuestDefaultsSettings(undefined).byCategory != null, 'sanitize empty quest defaults');
 
 if (failures.length) {
   console.error('FAILED:\n' + failures.map((f) => ` - ${f}`).join('\n'));

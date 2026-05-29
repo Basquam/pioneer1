@@ -260,6 +260,8 @@ export type UserQuest = {
   focusPinned?: boolean;
   /** When the user plans to do this quest — e.g. "Tomorrow morning". */
   plannedTimeLabel?: string;
+  /** Where the user plans to do this quest — e.g. "Desk". */
+  plannedLocation?: string;
   /** Habit to stack this quest after — e.g. "I finish breakfast". */
   afterCurrentHabit?: string;
   /** Local-only friction reviews when a quest feels hard to start. */
@@ -288,6 +290,19 @@ export type UserQuest = {
   completedAt?: string;
   /** Links a generated instance back to its recurring routine template. */
   generatedFromRecurringQuestId?: string;
+  /** Routine boredom guard tone for this spawn — calm, normal, or urgent. */
+  routineVariationTone?: QuestVariationIntensity;
+  /** Optional fresh-angle line for repeated routines. */
+  routineFreshAngleLine?: string;
+};
+
+export type RoutineRepetitionRecord = {
+  originalTitle: string;
+  category: TaskCategory;
+  generatedFromRecurringQuestId?: string;
+  lastNarrativeTitleUsed?: string;
+  recentVariationIds: string[];
+  completionCount: number;
 };
 
 export type QuestDistractionType =
@@ -368,6 +383,7 @@ export type BoardQuest = {
   showFrictionReview?: boolean;
   plannedTimeLabel?: string;
   afterCurrentHabit?: string;
+  plannedLocation?: string;
   /** ISO timestamp when START NOW was tapped. */
   startedAt?: string;
   /** True when the quest has a recorded start moment. */
@@ -386,6 +402,10 @@ export type BoardQuest = {
   isTooMuchMotion?: boolean;
   /** True when this quest was spawned from a recurring routine. */
   isRecurring?: boolean;
+  /** Subtle hint for recurring or repeated routine quests. */
+  routineFreshnessHint?: string;
+  usedVariationId?: string;
+  generatedFromRecurringQuestId?: string;
 };
 
 export type DailyActivity = {
@@ -523,4 +543,26 @@ export type PlayerProgress = {
   momentumReserve: number;
   /** Momentum milestone thresholds already reached (10, 25, 50, 100). */
   momentumMilestonesReached: number[];
+  /** Lightweight repetition tracking for recurring and repeated user quests. */
+  routineRepetitionByKey: Record<string, RoutineRepetitionRecord>;
+  /** Optional per-category defaults for new quest creation. */
+  questDefaults: QuestDefaultsSettings;
+};
+
+export type CategoryQuestDefaults = {
+  defaultRiskLevel?: QuestRiskLevel;
+  defaultStarterEnabled?: boolean;
+  defaultPrepStep?: string;
+  defaultAfterQuestReward?: string;
+  defaultPlannedTimeLabel?: string;
+  defaultPlannedLocation?: string;
+  defaultAfterCurrentHabit?: string;
+  defaultMarkAsFocus?: boolean;
+};
+
+export type QuestDefaultsPresetId = 'low-friction' | 'deep-work' | 'recovery';
+
+export type QuestDefaultsSettings = {
+  byCategory: Partial<Record<TaskCategory, CategoryQuestDefaults>>;
+  activePresetId?: QuestDefaultsPresetId;
 };

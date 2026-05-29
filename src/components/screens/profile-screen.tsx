@@ -16,6 +16,7 @@ import { WeeklyRecapCard } from '@/components/rpg/weekly-recap-card';
 import { DevToolsPanel } from '@/components/rpg/dev-tools-panel';
 import { GlossaryHelpButton } from '@/components/rpg/glossary-help-button';
 import { GlossarySheet } from '@/components/rpg/glossary-sheet';
+import { QuestDefaultsPanel } from '@/components/rpg/quest-defaults-panel';
 import { RecurringQuestsPanel } from '@/components/rpg/recurring-quests-panel';
 import { ProfileAppInfo } from '@/components/rpg/profile-app-info';
 import { ProfileSection } from '@/components/rpg/profile-section';
@@ -238,6 +239,10 @@ export function ProfileScreen() {
           <GlossaryHelpButton onPress={() => setGlossaryVisible(true)} />
           <AmbientAudioToggle />
           {__DEV__ ? <AudioDevTools /> : null}
+        </ProfileSection>
+
+        <ProfileSection title="QUEST DEFAULTS" hint="Optional automation for new quests.">
+          <QuestDefaultsPanel />
         </ProfileSection>
 
         <GlossarySheet visible={glossaryVisible} onClose={() => setGlossaryVisible(false)} />

@@ -107,3 +107,46 @@ export function buildQuestNarrativeContext(
     templateHook: templateHook ?? '',
   };
 }
+
+export function buildDefaultNarrativeTitle(
+  originalTitle: string,
+  category: TaskCategory,
+  templateTitle?: string,
+): string {
+  const verb = CATEGORY_VERBS[category];
+  const noun = capitalize(taskNoun(originalTitle));
+
+  if (templateTitle) {
+    const setting = extractSettingFromTemplate(templateTitle);
+    if (setting && category === 'cleaning') {
+      return `${verb} the ${capitalize(setting)} ${noun}`;
+    }
+    const prefix = templateTitle.split('—')[0]?.trim();
+    if (prefix) {
+      return `${prefix} — ${noun}`;
+    }
+  }
+
+  return `${verb} ${noun}`;
+}
+
+export function buildDefaultNarrativeDescription(
+  originalTitle: string,
+  category: TaskCategory,
+  universe: Universe,
+  saga: Saga,
+  chapter: Chapter,
+  templateHook?: string,
+): string {
+  const context = buildQuestNarrativeContext(
+    originalTitle,
+    category,
+    universe,
+    saga,
+    chapter,
+    undefined,
+    templateHook,
+  );
+  const base = `${context.Article} ${context.task} keeps ${context.location} steady before ${context.villain} ${context.stakes}.`;
+  return templateHook ? `${base} ${templateHook}` : base;
+}

@@ -185,6 +185,12 @@ export function QuestCard({ quest, index }: QuestCardProps) {
           {quest.narrativeTitle}
         </Text>
 
+        {quest.source === 'user' && quest.routineFreshnessHint ? (
+          <Text style={[styles.freshnessHint, { color: palette.fog }]} numberOfLines={2}>
+            {quest.routineFreshnessHint}
+          </Text>
+        ) : null}
+
         <View style={styles.realRow}>
           <Text style={[styles.realLabel, { color: palette.fog }]}>
             {quest.source === 'user' ? ui.realTaskLabel : ui.templateQuestLabel}
@@ -294,6 +300,13 @@ const styles = StyleSheet.create({
   badgeText: { fontFamily: GameFonts.uiSemi, fontSize: 9, letterSpacing: 2 },
   xp: { fontFamily: GameFonts.ui, fontSize: 13, letterSpacing: 2, flexShrink: 0 },
   title: { fontFamily: GameFonts.display, fontSize: 18, lineHeight: 24 },
+  freshnessHint: {
+    fontFamily: GameFonts.displayRegular,
+    fontSize: 11,
+    lineHeight: 15,
+    fontStyle: 'italic',
+    marginTop: -2,
+  },
   realRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',

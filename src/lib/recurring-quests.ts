@@ -1,6 +1,7 @@
 import { createUserQuestFromTask, type CreateUserQuestOptions } from '@/lib/convert-task-to-quest';
 import { getLocalDateKey } from '@/lib/daily-streak';
 import { pruneUserQuests } from '@/lib/player-progress-sanitize';
+import { recordRoutineQuestSpawned } from '@/lib/routine-boredom-guard';
 import type {
   Chapter,
   PlayerProgress,
@@ -189,6 +190,7 @@ export function generateRecurringQuestInstances(
       workingQuests,
       templateToQuestOptions(template),
       today,
+      progress,
     );
 
     newQuests.push(quest);
@@ -197,10 +199,16 @@ export function generateRecurringQuestInstances(
 
   if (newQuests.length === 0) return progress;
 
-  return {
+  let nextProgress: PlayerProgress = {
     ...progress,
     userQuests: pruneUserQuests([...progress.userQuests, ...newQuests]),
   };
+
+  for (const quest of newQuests) {
+    nextProgress = recordRoutineQuestSpawned(nextProgress, quest);
+  }
+
+  return nextProgress;
 }
 
 export function disableRecurringQuestTemplate(
