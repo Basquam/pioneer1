@@ -304,6 +304,18 @@ export function QuestFocusOverlay() {
             </Animated.View>
           )}
 
+          {!isCompleted && !character && (
+            <Animated.View
+              entering={FadeInDown.duration(450).delay(220)}
+              style={[styles.identityFallback, { borderColor: palette.panelBorder, backgroundColor: palette.panel }]}>
+              <Text style={[styles.identityLabel, { color: palette.gold }]}>{copy.identityVoteLabel}</Text>
+              <Text style={[styles.identityVote, { color: palette.bone }]}>
+                {formatFocusIdentityVotePreview(trait.label)}
+              </Text>
+              <Text style={[styles.identityHint, { color: palette.fog }]}>{trait.encouragingLine}</Text>
+            </Animated.View>
+          )}
+
           {isCompleted && (
             <Animated.Text
               entering={FadeInDown.duration(450).delay(220)}
@@ -561,6 +573,13 @@ const styles = StyleSheet.create({
     paddingTop: 10,
     marginTop: 4,
     gap: 4,
+  },
+  identityFallback: {
+    borderWidth: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    gap: 4,
+    transform: [{ skewX: '-2deg' }],
   },
   identityLabel: { fontFamily: GameFonts.uiSemi, fontSize: 9, letterSpacing: 2 },
   identityVote: { fontFamily: GameFonts.ui, fontSize: 18, letterSpacing: 1.5 },

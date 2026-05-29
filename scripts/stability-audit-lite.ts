@@ -2,7 +2,7 @@
 import { UNIVERSES } from '../src/data/narrative/universes';
 import { NEON_ASHES_UNIVERSE_UNLOCK_ID } from '../src/data/narrative/neon-ashes-universe';
 import { NEURONET_UNIVERSE_UNLOCK_ID } from '../src/data/narrative/neuronet-universe';
-import { convertTaskToUserQuest } from '../src/lib/convert-task-to-quest';
+import { convertTaskToUserQuest, createUserQuestId } from '../src/lib/convert-task-to-quest';
 import {
   applyDevSwitchToDustAndIron,
   applyDevSwitchToNeonAshes,
@@ -10,7 +10,17 @@ import {
 } from '../src/lib/dev-universe-switch';
 import { resolveNarrativeState } from '../src/lib/narrative-state';
 import { createEmptyIdentityVotes } from '../src/lib/identity-votes';
-import type { PlayerProgress, TaskCategory } from '../src/types/narrative';
+import { buildBoardQuests, findBoardQuest } from '../src/lib/quest-board';
+import { computeQuestReadiness } from '../src/lib/quest-readiness';
+import { isHighRiskQuest, resolveQuestRiskLevel } from '../src/lib/quest-risk';
+import { getDistractionShieldSuggestion } from '../src/lib/distraction-shield';
+import { getQuestFocusCopy, getQuestStartRitualCopy } from '../src/lib/quest-focus-mode';
+import { getAfterQuestRewardCopy } from '../src/lib/after-quest-reward';
+import { recordWeeklyReview } from '../src/lib/weekly-review';
+import { lockTodayFocus } from '../src/lib/focus-lock';
+import { shouldShowFrictionReview } from '../src/lib/quest-friction';
+import { sanitizePersistedProgress, sanitizeUserQuest } from '../src/lib/player-progress-sanitize';
+import type { PlayerProgress, QuestRiskLevel, TaskCategory, UserQuest } from '../src/types/narrative';
 
 const AMBIENT_UNIVERSE_IDS = ['dust-and-iron', 'neuronet', 'neon-ashes'] as const;
 
@@ -113,8 +123,152 @@ const switched = applyDevSwitchToNeuroNet(progress);
 assert(switched.firstUniverseId === 'neon-ashes', 'origin universe overwritten');
 assert(switched.firstSagaId === 'hollow-syndicate', 'origin saga overwritten');
 
+function simulateAddUserQuest(
+  base: PlayerProgress,
+  universeId: string,
+  options?: {
+    starterTaskTitle?: string;
+    prepStepTitle?: string;
+    afterQuestReward?: string;
+    riskLevel?: QuestRiskLevel;
+  },
+): UserQuest {
+  const universe = UNIVERSES.find((u) => u.id === universeId)!;
+  const saga = universe.sagas.find((s) => s.id === base.selectedSagaId)!;
+  const chapter = saga.chapters.find((c) => c.id === base.currentChapterId)!;
+  const converted = convertTaskToUserQuest('Simulated quest', 'cleaning', universe, saga, chapter, base.userQuests);
+  return {
+    ...converted,
+    id: createUserQuestId(),
+    isCompleted: false,
+    createdOnDate: '2026-05-27',
+    ...(options?.starterTaskTitle ? { starterTaskTitle: options.starterTaskTitle } : {}),
+    ...(options?.prepStepTitle ? { prepStepTitle: options.prepStepTitle } : {}),
+    ...(options?.afterQuestReward ? { afterQuestReward: options.afterQuestReward } : {}),
+    riskLevel: options?.riskLevel ?? 'standard',
+  };
+}
+
+// Behavior tools: create quest variants (all universes)
+for (const universe of UNIVERSES) {
+  const saga = universe.sagas.find((s) => s.chapters.length > 0)!;
+  const chapter = saga.chapters[0]!;
+  const scoped: PlayerProgress = {
+    ...baseProgress(),
+    selectedUniverseId: universe.id,
+    selectedSagaId: saga.id,
+    currentChapterId: chapter.id,
+    userQuests: [],
+  };
+
+  const normal = simulateAddUserQuest(scoped, universe.id);
+  assert(normal.riskLevel === 'standard', `${universe.id}: default risk`);
+
+  const full = simulateAddUserQuest(scoped, universe.id, {
+    starterTaskTitle: 'Wipe one counter',
+    prepStepTitle: 'Lay out supplies',
+    afterQuestReward: 'Five minutes of rest',
+    riskLevel: 'high',
+  });
+  assert(full.starterTaskTitle != null, `${universe.id}: starter`);
+  assert(full.prepStepTitle != null, `${universe.id}: prep`);
+  assert(full.afterQuestReward != null, `${universe.id}: reward`);
+  assert(isHighRiskQuest(full.riskLevel), `${universe.id}: high risk`);
+  assert(getQuestFocusCopy(universe.id).tagline.length > 0, `${universe.id}: focus copy`);
+  assert(getQuestStartRitualCopy(universe.id).startButtonLabel.length > 0, `${universe.id}: ritual copy`);
+  assert(getAfterQuestRewardCopy(universe.id).helperText.length > 0, `${universe.id}: reward copy`);
+}
+
+// Board quest supports + friction + completed guard
+const dustUniverse = UNIVERSES.find((u) => u.id === 'dust-and-iron')!;
+const dustSaga = dustUniverse.sagas.find((s) => s.chapters.length > 0)!;
+const dustChapter = dustSaga.chapters[0]!;
+const richQuest: UserQuest = {
+  ...simulateAddUserQuest(
+    { ...baseProgress(), selectedSagaId: dustSaga.id, currentChapterId: dustChapter.id },
+    'dust-and-iron',
+    {
+      starterTaskTitle: 'Open the document',
+      prepStepTitle: 'Clear the table',
+      afterQuestReward: 'Coffee break',
+      riskLevel: 'high',
+    },
+  ),
+  implementationIntention: 'After lunch, at my desk',
+  lastFocusDistraction: 'phone',
+};
+const boardProgress: PlayerProgress = {
+  ...baseProgress(),
+  selectedUniverseId: dustUniverse.id,
+  selectedSagaId: dustSaga.id,
+  currentChapterId: dustChapter.id,
+  userQuests: [richQuest],
+};
+const boardQuest = findBoardQuest(buildBoardQuests(dustChapter, dustSaga, boardProgress), richQuest.id)!;
+assert(Boolean(boardQuest.starterTaskTitle), 'board starter');
+assert(Boolean(boardQuest.implementationIntention), 'board plan');
+assert(Boolean(boardQuest.prepStepTitle), 'board prep');
+assert(Boolean(boardQuest.afterQuestReward), 'board reward');
+assert(boardQuest.lastFocusDistraction === 'phone', 'board distraction');
+assert(getDistractionShieldSuggestion('phone').length > 0, 'shield copy');
+assert((computeQuestReadiness(boardQuest)?.score ?? 0) >= 2, 'readiness score');
+
+const staleQuest = { ...richQuest, id: createUserQuestId(), createdOnDate: '2026-05-20' };
+const staleEntry = findBoardQuest(
+  buildBoardQuests(dustChapter, dustSaga, { ...boardProgress, userQuests: [staleQuest] }),
+  staleQuest.id,
+)!;
+assert(shouldShowFrictionReview(staleEntry, '2026-05-27'), 'friction eligible');
+
+const doneEntry = findBoardQuest(
+  buildBoardQuests(dustChapter, dustSaga, {
+    ...boardProgress,
+    userQuests: [{ ...richQuest, isCompleted: true }],
+  }),
+  richQuest.id,
+)!;
+assert(doneEntry.completed === true, 'completed board quest');
+
+// Persistence sanitize round-trip
+const sanitized = sanitizeUserQuest(richQuest);
+assert(sanitized?.lastFocusDistraction === 'phone', 'sanitize distraction');
+assert(sanitized?.afterQuestReward === 'Coffee break', 'sanitize reward');
+assert(sanitized?.riskLevel === 'high', 'sanitize risk');
+
+let persisted = sanitizePersistedProgress({
+  ...boardProgress,
+  userQuests: [richQuest],
+});
+persisted = recordWeeklyReview(persisted, ['starter-moves'], 'low-energy');
+persisted = lockTodayFocus(persisted, 'dust-and-iron', '2026-05-27');
+const roundTrip = sanitizePersistedProgress(persisted);
+assert(roundTrip.userQuests[0]?.lastFocusDistraction === 'phone', 'round-trip distraction');
+assert(roundTrip.userQuests[0]?.afterQuestReward === 'Coffee break', 'round-trip reward');
+assert(Object.keys(roundTrip.weeklyReviewByWeek).length === 1, 'round-trip weekly review');
+assert(roundTrip.focusLockedDate === '2026-05-27', 'round-trip focus lock');
+assert(roundTrip.lockedFocusQuestIds.length > 0, 'round-trip locked ids');
+
+// Legacy quest without new fields normalizes via sanitize
+const legacyRaw = {
+  id: 'user-1000-legacy',
+  originalTitle: 'Legacy task',
+  category: 'work' as TaskCategory,
+  narrativeTitle: 'Legacy narrative',
+  narrativeDescription: 'Legacy desc',
+  sourceUniverseId: 'dust-and-iron',
+  sourceSagaId: dustSaga.id,
+  sourceChapterId: dustChapter.id,
+  isCompleted: false,
+  xpReward: 10,
+  reputationReward: 1,
+  reactionCharacterId: dustSaga.characters[0]?.id ?? 'unknown',
+};
+const legacySanitized = sanitizeUserQuest(legacyRaw);
+assert(legacySanitized?.originalTitle === 'Legacy task', 'legacy quest sanitize');
+assert(resolveQuestRiskLevel(legacySanitized?.riskLevel) === 'standard', 'legacy default risk');
+
 if (failures.length) {
   console.error('FAILED:\n' + failures.map((f) => ` - ${f}`).join('\n'));
   process.exit(1);
 }
-console.log('Lite stability checks passed.');
+console.log('Lite stability checks passed (including behavior systems).');

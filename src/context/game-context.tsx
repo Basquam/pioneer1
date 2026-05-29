@@ -475,7 +475,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
           ...(options?.starterTaskTitle ? { starterTaskTitle: options.starterTaskTitle.trim() } : {}),
           ...(options?.prepStepTitle ? { prepStepTitle: options.prepStepTitle.trim() } : {}),
           ...(options?.afterQuestReward ? { afterQuestReward: options.afterQuestReward.trim() } : {}),
-          ...(options?.riskLevel ? { riskLevel: options.riskLevel } : {}),
+          riskLevel: options?.riskLevel ?? 'standard',
         };
 
         setAddQuestSheetOpen(false);
