@@ -46,6 +46,22 @@ export function captureQuestInboxItem(items: QuestInboxItem[], title: string): Q
   return pruneQuestInbox([createQuestInboxItem(trimmed), ...items]);
 }
 
+export function captureQuestInboxItemForDate(
+  items: QuestInboxItem[],
+  title: string,
+  targetDate: string,
+): QuestInboxItem[] {
+  const trimmed = title.trim();
+  if (!trimmed) return items;
+
+  const item = {
+    ...createQuestInboxItem(trimmed),
+    targetDate,
+  };
+
+  return pruneQuestInbox([item, ...items]);
+}
+
 export function markInboxItemConverted(items: QuestInboxItem[], itemId: string): QuestInboxItem[] {
   return items.map((item) =>
     item.id === itemId && item.status === 'inbox'
@@ -112,6 +128,10 @@ export function sanitizeQuestInboxItem(raw: unknown): QuestInboxItem | null {
     TASK_CATEGORIES.has(item.suggestedCategory as TaskCategory)
   ) {
     sanitized.suggestedCategory = item.suggestedCategory as TaskCategory;
+  }
+
+  if (typeof item.targetDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(item.targetDate)) {
+    sanitized.targetDate = item.targetDate;
   }
 
   return sanitized;

@@ -9,6 +9,7 @@ import { QuestInboxPanel } from '@/components/rpg/quest-inbox-panel';
 import { DailyOperationsBriefing } from '@/components/rpg/daily-operations-briefing';
 import { DialoguePanel } from '@/components/rpg/dialogue-panel';
 import { MinimumViableDayBanner } from '@/components/rpg/minimum-viable-day-banner';
+import { PreparedForTodayCard } from '@/components/rpg/prepared-for-today-card';
 import { NarrativeMomentOverlay } from '@/components/rpg/narrative-moment-overlay';
 import { QuestCard } from '@/components/rpg/quest-card';
 import { RecoveryQuestBanner } from '@/components/rpg/recovery-quest-banner';
@@ -75,6 +76,8 @@ export function HqScreen() {
         </Animated.View>
 
         <MinimumViableDayBanner />
+
+        <PreparedForTodayCard />
 
         <DailyOperationsBriefing />
 

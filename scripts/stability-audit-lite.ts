@@ -3,7 +3,7 @@ import { UNIVERSES } from '../src/data/narrative/universes';
 import { NEON_ASHES_UNIVERSE_UNLOCK_ID } from '../src/data/narrative/neon-ashes-universe';
 import { NEURONET_UNIVERSE_UNLOCK_ID } from '../src/data/narrative/neuronet-universe';
 import { convertTaskToUserQuest, createUserQuestId } from '../src/lib/convert-task-to-quest';
-import { getLocalDateKey } from '../src/lib/daily-streak';
+import { getLocalDateKey, getTomorrowDateKey } from '../src/lib/daily-streak';
 import {
   applyDevSwitchToDustAndIron,
   applyDevSwitchToNeonAshes,
@@ -184,6 +184,21 @@ import {
   shouldAutoActivateMvdFromAwareness,
 } from '../src/lib/minimum-viable-day';
 import { getQuestLoadStatus } from '../src/lib/quest-load';
+import {
+  computeRoutineMaintenanceSummary,
+  getSuggestedStarterForRoutine,
+} from '../src/lib/routine-maintenance';
+import {
+  formatTomorrowImplementationIntention,
+  getTomorrowSetupForDate,
+  recordTomorrowSetup,
+} from '../src/lib/tomorrow-setup';
+import {
+  addStarterToRecurringQuestTemplate,
+  createRecurringQuestTemplate,
+  lowerRecurringQuestTemplateDifficulty,
+  pauseRecurringQuestTemplate,
+} from '../src/lib/recurring-quests';
 import { shouldShowRecoveryPrompt } from '../src/lib/recovery-quest';
 const AMBIENT_UNIVERSE_IDS = ['dust-and-iron', 'neuronet', 'neon-ashes'] as const;
 
@@ -246,6 +261,7 @@ function baseProgress(): PlayerProgress {
     monthlyReviewSeenByMonth: {},
     dismissedNextBestActionByDate: {},
     minimumViableDayByDate: {},
+    tomorrowSetupByDate: {},
   } as PlayerProgress;
 
   for (const universe of UNIVERSES) {
@@ -1353,6 +1369,100 @@ const overloadedLoad = getQuestLoadStatus({
 });
 assert(overloadedLoad.loadLevel === 'overloaded', 'quest load overloaded board');
 assert(overloadedLoad.score >= 0 && overloadedLoad.score <= 100, 'quest load score bounded');
+
+// Routine maintenance
+const routineTemplate = createRecurringQuestTemplate('Morning stretch', 'health', {
+  recurrenceType: 'daily',
+  preferredTimeLabel: 'After waking',
+});
+const routineProgress = {
+  ...loadBaseProgress,
+  recurringQuestTemplates: [routineTemplate],
+  desiredIdentityTraits: ['selfRespecting'] as IdentityTraitKey[],
+};
+const routineSummary = computeRoutineMaintenanceSummary({
+  progress: routineProgress,
+  universeId: 'dust-and-iron',
+  today: loadToday,
+});
+assert(routineSummary.activeRoutineCount === 1, 'routine maintenance active count');
+assert(routineSummary.entries[0]?.status === 'healthy', 'new routine healthy');
+assert(routineSummary.universeFlavor.includes('trail'), 'routine maintenance flavor');
+const starter = getSuggestedStarterForRoutine(routineTemplate);
+assert(starter.length > 0, 'routine starter suggestion');
+const withStarter = addStarterToRecurringQuestTemplate(routineProgress, routineTemplate.id, starter);
+assert(withStarter.recurringQuestTemplates[0]?.starterTaskTitle === starter, 'routine starter applied');
+const heavyRoutine = {
+  ...routineTemplate,
+  riskLevel: 'high' as const,
+};
+const heavyRoutineProgress = {
+  ...loadBaseProgress,
+  recurringQuestTemplates: [heavyRoutine],
+  userQuests: [
+    ...makeTodayQuests(0),
+    {
+      ...simulateAddUserQuest(loadBaseProgress, 'dust-and-iron', { riskLevel: 'high' }),
+      id: createUserQuestId(),
+      generatedFromRecurringQuestId: heavyRoutine.id,
+      createdOnDate: loadToday,
+      isCompleted: false,
+    },
+    {
+      ...simulateAddUserQuest(loadBaseProgress, 'dust-and-iron', { riskLevel: 'high' }),
+      id: createUserQuestId(),
+      generatedFromRecurringQuestId: heavyRoutine.id,
+      createdOnDate: subtractDaysForAudit(loadToday, 3),
+      isCompleted: false,
+    },
+  ],
+};
+function subtractDaysForAudit(dateKey: string, days: number): string {
+  const date = new Date(`${dateKey}T12:00:00`);
+  date.setDate(date.getDate() - days);
+  return getLocalDateKey(date);
+}
+const heavyRoutineSummary = computeRoutineMaintenanceSummary({
+  progress: heavyRoutineProgress,
+  universeId: 'dust-and-iron',
+  today: loadToday,
+});
+assert(
+  heavyRoutineSummary.entries[0]?.status === 'too-heavy' ||
+    heavyRoutineSummary.entries[0]?.status === 'needs-adjustment',
+  'high risk low completion flagged',
+);
+const lowered = lowerRecurringQuestTemplateDifficulty(heavyRoutineProgress, heavyRoutine.id);
+assert(lowered.recurringQuestTemplates[0]?.riskLevel === 'standard', 'routine difficulty lowered');
+const paused = pauseRecurringQuestTemplate(heavyRoutineProgress, heavyRoutine.id);
+assert(paused.recurringQuestTemplates[0]?.isActive === false, 'routine paused');
+assert(typeof paused.recurringQuestTemplates[0]?.pausedAt === 'string', 'routine pausedAt set');
+
+// Tomorrow setup
+const tomorrow = getTomorrowDateKey();
+const withPrep = recordTomorrowSetup(loadBaseProgress, {
+  kind: 'environment-step',
+  prepStepTitle: 'Put notebook on desk',
+});
+assert(getTomorrowSetupForDate(withPrep, tomorrow)?.tomorrowPrepStepTitle === 'Put notebook on desk', 'tomorrow prep stored');
+const withPlan = recordTomorrowSetup(loadBaseProgress, {
+  kind: 'when-where-plan',
+  implementationIntention: formatTomorrowImplementationIntention('stretch', '7:30 AM', 'kitchen'),
+});
+assert(
+  getTomorrowSetupForDate(withPlan, tomorrow)?.tomorrowImplementationIntention?.includes('stretch') === true,
+  'tomorrow plan stored',
+);
+const withCapture = recordTomorrowSetup(loadBaseProgress, {
+  kind: 'captured-task',
+  taskTitle: 'Email the clinic',
+});
+const capturedEntry = getTomorrowSetupForDate(withCapture, tomorrow);
+assert(capturedEntry?.plannedTomorrowTaskTitle === 'Email the clinic', 'tomorrow captured task');
+assert(
+  withCapture.questInbox.some((item) => item.title === 'Email the clinic' && item.targetDate === tomorrow),
+  'tomorrow inbox target date',
+);
 
 if (failures.length) {
   console.error('FAILED:\n' + failures.map((f) => ` - ${f}`).join('\n'));

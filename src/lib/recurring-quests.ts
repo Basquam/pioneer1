@@ -235,17 +235,7 @@ export function disableRecurringQuestTemplate(
   progress: PlayerProgress,
   templateId: string,
 ): PlayerProgress {
-  const templates = progress.recurringQuestTemplates;
-  if (!templates.some((template) => template.id === templateId && template.isActive)) {
-    return progress;
-  }
-
-  return {
-    ...progress,
-    recurringQuestTemplates: templates.map((template) =>
-      template.id === templateId ? { ...template, isActive: false } : template,
-    ),
-  };
+  return pauseRecurringQuestTemplate(progress, templateId);
 }
 
 export function isWeekdayKey(value: unknown): value is WeekdayKey {
@@ -319,5 +309,162 @@ function sanitizeRecurringQuestTemplate(raw: unknown): RecurringQuestTemplate | 
     sanitized.reminderTime = template.reminderTime.slice(0, 16);
   }
 
+  if (typeof template.pausedAt === 'string' && template.pausedAt.length > 0) {
+    sanitized.pausedAt = template.pausedAt;
+  }
+
+  if (typeof template.archivedAt === 'string' && template.archivedAt.length > 0) {
+    sanitized.archivedAt = template.archivedAt;
+  }
+
   return sanitized;
+}
+
+export function getRecurringTemplateInstances(
+  userQuests: UserQuest[],
+  templateId: string,
+): UserQuest[] {
+  return userQuests.filter((quest) => quest.generatedFromRecurringQuestId === templateId);
+}
+
+export function findRecurringQuestTemplate(
+  progress: Pick<PlayerProgress, 'recurringQuestTemplates'>,
+  templateId: string,
+): RecurringQuestTemplate | null {
+  return progress.recurringQuestTemplates.find((template) => template.id === templateId) ?? null;
+}
+
+export type RecurringQuestTemplateUpdates = Partial<
+  Pick<
+    RecurringQuestTemplate,
+    | 'originalTitle'
+    | 'preferredTimeLabel'
+    | 'preferredDays'
+    | 'starterTaskTitle'
+    | 'prepStepTitle'
+    | 'afterQuestReward'
+    | 'riskLevel'
+    | 'reminderEnabled'
+    | 'reminderTime'
+  >
+>;
+
+export function updateRecurringQuestTemplate(
+  progress: PlayerProgress,
+  templateId: string,
+  updates: RecurringQuestTemplateUpdates,
+): PlayerProgress {
+  const index = progress.recurringQuestTemplates.findIndex((template) => template.id === templateId);
+  if (index < 0) return progress;
+
+  const current = progress.recurringQuestTemplates[index]!;
+  const nextTemplate: RecurringQuestTemplate = {
+    ...current,
+    ...(typeof updates.originalTitle === 'string' && updates.originalTitle.trim().length > 0
+      ? { originalTitle: updates.originalTitle.trim() }
+      : {}),
+    ...(updates.preferredTimeLabel !== undefined
+      ? updates.preferredTimeLabel.trim().length > 0
+        ? { preferredTimeLabel: updates.preferredTimeLabel.trim() }
+        : { preferredTimeLabel: undefined }
+      : {}),
+    ...(updates.preferredDays ? { preferredDays: updates.preferredDays } : {}),
+    ...(updates.starterTaskTitle !== undefined
+      ? updates.starterTaskTitle.trim().length > 0
+        ? { starterTaskTitle: updates.starterTaskTitle.trim() }
+        : { starterTaskTitle: undefined }
+      : {}),
+    ...(updates.prepStepTitle !== undefined
+      ? updates.prepStepTitle.trim().length > 0
+        ? { prepStepTitle: updates.prepStepTitle.trim() }
+        : { prepStepTitle: undefined }
+      : {}),
+    ...(updates.afterQuestReward !== undefined
+      ? updates.afterQuestReward.trim().length > 0
+        ? { afterQuestReward: updates.afterQuestReward.trim() }
+        : { afterQuestReward: undefined }
+      : {}),
+    ...(updates.riskLevel ? { riskLevel: updates.riskLevel } : {}),
+    ...(updates.reminderEnabled === true && updates.reminderTime
+      ? { reminderEnabled: true, reminderTime: updates.reminderTime }
+      : updates.reminderEnabled === false
+        ? { reminderEnabled: false, reminderTime: undefined }
+        : {}),
+  };
+
+  const templates = [...progress.recurringQuestTemplates];
+  templates[index] = nextTemplate;
+
+  return {
+    ...progress,
+    recurringQuestTemplates: templates,
+  };
+}
+
+export function pauseRecurringQuestTemplate(
+  progress: PlayerProgress,
+  templateId: string,
+): PlayerProgress {
+  const templates = progress.recurringQuestTemplates;
+  if (!templates.some((template) => template.id === templateId && template.isActive)) {
+    return progress;
+  }
+
+  const pausedAt = new Date().toISOString();
+
+  return {
+    ...progress,
+    recurringQuestTemplates: templates.map((template) =>
+      template.id === templateId
+        ? { ...template, isActive: false, pausedAt, archivedAt: undefined }
+        : template,
+    ),
+  };
+}
+
+export function archiveRecurringQuestTemplate(
+  progress: PlayerProgress,
+  templateId: string,
+): PlayerProgress {
+  const templates = progress.recurringQuestTemplates;
+  if (!templates.some((template) => template.id === templateId && template.isActive)) {
+    return progress;
+  }
+
+  const archivedAt = new Date().toISOString();
+
+  return {
+    ...progress,
+    recurringQuestTemplates: templates.map((template) =>
+      template.id === templateId
+        ? { ...template, isActive: false, archivedAt, pausedAt: undefined }
+        : template,
+    ),
+  };
+}
+
+export function lowerRecurringQuestTemplateDifficulty(
+  progress: PlayerProgress,
+  templateId: string,
+): PlayerProgress {
+  const template = findRecurringQuestTemplate(progress, templateId);
+  if (!template) return progress;
+
+  const current = template.riskLevel ?? 'standard';
+  const nextRisk = current === 'high' ? 'standard' : 'low';
+
+  return updateRecurringQuestTemplate(progress, templateId, { riskLevel: nextRisk });
+}
+
+export function addStarterToRecurringQuestTemplate(
+  progress: PlayerProgress,
+  templateId: string,
+  starterTaskTitle: string,
+): PlayerProgress {
+  const template = findRecurringQuestTemplate(progress, templateId);
+  if (!template || template.starterTaskTitle?.trim()) return progress;
+
+  return updateRecurringQuestTemplate(progress, templateId, {
+    starterTaskTitle: starterTaskTitle.trim(),
+  });
 }

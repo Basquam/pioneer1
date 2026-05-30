@@ -30,6 +30,10 @@ import {
   sanitizeMinimumViableDayByDate,
 } from '@/lib/minimum-viable-day';
 import {
+  pruneTomorrowSetupByDate,
+  sanitizeTomorrowSetupByDate,
+} from '@/lib/tomorrow-setup';
+import {
   pruneDailyShutdownByDate,
   sanitizeDailyShutdownByDate,
   sanitizeDailyShutdownDismissedDates,
@@ -392,6 +396,9 @@ export function sanitizePersistedProgress(progress: PlayerProgress): PlayerProgr
     ),
     minimumViableDayByDate: pruneMinimumViableDayByDate(
       sanitizeMinimumViableDayByDate(progress.minimumViableDayByDate),
+    ),
+    tomorrowSetupByDate: pruneTomorrowSetupByDate(
+      sanitizeTomorrowSetupByDate(progress.tomorrowSetupByDate),
     ),
     evidenceLog: pruneEvidenceLog(progress.evidenceLog ?? []),
     momentumReserve: sanitizeMomentumReserve(progress.momentumReserve),

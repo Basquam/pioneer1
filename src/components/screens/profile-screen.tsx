@@ -18,6 +18,7 @@ import { TodayFocusDisplay } from '@/components/rpg/today-focus-display';
 import { WeeklyRecapCard } from '@/components/rpg/weekly-recap-card';
 import { MonthlySeasonReportCard } from '@/components/rpg/monthly-season-report-card';
 import { MinimumViableDayProfileStat } from '@/components/rpg/minimum-viable-day-profile-stat';
+import { RoutineMaintenancePanel } from '@/components/rpg/routine-maintenance-panel';
 import { QuestCalendarPanel } from '@/components/rpg/quest-calendar-panel';
 import { SystemsInsightPanel } from '@/components/rpg/systems-insight-panel';
 import { GoldilocksCoachPanel } from '@/components/rpg/goldilocks-coach-panel';
@@ -219,6 +220,7 @@ export function ProfileScreen() {
           <DailyShutdownBanner variant="profile" />
           <WeeklyRecapCard />
           <MonthlySeasonReportCard />
+          <RoutineMaintenancePanel />
         </ProfileSection>
 
         <ProfileSection title="RECURRING QUESTS">

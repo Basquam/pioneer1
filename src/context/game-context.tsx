@@ -30,11 +30,18 @@ import { recordChapterCompleted, recordQuestCompleted } from '@/lib/weekly-recap
 import { isHighRiskQuest } from '@/lib/quest-risk';
 import { createUserQuestFromTask, type CreateUserQuestOptions, isUserQuestId } from '@/lib/convert-task-to-quest';
 import {
+  addStarterToRecurringQuestTemplate,
+  archiveRecurringQuestTemplate,
   createRecurringQuestTemplate,
   disableRecurringQuestTemplate,
   generateRecurringQuestInstances,
+  lowerRecurringQuestTemplateDifficulty,
+  pauseRecurringQuestTemplate,
+  updateRecurringQuestTemplate as applyRecurringQuestTemplateUpdate,
   type AddUserQuestOptions,
+  type RecurringQuestTemplateUpdates,
 } from '@/lib/recurring-quests';
+import { getSuggestedStarterForRoutine } from '@/lib/routine-maintenance';
 import { formatRewardRitualUnlockedLine, getAfterQuestRewardCopy } from '@/lib/after-quest-reward';
 import { markQuestStarted } from '@/lib/decisive-moment';
 import { castIdentityVote, getTraitForCategory } from '@/lib/identity-votes';
@@ -87,6 +94,7 @@ import {
   recordDailyShutdown,
   shouldShowDailyShutdownPrompt,
 } from '@/lib/daily-shutdown';
+import { recordTomorrowSetup, type TomorrowSetupInput } from '@/lib/tomorrow-setup';
 import { recordWeeklyReview } from '@/lib/weekly-review';
 import { markMonthlyReviewSeen } from '@/lib/monthly-review';
 import {
@@ -254,6 +262,7 @@ type GameContextValue = {
   addQuestTraitSuggestionPrefill: AddQuestTraitSuggestionPrefill | null;
   activeInboxItems: QuestInboxItem[];
   improveQuestId: string | null;
+  editRecurringQuestId: string | null;
   splitQuestChainId: string | null;
   frictionReviewQuestId: string | null;
   focusQuest: BoardQuest | null;
@@ -317,6 +326,13 @@ type GameContextValue = {
   markFrictionFixApplied: (questId: string) => void;
   archiveUserQuest: (questId: string) => void;
   disableRecurringQuest: (templateId: string) => void;
+  openEditRecurringQuest: (templateId: string) => void;
+  closeEditRecurringQuest: () => void;
+  updateRecurringQuestTemplate: (templateId: string, updates: RecurringQuestTemplateUpdates) => void;
+  pauseRecurringQuest: (templateId: string) => void;
+  archiveRecurringQuest: (templateId: string) => void;
+  lowerRecurringQuestDifficulty: (templateId: string) => void;
+  addStarterToRecurringQuest: (templateId: string) => void;
   updateCategoryQuestDefaults: (
     category: TaskCategory,
     updates: Partial<CategoryQuestDefaults>,
@@ -338,6 +354,7 @@ type GameContextValue = {
   completeDailyShutdown: (
     helpedBy: DailyShutdownHelpedBy | undefined,
     openQuestActions: DailyShutdownOpenQuestSummary[],
+    tomorrowSetup?: TomorrowSetupInput,
   ) => void;
   carryQuestToToday: (questId: string) => void;
   snoozeQuest: (questId: string, untilDate: string) => void;
@@ -406,6 +423,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [focusQuestId, setFocusQuestId] = useState<string | null>(null);
   const [focusDecisiveMoment, setFocusDecisiveMoment] = useState(false);
   const [improveQuestId, setImproveQuestId] = useState<string | null>(null);
+  const [editRecurringQuestId, setEditRecurringQuestId] = useState<string | null>(null);
   const [splitQuestChainId, setSplitQuestChainId] = useState<string | null>(null);
   const [frictionReviewQuestId, setFrictionReviewQuestId] = useState<string | null>(null);
   const [requestedQuestBoardTab, setRequestedQuestBoardTab] = useState<QuestBoardTab | null>(null);
@@ -724,6 +742,45 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   const disableRecurringQuest = useCallback((templateId: string) => {
     setProgress((prev) => disableRecurringQuestTemplate(prev, templateId));
+  }, []);
+
+  const openEditRecurringQuest = useCallback((templateId: string) => {
+    setEditRecurringQuestId(templateId);
+  }, []);
+
+  const closeEditRecurringQuest = useCallback(() => {
+    setEditRecurringQuestId(null);
+  }, []);
+
+  const updateRecurringQuestTemplate = useCallback(
+    (templateId: string, updates: RecurringQuestTemplateUpdates) => {
+      setProgress((prev) => applyRecurringQuestTemplateUpdate(prev, templateId, updates));
+    },
+    [],
+  );
+
+  const pauseRecurringQuest = useCallback((templateId: string) => {
+    setProgress((prev) => pauseRecurringQuestTemplate(prev, templateId));
+  }, []);
+
+  const archiveRecurringQuest = useCallback((templateId: string) => {
+    setProgress((prev) => archiveRecurringQuestTemplate(prev, templateId));
+  }, []);
+
+  const lowerRecurringQuestDifficulty = useCallback((templateId: string) => {
+    setProgress((prev) => lowerRecurringQuestTemplateDifficulty(prev, templateId));
+  }, []);
+
+  const addStarterToRecurringQuest = useCallback((templateId: string) => {
+    setProgress((prev) => {
+      const template = prev.recurringQuestTemplates.find((entry) => entry.id === templateId);
+      if (!template) return prev;
+      return addStarterToRecurringQuestTemplate(
+        prev,
+        templateId,
+        getSuggestedStarterForRoutine(template),
+      );
+    });
   }, []);
 
   const updateCategoryQuestDefaults = useCallback(
@@ -1257,8 +1314,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
     (
       helpedBy: DailyShutdownHelpedBy | undefined,
       openQuestActions: DailyShutdownOpenQuestSummary[],
+      tomorrowSetup: TomorrowSetupInput = { kind: 'skip' },
     ) => {
-      setProgress((prev) => recordDailyShutdown(prev, helpedBy, openQuestActions));
+      setProgress((prev) => {
+        const withShutdown = recordDailyShutdown(prev, helpedBy, openQuestActions);
+        if (tomorrowSetup.kind === 'skip') return withShutdown;
+        return recordTomorrowSetup(withShutdown, tomorrowSetup);
+      });
     },
     [],
   );
@@ -1897,6 +1959,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       addQuestTraitSuggestionPrefill,
       activeInboxItems,
       improveQuestId,
+      editRecurringQuestId,
       splitQuestChainId,
       frictionReviewQuestId,
       focusQuest,
@@ -1949,6 +2012,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
       markFrictionFixApplied,
       archiveUserQuest,
       disableRecurringQuest,
+      openEditRecurringQuest,
+      closeEditRecurringQuest,
+      updateRecurringQuestTemplate,
+      pauseRecurringQuest,
+      archiveRecurringQuest,
+      lowerRecurringQuestDifficulty,
+      addStarterToRecurringQuest,
       updateCategoryQuestDefaults,
       applyQuestDefaultsPreset,
       setDesiredIdentityTraits,
@@ -2018,6 +2088,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
       captureInboxTask,
       convertInboxItem,
       disableRecurringQuest,
+      openEditRecurringQuest,
+      closeEditRecurringQuest,
+      updateRecurringQuestTemplate,
+      pauseRecurringQuest,
+      archiveRecurringQuest,
+      lowerRecurringQuestDifficulty,
+      addStarterToRecurringQuest,
       updateCategoryQuestDefaults,
       applyQuestDefaultsPreset,
       setDesiredIdentityTraits,
@@ -2030,6 +2107,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       closeAddQuestSheet,
       closeFrictionReview,
       closeImproveQuest,
+      closeEditRecurringQuest,
       closeSplitQuestChain,
       closeQuestFocus,
       completeOnboarding,
@@ -2063,6 +2141,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       focusQuest,
       frictionReviewQuestId,
       improveQuestId,
+      editRecurringQuestId,
       splitQuestChainId,
       isHydrated,
       isSagaPreview,

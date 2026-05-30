@@ -371,6 +371,10 @@ export type RecurringQuestTemplate = {
   /** ISO timestamp when the routine was created. */
   createdAt: string;
   isActive: boolean;
+  /** ISO timestamp when the routine was paused (isActive false). */
+  pausedAt?: string;
+  /** ISO timestamp when the routine was archived (isActive false). */
+  archivedAt?: string;
   starterTaskTitle?: string;
   prepStepTitle?: string;
   afterQuestReward?: string;
@@ -539,6 +543,24 @@ export type DailyShutdownEntry = {
   openQuestActions: DailyShutdownOpenQuestSummary[];
 };
 
+export type TomorrowSetupKind =
+  | 'first-quest'
+  | 'captured-task'
+  | 'environment-step'
+  | 'when-where-plan';
+
+export type TomorrowSetupEntry = {
+  date: string;
+  preparedOnDate: string;
+  preparedAt: string;
+  kind: TomorrowSetupKind;
+  selectedTomorrowQuestId?: string;
+  plannedTomorrowTaskTitle?: string;
+  plannedTomorrowInboxItemId?: string;
+  tomorrowPrepStepTitle?: string;
+  tomorrowImplementationIntention?: string;
+};
+
 export type WeeklyReviewHelpedFactor =
   | 'focus-mode'
   | 'starter-moves'
@@ -656,6 +678,8 @@ export type PlayerProgress = {
   dismissedNextBestActionByDate: Record<string, boolean>;
   /** Minimum viable / low-energy day mode keyed by local date (YYYY-MM-DD). */
   minimumViableDayByDate: Record<string, MinimumViableDayEntry>;
+  /** Prime-tomorrow setup keyed by the local date it applies to (YYYY-MM-DD). */
+  tomorrowSetupByDate: Record<string, TomorrowSetupEntry>;
   /** Local recurring routine templates — spawn user quest instances on schedule. */
   recurringQuestTemplates: RecurringQuestTemplate[];
   /** Recent quest completion events for the evidence timeline. */
@@ -716,4 +740,6 @@ export type QuestInboxItem = {
   createdAt: string;
   suggestedCategory?: TaskCategory;
   status: QuestInboxItemStatus;
+  /** Optional local date when the user plans to tackle this item (YYYY-MM-DD). */
+  targetDate?: string;
 };

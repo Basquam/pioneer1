@@ -29,6 +29,7 @@ import {
 } from '@/lib/monthly-review';
 import { sanitizeDismissedNextBestActionByDate } from '@/lib/next-best-action';
 import { sanitizeMinimumViableDayByDate } from '@/lib/minimum-viable-day';
+import { sanitizeTomorrowSetupByDate } from '@/lib/tomorrow-setup';
 import {
   sanitizeDailyShutdownByDate,
   sanitizeDailyShutdownDismissedDates,
@@ -195,6 +196,7 @@ export function createInitialProgress(): PlayerProgress {
     monthlyReviewSeenByMonth: {},
     dismissedNextBestActionByDate: {},
     minimumViableDayByDate: {},
+    tomorrowSetupByDate: {},
     recurringQuestTemplates: [],
     evidenceLog: [],
     momentumReserve: 0,
@@ -264,6 +266,9 @@ function normalizeProgress(raw: Partial<PlayerProgress> & Record<string, unknown
     ),
     minimumViableDayByDate: sanitizeMinimumViableDayByDate(
       raw.minimumViableDayByDate ?? base.minimumViableDayByDate,
+    ),
+    tomorrowSetupByDate: sanitizeTomorrowSetupByDate(
+      raw.tomorrowSetupByDate ?? base.tomorrowSetupByDate,
     ),
     recurringQuestTemplates: sanitizeRecurringQuestTemplates(
       raw.recurringQuestTemplates ?? base.recurringQuestTemplates,

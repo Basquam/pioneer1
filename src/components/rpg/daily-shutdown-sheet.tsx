@@ -27,6 +27,8 @@ import {
   getDailyShutdownEntry,
 } from '@/lib/daily-shutdown';
 import { QUEST_LIFECYCLE_NEEDS_DECISION_COPY } from '@/lib/quest-lifecycle';
+import { PrimeTomorrowStep } from '@/components/rpg/prime-tomorrow-step';
+import type { TomorrowSetupInput } from '@/lib/tomorrow-setup';
 import type {
   DailyShutdownHelpedBy,
   DailyShutdownOpenQuestAction,
@@ -38,7 +40,7 @@ type DailyShutdownSheetProps = {
   onClose: () => void;
 };
 
-type ShutdownPhase = 'summary' | 'reflect' | 'done';
+type ShutdownPhase = 'summary' | 'reflect' | 'prime' | 'done';
 
 export function DailyShutdownSheet({ visible, onClose }: DailyShutdownSheetProps) {
   const {
@@ -106,9 +108,14 @@ export function DailyShutdownSheet({ visible, onClose }: DailyShutdownSheetProps
     setPhase('reflect');
   };
 
-  const handleFinish = () => {
+  const handleContinueToPrime = () => {
+    void Haptics.selectionAsync();
+    setPhase('prime');
+  };
+
+  const handleFinishShutdown = (tomorrowSetup: TomorrowSetupInput = { kind: 'skip' }) => {
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    completeDailyShutdown(helpedBy ?? undefined, buildOpenQuestSummaries());
+    completeDailyShutdown(helpedBy ?? undefined, buildOpenQuestSummaries(), tomorrowSetup);
     setPhase('done');
   };
 
@@ -266,10 +273,17 @@ export function DailyShutdownSheet({ visible, onClose }: DailyShutdownSheetProps
                 </View>
                 <GlowButton
                   label="CLOSE TODAY"
-                  hint="Save shutdown — no pressure to pick an answer"
-                  onPress={handleFinish}
+                  hint="Optional — one quick prime step next"
+                  onPress={handleContinueToPrime}
                 />
               </>
+            ) : null}
+
+            {phase === 'prime' ? (
+              <PrimeTomorrowStep
+                onComplete={(input) => handleFinishShutdown(input)}
+                onSkip={() => handleFinishShutdown({ kind: 'skip' })}
+              />
             ) : null}
           </ScrollView>
         </View>

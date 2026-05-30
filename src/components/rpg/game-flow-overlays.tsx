@@ -4,6 +4,7 @@ import { QuestReminderSync } from '@/components/rpg/quest-reminder-sync';
 import { SuggestedQuestPacksSheet } from '@/components/rpg/suggested-quest-packs-sheet';
 import { FrictionReviewSheet } from '@/components/rpg/friction-review-sheet';
 import { ImproveQuestSheet } from '@/components/rpg/improve-quest-sheet';
+import { RecurringRoutineEditSheet } from '@/components/rpg/recurring-routine-edit-sheet';
 import { SplitQuestChainSheet } from '@/components/rpg/split-quest-chain-sheet';
 import { ChapterCompleteOverlay } from '@/components/rpg/chapter-complete-overlay';
 import { ChapterIntroScene } from '@/components/rpg/chapter-intro-scene';
@@ -26,6 +27,8 @@ export function GameFlowOverlays() {
     closeQuestPackSheet,
     improveQuestId,
     closeImproveQuest,
+    editRecurringQuestId,
+    closeEditRecurringQuest,
     splitQuestChainId,
     closeSplitQuestChain,
     frictionReviewQuestId,
@@ -50,6 +53,7 @@ export function GameFlowOverlays() {
       <AddQuestSheet visible={addQuestSheetOpen} onClose={closeAddQuestSheet} />
       <SuggestedQuestPacksSheet visible={questPackSheetOpen} onClose={closeQuestPackSheet} />
       <ImproveQuestSheet questId={improveQuestId} onClose={closeImproveQuest} />
+      <RecurringRoutineEditSheet templateId={editRecurringQuestId} onClose={closeEditRecurringQuest} />
       <SplitQuestChainSheet questId={splitQuestChainId} onClose={closeSplitQuestChain} />
       <FrictionReviewSheet questId={frictionReviewQuestId} onClose={closeFrictionReview} />
       <DailyShutdownSheet visible={dailyShutdownOpen} onClose={closeDailyShutdown} />
