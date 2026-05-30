@@ -31,6 +31,7 @@ import {
 import { getTaskCategoryMeta } from '@/lib/task-categories';
 import { formatChainProgressLabel, isQuestChainParentBlocked, isQuestChainSplittable, shouldHighlightQuestChainSplit } from '@/lib/quest-chain';
 import { formatPreQuestRitualCardLine } from '@/lib/pre-quest-ritual';
+import { formatQuestReminderCue } from '@/lib/quest-reminders';
 import type { BoardQuest } from '@/types/narrative';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -112,6 +113,7 @@ export function QuestCard({ quest, index, variant = 'default' }: QuestCardProps)
     parentQuestId: quest.parentQuestId,
   });
   const highlightSplit = canSplit && shouldHighlightQuestChainSplit(quest);
+  const reminderCue = quest.source === 'user' ? formatQuestReminderCue(quest) : null;
 
   const handlePress = () => {
     if (chainBlocked) return;
@@ -283,6 +285,12 @@ export function QuestCard({ quest, index, variant = 'default' }: QuestCardProps)
           </Text>
         ) : null}
 
+        {reminderCue ? (
+          <Text style={[styles.cueLine, { color: palette.fog }]} numberOfLines={1}>
+            {reminderCue}
+          </Text>
+        ) : null}
+
         {quest.source === 'user' && quest.isTooMuchMotion && (
           <View style={[styles.motionGuardBox, { borderColor: palette.accent, backgroundColor: `${palette.primary}33` }]}>
             <Text style={[styles.motionGuardPrompt, { color: palette.bone }]}>{MOTION_GUARD_CARD_PROMPT}</Text>
@@ -448,6 +456,14 @@ const styles = StyleSheet.create({
     letterSpacing: 0.4,
     lineHeight: 14,
     marginTop: 2,
+  },
+  cueLine: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 10,
+    letterSpacing: 0.35,
+    lineHeight: 14,
+    marginTop: 2,
+    opacity: 0.85,
   },
   motionGuardBox: {
     borderWidth: 1,

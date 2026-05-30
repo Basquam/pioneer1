@@ -11,6 +11,7 @@ import { DailyStreakDisplay } from '@/components/rpg/daily-streak-display';
 import { BecomingPathPanel } from '@/components/rpg/identity-evidence-panel';
 import { IdentityCompassSheet } from '@/components/rpg/identity-compass-sheet';
 import { QuestStyleSheet } from '@/components/rpg/quest-style-sheet';
+import { ReminderPreferencesSheet } from '@/components/rpg/reminder-preferences-sheet';
 import { EvidenceTimelinePanel } from '@/components/rpg/evidence-timeline-panel';
 import { MomentumReservePanel } from '@/components/rpg/momentum-reserve-panel';
 import { TodayFocusDisplay } from '@/components/rpg/today-focus-display';
@@ -18,6 +19,7 @@ import { WeeklyRecapCard } from '@/components/rpg/weekly-recap-card';
 import { QuestCalendarPanel } from '@/components/rpg/quest-calendar-panel';
 import { SystemsInsightPanel } from '@/components/rpg/systems-insight-panel';
 import { GoldilocksCoachPanel } from '@/components/rpg/goldilocks-coach-panel';
+import { DailyShutdownBanner } from '@/components/rpg/daily-shutdown-banner';
 import { DevToolsPanel } from '@/components/rpg/dev-tools-panel';
 import { GlossaryHelpButton } from '@/components/rpg/glossary-help-button';
 import { GlossarySheet } from '@/components/rpg/glossary-sheet';
@@ -40,6 +42,7 @@ import {
 } from '@/lib/onboarding-origin-display';
 import { getUnlockedRewardEntries, isSagaUnlocked, REWARD_TYPE_LABELS } from '@/lib/reward-unlocks';
 import { formatQuestStyleSummary } from '@/lib/quest-style-profile';
+import { sanitizeReminderPreferences } from '@/lib/reminder-preferences';
 import { getSagaActiveChapter } from '@/lib/saga-progress';
 
 export function ProfileScreen() {
@@ -47,6 +50,7 @@ export function ProfileScreen() {
   const [glossaryVisible, setGlossaryVisible] = useState(false);
   const [identityCompassVisible, setIdentityCompassVisible] = useState(false);
   const [questStyleVisible, setQuestStyleVisible] = useState(false);
+  const [reminderPrefsVisible, setReminderPrefsVisible] = useState(false);
   const {
     activeUniverse,
     activeSaga,
@@ -56,6 +60,7 @@ export function ProfileScreen() {
     completedQuestCount,
     quests,
   } = useGame();
+  const reminderPrefs = sanitizeReminderPreferences(playerProgress.reminderPreferences);
 
   const unlockedSagas = useMemo(
     () =>
@@ -208,6 +213,7 @@ export function ProfileScreen() {
           <QuestCalendarPanel />
           <SystemsInsightPanel onEditIdentityCompass={() => setIdentityCompassVisible(true)} />
           <GoldilocksCoachPanel />
+          <DailyShutdownBanner variant="profile" />
           <WeeklyRecapCard />
         </ProfileSection>
 
@@ -267,6 +273,19 @@ export function ProfileScreen() {
               {formatQuestStyleSummary(playerProgress.questStyleProfile)}
             </Text>
           </Pressable>
+          <Pressable
+            onPress={() => setReminderPrefsVisible(true)}
+            style={[styles.questStyleButton, { borderColor: activeUniverse.palette.panelBorder, backgroundColor: activeUniverse.palette.panel }]}>
+            <View style={styles.questStyleCopy}>
+              <Text style={[styles.questStyleTitle, { color: activeUniverse.palette.bone }]}>Reminder Preferences</Text>
+              <Text style={[styles.questStyleSubtitle, { color: activeUniverse.palette.fog }]}>
+                Optional local cues for important quests.
+              </Text>
+            </View>
+            <Text style={[styles.questStyleValue, { color: activeUniverse.palette.gold }]}>
+              {reminderPrefs.remindersEnabled ? 'On' : 'Off'}
+            </Text>
+          </Pressable>
           <GlossaryHelpButton onPress={() => setGlossaryVisible(true)} />
           <AmbientAudioToggle />
           {__DEV__ ? <AudioDevTools /> : null}
@@ -282,6 +301,10 @@ export function ProfileScreen() {
           onClose={() => setIdentityCompassVisible(false)}
         />
         <QuestStyleSheet visible={questStyleVisible} onClose={() => setQuestStyleVisible(false)} />
+        <ReminderPreferencesSheet
+          visible={reminderPrefsVisible}
+          onClose={() => setReminderPrefsVisible(false)}
+        />
 
         <ProfileSection title="BACKUP" badge="experimental">
           <ProgressBackupPanel embedded />

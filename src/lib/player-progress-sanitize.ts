@@ -15,7 +15,13 @@ import { sanitizeQuestInbox } from '@/lib/quest-inbox';
 import { sanitizeChildQuestIds } from '@/lib/quest-chain';
 import { sanitizeDesiredIdentityTraits } from '@/lib/identity-compass';
 import { sanitizeQuestStyleProfile } from '@/lib/quest-style-profile';
+import { sanitizeReminderPreferences } from '@/lib/reminder-preferences';
 import { pruneWeeklyReviewByWeek } from '@/lib/weekly-review';
+import {
+  pruneDailyShutdownByDate,
+  sanitizeDailyShutdownByDate,
+  sanitizeDailyShutdownDismissedDates,
+} from '@/lib/daily-shutdown';
 import type { DailyActivity, PlayerProgress, QuestFrictionReason, TaskCategory, UserQuest } from '@/types/narrative';
 
 export const MAX_STORED_USER_QUESTS = 300;
@@ -103,6 +109,23 @@ export function sanitizeUserQuest(raw: unknown): UserQuest | null {
 
   if (typeof quest.plannedTimeLabel === 'string' && quest.plannedTimeLabel.length > 0) {
     sanitized.plannedTimeLabel = quest.plannedTimeLabel;
+  }
+
+  if (typeof quest.carryForwardDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(quest.carryForwardDate)) {
+    sanitized.carryForwardDate = quest.carryForwardDate;
+  }
+
+  if (quest.reminderEnabled === true) {
+    sanitized.reminderEnabled = true;
+    if (typeof quest.reminderTime === 'string' && quest.reminderTime.length > 0) {
+      sanitized.reminderTime = quest.reminderTime.slice(0, 16);
+    }
+    if (typeof quest.reminderLabel === 'string' && quest.reminderLabel.length > 0) {
+      sanitized.reminderLabel = quest.reminderLabel.slice(0, 32);
+    }
+    if (typeof quest.reminderId === 'string' && quest.reminderId.startsWith('quest-cue-')) {
+      sanitized.reminderId = quest.reminderId;
+    }
   }
 
   if (typeof quest.plannedLocation === 'string' && quest.plannedLocation.length > 0) {
@@ -303,6 +326,14 @@ export function sanitizePersistedProgress(progress: PlayerProgress): PlayerProgr
   const dailyAwarenessDismissedDates = progress.dailyAwarenessDismissedDates.filter(
     (dateKey) => dateKey >= cutoffKey,
   );
+  const dailyShutdownByDate = pruneDailyShutdownByDate(
+    sanitizeDailyShutdownByDate(progress.dailyShutdownByDate),
+    new Date(),
+    ACTIVITY_RETENTION_DAYS,
+  );
+  const dailyShutdownDismissedDates = sanitizeDailyShutdownDismissedDates(
+    progress.dailyShutdownDismissedDates,
+  ).filter((dateKey) => dateKey >= cutoffKey);
 
   return {
     ...progress,
@@ -310,6 +341,8 @@ export function sanitizePersistedProgress(progress: PlayerProgress): PlayerProgr
     activityByDate: sanitizeActivityByDate(progress.activityByDate),
     dailyAwarenessByDate,
     dailyAwarenessDismissedDates,
+    dailyShutdownByDate,
+    dailyShutdownDismissedDates,
     weeklyReviewByWeek: pruneWeeklyReviewByWeek(
       progress.weeklyReviewByWeek ?? {},
       new Date(),
@@ -323,6 +356,7 @@ export function sanitizePersistedProgress(progress: PlayerProgress): PlayerProgr
     questInbox: sanitizeQuestInbox(progress.questInbox),
     desiredIdentityTraits: sanitizeDesiredIdentityTraits(progress.desiredIdentityTraits),
     questStyleProfile: sanitizeQuestStyleProfile(progress.questStyleProfile),
+    reminderPreferences: sanitizeReminderPreferences(progress.reminderPreferences),
   };
 }
 

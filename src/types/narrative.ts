@@ -264,6 +264,16 @@ export type UserQuest = {
   focusPinned?: boolean;
   /** When the user plans to do this quest — e.g. "Tomorrow morning". */
   plannedTimeLabel?: string;
+  /** Local date when daily shutdown marked this quest for tomorrow. */
+  carryForwardDate?: string;
+  /** Optional local reminder cue — never required. */
+  reminderEnabled?: boolean;
+  /** Preset key or HH:mm custom time. */
+  reminderTime?: string;
+  /** Display label such as Evening or 19:30. */
+  reminderLabel?: string;
+  /** Scheduled local notification identifier. */
+  reminderId?: string;
   /** Where the user plans to do this quest — e.g. "Desk". */
   plannedLocation?: string;
   /** Habit to stack this quest after — e.g. "I finish breakfast". */
@@ -351,6 +361,15 @@ export type RecurringQuestTemplate = {
   prepStepTitle?: string;
   afterQuestReward?: string;
   riskLevel?: QuestRiskLevel;
+  reminderEnabled?: boolean;
+  reminderTime?: string;
+};
+
+export type ReminderPreferences = {
+  remindersEnabled?: boolean;
+  quietHoursEnabled?: boolean;
+  quietHoursStart?: string;
+  quietHoursEnd?: string;
 };
 
 export type QuestReadinessChecklist = {
@@ -398,8 +417,12 @@ export type BoardQuest = {
   /** Show gentle friction review action on the card. */
   showFrictionReview?: boolean;
   plannedTimeLabel?: string;
+  /** Carried forward from daily shutdown for a future day. */
+  carryForwardDate?: string;
   afterCurrentHabit?: string;
   plannedLocation?: string;
+  reminderEnabled?: boolean;
+  reminderLabel?: string;
   /** ISO timestamp when START NOW was tapped. */
   startedAt?: string;
   /** True when the quest has a recorded start moment. */
@@ -454,6 +477,34 @@ export type DailyAwarenessEntry = {
   date: string;
   selectedBlocker: DailyAwarenessBlocker;
   createdAt: string;
+};
+
+export type DailyShutdownHelpedBy =
+  | 'focus-mode'
+  | 'starter-move'
+  | 'prep-step'
+  | 'reward-ritual'
+  | 'locked-focus'
+  | 'reminder'
+  | 'character-story'
+  | 'nothing-yet';
+
+export type DailyShutdownOpenQuestAction =
+  | 'keep-tomorrow'
+  | 'convert-starter'
+  | 'archive'
+  | 'leave';
+
+export type DailyShutdownOpenQuestSummary = {
+  questId: string;
+  action: DailyShutdownOpenQuestAction;
+};
+
+export type DailyShutdownEntry = {
+  date: string;
+  completedAt: string;
+  helpedBy?: DailyShutdownHelpedBy;
+  openQuestActions: DailyShutdownOpenQuestSummary[];
 };
 
 export type WeeklyReviewHelpedFactor =
@@ -559,6 +610,10 @@ export type PlayerProgress = {
   dailyAwarenessByDate: Record<string, DailyAwarenessEntry>;
   /** Local dates when the user dismissed the awareness check without answering. */
   dailyAwarenessDismissedDates: string[];
+  /** Daily shutdown reflections keyed by local date (YYYY-MM-DD). */
+  dailyShutdownByDate: Record<string, DailyShutdownEntry>;
+  /** Local dates when the user dismissed the daily shutdown prompt. */
+  dailyShutdownDismissedDates: string[];
   /** Chapter bounty template quest ids → ISO timestamp when START NOW was tapped. */
   templateQuestStartedAt: Record<string, string>;
   /** Weekly reflection answers keyed by local week (Sunday start date YYYY-MM-DD). */
@@ -579,6 +634,8 @@ export type PlayerProgress = {
   questInbox: QuestInboxItem[];
   /** Personal productivity style calibration — emphasis only, never restrictive. */
   questStyleProfile: QuestStyleProfile;
+  /** Global local reminder preferences. */
+  reminderPreferences: ReminderPreferences;
 };
 
 export type QuestStyleKey =

@@ -3,6 +3,7 @@ import { UNIVERSES } from '../src/data/narrative/universes';
 import { NEON_ASHES_UNIVERSE_UNLOCK_ID } from '../src/data/narrative/neon-ashes-universe';
 import { NEURONET_UNIVERSE_UNLOCK_ID } from '../src/data/narrative/neuronet-universe';
 import { convertTaskToUserQuest, createUserQuestId } from '../src/lib/convert-task-to-quest';
+import { getLocalDateKey } from '../src/lib/daily-streak';
 import {
   applyDevSwitchToDustAndIron,
   applyDevSwitchToNeonAshes,
@@ -129,6 +130,30 @@ import { recordWeeklyReview } from '../src/lib/weekly-review';
 import { lockTodayFocus } from '../src/lib/focus-lock';
 import { shouldShowFrictionReview } from '../src/lib/quest-friction';
 import { sanitizePersistedProgress, sanitizeUserQuest } from '../src/lib/player-progress-sanitize';
+import {
+  buildQuestReminderFields,
+  buildQuestReminderId,
+  createDefaultReminderPreferences,
+  formatQuestReminderCue,
+  getQuestReminderNotificationCopy,
+  shouldScheduleQuestReminder,
+  suggestReminderSelectionFromPlannedTime,
+} from '../src/lib/quest-reminders';
+import { sanitizeReminderPreferences } from '../src/lib/reminder-preferences';
+import {
+  buildQuestBoardTabContent,
+  compareTodayBoardQuests,
+  getChapterBoardTabLabel,
+  getTodayQuestPriority,
+} from '../src/lib/quest-board-organization';
+import type { BoardQuest } from '../src/types/narrative';
+import {
+  applyKeepQuestForTomorrow,
+  computeDailyShutdownOpenQuests,
+  getDailyShutdownCopy,
+  recordDailyShutdown,
+  shouldShowDailyShutdownPrompt,
+} from '../src/lib/daily-shutdown';
 import type { PlayerProgress, QuestRiskLevel, TaskCategory, UserQuest } from '../src/types/narrative';
 
 const AMBIENT_UNIVERSE_IDS = ['dust-and-iron', 'neuronet', 'neon-ashes'] as const;
@@ -186,6 +211,9 @@ function baseProgress(): PlayerProgress {
     questDefaults: createEmptyQuestDefaultsSettings(),
     questInbox: [],
     questStyleProfile: {},
+    reminderPreferences: createDefaultReminderPreferences(),
+    dailyShutdownByDate: {},
+    dailyShutdownDismissedDates: [],
   } as PlayerProgress;
 
   for (const universe of UNIVERSES) {
@@ -882,6 +910,150 @@ const styledGoldilocks = generateGoldilocksRecommendationWithStyle(
   new Date('2026-05-27T12:00:00'),
 );
 assert(styledGoldilocks?.id === 'low-risk-steady', 'styled goldilocks recommendation');
+
+// Quest reminders
+assert(buildQuestReminderId('user-abc') === 'quest-cue-user-abc', 'quest reminder id format');
+assert(
+  buildQuestReminderFields('evening').reminderLabel === 'Evening',
+  'evening reminder preset label',
+);
+assert(
+  buildQuestReminderFields('custom', '19:30').reminderTime === '19:30',
+  'custom reminder time',
+);
+assert(
+  suggestReminderSelectionFromPlannedTime('Tomorrow morning') === 'morning',
+  'planned time suggests morning reminder',
+);
+assert(
+  formatQuestReminderCue({ reminderEnabled: true, reminderLabel: 'Evening' }) === 'Cue: Evening',
+  'quest card reminder cue',
+);
+assert(
+  getQuestReminderNotificationCopy('neon-ashes').title === 'A lead is waiting.',
+  'neon ashes reminder copy',
+);
+const reminderQuest = sanitizeUserQuest({
+  id: 'user-reminder-1',
+  originalTitle: 'Walk',
+  category: 'fitness',
+  narrativeTitle: 'Walk',
+  narrativeDescription: 'Walk',
+  sourceUniverseId: 'dust-and-iron',
+  sourceSagaId: 'dustfall-saga',
+  sourceChapterId: 'vulture-gang-ch1',
+  isCompleted: false,
+  xpReward: 10,
+  reputationReward: 2,
+  reactionCharacterId: 'deputy',
+  reminderEnabled: true,
+  reminderTime: 'evening',
+  reminderLabel: 'Evening',
+});
+assert(reminderQuest?.reminderEnabled === true, 'reminder fields persist on sanitize');
+assert(
+  shouldScheduleQuestReminder(reminderQuest!, { remindersEnabled: true }) === true,
+  'should schedule when globally enabled',
+);
+assert(
+  shouldScheduleQuestReminder(reminderQuest!, { remindersEnabled: false }) === false,
+  'should not schedule when globally disabled',
+);
+assert(
+  sanitizeReminderPreferences({ remindersEnabled: true }).remindersEnabled === true,
+  'reminder preferences sanitize',
+);
+
+// Daily shutdown
+assert(getDailyShutdownCopy('neuronet').title === 'End the cycle.', 'daily shutdown copy');
+assert(
+  shouldShowDailyShutdownPrompt({ ...baseProgress(), hasOnboarded: true }) === true,
+  'daily shutdown prompt when not completed',
+);
+const shutdownProgress = recordDailyShutdown(baseProgress(), 'focus-mode', [
+  { questId: 'user-abc', action: 'leave' },
+]);
+assert(
+  shutdownProgress.dailyShutdownByDate[getLocalDateKey()]?.helpedBy === 'focus-mode',
+  'daily shutdown record',
+);
+const carryQuest = applyKeepQuestForTomorrow({
+  id: 'user-carry',
+  originalTitle: 'Walk',
+  category: 'fitness',
+  narrativeTitle: 'Walk',
+  narrativeDescription: 'Walk',
+  sourceUniverseId: 'dust-and-iron',
+  sourceSagaId: 'vulture-gang',
+  sourceChapterId: 'vulture-gang-ch1',
+  isCompleted: false,
+  xpReward: 10,
+  reputationReward: 2,
+  reactionCharacterId: 'deputy',
+  createdOnDate: getLocalDateKey(),
+});
+assert(carryQuest.carryForwardDate != null, 'carry forward date set');
+const openShutdownQuests = computeDailyShutdownOpenQuests(
+  {
+    ...baseProgress(),
+    userQuests: [
+      {
+        id: 'user-open-1',
+        originalTitle: 'Inbox zero',
+        category: 'work',
+        narrativeTitle: 'Inbox',
+        narrativeDescription: 'Inbox',
+        sourceUniverseId: 'dust-and-iron',
+        sourceSagaId: 'vulture-gang',
+        sourceChapterId: 'vulture-gang-ch1',
+        isCompleted: false,
+        xpReward: 10,
+        reputationReward: 2,
+        reactionCharacterId: 'deputy',
+        createdOnDate: getLocalDateKey(),
+        focusPinned: true,
+      },
+    ],
+  },
+  'dust-and-iron',
+);
+assert(openShutdownQuests.length === 1, 'open shutdown quest includes focus quest');
+
+// Quest board organization
+assert(getChapterBoardTabLabel('neon-ashes') === 'Leads', 'chapter tab label');
+const lockedFocusQuest: BoardQuest = {
+  id: 'user-focus-1',
+  source: 'user',
+  category: 'work',
+  originalTitle: 'Locked',
+  narrativeTitle: 'Locked',
+  narrativeDescription: 'Locked',
+  xpReward: 10,
+  reputationReward: 2,
+  reactionCharacterId: 'deputy',
+  completed: false,
+  isFocusLocked: true,
+  createdOnDate: getLocalDateKey(),
+};
+const regularQuest: BoardQuest = {
+  ...lockedFocusQuest,
+  id: 'user-regular-1',
+  isFocusLocked: false,
+};
+assert(
+  getTodayQuestPriority(lockedFocusQuest) < getTodayQuestPriority(regularQuest),
+  'locked focus sorts ahead on today tab',
+);
+assert(
+  compareTodayBoardQuests(lockedFocusQuest, regularQuest) < 0,
+  'today tab compare prefers locked focus',
+);
+const todayBoard = buildQuestBoardTabContent({
+  tab: 'today',
+  userEntries: [{ kind: 'quest', quest: regularQuest }, { kind: 'quest', quest: lockedFocusQuest }],
+  chapterQuests: [],
+});
+assert(todayBoard.entries[0]?.kind === 'quest' && todayBoard.entries[0].quest.id === 'user-focus-1', 'today tab ordering');
 
 if (failures.length) {
   console.error('FAILED:\n' + failures.map((f) => ` - ${f}`).join('\n'));

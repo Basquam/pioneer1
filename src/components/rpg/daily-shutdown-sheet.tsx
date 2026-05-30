@@ -1,0 +1,495 @@
+import * as Haptics from 'expo-haptics';
+import { useEffect, useMemo, useState } from 'react';
+import {
+  Alert,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+
+import { GlowButton } from '@/components/rpg/glow-button';
+import { GameLayout } from '@/constants/layout';
+import { GameFonts } from '@/constants/typography';
+import { useGame } from '@/hooks/use-game';
+import { useModalBottomInset } from '@/hooks/use-scroll-insets';
+import { getLocalDateKey } from '@/lib/daily-streak';
+import {
+  computeDailyShutdownCompletedStats,
+  computeDailyShutdownOpenQuests,
+  DAILY_SHUTDOWN_HELPED_OPTIONS,
+  formatOpenQuestCategories,
+  getDailyShutdownCopy,
+  getDailyShutdownEntry,
+} from '@/lib/daily-shutdown';
+import type {
+  DailyShutdownHelpedBy,
+  DailyShutdownOpenQuestAction,
+  DailyShutdownOpenQuestSummary,
+} from '@/types/narrative';
+
+type DailyShutdownSheetProps = {
+  visible: boolean;
+  onClose: () => void;
+};
+
+type ShutdownPhase = 'summary' | 'reflect' | 'done';
+
+const OPEN_QUEST_ACTION_OPTIONS: Array<{
+  action: DailyShutdownOpenQuestAction;
+  label: string;
+}> = [
+  { action: 'keep-tomorrow', label: 'Keep for tomorrow' },
+  { action: 'convert-starter', label: 'Starter move' },
+  { action: 'archive', label: 'Archive' },
+  { action: 'leave', label: 'Leave as is' },
+];
+
+export function DailyShutdownSheet({ visible, onClose }: DailyShutdownSheetProps) {
+  const {
+    activeUniverse,
+    playerProgress,
+    completeDailyShutdown,
+    carryQuestToTomorrow,
+    archiveUserQuest,
+    openImproveQuest,
+    closeDailyShutdown,
+  } = useGame();
+  const { palette } = activeUniverse;
+  const modalBottomInset = useModalBottomInset(32);
+  const today = getLocalDateKey();
+  const copy = getDailyShutdownCopy(activeUniverse.id);
+  const savedEntry = getDailyShutdownEntry(playerProgress, today);
+
+  const [phase, setPhase] = useState<ShutdownPhase>('summary');
+  const [helpedBy, setHelpedBy] = useState<DailyShutdownHelpedBy | null>(null);
+  const [actionByQuestId, setActionByQuestId] = useState<
+    Record<string, DailyShutdownOpenQuestAction>
+  >({});
+
+  const completedStats = useMemo(
+    () => computeDailyShutdownCompletedStats(playerProgress, today, activeUniverse.id),
+    [activeUniverse.id, playerProgress, today],
+  );
+  const openQuests = useMemo(
+    () => computeDailyShutdownOpenQuests(playerProgress, activeUniverse.id, today),
+    [activeUniverse.id, playerProgress, today],
+  );
+
+  const isQuietDay =
+    completedStats.questsCompleted === 0 &&
+    completedStats.xpEarned === 0 &&
+    completedStats.reputationEarned === 0 &&
+    completedStats.identityVotesGained === 0 &&
+    completedStats.chaptersCompleted === 0 &&
+    openQuests.length === 0;
+
+  const resetState = () => {
+    setPhase('summary');
+    setHelpedBy(null);
+    setActionByQuestId({});
+  };
+
+  useEffect(() => {
+    if (visible) resetState();
+  }, [visible]);
+
+  const handleClose = () => {
+    resetState();
+    closeDailyShutdown();
+  };
+
+  const handleSelectAction = (questId: string, action: DailyShutdownOpenQuestAction) => {
+    void Haptics.selectionAsync();
+    setActionByQuestId((current) => ({ ...current, [questId]: action }));
+
+    if (action === 'keep-tomorrow') {
+      carryQuestToTomorrow(questId);
+      return;
+    }
+
+    if (action === 'convert-starter') {
+      handleClose();
+      openImproveQuest(questId);
+      return;
+    }
+
+    if (action === 'archive') {
+      Alert.alert(
+        'Archive this quest?',
+        'It leaves your active board but stays in your history.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Archive',
+            style: 'destructive',
+            onPress: () => {
+              archiveUserQuest(questId);
+            },
+          },
+        ],
+      );
+    }
+  };
+
+  const buildOpenQuestSummaries = (): DailyShutdownOpenQuestSummary[] =>
+    openQuests.map(({ quest }) => ({
+      questId: quest.id,
+      action: actionByQuestId[quest.id] ?? 'leave',
+    }));
+
+  const handleContinueToReflect = () => {
+    void Haptics.selectionAsync();
+    setPhase('reflect');
+  };
+
+  const handleFinish = () => {
+    void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    completeDailyShutdown(helpedBy ?? undefined, buildOpenQuestSummaries());
+    setPhase('done');
+  };
+
+  const handleDoneClose = () => {
+    handleClose();
+  };
+
+  if (!visible) return null;
+
+  return (
+    <Modal visible animationType="slide" transparent onRequestClose={handleClose}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={styles.backdrop}>
+        <Pressable style={styles.dismissArea} onPress={handleClose} />
+        <View
+          style={[
+            styles.sheet,
+            {
+              backgroundColor: palette.night,
+              borderColor: palette.panelBorder,
+              maxHeight: GameLayout.modalMaxHeight,
+            },
+          ]}>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={[styles.content, { paddingBottom: modalBottomInset }]}>
+            <View style={styles.header}>
+              <Text style={[styles.eyebrow, { color: palette.gold }]}>DAILY SHUTDOWN</Text>
+              <Pressable onPress={handleClose} hitSlop={12}>
+                <Text style={[styles.close, { color: palette.fog }]}>✕</Text>
+              </Pressable>
+            </View>
+
+            {phase === 'done' ? (
+              <>
+                <Text style={[styles.title, { color: palette.bone }]}>{copy.completion}</Text>
+                <Text style={[styles.subtitle, { color: palette.fog }]}>
+                  Tomorrow gets a clean start — no penalty for what stays open.
+                </Text>
+                <GlowButton label="DONE" hint="Rest well" onPress={handleDoneClose} />
+              </>
+            ) : null}
+
+            {phase === 'summary' ? (
+              <>
+                <Text style={[styles.title, { color: palette.bone }]}>{copy.title}</Text>
+                <Text style={[styles.subtitle, { color: palette.fog }]}>{copy.intro}</Text>
+                {savedEntry ? (
+                  <Text style={[styles.reopenedHint, { color: palette.fog }]}>
+                    You already logged a shutdown today — this update replaces it.
+                  </Text>
+                ) : null}
+
+                <View style={[styles.section, { borderColor: palette.panelBorder }]}>
+                  <Text style={[styles.sectionLabel, { color: palette.gold }]}>COMPLETED TODAY</Text>
+                  {isQuietDay ? (
+                    <Text style={[styles.quietLine, { color: palette.fog }]}>
+                      A quiet day is still a valid day. Nothing to fix here.
+                    </Text>
+                  ) : (
+                    <View style={styles.statsGrid}>
+                      <StatChip label="Quests" value={String(completedStats.questsCompleted)} palette={palette} />
+                      <StatChip label="XP" value={`+${completedStats.xpEarned}`} palette={palette} />
+                      <StatChip
+                        label="Rep"
+                        value={`+${completedStats.reputationEarned}`}
+                        palette={palette}
+                      />
+                      <StatChip
+                        label="Identity"
+                        value={String(completedStats.identityVotesGained)}
+                        palette={palette}
+                      />
+                      {completedStats.chaptersCompleted > 0 ? (
+                        <StatChip
+                          label="Chapters"
+                          value={String(completedStats.chaptersCompleted)}
+                          palette={palette}
+                        />
+                      ) : null}
+                    </View>
+                  )}
+                </View>
+
+                {openQuests.length > 0 ? (
+                  <View style={[styles.section, { borderColor: palette.panelBorder }]}>
+                    <Text style={[styles.sectionLabel, { color: palette.gold }]}>STILL OPEN</Text>
+                    <Text style={[styles.sectionHint, { color: palette.fog }]}>
+                      Unfinished quests can wait — choose what helps tomorrow.
+                    </Text>
+                    {openQuests.map(({ quest, categories }) => {
+                      const selectedAction = actionByQuestId[quest.id] ?? 'leave';
+                      return (
+                        <View
+                          key={quest.id}
+                          style={[styles.openQuestCard, { borderColor: palette.panelBorder, backgroundColor: palette.panel }]}>
+                          <Text style={[styles.openQuestTitle, { color: palette.bone }]} numberOfLines={2}>
+                            {quest.originalTitle}
+                          </Text>
+                          <Text style={[styles.openQuestMeta, { color: palette.fog }]}>
+                            {formatOpenQuestCategories(categories)}
+                          </Text>
+                          <View style={styles.actionRow}>
+                            {OPEN_QUEST_ACTION_OPTIONS.map((option) => {
+                              const selected = selectedAction === option.action;
+                              return (
+                                <Pressable
+                                  key={option.action}
+                                  onPress={() => handleSelectAction(quest.id, option.action)}
+                                  style={[
+                                    styles.actionChip,
+                                    {
+                                      backgroundColor: selected ? palette.primary : palette.night,
+                                      borderColor: selected ? palette.gold : palette.panelBorder,
+                                    },
+                                  ]}>
+                                  <Text
+                                    style={[
+                                      styles.actionChipText,
+                                      { color: selected ? palette.bone : palette.fog },
+                                    ]}>
+                                    {option.label}
+                                  </Text>
+                                </Pressable>
+                              );
+                            })}
+                          </View>
+                        </View>
+                      );
+                    })}
+                  </View>
+                ) : null}
+
+                <GlowButton
+                  label={openQuests.length > 0 ? 'CONTINUE' : 'REFLECT'}
+                  hint="Optional — one quick question next"
+                  onPress={handleContinueToReflect}
+                />
+              </>
+            ) : null}
+
+            {phase === 'reflect' ? (
+              <>
+                <Text style={[styles.sectionLabel, { color: palette.gold }]}>WHAT HELPED YOU TODAY?</Text>
+                <Text style={[styles.sectionHint, { color: palette.fog }]}>
+                  Optional — pick one if something worked.
+                </Text>
+                <View style={styles.helpedOptions}>
+                  {DAILY_SHUTDOWN_HELPED_OPTIONS.map((option) => {
+                    const selected = helpedBy === option.value;
+                    return (
+                      <Pressable
+                        key={option.value}
+                        onPress={() => {
+                          void Haptics.selectionAsync();
+                          setHelpedBy(option.value);
+                        }}
+                        style={[
+                          styles.helpedChip,
+                          {
+                            backgroundColor: selected ? palette.primary : palette.panel,
+                            borderColor: selected ? palette.gold : palette.panelBorder,
+                          },
+                        ]}>
+                        <Text style={[styles.helpedChipText, { color: selected ? palette.bone : palette.fog }]}>
+                          {option.label}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+                <GlowButton
+                  label="CLOSE TODAY"
+                  hint="Save shutdown — no pressure to pick an answer"
+                  onPress={handleFinish}
+                />
+              </>
+            ) : null}
+          </ScrollView>
+        </View>
+      </KeyboardAvoidingView>
+    </Modal>
+  );
+}
+
+function StatChip({
+  label,
+  value,
+  palette,
+}: {
+  label: string;
+  value: string;
+  palette: { bone: string; fog: string; panelBorder: string; night: string };
+}) {
+  return (
+    <View style={[styles.statChip, { borderColor: palette.panelBorder, backgroundColor: palette.night }]}>
+      <Text style={[styles.statValue, { color: palette.bone }]}>{value}</Text>
+      <Text style={[styles.statLabel, { color: palette.fog }]}>{label}</Text>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  backdrop: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0,0,0,0.72)',
+  },
+  dismissArea: { flex: 1 },
+  sheet: {
+    borderTopWidth: 1,
+    transform: [{ skewX: '-1deg' }],
+  },
+  content: {
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    gap: 14,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  eyebrow: {
+    fontFamily: GameFonts.ui,
+    fontSize: 10,
+    letterSpacing: 2.5,
+  },
+  close: {
+    fontFamily: GameFonts.ui,
+    fontSize: 18,
+    padding: 4,
+  },
+  title: {
+    fontFamily: GameFonts.display,
+    fontSize: 24,
+    lineHeight: 30,
+  },
+  subtitle: {
+    fontFamily: GameFonts.displayRegular,
+    fontSize: 14,
+    lineHeight: 20,
+    fontStyle: 'italic',
+  },
+  reopenedHint: {
+    fontFamily: GameFonts.displayRegular,
+    fontSize: 12,
+    lineHeight: 17,
+  },
+  section: {
+    borderTopWidth: 1,
+    paddingTop: 12,
+    gap: 10,
+  },
+  sectionLabel: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 11,
+    letterSpacing: 1.4,
+  },
+  sectionHint: {
+    fontFamily: GameFonts.displayRegular,
+    fontSize: 12,
+    lineHeight: 17,
+  },
+  quietLine: {
+    fontFamily: GameFonts.displayRegular,
+    fontSize: 13,
+    lineHeight: 19,
+    fontStyle: 'italic',
+  },
+  statsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  statChip: {
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    minWidth: 72,
+    alignItems: 'center',
+  },
+  statValue: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 14,
+  },
+  statLabel: {
+    fontFamily: GameFonts.ui,
+    fontSize: 9,
+    letterSpacing: 1,
+    marginTop: 2,
+  },
+  openQuestCard: {
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 12,
+    gap: 8,
+  },
+  openQuestTitle: {
+    fontFamily: GameFonts.ui,
+    fontSize: 14,
+    lineHeight: 18,
+  },
+  openQuestMeta: {
+    fontFamily: GameFonts.ui,
+    fontSize: 10,
+    letterSpacing: 0.4,
+  },
+  actionRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  actionChip: {
+    borderWidth: 1,
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+  },
+  actionChipText: {
+    fontFamily: GameFonts.ui,
+    fontSize: 10,
+    letterSpacing: 0.3,
+  },
+  helpedOptions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  helpedChip: {
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
+  helpedChipText: {
+    fontFamily: GameFonts.ui,
+    fontSize: 12,
+  },
+});

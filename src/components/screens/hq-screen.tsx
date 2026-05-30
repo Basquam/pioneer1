@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
+import { DailyShutdownBanner } from '@/components/rpg/daily-shutdown-banner';
 import { DailyAwarenessCheck } from '@/components/rpg/daily-awareness-check';
 import { QuestInboxPanel } from '@/components/rpg/quest-inbox-panel';
 import { DailyOperationsBriefing } from '@/components/rpg/daily-operations-briefing';
@@ -64,6 +65,8 @@ export function HqScreen() {
         <QuestInboxPanel />
 
         <DailyAwarenessCheck />
+
+        <DailyShutdownBanner />
 
         <RecoveryQuestBanner />
 

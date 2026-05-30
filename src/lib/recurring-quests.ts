@@ -1,5 +1,6 @@
 import { createUserQuestFromTask, type CreateUserQuestOptions } from '@/lib/convert-task-to-quest';
 import { getLocalDateKey } from '@/lib/daily-streak';
+import { resolveQuestReminderSchedule } from '@/lib/quest-reminders';
 import { pruneUserQuests } from '@/lib/player-progress-sanitize';
 import { recordRoutineQuestSpawned } from '@/lib/routine-boredom-guard';
 import type {
@@ -152,10 +153,20 @@ export function createRecurringQuestTemplate(
       ? { afterQuestReward: questOptions.afterQuestReward.trim() }
       : {}),
     ...(questOptions?.riskLevel ? { riskLevel: questOptions.riskLevel } : {}),
+    ...(questOptions?.reminderEnabled && questOptions.reminderTime
+      ? {
+          reminderEnabled: true,
+          reminderTime: questOptions.reminderTime,
+        }
+      : {}),
   };
 }
 
 function templateToQuestOptions(template: RecurringQuestTemplate): CreateUserQuestOptions {
+  const reminderSchedule = template.reminderTime
+    ? resolveQuestReminderSchedule(template.reminderTime)
+    : null;
+
   return {
     generatedFromRecurringQuestId: template.id,
     ...(template.starterTaskTitle ? { starterTaskTitle: template.starterTaskTitle } : {}),
@@ -163,6 +174,13 @@ function templateToQuestOptions(template: RecurringQuestTemplate): CreateUserQue
     ...(template.afterQuestReward ? { afterQuestReward: template.afterQuestReward } : {}),
     ...(template.riskLevel ? { riskLevel: template.riskLevel } : {}),
     ...(template.preferredTimeLabel ? { plannedTimeLabel: template.preferredTimeLabel } : {}),
+    ...(template.reminderEnabled && template.reminderTime
+      ? {
+          reminderEnabled: true,
+          reminderTime: template.reminderTime,
+          ...(reminderSchedule ? { reminderLabel: reminderSchedule.label } : {}),
+        }
+      : {}),
   };
 }
 
@@ -294,6 +312,11 @@ function sanitizeRecurringQuestTemplate(raw: unknown): RecurringQuestTemplate | 
   const riskLevel = template.riskLevel;
   if (riskLevel === 'low' || riskLevel === 'standard' || riskLevel === 'high') {
     sanitized.riskLevel = riskLevel;
+  }
+
+  if (template.reminderEnabled === true && typeof template.reminderTime === 'string') {
+    sanitized.reminderEnabled = true;
+    sanitized.reminderTime = template.reminderTime.slice(0, 16);
   }
 
   return sanitized;

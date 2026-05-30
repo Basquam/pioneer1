@@ -76,9 +76,17 @@ import {
   recordDailyAwarenessAnswer,
   shouldShowDailyAwarenessCheck,
 } from '@/lib/daily-awareness';
+import {
+  applyKeepQuestForTomorrow,
+  dismissDailyShutdownForToday,
+  recordDailyShutdown,
+  shouldShowDailyShutdownPrompt,
+} from '@/lib/daily-shutdown';
 import { recordWeeklyReview } from '@/lib/weekly-review';
 import type {
   DailyAwarenessBlocker,
+  DailyShutdownHelpedBy,
+  DailyShutdownOpenQuestSummary,
   QuestDistractionType,
   QuestFrictionReason,
   WeeklyReviewHelpedFactor,
@@ -136,6 +144,11 @@ import {
   markInboxItemConverted,
 } from '@/lib/quest-inbox';
 import { sanitizeQuestStyleProfile } from '@/lib/quest-style-profile';
+import { sanitizeReminderPreferences } from '@/lib/reminder-preferences';
+import {
+  cancelQuestReminderNotification,
+  requestLocalReminderPermissions,
+} from '@/lib/local-notifications';
 import {
   formatDesiredIdentityHighlight,
   isDesiredIdentityTrait,
@@ -167,6 +180,7 @@ import type {
   QuestDefaultsPresetId,
   QuestInboxItem,
   QuestStyleProfile,
+  ReminderPreferences,
 } from '@/types/narrative';
 
 export type XpBurst = { id: string; amount: number };
@@ -225,6 +239,8 @@ type GameContextValue = {
   focusDecisiveMoment: boolean;
   showRecoveryPrompt: boolean;
   showDailyAwarenessCheck: boolean;
+  showDailyShutdownPrompt: boolean;
+  dailyShutdownOpen: boolean;
   isTodayFocusLocked: boolean;
   showChapterIntro: boolean;
   showHqTutorial: boolean;
@@ -284,10 +300,22 @@ type GameContextValue = {
   applyQuestDefaultsPreset: (presetId: QuestDefaultsPresetId) => void;
   setDesiredIdentityTraits: (traits: IdentityTraitKey[]) => void;
   setQuestStyleProfile: (profile: QuestStyleProfile) => void;
+  setReminderPreferences: (preferences: ReminderPreferences) => void;
+  applyQuestReminderSyncUpdates: (
+    updates: Array<{ questId: string; reminderId: string | null }>,
+  ) => void;
   recordFocusDistraction: (questId: string, distraction: QuestDistractionType) => void;
   markFrictionShieldApplied: (questId: string) => void;
   submitDailyAwareness: (blocker: DailyAwarenessBlocker) => void;
   dismissDailyAwarenessCheck: () => void;
+  openDailyShutdown: () => void;
+  closeDailyShutdown: () => void;
+  dismissDailyShutdownPrompt: () => void;
+  completeDailyShutdown: (
+    helpedBy: DailyShutdownHelpedBy | undefined,
+    openQuestActions: DailyShutdownOpenQuestSummary[],
+  ) => void;
+  carryQuestToTomorrow: (questId: string) => void;
   submitWeeklyReview: (
     helpedFactors: WeeklyReviewHelpedFactor[],
     slowdownFactor: WeeklyReviewSlowdownFactor,
@@ -336,6 +364,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [questComplete, setQuestComplete] = useState<QuestCompleteState | null>(null);
   const [questCreated, setQuestCreated] = useState<UserQuest | null>(null);
   const [addQuestSheetOpen, setAddQuestSheetOpen] = useState(false);
+  const [dailyShutdownOpen, setDailyShutdownOpen] = useState(false);
   const [questPackSheetOpen, setQuestPackSheetOpen] = useState(false);
   const [addQuestRecoveryMode, setAddQuestRecoveryMode] = useState(false);
   const [addQuestInboxPrefill, setAddQuestInboxPrefill] = useState<AddQuestInboxPrefill | null>(null);
@@ -513,6 +542,15 @@ export function GameProvider({ children }: { children: ReactNode }) {
     [isHydrated, progress, showHqTutorial],
   );
 
+  const showDailyShutdownPrompt = useMemo(
+    () =>
+      isHydrated &&
+      progress.hasOnboarded &&
+      !showHqTutorial &&
+      shouldShowDailyShutdownPrompt(progress),
+    [isHydrated, progress, showHqTutorial],
+  );
+
   const player = useMemo(
     () => ({
       level: levelInfo.level,
@@ -678,6 +716,45 @@ export function GameProvider({ children }: { children: ReactNode }) {
       questStyleProfile: sanitizeQuestStyleProfile(profile),
     }));
   }, []);
+
+  const setReminderPreferences = useCallback((preferences: ReminderPreferences) => {
+    const sanitized = sanitizeReminderPreferences(preferences);
+    if (sanitized.remindersEnabled) {
+      void requestLocalReminderPermissions();
+    }
+    setProgress((prev) => ({
+      ...prev,
+      reminderPreferences: sanitized,
+    }));
+  }, []);
+
+  const applyQuestReminderSyncUpdates = useCallback(
+    (updates: Array<{ questId: string; reminderId: string | null }>) => {
+      if (updates.length === 0) return;
+
+      setProgress((prev) => {
+        let changed = false;
+        const userQuests = prev.userQuests.map((quest) => {
+          const update = updates.find((entry) => entry.questId === quest.id);
+          if (!update) return quest;
+
+          if (update.reminderId === quest.reminderId) return quest;
+
+          changed = true;
+          if (update.reminderId) {
+            return { ...quest, reminderId: update.reminderId };
+          }
+
+          const next = { ...quest };
+          delete next.reminderId;
+          return next;
+        });
+
+        return changed ? { ...prev, userQuests } : prev;
+      });
+    },
+    [],
+  );
 
   const addUserQuestPack = useCallback(
     (items: Array<{ originalTitle: string; category: TaskCategory; options?: CreateUserQuestOptions }>) => {
@@ -951,6 +1028,24 @@ export function GameProvider({ children }: { children: ReactNode }) {
             else delete next.afterCurrentHabit;
           }
 
+          if ('reminderEnabled' in updates) {
+            if (updates.reminderEnabled && updates.reminderTime) {
+              next.reminderEnabled = true;
+              next.reminderTime = updates.reminderTime;
+              if (updates.reminderLabel?.trim()) {
+                next.reminderLabel = updates.reminderLabel.trim();
+              } else {
+                delete next.reminderLabel;
+              }
+              delete next.reminderId;
+            } else {
+              delete next.reminderEnabled;
+              delete next.reminderTime;
+              delete next.reminderLabel;
+              delete next.reminderId;
+            }
+          }
+
           if (options?.planningSource === 'improve') {
             next = recordImproveActivity(next, timestamp);
           } else if (options?.planningSource === 'readiness') {
@@ -1002,6 +1097,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const archiveUserQuest = useCallback((questId: string) => {
+    void cancelQuestReminderNotification(questId);
     setProgress((prev) => ({
       ...prev,
       userQuests: prev.userQuests.map((quest) =>
@@ -1043,6 +1139,37 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const dismissDailyAwarenessCheck = useCallback(() => {
     setProgress((prev) => dismissDailyAwarenessForToday(prev));
   }, []);
+
+  const openDailyShutdown = useCallback(() => {
+    setDailyShutdownOpen(true);
+  }, []);
+
+  const closeDailyShutdown = useCallback(() => {
+    setDailyShutdownOpen(false);
+  }, []);
+
+  const dismissDailyShutdownPrompt = useCallback(() => {
+    setProgress((prev) => dismissDailyShutdownForToday(prev));
+  }, []);
+
+  const carryQuestToTomorrow = useCallback((questId: string) => {
+    setProgress((prev) => ({
+      ...prev,
+      userQuests: prev.userQuests.map((quest) =>
+        quest.id === questId ? applyKeepQuestForTomorrow(quest) : quest,
+      ),
+    }));
+  }, []);
+
+  const completeDailyShutdown = useCallback(
+    (
+      helpedBy: DailyShutdownHelpedBy | undefined,
+      openQuestActions: DailyShutdownOpenQuestSummary[],
+    ) => {
+      setProgress((prev) => recordDailyShutdown(prev, helpedBy, openQuestActions));
+    },
+    [],
+  );
 
   const submitWeeklyReview = useCallback(
     (helpedFactors: WeeklyReviewHelpedFactor[], slowdownFactor: WeeklyReviewSlowdownFactor) => {
@@ -1653,6 +1780,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       focusDecisiveMoment,
       showRecoveryPrompt,
       showDailyAwarenessCheck,
+      showDailyShutdownPrompt,
+      dailyShutdownOpen,
       isTodayFocusLocked: todayFocusLocked,
       showChapterIntro,
       showHqTutorial,
@@ -1698,10 +1827,17 @@ export function GameProvider({ children }: { children: ReactNode }) {
       applyQuestDefaultsPreset,
       setDesiredIdentityTraits,
       setQuestStyleProfile,
+      setReminderPreferences,
+      applyQuestReminderSyncUpdates,
       recordFocusDistraction,
       markFrictionShieldApplied,
       submitDailyAwareness,
       dismissDailyAwarenessCheck,
+      openDailyShutdown,
+      closeDailyShutdown,
+      dismissDailyShutdownPrompt,
+      completeDailyShutdown,
+      carryQuestToTomorrow,
       submitWeeklyReview,
       dismissXpBurst,
       markChapterIntroSeen,
@@ -1749,6 +1885,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       applyQuestDefaultsPreset,
       setDesiredIdentityTraits,
       setQuestStyleProfile,
+      setReminderPreferences,
+      applyQuestReminderSyncUpdates,
       chapters,
       characters,
       chapterComplete,
@@ -1772,6 +1910,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
       devSwitchToDustAndIron,
       devUnlockVultureGangChapters,
       dismissDailyAwarenessCheck,
+      dismissDailyShutdownPrompt,
+      openDailyShutdown,
+      closeDailyShutdown,
+      completeDailyShutdown,
+      carryQuestToTomorrow,
+      dailyShutdownOpen,
       dismissHqTutorial,
       dismissNarrativeMoment,
       dismissQuestComplete,

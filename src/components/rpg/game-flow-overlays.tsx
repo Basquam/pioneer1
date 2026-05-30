@@ -1,4 +1,6 @@
 import { AddQuestSheet } from '@/components/rpg/add-quest-sheet';
+import { DailyShutdownSheet } from '@/components/rpg/daily-shutdown-sheet';
+import { QuestReminderSync } from '@/components/rpg/quest-reminder-sync';
 import { SuggestedQuestPacksSheet } from '@/components/rpg/suggested-quest-packs-sheet';
 import { FrictionReviewSheet } from '@/components/rpg/friction-review-sheet';
 import { ImproveQuestSheet } from '@/components/rpg/improve-quest-sheet';
@@ -28,10 +30,13 @@ export function GameFlowOverlays() {
     closeSplitQuestChain,
     frictionReviewQuestId,
     closeFrictionReview,
+    dailyShutdownOpen,
+    closeDailyShutdown,
   } = useGame();
 
   return (
     <>
+      <QuestReminderSync />
       <ChapterCompleteOverlay />
       <QuestFocusOverlay />
       <QuestCompleteOverlay />
@@ -47,6 +52,7 @@ export function GameFlowOverlays() {
       <ImproveQuestSheet questId={improveQuestId} onClose={closeImproveQuest} />
       <SplitQuestChainSheet questId={splitQuestChainId} onClose={closeSplitQuestChain} />
       <FrictionReviewSheet questId={frictionReviewQuestId} onClose={closeFrictionReview} />
+      <DailyShutdownSheet visible={dailyShutdownOpen} onClose={closeDailyShutdown} />
     </>
   );
 }

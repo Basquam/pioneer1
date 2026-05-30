@@ -84,4 +84,7 @@ export type UserQuestReadinessUpdates = {
   originalTitle?: string | null;
   plannedTimeLabel?: string | null;
   afterCurrentHabit?: string | null;
+  reminderEnabled?: boolean;
+  reminderTime?: string | null;
+  reminderLabel?: string | null;
 };

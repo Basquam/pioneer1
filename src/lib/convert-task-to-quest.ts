@@ -89,6 +89,9 @@ export type CreateUserQuestOptions = {
   afterCurrentHabit?: string;
   implementationIntention?: string;
   focusPinned?: boolean;
+  reminderEnabled?: boolean;
+  reminderTime?: string;
+  reminderLabel?: string;
 };
 
 /** Shared user-quest creation used by single and batch add flows. */
@@ -129,6 +132,13 @@ export function createUserQuestFromTask(
       ? { generatedFromRecurringQuestId: options.generatedFromRecurringQuestId }
       : {}),
     ...(options?.plannedTimeLabel ? { plannedTimeLabel: options.plannedTimeLabel.trim() } : {}),
+    ...(options?.reminderEnabled
+      ? {
+          reminderEnabled: true,
+          ...(options.reminderTime ? { reminderTime: options.reminderTime } : {}),
+          ...(options.reminderLabel ? { reminderLabel: options.reminderLabel.trim() } : {}),
+        }
+      : {}),
     ...(options?.plannedLocation ? { plannedLocation: options.plannedLocation.trim() } : {}),
     ...(options?.afterCurrentHabit ? { afterCurrentHabit: options.afterCurrentHabit.trim() } : {}),
     ...(options?.implementationIntention

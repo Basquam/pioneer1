@@ -14,6 +14,8 @@ import {
 import { createEmptyQuestDefaultsSettings, sanitizeQuestDefaultsSettings } from '@/lib/quest-defaults';
 import { sanitizeQuestInbox } from '@/lib/quest-inbox';
 import { sanitizeQuestStyleProfile } from '@/lib/quest-style-profile';
+import { sanitizeReminderPreferences } from '@/lib/reminder-preferences';
+import { createDefaultReminderPreferences } from '@/lib/quest-reminders';
 import { sanitizeRoutineRepetitionByKey } from '@/lib/routine-boredom-guard';
 import { sanitizeTemplateQuestStartedAt } from '@/lib/decisive-moment';
 import {
@@ -21,6 +23,10 @@ import {
   sanitizeDailyAwarenessDismissedDates,
 } from '@/lib/daily-awareness';
 import { pruneWeeklyReviewByWeek, sanitizeWeeklyReviewByWeek } from '@/lib/weekly-review';
+import {
+  sanitizeDailyShutdownByDate,
+  sanitizeDailyShutdownDismissedDates,
+} from '@/lib/daily-shutdown';
 import { findUniverse } from '@/lib/narrative-state';
 import { narrativeWarn } from '@/lib/narrative-state-debug';
 import type { PlayerProgress } from '@/types/narrative';
@@ -176,6 +182,8 @@ export function createInitialProgress(): PlayerProgress {
     recoveryQuestCompletedDates: [],
     dailyAwarenessByDate: {},
     dailyAwarenessDismissedDates: [],
+    dailyShutdownByDate: {},
+    dailyShutdownDismissedDates: [],
     templateQuestStartedAt: {},
     weeklyReviewByWeek: {},
     recurringQuestTemplates: [],
@@ -186,6 +194,7 @@ export function createInitialProgress(): PlayerProgress {
     questDefaults: createEmptyQuestDefaultsSettings(),
     questInbox: [],
     questStyleProfile: {},
+    reminderPreferences: createDefaultReminderPreferences(),
   };
 }
 
@@ -230,6 +239,12 @@ function normalizeProgress(raw: Partial<PlayerProgress> & Record<string, unknown
     dailyAwarenessDismissedDates: sanitizeDailyAwarenessDismissedDates(
       raw.dailyAwarenessDismissedDates,
     ),
+    dailyShutdownByDate: sanitizeDailyShutdownByDate(
+      raw.dailyShutdownByDate ?? base.dailyShutdownByDate,
+    ),
+    dailyShutdownDismissedDates: sanitizeDailyShutdownDismissedDates(
+      raw.dailyShutdownDismissedDates ?? base.dailyShutdownDismissedDates,
+    ),
     templateQuestStartedAt: sanitizeTemplateQuestStartedAt(raw.templateQuestStartedAt),
     weeklyReviewByWeek: sanitizeWeeklyReviewByWeek(raw.weeklyReviewByWeek),
     recurringQuestTemplates: sanitizeRecurringQuestTemplates(
@@ -246,6 +261,7 @@ function normalizeProgress(raw: Partial<PlayerProgress> & Record<string, unknown
     questDefaults: sanitizeQuestDefaultsSettings(raw.questDefaults ?? base.questDefaults),
     questInbox: sanitizeQuestInbox(raw.questInbox ?? base.questInbox),
     questStyleProfile: sanitizeQuestStyleProfile(raw.questStyleProfile ?? base.questStyleProfile),
+    reminderPreferences: sanitizeReminderPreferences(raw.reminderPreferences ?? base.reminderPreferences),
   };
 
   const universeForMigration = findUniverse(merged.selectedUniverseId) ?? DUST_AND_IRON_UNIVERSE;

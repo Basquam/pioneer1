@@ -8,6 +8,13 @@ export function getLocalDateKey(date = new Date()): string {
   return `${year}-${month}-${day}`;
 }
 
+/** Next local calendar day from a date key or today. */
+export function getTomorrowDateKey(today: string = getLocalDateKey()): string {
+  const date = new Date(`${today}T12:00:00`);
+  date.setDate(date.getDate() + 1);
+  return getLocalDateKey(date);
+}
+
 function parseLocalDateKey(dateKey: string): Date {
   return new Date(`${dateKey}T12:00:00`);
 }

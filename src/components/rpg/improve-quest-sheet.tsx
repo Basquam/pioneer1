@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 
 import { GlowButton } from '@/components/rpg/glow-button';
+import { QuestReminderPicker } from '@/components/rpg/quest-reminder-picker';
 import { GameLayout } from '@/constants/layout';
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
@@ -37,6 +38,12 @@ import {
 } from '@/lib/quest-prep';
 import { generateStarterTaskTitle, getStarterToggleCopy } from '@/lib/two-minute-starter';
 import { userQuestToBoardQuest } from '@/lib/quest-board';
+import { requestLocalReminderPermissions } from '@/lib/local-notifications';
+import {
+  buildQuestReminderFields,
+  getQuestReminderSelection,
+  type QuestReminderSelection,
+} from '@/lib/quest-reminders';
 
 type ImproveQuestSheetProps = {
   questId: string | null;
@@ -64,6 +71,8 @@ export function ImproveQuestSheet({ questId, onClose }: ImproveQuestSheetProps) 
   const [prepEnabled, setPrepEnabled] = useState(false);
   const [prepStepTitle, setPrepStepTitle] = useState('');
   const [focusPinned, setFocusPinned] = useState(false);
+  const [reminderSelection, setReminderSelection] = useState<QuestReminderSelection>('none');
+  const [reminderCustomTime, setReminderCustomTime] = useState('');
 
   const today = getLocalDateKey();
   const focusLimit = getDailyFocusLimit(playerProgress);
@@ -93,6 +102,11 @@ export function ImproveQuestSheet({ questId, onClose }: ImproveQuestSheetProps) 
     setPrepEnabled(Boolean(userQuest.prepStepTitle?.trim()));
     setPrepStepTitle(userQuest.prepStepTitle?.trim() ?? '');
     setFocusPinned(Boolean(userQuest.focusPinned));
+    const selection = getQuestReminderSelection(userQuest);
+    setReminderSelection(selection);
+    setReminderCustomTime(
+      selection === 'custom' && userQuest.reminderTime ? userQuest.reminderTime : '',
+    );
   }, [userQuest]);
 
   useEffect(() => {
@@ -104,6 +118,8 @@ export function ImproveQuestSheet({ questId, onClose }: ImproveQuestSheetProps) 
     setPrepEnabled(false);
     setPrepStepTitle('');
     setFocusPinned(false);
+    setReminderSelection('none');
+    setReminderCustomTime('');
   }, [questId]);
 
   useEffect(() => {
@@ -140,11 +156,22 @@ export function ImproveQuestSheet({ questId, onClose }: ImproveQuestSheetProps) 
   };
 
   const handleSave = () => {
+    const reminderFields = buildQuestReminderFields(reminderSelection, reminderCustomTime);
+    const remindersGloballyEnabled =
+      playerProgress.reminderPreferences?.remindersEnabled === true;
+
+    if (reminderFields.reminderEnabled && remindersGloballyEnabled) {
+      void requestLocalReminderPermissions();
+    }
+
     const updates: UserQuestReadinessUpdates = {
       starterTaskTitle: starterEnabled ? starterTitle.trim() || suggestedStarter : null,
       implementationIntention: planEnabled ? planText.trim() : null,
       prepStepTitle: prepEnabled ? prepStepTitle.trim() : null,
       focusPinned: focusPinned && !isAutoFocus && !isLockedFocus,
+      reminderEnabled: reminderFields.reminderEnabled === true,
+      reminderTime: reminderFields.reminderTime ?? null,
+      reminderLabel: reminderFields.reminderLabel ?? null,
     };
 
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -358,6 +385,15 @@ export function ImproveQuestSheet({ questId, onClose }: ImproveQuestSheetProps) 
                 thumbColor={focusPinned || isAutoFocus || isLockedFocus ? palette.gold : palette.fog}
               />
             </View>
+
+            <QuestReminderPicker
+              selection={reminderSelection}
+              customTime={reminderCustomTime}
+              plannedTimeLabel={userQuest.plannedTimeLabel}
+              onSelectionChange={setReminderSelection}
+              onCustomTimeChange={setReminderCustomTime}
+              palette={palette}
+            />
 
             <GlowButton label="SAVE CHANGES" hint="Optional improvements — no pressure" onPress={handleSave} />
           </ScrollView>

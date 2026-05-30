@@ -67,6 +67,14 @@ export function userQuestToBoardQuest(
     ...(quest.prepStepTitle ? { prepStepTitle: quest.prepStepTitle } : {}),
     ...(quest.implementationIntention ? { implementationIntention: quest.implementationIntention } : {}),
     ...(quest.plannedTimeLabel ? { plannedTimeLabel: quest.plannedTimeLabel } : {}),
+    ...(quest.carryForwardDate ? { carryForwardDate: quest.carryForwardDate } : {}),
+    ...(quest.reminderEnabled
+      ? {
+          reminderEnabled: true,
+          ...(quest.reminderLabel ? { reminderLabel: quest.reminderLabel } : {}),
+          ...(quest.reminderTime ? { reminderTime: quest.reminderTime } : {}),
+        }
+      : {}),
     ...(quest.plannedLocation ? { plannedLocation: quest.plannedLocation } : {}),
     ...(quest.afterCurrentHabit ? { afterCurrentHabit: quest.afterCurrentHabit } : {}),
     ...(quest.startedAt ? { startedAt: quest.startedAt, isStarted: true } : {}),

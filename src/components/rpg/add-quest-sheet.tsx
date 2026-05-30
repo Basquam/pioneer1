@@ -74,6 +74,12 @@ import {
   getWeekdayKeyForDate,
   WEEKDAY_OPTIONS,
 } from '@/lib/recurring-quests';
+import { QuestReminderPicker } from '@/components/rpg/quest-reminder-picker';
+import { requestLocalReminderPermissions } from '@/lib/local-notifications';
+import {
+  buildQuestReminderFields,
+  type QuestReminderSelection,
+} from '@/lib/quest-reminders';
 
 type AddQuestSheetProps = {
   visible: boolean;
@@ -116,6 +122,8 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
   const [plannedLocation, setPlannedLocation] = useState('');
   const [afterCurrentHabit, setAfterCurrentHabit] = useState('');
   const [planText, setPlanText] = useState('');
+  const [reminderSelection, setReminderSelection] = useState<QuestReminderSelection>('none');
+  const [reminderCustomTime, setReminderCustomTime] = useState('');
   const [defaultsApplied, setDefaultsApplied] = useState(false);
 
   const starterCopy = getStarterToggleCopy(activeUniverse.id);
@@ -185,6 +193,8 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
     setPlannedLocation('');
     setAfterCurrentHabit('');
     setPlanText('');
+    setReminderSelection('none');
+    setReminderCustomTime('');
     setDefaultsApplied(false);
   };
 
@@ -261,6 +271,14 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
     const prep = prepEnabled ? prepStepTitle.trim() : '';
     const reward = rewardEnabled ? rewardTitle.trim() : '';
     const preQuestRitual = preQuestRitualEnabled ? preQuestRitualTitle.trim() : '';
+    const reminderFields = buildQuestReminderFields(reminderSelection, reminderCustomTime);
+    const remindersGloballyEnabled =
+      playerProgress.reminderPreferences?.remindersEnabled === true;
+
+    if (reminderFields.reminderEnabled && remindersGloballyEnabled) {
+      void requestLocalReminderPermissions();
+    }
+
     const todayWeekday = getWeekdayKeyForDate(getLocalDateKey());
     const weeklyDays =
       preferredDays.size > 0 ? Array.from(preferredDays) : [todayWeekday];
@@ -286,6 +304,13 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
       ...(afterCurrentHabit.trim() ? { afterCurrentHabit: afterCurrentHabit.trim() } : {}),
       ...(planText.trim() ? { implementationIntention: planText.trim() } : {}),
       ...(markAsFocus ? { focusPinned: true } : {}),
+      ...(reminderFields.reminderEnabled
+        ? {
+            reminderEnabled: true,
+            ...(reminderFields.reminderTime ? { reminderTime: reminderFields.reminderTime } : {}),
+            ...(reminderFields.reminderLabel ? { reminderLabel: reminderFields.reminderLabel } : {}),
+          }
+        : {}),
       ...(addQuestInboxPrefill?.inboxItemId
         ? { convertFromInboxItemId: addQuestInboxPrefill.inboxItemId }
         : {}),
@@ -954,6 +979,15 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
                   />
                 </View>
               )}
+
+              <QuestReminderPicker
+                selection={reminderSelection}
+                customTime={reminderCustomTime}
+                plannedTimeLabel={plannedTimeLabel.trim() || preferredTimeLabel.trim() || undefined}
+                onSelectionChange={setReminderSelection}
+                onCustomTimeChange={setReminderCustomTime}
+                palette={palette}
+              />
 
               {(plannedTimeLabel || plannedLocation || afterCurrentHabit || planText || markAsFocus) && (
                 <View style={[styles.prepBox, { backgroundColor: palette.night, borderColor: palette.panelBorder }]}>

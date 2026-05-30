@@ -16,6 +16,7 @@ import { useColorScheme } from 'react-native';
 import { GameProvider } from '@/context/game-context';
 import { AmbientAudioProvider } from '@/context/ambient-audio-context';
 import { NarrativeRecoveryGate } from '@/components/rpg/narrative-recovery-gate';
+import { configureLocalNotifications } from '@/lib/local-notifications';
 
 SplashScreen.preventAutoHideAsync();
 SplashScreen.setOptions({
@@ -41,6 +42,10 @@ export default function RootLayout() {
       void SplashScreen.hideAsync();
     }
   }, [fontsLoaded]);
+
+  useEffect(() => {
+    void configureLocalNotifications();
+  }, []);
 
   if (!fontsLoaded) {
     return null;
