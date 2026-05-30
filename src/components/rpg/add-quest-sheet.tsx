@@ -15,6 +15,11 @@ import {
 
 import { GlowButton } from '@/components/rpg/glow-button';
 import { CollapsibleSection } from '@/components/rpg/collapsible-section';
+import {
+  FeatureDiscoveryBadge,
+  FeatureDiscoveryHint,
+  FeatureDiscoveryTeaser,
+} from '@/components/rpg/feature-discovery-badge';
 import { GameLayout } from '@/constants/layout';
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
@@ -80,6 +85,16 @@ import {
   buildQuestReminderFields,
   type QuestReminderSelection,
 } from '@/lib/quest-reminders';
+import {
+  getAddQuestBehaviorToolsHint,
+  getFeatureIntroHint,
+  getFeatureUnlockTeaser,
+  getFeatureDiscoveryState,
+  getNewlyIntroducedFeaturesInAddQuest,
+  isFeatureNewlyIntroduced,
+  isFeatureUnlocked,
+  isGuidedFeatureDiscoveryActive,
+} from '@/lib/feature-discovery';
 
 type AddQuestSheetProps = {
   visible: boolean;
@@ -98,6 +113,7 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
     addQuestTraitSuggestionPrefill,
     isTodayFocusLocked,
     openQuestPackSheet,
+    setShowAdvancedFeatureTools,
   } = useGame();
   const { palette } = activeUniverse;
   const [title, setTitle] = useState('');
@@ -169,6 +185,36 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
     activeUniverse.id,
   );
   const atFocusLimit = todayFocusCount >= focusLimit;
+
+  const discoveryState = useMemo(
+    () => getFeatureDiscoveryState(playerProgress),
+    [playerProgress],
+  );
+  const guidedDiscoveryActive = useMemo(
+    () => isGuidedFeatureDiscoveryActive(playerProgress),
+    [playerProgress],
+  );
+  const showStarterTools = isFeatureUnlocked(playerProgress, 'starterMove');
+  const showPrepTools = isFeatureUnlocked(playerProgress, 'prepStep');
+  const showRewardTools = isFeatureUnlocked(playerProgress, 'rewardRitual');
+  const showRiskTools = isFeatureUnlocked(playerProgress, 'riskLevel');
+  const showFocusTools = isFeatureUnlocked(playerProgress, 'focusMode');
+  const showRepeatTools = isFeatureUnlocked(playerProgress, 'recurringQuest');
+  const behaviorToolsHint = useMemo(
+    () => getAddQuestBehaviorToolsHint(playerProgress),
+    [playerProgress],
+  );
+  const newlyIntroducedTools = useMemo(
+    () => getNewlyIntroducedFeaturesInAddQuest(playerProgress),
+    [playerProgress],
+  );
+  const hasNewBehaviorTools = newlyIntroducedTools.length > 0;
+
+  useEffect(() => {
+    if (visible && hasNewBehaviorTools) {
+      setBehaviorToolsOpen(true);
+    }
+  }, [visible, hasNewBehaviorTools]);
 
   const resetForm = () => {
     setTitle('');
@@ -637,6 +683,18 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
               <Text style={[styles.defaultsHint, { color: palette.accent }]}>{QUEST_DEFAULTS_APPLIED_COPY}</Text>
             ) : null}
 
+            {guidedDiscoveryActive && !discoveryState.showAdvancedTools ? (
+              <Pressable
+                onPress={() => setShowAdvancedFeatureTools(true)}
+                style={[styles.advancedToolsLink, { borderColor: palette.panelBorder }]}>
+                <Text style={[styles.advancedToolsLinkText, { color: palette.gold }]}>
+                  Show advanced tools
+                </Text>
+              </Pressable>
+            ) : null}
+
+            {showRepeatTools ? (
+              <>
             <Text style={[styles.label, { color: palette.gold }]}>REPEAT THIS QUEST</Text>
             <View style={styles.repeatOptions}>
               {(
@@ -730,15 +788,32 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
               </>
             )}
 
+              </>
+            ) : null}
+
+            {showStarterTools ? (
             <CollapsibleSection
               title="Optional behavior tools"
-              hint="Starter, prep, risk, and rewards — expand if helpful."
+              hint={behaviorToolsHint}
               expanded={behaviorToolsOpen}
               onToggle={() => setBehaviorToolsOpen((open) => !open)}
               palette={palette}>
+              {hasNewBehaviorTools ? (
+                <FeatureDiscoveryHint
+                  hint={getFeatureIntroHint(newlyIntroducedTools[0])}
+                  showTryThis
+                  palette={palette}
+                />
+              ) : null}
+
               <View style={[styles.toggleRow, { borderColor: palette.panelBorder }]}>
                 <View style={styles.toggleCopy}>
-                  <Text style={[styles.toggleLabel, { color: palette.bone }]}>{starterCopy.toggleLabel}</Text>
+                  <View style={styles.toggleTitleRow}>
+                    <Text style={[styles.toggleLabel, { color: palette.bone }]}>{starterCopy.toggleLabel}</Text>
+                    {isFeatureNewlyIntroduced(playerProgress, 'starterMove') ? (
+                      <FeatureDiscoveryBadge palette={palette} />
+                    ) : null}
+                  </View>
                   <Text style={[styles.toggleHint, { color: palette.fog }]}>{starterCopy.universeHint}</Text>
                 </View>
                 <Switch
@@ -768,6 +843,8 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
                 </View>
               )}
 
+              {showRiskTools ? (
+              <>
               <Text style={[styles.toolsLabel, { color: palette.gold }]}>QUEST RISK</Text>
               <View style={styles.riskOptions}>
                 {riskOptions.map((option) => {
@@ -808,6 +885,11 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
                 </View>
               )}
 
+              </>
+              ) : null}
+
+              {showPrepTools ? (
+              <>
               <View style={[styles.toggleRow, { borderColor: palette.panelBorder }]}>
                 <View style={styles.toggleCopy}>
                   <Text style={[styles.toggleLabel, { color: palette.bone }]}>{prepCopy.sectionLabel}</Text>
@@ -862,69 +944,11 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
                   />
                 </View>
               )}
+              </>
+              ) : null}
 
-              <View style={[styles.toggleRow, { borderColor: palette.panelBorder }]}>
-                <View style={styles.toggleCopy}>
-                  <Text style={[styles.toggleLabel, { color: palette.bone }]}>
-                    {preQuestRitualCopy.sectionPrompt}
-                  </Text>
-                  <Text style={[styles.toggleHint, { color: palette.fog }]}>
-                    {preQuestRitualCopy.helperText}
-                  </Text>
-                  <Text style={[styles.toggleHint, { color: palette.gold, fontStyle: 'italic' }]}>
-                    {preQuestRitualCopy.universeHint}
-                  </Text>
-                </View>
-                <Switch
-                  value={preQuestRitualEnabled}
-                  onValueChange={handleTogglePreQuestRitual}
-                  trackColor={{ false: palette.panelBorder, true: palette.primary }}
-                  thumbColor={preQuestRitualEnabled ? palette.gold : palette.fog}
-                />
-              </View>
-
-              {preQuestRitualEnabled && (
-                <View style={[styles.prepBox, { backgroundColor: palette.night, borderColor: palette.gold }]}>
-                  <Text style={[styles.prepLabel, { color: palette.gold }]}>START RITUAL</Text>
-                  <View style={styles.presetList}>
-                    {PRE_QUEST_RITUAL_PRESETS.map((preset) => {
-                      const selected = preQuestRitualTitle === preset;
-                      return (
-                        <Pressable
-                          key={preset}
-                          onPress={() => {
-                            void Haptics.selectionAsync();
-                            setPreQuestRitualTitle(preset);
-                          }}
-                          style={[
-                            styles.presetChip,
-                            {
-                              backgroundColor: selected ? palette.primary : palette.panel,
-                              borderColor: selected ? palette.gold : palette.panelBorder,
-                            },
-                          ]}>
-                          <Text
-                            style={[styles.presetChipText, { color: selected ? palette.bone : palette.fog }]}
-                            numberOfLines={2}>
-                            {preset}
-                          </Text>
-                        </Pressable>
-                      );
-                    })}
-                  </View>
-                  <TextInput
-                    value={isPresetPreQuestRitual(preQuestRitualTitle) ? '' : preQuestRitualTitle}
-                    onChangeText={setPreQuestRitualTitle}
-                    placeholder="Your own ritual…"
-                    placeholderTextColor={`${palette.fog}88`}
-                    style={[
-                      styles.input,
-                      { color: palette.bone, borderColor: palette.panelBorder, backgroundColor: palette.panel },
-                    ]}
-                  />
-                </View>
-              )}
-
+              {showRewardTools ? (
+              <>
               <View style={[styles.toggleRow, { borderColor: palette.panelBorder }]}>
                 <View style={styles.toggleCopy}>
                   <Text style={[styles.toggleLabel, { color: palette.bone }]}>{rewardCopy.sectionPrompt}</Text>
@@ -971,6 +995,67 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
                     value={isPresetAfterQuestReward(rewardTitle) ? '' : rewardTitle}
                     onChangeText={setRewardTitle}
                     placeholder="Your own reward…"
+                    placeholderTextColor={`${palette.fog}88`}
+                    style={[
+                      styles.input,
+                      { color: palette.bone, borderColor: palette.panelBorder, backgroundColor: palette.panel },
+                    ]}
+                  />
+                </View>
+              )}
+              </>
+              ) : null}
+
+              <View style={[styles.toggleRow, { borderColor: palette.panelBorder }]}>
+                <View style={styles.toggleCopy}>
+                  <Text style={[styles.toggleLabel, { color: palette.bone }]}>
+                    {preQuestRitualCopy.sectionPrompt}
+                  </Text>
+                  <Text style={[styles.toggleHint, { color: palette.fog }]}>
+                    {preQuestRitualCopy.helperText}
+                  </Text>
+                </View>
+                <Switch
+                  value={preQuestRitualEnabled}
+                  onValueChange={handleTogglePreQuestRitual}
+                  trackColor={{ false: palette.panelBorder, true: palette.primary }}
+                  thumbColor={preQuestRitualEnabled ? palette.gold : palette.fog}
+                />
+              </View>
+
+              {preQuestRitualEnabled && (
+                <View style={[styles.prepBox, { backgroundColor: palette.night, borderColor: palette.gold }]}>
+                  <Text style={[styles.prepLabel, { color: palette.gold }]}>START RITUAL</Text>
+                  <View style={styles.presetList}>
+                    {PRE_QUEST_RITUAL_PRESETS.map((preset) => {
+                      const selected = preQuestRitualTitle === preset;
+                      return (
+                        <Pressable
+                          key={preset}
+                          onPress={() => {
+                            void Haptics.selectionAsync();
+                            setPreQuestRitualTitle(preset);
+                          }}
+                          style={[
+                            styles.presetChip,
+                            {
+                              backgroundColor: selected ? palette.primary : palette.panel,
+                              borderColor: selected ? palette.gold : palette.panelBorder,
+                            },
+                          ]}>
+                          <Text
+                            style={[styles.presetChipText, { color: selected ? palette.bone : palette.fog }]}
+                            numberOfLines={2}>
+                            {preset}
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                  <TextInput
+                    value={isPresetPreQuestRitual(preQuestRitualTitle) ? '' : preQuestRitualTitle}
+                    onChangeText={setPreQuestRitualTitle}
+                    placeholder="Your own ritual…"
                     placeholderTextColor={`${palette.fog}88`}
                     style={[
                       styles.input,
@@ -1034,6 +1119,9 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
                   />
                   <View style={[styles.toggleRow, { borderColor: palette.panelBorder }]}>
                     <Text style={[styles.toggleLabel, { color: palette.bone }]}>Mark as daily focus</Text>
+                    {isFeatureNewlyIntroduced(playerProgress, 'focusMode') ? (
+                      <FeatureDiscoveryBadge palette={palette} />
+                    ) : null}
                     <Switch
                       value={markAsFocus}
                       onValueChange={(enabled) => {
@@ -1046,7 +1134,41 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
                   </View>
                 </View>
               )}
+
+              {showFocusTools &&
+              !markAsFocus &&
+              !plannedTimeLabel &&
+              !plannedLocation &&
+              !afterCurrentHabit &&
+              !planText ? (
+                <View style={[styles.toggleRow, { borderColor: palette.panelBorder }]}>
+                  <View style={styles.toggleCopy}>
+                    <Text style={[styles.toggleLabel, { color: palette.bone }]}>Mark as daily focus</Text>
+                    {isFeatureNewlyIntroduced(playerProgress, 'focusMode') ? (
+                      <FeatureDiscoveryBadge palette={palette} />
+                    ) : null}
+                    <Text style={[styles.toggleHint, { color: palette.fog }]}>
+                      {getFeatureIntroHint('focusMode')}
+                    </Text>
+                  </View>
+                  <Switch
+                    value={markAsFocus}
+                    onValueChange={(enabled) => {
+                      void Haptics.selectionAsync();
+                      setMarkAsFocus(enabled);
+                    }}
+                    trackColor={{ false: palette.panelBorder, true: palette.primary }}
+                    thumbColor={markAsFocus ? palette.gold : palette.fog}
+                  />
+                </View>
+              ) : null}
             </CollapsibleSection>
+            ) : guidedDiscoveryActive ? (
+              <FeatureDiscoveryTeaser
+                message={getFeatureUnlockTeaser('starterMove')}
+                palette={palette}
+              />
+            ) : null}
 
             <GlowButton
               label={confirmOverLimit ? 'CONTINUE ANYWAY' : ui.addQuestCreateLabel}
@@ -1196,6 +1318,24 @@ const styles = StyleSheet.create({
     fontSize: 11,
     lineHeight: 16,
     fontStyle: 'italic',
+  },
+  advancedToolsLink: {
+    borderWidth: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    alignItems: 'center',
+    transform: [{ skewX: '-2deg' }],
+  },
+  advancedToolsLinkText: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 10,
+    letterSpacing: 1.2,
+  },
+  toggleTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flexWrap: 'wrap',
   },
   toggleRow: {
     borderTopWidth: 1,

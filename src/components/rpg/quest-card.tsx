@@ -32,6 +32,7 @@ import { getTaskCategoryMeta } from '@/lib/task-categories';
 import { formatChainProgressLabel, isQuestChainParentBlocked, isQuestChainSplittable, shouldHighlightQuestChainSplit } from '@/lib/quest-chain';
 import { formatPreQuestRitualCardLine } from '@/lib/pre-quest-ritual';
 import { formatQuestReminderCue } from '@/lib/quest-reminders';
+import { isFeatureUnlocked } from '@/lib/feature-discovery';
 import type { BoardQuest } from '@/types/narrative';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -46,6 +47,7 @@ export function QuestCard({ quest, index, variant = 'default' }: QuestCardProps)
   const ui = useUniverseUiCopy();
   const {
     activeUniverse,
+    playerProgress,
     completeQuest,
     openQuestFocus,
     startQuestNow,
@@ -55,6 +57,10 @@ export function QuestCard({ quest, index, variant = 'default' }: QuestCardProps)
   } = useGame();
   const visualTheme = useUniverseVisualTheme();
   const { palette } = activeUniverse;
+  const showFocusMode = isFeatureUnlocked(playerProgress, 'focusMode');
+  const showQuestReadiness = isFeatureUnlocked(playerProgress, 'questReadiness');
+  const showFrictionReview = isFeatureUnlocked(playerProgress, 'frictionReview');
+  const showQuestChain = isFeatureUnlocked(playerProgress, 'questChain');
   const scale = useSharedValue(1);
   const panelBorder = getPanelBorderColor(palette, visualTheme);
   const accentColor = getPanelAccentColor(palette, visualTheme);
@@ -259,7 +265,7 @@ export function QuestCard({ quest, index, variant = 'default' }: QuestCardProps)
           </Text>
         </View>
 
-        {quest.source === 'user' && (quest.readinessScore != null || showRisk) && (
+        {quest.source === 'user' && showQuestReadiness && (quest.readinessScore != null || showRisk) && (
           <View style={[styles.metaRow, { borderTopColor: 'rgba(255,255,255,0.08)' }]}>
             {quest.readinessScore != null && (
               <Text style={[styles.metaLine, { color: palette.gold }]}>
@@ -306,6 +312,7 @@ export function QuestCard({ quest, index, variant = 'default' }: QuestCardProps)
         )}
 
         <View style={styles.actionRow}>
+          {showFocusMode ? (
           <Pressable
             onPress={(event) => {
               event.stopPropagation();
@@ -314,6 +321,7 @@ export function QuestCard({ quest, index, variant = 'default' }: QuestCardProps)
             style={[styles.focusButton, { borderColor: palette.gold, backgroundColor: palette.primary }]}>
             <Text style={[styles.focusButtonText, { color: palette.bone }]}>START FOCUS</Text>
           </Pressable>
+          ) : null}
 
           {quest.source === 'user' && !quest.isStarted && (
             <Pressable
@@ -326,7 +334,7 @@ export function QuestCard({ quest, index, variant = 'default' }: QuestCardProps)
             </Pressable>
           )}
 
-          {quest.source === 'user' && !isChainChild && (
+          {quest.source === 'user' && !isChainChild && showQuestReadiness && (
             <Pressable
               onPress={(event) => {
                 event.stopPropagation();
@@ -337,7 +345,7 @@ export function QuestCard({ quest, index, variant = 'default' }: QuestCardProps)
             </Pressable>
           )}
 
-          {canSplit && (
+          {canSplit && showQuestChain && (
             <Pressable
               onPress={(event) => {
                 event.stopPropagation();
@@ -360,7 +368,7 @@ export function QuestCard({ quest, index, variant = 'default' }: QuestCardProps)
             </Pressable>
           )}
 
-          {quest.source === 'user' && quest.showFrictionReview && (
+          {quest.source === 'user' && quest.showFrictionReview && showFrictionReview && (
             <Pressable
               onPress={(event) => {
                 event.stopPropagation();

@@ -104,6 +104,12 @@ import {
   dismissCoachTipForToday as recordCoachTipDismissed,
 } from '@/lib/contextual-coach-tip';
 import {
+  markFeatureDiscovered,
+  refreshFeatureDiscoveryState,
+  setGuidedFeatureDiscoveryEnabled,
+  setShowAdvancedFeatureTools as applyShowAdvancedFeatureTools,
+} from '@/lib/feature-discovery';
+import {
   activateMinimumViableDay as applyMinimumViableDayActivation,
   getMinimumViableDayCompletionFlavor,
   getMinimumViableDayCopy,
@@ -372,6 +378,8 @@ type GameContextValue = {
   clearRequestedQuestBoardTab: () => void;
   dismissNextBestActionForToday: () => void;
   dismissCoachTipForToday: (tipId: string) => void;
+  setGuidedFeatureDiscovery: (enabled: boolean) => void;
+  setShowAdvancedFeatureTools: (enabled: boolean) => void;
   hqScrollNonce: number;
   requestHqScrollToDailyAwareness: () => void;
   dismissXpBurst: () => void;
@@ -730,14 +738,16 @@ export function GameProvider({ children }: { children: ReactNode }) {
           ? markInboxItemConverted(prev.questInbox, convertFromInboxItemId)
           : prev.questInbox;
 
-        return recordRoutineQuestSpawned(
-          {
-            ...prev,
-            recurringQuestTemplates,
-            questInbox,
-            userQuests: pruneUserQuests([...prev.userQuests, quest]),
-          },
-          quest,
+        return refreshFeatureDiscoveryState(
+          recordRoutineQuestSpawned(
+            {
+              ...prev,
+              recurringQuestTemplates,
+              questInbox,
+              userQuests: pruneUserQuests([...prev.userQuests, quest]),
+            },
+            quest,
+          ),
         );
       });
     },
@@ -1020,12 +1030,19 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setFocusDecisiveMoment(false);
     setFocusQuestId(questId);
     if (!isUserQuestId(questId)) return;
-    setProgress((prev) => ({
-      ...prev,
-      userQuests: prev.userQuests.map((quest) =>
-        quest.id === questId ? recordFocusStartedActivity(quest) : quest,
+    setProgress((prev) =>
+      refreshFeatureDiscoveryState(
+        markFeatureDiscovered(
+          {
+            ...prev,
+            userQuests: prev.userQuests.map((quest) =>
+              quest.id === questId ? recordFocusStartedActivity(quest) : quest,
+            ),
+          },
+          'focusMode',
+        ),
       ),
-    }));
+    );
   }, []);
 
   const startQuestNow = useCallback((questId: string) => {
@@ -1048,6 +1065,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   const openImproveQuest = useCallback((questId: string) => {
     setImproveQuestId(questId);
+    setProgress((prev) => refreshFeatureDiscoveryState(markFeatureDiscovered(prev, 'questReadiness')));
   }, []);
 
   const closeImproveQuest = useCallback(() => {
@@ -1082,13 +1100,18 @@ export function GameProvider({ children }: { children: ReactNode }) {
             getLocalDateKey(),
           );
 
-          return {
-            ...prev,
-            userQuests: pruneUserQuests([
-              ...prev.userQuests.map((quest) => (quest.id === parentQuestId ? updatedParent : quest)),
-              ...childQuests,
-            ]),
-          };
+          return refreshFeatureDiscoveryState(
+            markFeatureDiscovered(
+              {
+                ...prev,
+                userQuests: pruneUserQuests([
+                  ...prev.userQuests.map((quest) => (quest.id === parentQuestId ? updatedParent : quest)),
+                  ...childQuests,
+                ]),
+              },
+              'questChain',
+            ),
+          );
         } catch {
           return prev;
         }
@@ -1193,23 +1216,30 @@ export function GameProvider({ children }: { children: ReactNode }) {
   );
 
   const recordFrictionReview = useCallback((questId: string, reason: QuestFrictionReason) => {
-    setProgress((prev) => ({
-      ...prev,
-      userQuests: prev.userQuests.map((quest) => {
-        if (quest.id !== questId) return quest;
+    setProgress((prev) =>
+      refreshFeatureDiscoveryState(
+        markFeatureDiscovered(
+          {
+            ...prev,
+            userQuests: prev.userQuests.map((quest) => {
+              if (quest.id !== questId) return quest;
 
-        const review = {
-          reason,
-          reviewedAt: new Date().toISOString(),
-          suggestedFixApplied: false,
-        };
+              const review = {
+                reason,
+                reviewedAt: new Date().toISOString(),
+                suggestedFixApplied: false,
+              };
 
-        return recordFrictionReviewActivity({
-          ...quest,
-          frictionReviews: [...(quest.frictionReviews ?? []), review].slice(-10),
-        });
-      }),
-    }));
+              return recordFrictionReviewActivity({
+                ...quest,
+                frictionReviews: [...(quest.frictionReviews ?? []), review].slice(-10),
+              });
+            }),
+          },
+          'frictionReview',
+        ),
+      ),
+    );
   }, []);
 
   const markFrictionFixApplied = useCallback((questId: string) => {
@@ -1322,8 +1352,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
     ) => {
       setProgress((prev) => {
         const withShutdown = recordDailyShutdown(prev, helpedBy, openQuestActions);
-        if (tomorrowSetup.kind === 'skip') return withShutdown;
-        return recordTomorrowSetup(withShutdown, tomorrowSetup);
+        const withSetup =
+          tomorrowSetup.kind === 'skip'
+            ? withShutdown
+            : markFeatureDiscovered(recordTomorrowSetup(withShutdown, tomorrowSetup), 'tomorrowSetup');
+        return refreshFeatureDiscoveryState(withSetup);
       });
     },
     [],
@@ -1331,7 +1364,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   const submitWeeklyReview = useCallback(
     (helpedFactors: WeeklyReviewHelpedFactor[], slowdownFactor: WeeklyReviewSlowdownFactor) => {
-      setProgress((prev) => recordWeeklyReview(prev, helpedFactors, slowdownFactor));
+      setProgress((prev) =>
+        refreshFeatureDiscoveryState(
+          markFeatureDiscovered(recordWeeklyReview(prev, helpedFactors, slowdownFactor), 'weeklyReview'),
+        ),
+      );
     },
     [],
   );
@@ -1353,7 +1390,19 @@ export function GameProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const dismissCoachTipForToday = useCallback((tipId: string) => {
-    setProgress((prev) => recordCoachTipDismissed(prev, tipId));
+    setProgress((prev) =>
+      refreshFeatureDiscoveryState(
+        markFeatureDiscovered(recordCoachTipDismissed(prev, tipId), 'coachTips'),
+      ),
+    );
+  }, []);
+
+  const setGuidedFeatureDiscovery = useCallback((enabled: boolean) => {
+    setProgress((prev) => setGuidedFeatureDiscoveryEnabled(prev, enabled));
+  }, []);
+
+  const setShowAdvancedFeatureTools = useCallback((enabled: boolean) => {
+    setProgress((prev) => applyShowAdvancedFeatureTools(prev, enabled));
   }, []);
 
   const requestHqScrollToDailyAwareness = useCallback(() => {
@@ -1586,7 +1635,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
               }
             : withRoutine;
 
-        return applyMomentumGain(withChainParent, momentumGain).progress;
+        return refreshFeatureDiscoveryState(applyMomentumGain(withChainParent, momentumGain).progress);
       });
 
       const chapterAllDone = chapterDoneCount === currentChapter.questTemplates.length;
@@ -2051,6 +2100,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       clearRequestedQuestBoardTab,
       dismissNextBestActionForToday,
       dismissCoachTipForToday,
+      setGuidedFeatureDiscovery,
+      setShowAdvancedFeatureTools,
       hqScrollNonce,
       requestHqScrollToDailyAwareness,
       dismissXpBurst,
@@ -2200,6 +2251,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       clearRequestedQuestBoardTab,
       dismissNextBestActionForToday,
       dismissCoachTipForToday,
+      setGuidedFeatureDiscovery,
+      setShowAdvancedFeatureTools,
       hqScrollNonce,
       requestHqScrollToDailyAwareness,
       startQuestNow,

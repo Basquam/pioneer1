@@ -199,6 +199,13 @@ import {
   isCoachTipDismissedToday,
 } from '../src/lib/contextual-coach-tip';
 import {
+  computeDiscoveryTier,
+  createDefaultFeatureDiscoveryState,
+  isFeatureUnlocked,
+  refreshFeatureDiscoveryState,
+  setGuidedFeatureDiscoveryEnabled,
+} from '../src/lib/feature-discovery';
+import {
   addStarterToRecurringQuestTemplate,
   createRecurringQuestTemplate,
   lowerRecurringQuestTemplateDifficulty,
@@ -266,6 +273,7 @@ function baseProgress(): PlayerProgress {
     monthlyReviewSeenByMonth: {},
     dismissedNextBestActionByDate: {},
     dismissedCoachTipsByDate: {},
+    featureDiscoveryState: createDefaultFeatureDiscoveryState(),
     minimumViableDayByDate: {},
     tomorrowSetupByDate: {},
   } as PlayerProgress;
@@ -1563,6 +1571,37 @@ const neuronetTip = getContextualCoachTip({
   today: loadToday,
 });
 assert(neuronetTip?.universeFlavorLabel === 'Signal Guidance', 'coach tip neuronet flavor');
+
+// Feature discovery
+const freshDiscovery = createDefaultFeatureDiscoveryState();
+assert(freshDiscovery.guidedDiscoveryEnabled === true, 'feature discovery guided default');
+assert(computeDiscoveryTier(loadBaseProgress) === 0, 'feature discovery tier zero baseline');
+const afterQuestProgress = refreshFeatureDiscoveryState({
+  ...loadBaseProgress,
+  userQuests: [
+    {
+      ...simulateAddUserQuest(loadBaseProgress, 'dust-and-iron'),
+      id: createUserQuestId(),
+      createdOnDate: loadToday,
+      isCompleted: true,
+      completedAt: new Date().toISOString(),
+    },
+  ],
+});
+assert(computeDiscoveryTier(afterQuestProgress) >= 1, 'feature discovery tier after completion');
+assert(isFeatureUnlocked(afterQuestProgress, 'focusMode'), 'focus unlocked after first completion');
+const veteranProgress = setGuidedFeatureDiscoveryEnabled(
+  {
+    ...loadBaseProgress,
+    userQuests: makeTodayQuests(4),
+    activityByDate: {
+      [loadToday]: { questsCompleted: 2, xpEarned: 20, reputationEarned: 4, chaptersCompleted: 0, highRiskQuestsCompleted: 0 },
+      '2026-05-26': { questsCompleted: 1, xpEarned: 10, reputationEarned: 2, chaptersCompleted: 0, highRiskQuestsCompleted: 0 },
+    },
+  },
+  false,
+);
+assert(veteranProgress.featureDiscoveryState.guidedDiscoveryEnabled === false, 'guided discovery off for veterans');
 
 if (failures.length) {
   console.error('FAILED:\n' + failures.map((f) => ` - ${f}`).join('\n'));

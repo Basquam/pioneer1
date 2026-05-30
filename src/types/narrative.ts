@@ -608,6 +608,32 @@ export type EvidenceEvent = {
   source: EvidenceEventSource;
 };
 
+export type FeatureDiscoveryKey =
+  | 'starterMove'
+  | 'prepStep'
+  | 'rewardRitual'
+  | 'riskLevel'
+  | 'focusMode'
+  | 'frictionReview'
+  | 'questChain'
+  | 'recurringQuest'
+  | 'tomorrowSetup'
+  | 'weeklyReview'
+  | 'coachTips'
+  | 'identityVotes'
+  | 'questReadiness'
+  | 'systemsInsight';
+
+export type FeatureDiscoveryFlags = Partial<Record<FeatureDiscoveryKey, true>>;
+
+export type FeatureDiscoveryState = {
+  guidedDiscoveryEnabled: boolean;
+  showAdvancedTools: boolean;
+  discovered: FeatureDiscoveryFlags;
+  introduced: Partial<Record<FeatureDiscoveryKey, string>>;
+  currentTier: number;
+};
+
 export type PlayerProgress = {
   hasOnboarded: boolean;
   /** First-session HQ tutorial — shown once after onboarding. */
@@ -678,6 +704,8 @@ export type PlayerProgress = {
   dismissedNextBestActionByDate: Record<string, boolean>;
   /** Coach tip ids dismissed per local date (YYYY-MM-DD). */
   dismissedCoachTipsByDate: Record<string, string[]>;
+  /** Progressive feature disclosure — guided unlocks and discovery tracking. */
+  featureDiscoveryState: FeatureDiscoveryState;
   /** Minimum viable / low-energy day mode keyed by local date (YYYY-MM-DD). */
   minimumViableDayByDate: Record<string, MinimumViableDayEntry>;
   /** Prime-tomorrow setup keyed by the local date it applies to (YYYY-MM-DD). */

@@ -6,11 +6,11 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
 import { getTraitForCategory } from '@/lib/identity-votes';
-import {
-  getContextualCoachTip,
+import { getContextualCoachTip,
   type CoachTip,
   type CoachTipActionType,
 } from '@/lib/contextual-coach-tip';
+import { isFeatureUnlocked } from '@/lib/feature-discovery';
 import { getLocalDateKey } from '@/lib/daily-streak';
 import { getTomorrowSetupForDate } from '@/lib/tomorrow-setup';
 import type { PlayerProgress } from '@/types/narrative';
@@ -41,6 +41,10 @@ export function ContextualCoachTipCard() {
   );
 
   if (!tip) return null;
+
+  if (!isFeatureUnlocked(playerProgress, 'coachTips')) {
+    return null;
+  }
 
   const handleDismiss = () => {
     void Haptics.selectionAsync();

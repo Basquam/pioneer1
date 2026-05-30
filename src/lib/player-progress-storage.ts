@@ -31,6 +31,11 @@ import { sanitizeDismissedNextBestActionByDate } from '@/lib/next-best-action';
 import {
   sanitizeDismissedCoachTipsByDate,
 } from '@/lib/contextual-coach-tip';
+import {
+  createDefaultFeatureDiscoveryState,
+  refreshFeatureDiscoveryState,
+  sanitizeFeatureDiscoveryState,
+} from '@/lib/feature-discovery';
 import { sanitizeMinimumViableDayByDate } from '@/lib/minimum-viable-day';
 import { sanitizeTomorrowSetupByDate } from '@/lib/tomorrow-setup';
 import {
@@ -199,6 +204,7 @@ export function createInitialProgress(): PlayerProgress {
     monthlyReviewSeenByMonth: {},
     dismissedNextBestActionByDate: {},
     dismissedCoachTipsByDate: {},
+    featureDiscoveryState: createDefaultFeatureDiscoveryState(),
     minimumViableDayByDate: {},
     tomorrowSetupByDate: {},
     recurringQuestTemplates: [],
@@ -271,6 +277,9 @@ function normalizeProgress(raw: Partial<PlayerProgress> & Record<string, unknown
     dismissedCoachTipsByDate: sanitizeDismissedCoachTipsByDate(
       raw.dismissedCoachTipsByDate ?? base.dismissedCoachTipsByDate,
     ),
+    featureDiscoveryState: sanitizeFeatureDiscoveryState(
+      raw.featureDiscoveryState ?? base.featureDiscoveryState,
+    ),
     minimumViableDayByDate: sanitizeMinimumViableDayByDate(
       raw.minimumViableDayByDate ?? base.minimumViableDayByDate,
     ),
@@ -305,23 +314,29 @@ function normalizeProgress(raw: Partial<PlayerProgress> & Record<string, unknown
     ...sagaMaps,
   });
 
-  return sanitizePersistedProgress({
-    ...merged,
-    ...sagaMaps,
-    lastSagaByUniverseId,
-    selectedUniverseId: merged.selectedUniverseId,
-    selectedSagaId: merged.selectedSagaId,
-    currentChapterId: merged.currentChapterId || sagaMaps.currentChapterId,
-    activeChapterBySagaId: {
-      ...sagaMaps.activeChapterBySagaId,
-      ...merged.activeChapterBySagaId,
-    },
-    villainInfluenceBySaga: {
-      ...merged.villainInfluenceBySaga,
-      [merged.selectedSagaId]: merged.villainInfluenceBySaga[merged.selectedSagaId] ?? 100,
-    },
-    userQuests: sanitizeUserQuestList(merged.userQuests),
-  });
+  return refreshFeatureDiscoveryState(
+    sanitizePersistedProgress({
+      ...merged,
+      ...sagaMaps,
+      lastSagaByUniverseId,
+      selectedUniverseId: merged.selectedUniverseId,
+      selectedSagaId: merged.selectedSagaId,
+      currentChapterId: merged.currentChapterId || sagaMaps.currentChapterId,
+      activeChapterBySagaId: {
+        ...sagaMaps.activeChapterBySagaId,
+        ...merged.activeChapterBySagaId,
+      },
+      villainInfluenceBySaga: {
+        ...merged.villainInfluenceBySaga,
+        [merged.selectedSagaId]: merged.villainInfluenceBySaga[merged.selectedSagaId] ?? 100,
+      },
+      userQuests: sanitizeUserQuestList(merged.userQuests),
+      featureDiscoveryState: sanitizeFeatureDiscoveryState(
+        merged.featureDiscoveryState,
+        merged,
+      ),
+    }),
+  );
 }
 
 export async function loadPlayerProgress(): Promise<PlayerProgress | null> {

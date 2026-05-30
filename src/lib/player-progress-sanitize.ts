@@ -30,6 +30,10 @@ import {
   sanitizeDismissedCoachTipsByDate,
 } from '@/lib/contextual-coach-tip';
 import {
+  refreshFeatureDiscoveryState,
+  sanitizeFeatureDiscoveryState,
+} from '@/lib/feature-discovery';
+import {
   pruneMinimumViableDayByDate,
   sanitizeMinimumViableDayByDate,
 } from '@/lib/minimum-viable-day';
@@ -379,7 +383,7 @@ export function sanitizePersistedProgress(progress: PlayerProgress): PlayerProgr
     progress.dailyShutdownDismissedDates,
   ).filter((dateKey) => dateKey >= cutoffKey);
 
-  return {
+  return refreshFeatureDiscoveryState({
     ...progress,
     userQuests: pruneUserQuests(sanitizeUserQuestList(progress.userQuests)),
     activityByDate: sanitizeActivityByDate(progress.activityByDate),
@@ -416,7 +420,11 @@ export function sanitizePersistedProgress(progress: PlayerProgress): PlayerProgr
     desiredIdentityTraits: sanitizeDesiredIdentityTraits(progress.desiredIdentityTraits),
     questStyleProfile: sanitizeQuestStyleProfile(progress.questStyleProfile),
     reminderPreferences: sanitizeReminderPreferences(progress.reminderPreferences),
-  };
+    featureDiscoveryState: sanitizeFeatureDiscoveryState(
+      progress.featureDiscoveryState,
+      progress,
+    ),
+  });
 }
 
 export { EMPTY_ACTIVITY };

@@ -19,6 +19,13 @@ import { WeeklyRecapCard } from '@/components/rpg/weekly-recap-card';
 import { MonthlySeasonReportCard } from '@/components/rpg/monthly-season-report-card';
 import { MinimumViableDayProfileStat } from '@/components/rpg/minimum-viable-day-profile-stat';
 import { RoutineMaintenancePanel } from '@/components/rpg/routine-maintenance-panel';
+import { FeatureDiscoverySettings } from '@/components/rpg/feature-discovery-settings';
+import { FeatureDiscoveryGate } from '@/components/rpg/feature-discovery-gate';
+import {
+  FeatureDiscoveryBadge,
+  FeatureDiscoveryHint,
+} from '@/components/rpg/feature-discovery-badge';
+import { isFeatureNewlyIntroduced } from '@/lib/feature-discovery';
 import { QuestCalendarPanel } from '@/components/rpg/quest-calendar-panel';
 import { SystemsInsightPanel } from '@/components/rpg/systems-insight-panel';
 import { GoldilocksCoachPanel } from '@/components/rpg/goldilocks-coach-panel';
@@ -192,6 +199,13 @@ export function ProfileScreen() {
         <ProfileSection
           title="BECOMING"
           hint="Every quest is evidence of who you are becoming.">
+          {isFeatureNewlyIntroduced(playerProgress, 'identityVotes') ? (
+            <FeatureDiscoveryHint
+              hint="Each completed quest adds a quiet vote for who you are becoming."
+              showTryThis
+              palette={activeUniverse.palette}
+            />
+          ) : null}
           <Pressable
             onPress={() => setIdentityCompassVisible(true)}
             style={[styles.compassEditButton, { borderColor: activeUniverse.palette.gold }]}>
@@ -215,16 +229,36 @@ export function ProfileScreen() {
           <MinimumViableDayProfileStat />
           <TodayFocusDisplay variant="profile" />
           <QuestCalendarPanel />
-          <SystemsInsightPanel onEditIdentityCompass={() => setIdentityCompassVisible(true)} />
+          <FeatureDiscoveryGate
+            progress={playerProgress}
+            feature="systemsInsight"
+            palette={activeUniverse.palette}>
+            <SystemsInsightPanel onEditIdentityCompass={() => setIdentityCompassVisible(true)} />
+          </FeatureDiscoveryGate>
           <GoldilocksCoachPanel />
-          <DailyShutdownBanner variant="profile" />
-          <WeeklyRecapCard />
+          <FeatureDiscoveryGate
+            progress={playerProgress}
+            feature="tomorrowSetup"
+            palette={activeUniverse.palette}>
+            <DailyShutdownBanner variant="profile" />
+          </FeatureDiscoveryGate>
+          <FeatureDiscoveryGate
+            progress={playerProgress}
+            feature="weeklyReview"
+            palette={activeUniverse.palette}>
+            <WeeklyRecapCard />
+          </FeatureDiscoveryGate>
           <MonthlySeasonReportCard />
           <RoutineMaintenancePanel />
         </ProfileSection>
 
         <ProfileSection title="RECURRING QUESTS">
-          <RecurringQuestsPanel />
+          <FeatureDiscoveryGate
+            progress={playerProgress}
+            feature="recurringQuest"
+            palette={activeUniverse.palette}>
+            <RecurringQuestsPanel />
+          </FeatureDiscoveryGate>
         </ProfileSection>
 
         <ProfileSection title="RELATIONSHIPS">
@@ -266,6 +300,7 @@ export function ProfileScreen() {
         </ProfileSection>
 
         <ProfileSection title="SETTINGS">
+          <FeatureDiscoverySettings />
           <Pressable
             onPress={() => setQuestStyleVisible(true)}
             style={[styles.questStyleButton, { borderColor: activeUniverse.palette.panelBorder, backgroundColor: activeUniverse.palette.panel }]}>
