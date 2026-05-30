@@ -1,9 +1,11 @@
 import { useGame } from '@/hooks/use-game';
 import {
+  isChapterRewardPayload,
+  isCharacterReactionPayload,
+  isQuestCompletionPayload,
+} from '@/lib/celebration-payload';
+import {
   isFullScreenRewardEvent,
-  type ChapterRewardPayload,
-  type CharacterReactionPayload,
-  type QuestCompletionPayload,
 } from '@/lib/reward-event-queue';
 
 import { CelebrationToast } from '@/components/rpg/celebration-toast';
@@ -17,29 +19,39 @@ export function CelebrationOverlay() {
   if (!activeCelebration) return null;
 
   if (activeCelebration.type === 'questCompletion') {
+    if (!isQuestCompletionPayload(activeCelebration.payload)) {
+      dismissCelebration();
+      return null;
+    }
     return (
       <QuestCompletionCelebration
         event={activeCelebration}
-        payload={activeCelebration.payload as QuestCompletionPayload}
+        payload={activeCelebration.payload}
         onDismiss={dismissCelebration}
       />
     );
   }
 
   if (activeCelebration.type === 'characterReaction') {
+    if (!isCharacterReactionPayload(activeCelebration.payload)) {
+      dismissCelebration();
+      return null;
+    }
     return (
       <CharacterReactionCelebration
         event={activeCelebration}
-        payload={activeCelebration.payload as CharacterReactionPayload}
+        payload={activeCelebration.payload}
         onDismiss={dismissCelebration}
       />
     );
   }
 
   if (activeCelebration.type === 'chapterReward' || activeCelebration.type === 'storyUnlock') {
-    return (
-      <ChapterCompleteOverlay chapterComplete={activeCelebration.payload as ChapterRewardPayload} />
-    );
+    if (!isChapterRewardPayload(activeCelebration.payload)) {
+      dismissCelebration();
+      return null;
+    }
+    return <ChapterCompleteOverlay chapterComplete={activeCelebration.payload} />;
   }
 
   if (isFullScreenRewardEvent(activeCelebration.type)) {

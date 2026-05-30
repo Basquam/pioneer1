@@ -299,7 +299,7 @@ export function QuestsScreen() {
             <CollapsibleSection
               key={group.dateKey}
               title={`${group.label} · ${group.quests.length}`}
-              hint={group.dateKey === today ? 'Today’s wins' : 'Tap to expand'}
+              hint={group.dateKey === today ? "Today's wins" : 'Tap to expand'}
               expanded={expanded}
               onToggle={() => toggleCompletedGroup(group.dateKey)}
               palette={palette}

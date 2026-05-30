@@ -158,6 +158,65 @@ export function QuestCard({ quest, index, variant = 'default' }: QuestCardProps)
     openSplitQuestChain(quest.id);
   };
 
+  const secondaryBadges: Array<{ key: string; label: string; backgroundColor: string; borderColor?: string; textColor: string; borderWidth?: number }> = [];
+  if (lockedFocus) {
+    secondaryBadges.push({
+      key: 'locked',
+      label: focusLockCopy.lockedQuestBadge,
+      backgroundColor: palette.primary,
+      borderColor: goldAccent,
+      borderWidth: 1,
+      textColor: goldAccent,
+    });
+  } else if (quest.source === 'user' && quest.isDailyFocus) {
+    secondaryBadges.push({
+      key: 'focus',
+      label: ui.focusQuestLabel,
+      backgroundColor: goldAccent,
+      textColor: palette.void,
+    });
+  }
+  if (isChainChild && quest.chainStepOrder != null) {
+    secondaryBadges.push({
+      key: 'step',
+      label: `STEP ${quest.chainStepOrder}`,
+      backgroundColor: palette.night,
+      borderColor: palette.gold,
+      borderWidth: 1,
+      textColor: palette.gold,
+    });
+  } else if (isChainParent) {
+    secondaryBadges.push({
+      key: 'chain',
+      label: 'CHAIN',
+      backgroundColor: palette.primary,
+      borderColor: palette.gold,
+      borderWidth: 1,
+      textColor: palette.bone,
+    });
+  }
+  if (quest.source === 'user' && quest.isRecurring) {
+    secondaryBadges.push({
+      key: 'recurring',
+      label: 'RECURRING',
+      backgroundColor: palette.primary,
+      borderColor: palette.accent,
+      borderWidth: 1,
+      textColor: palette.accent,
+    });
+  }
+  if (quest.isStarted) {
+    secondaryBadges.push({
+      key: 'started',
+      label: 'STARTED',
+      backgroundColor: palette.night,
+      borderColor: palette.accent,
+      borderWidth: 1,
+      textColor: palette.accent,
+    });
+  }
+  const visibleSecondaryBadges = secondaryBadges.slice(0, 2);
+
   return (
     <AnimatedPressable
       entering={FadeInDown.delay(index * 100).springify()}
@@ -184,48 +243,23 @@ export function QuestCard({ quest, index, variant = 'default' }: QuestCardProps)
                 {categoryMeta.icon} {categoryMeta.label.toUpperCase()}
               </Text>
             </View>
-            {lockedFocus && (
-              <View style={[styles.badge, { backgroundColor: palette.primary, borderWidth: 1, borderColor: goldAccent }]}>
-                <Text style={[styles.badgeText, { color: goldAccent }]} numberOfLines={1}>
-                  {focusLockCopy.lockedQuestBadge}
+            {visibleSecondaryBadges.map((badge) => (
+              <View
+                key={badge.key}
+                style={[
+                  styles.badge,
+                  {
+                    backgroundColor: badge.backgroundColor,
+                    ...(badge.borderColor
+                      ? { borderWidth: badge.borderWidth ?? 1, borderColor: badge.borderColor }
+                      : {}),
+                  },
+                ]}>
+                <Text style={[styles.badgeText, { color: badge.textColor }]} numberOfLines={1}>
+                  {badge.label}
                 </Text>
               </View>
-            )}
-            {!lockedFocus && quest.source === 'user' && quest.isDailyFocus && (
-              <View style={[styles.badge, { backgroundColor: goldAccent }]}>
-                <Text style={[styles.badgeText, { color: palette.void }]} numberOfLines={1}>
-                  {ui.focusQuestLabel}
-                </Text>
-              </View>
-            )}
-            {quest.source === 'user' && quest.isRecurring && (
-              <View style={[styles.badge, { backgroundColor: palette.primary, borderWidth: 1, borderColor: palette.accent }]}>
-                <Text style={[styles.badgeText, { color: palette.accent }]} numberOfLines={1}>
-                  RECURRING
-                </Text>
-              </View>
-            )}
-            {quest.isStarted && (
-              <View style={[styles.badge, { backgroundColor: palette.night, borderWidth: 1, borderColor: palette.accent }]}>
-                <Text style={[styles.badgeText, { color: palette.accent }]} numberOfLines={1}>
-                  STARTED
-                </Text>
-              </View>
-            )}
-            {isChainChild && quest.chainStepOrder != null && (
-              <View style={[styles.badge, { backgroundColor: palette.night, borderWidth: 1, borderColor: palette.gold }]}>
-                <Text style={[styles.badgeText, { color: palette.gold }]} numberOfLines={1}>
-                  STEP {quest.chainStepOrder}
-                </Text>
-              </View>
-            )}
-            {isChainParent && (
-              <View style={[styles.badge, { backgroundColor: palette.primary, borderWidth: 1, borderColor: palette.gold }]}>
-                <Text style={[styles.badgeText, { color: palette.bone }]} numberOfLines={1}>
-                  CHAIN
-                </Text>
-              </View>
-            )}
+            ))}
           </View>
           {!isChainParent ? (
             <Text style={[styles.xp, { color: goldAccent }]} numberOfLines={1}>

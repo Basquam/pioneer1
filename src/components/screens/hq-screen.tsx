@@ -37,6 +37,7 @@ export function HqScreen() {
     isSagaPreview,
     maybeShowVillainTaunt,
     hqScrollNonce,
+    activeInboxItems,
   } = useGame();
   const [sagaSwitcherVisible, setSagaSwitcherVisible] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
@@ -81,8 +82,12 @@ export function HqScreen() {
 
         <DailyOperationsBriefing />
 
-        <SectionLabel>QUEST INBOX</SectionLabel>
-        <QuestInboxPanel />
+        {activeInboxItems.length > 0 ? (
+          <>
+            <SectionLabel>QUEST INBOX</SectionLabel>
+            <QuestInboxPanel />
+          </>
+        ) : null}
 
         <View
           collapsable={false}

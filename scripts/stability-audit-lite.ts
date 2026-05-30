@@ -220,6 +220,10 @@ import {
 } from '../src/lib/player-progress-migration';
 import { restorePlayerProgress } from '../src/lib/player-progress-storage';
 import {
+  isChapterRewardPayload,
+  isQuestCompletionPayload,
+} from '../src/lib/celebration-payload';
+import {
   advanceRewardQueue,
   buildQuestCompleteCelebrationEvents,
   createRewardEvent,
@@ -1712,6 +1716,23 @@ const duplicateQueue = enqueueRewardEvents(queue, [
   }),
 ]);
 assert(duplicateQueue.length === queue.length, 'duplicate event ids ignored');
+
+// Product freeze: save roundtrip + celebration payloads
+const roundtripProgress = restorePlayerProgress(JSON.parse(JSON.stringify(baseProgress())));
+assert(roundtripProgress.schemaVersion === CURRENT_PLAYER_PROGRESS_SCHEMA_VERSION, 'save json roundtrip schema');
+assert(roundtripProgress.totalXp === baseProgress().totalXp, 'save json roundtrip xp');
+
+assert(
+  isQuestCompletionPayload({
+    questId: 'q1',
+    source: 'user',
+    narrativeTitle: 'Test',
+    earnedXp: 10,
+    earnedReputation: 2,
+  }),
+  'quest completion payload validator',
+);
+assert(!isChapterRewardPayload({ chapterId: 'x' }), 'chapter payload rejects partial');
 
 if (failures.length) {
   console.error('FAILED:\n' + failures.map((f) => ` - ${f}`).join('\n'));

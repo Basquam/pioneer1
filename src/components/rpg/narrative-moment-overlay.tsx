@@ -10,9 +10,11 @@ import { useUniverseUiCopy } from '@/lib/universe-ui-copy';
 
 export function NarrativeMomentOverlay() {
   const ui = useUniverseUiCopy();
-  const { activeUniverse, activeSaga, narrativeMoment, dismissNarrativeMoment } = useGame();
+  const { activeUniverse, activeSaga, narrativeMoment, dismissNarrativeMoment, isCelebrationActive } =
+    useGame();
   const { palette } = activeUniverse;
 
+  if (isCelebrationActive) return null;
   if (!narrativeMoment || narrativeMoment.type !== 'villain_taunt') return null;
 
   const character = getCharacter(activeSaga, narrativeMoment.characterId);

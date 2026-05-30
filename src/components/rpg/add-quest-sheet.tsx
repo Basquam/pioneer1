@@ -210,12 +210,6 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
   );
   const hasNewBehaviorTools = newlyIntroducedTools.length > 0;
 
-  useEffect(() => {
-    if (visible && hasNewBehaviorTools) {
-      setBehaviorToolsOpen(true);
-    }
-  }, [visible, hasNewBehaviorTools]);
-
   const resetForm = () => {
     setTitle('');
     setCategory(null);
