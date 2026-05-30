@@ -81,6 +81,7 @@ export type CreateUserQuestOptions = {
   starterTaskTitle?: string;
   prepStepTitle?: string;
   afterQuestReward?: string;
+  preQuestRitual?: string;
   riskLevel?: QuestRiskLevel;
   generatedFromRecurringQuestId?: string;
   plannedTimeLabel?: string;
@@ -122,6 +123,7 @@ export function createUserQuestFromTask(
     ...(options?.starterTaskTitle ? { starterTaskTitle: options.starterTaskTitle.trim() } : {}),
     ...(options?.prepStepTitle ? { prepStepTitle: options.prepStepTitle.trim() } : {}),
     ...(options?.afterQuestReward ? { afterQuestReward: options.afterQuestReward.trim() } : {}),
+    ...(options?.preQuestRitual ? { preQuestRitual: options.preQuestRitual.trim() } : {}),
     riskLevel: options?.riskLevel ?? 'standard',
     ...(options?.generatedFromRecurringQuestId
       ? { generatedFromRecurringQuestId: options.generatedFromRecurringQuestId }

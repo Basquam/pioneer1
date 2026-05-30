@@ -276,6 +276,8 @@ export type UserQuest = {
   startedAt?: string;
   /** Optional real-life reward paired with completing this quest. */
   afterQuestReward?: string;
+  /** Optional enjoyable ritual before starting this quest. */
+  preQuestRitual?: string;
   /** Goldilocks risk sizing — low, standard, or high. */
   riskLevel?: QuestRiskLevel;
   /** Last distraction noted in Focus Mode — optional session note. */
@@ -403,6 +405,7 @@ export type BoardQuest = {
   /** True when the quest has a recorded start moment. */
   isStarted?: boolean;
   afterQuestReward?: string;
+  preQuestRitual?: string;
   riskLevel?: QuestRiskLevel;
   lastFocusDistraction?: QuestDistractionType;
   frictionShieldAppliedAt?: string;

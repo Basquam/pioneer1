@@ -30,6 +30,7 @@ import {
 } from '@/lib/motion-vs-action';
 import { getTaskCategoryMeta } from '@/lib/task-categories';
 import { formatChainProgressLabel, isQuestChainParentBlocked, isQuestChainSplittable, shouldHighlightQuestChainSplit } from '@/lib/quest-chain';
+import { formatPreQuestRitualCardLine } from '@/lib/pre-quest-ritual';
 import type { BoardQuest } from '@/types/narrative';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -276,6 +277,12 @@ export function QuestCard({ quest, index, variant = 'default' }: QuestCardProps)
           </View>
         )}
 
+        {quest.source === 'user' && quest.preQuestRitual?.trim() ? (
+          <Text style={[styles.ritualLine, { color: palette.fog }]} numberOfLines={2}>
+            {formatPreQuestRitualCardLine(quest.preQuestRitual, activeUniverse.id)}
+          </Text>
+        ) : null}
+
         {quest.source === 'user' && quest.isTooMuchMotion && (
           <View style={[styles.motionGuardBox, { borderColor: palette.accent, backgroundColor: `${palette.primary}33` }]}>
             <Text style={[styles.motionGuardPrompt, { color: palette.bone }]}>{MOTION_GUARD_CARD_PROMPT}</Text>
@@ -434,6 +441,13 @@ const styles = StyleSheet.create({
     fontSize: 11,
     lineHeight: 15,
     fontStyle: 'italic',
+  },
+  ritualLine: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 10,
+    letterSpacing: 0.4,
+    lineHeight: 14,
+    marginTop: 2,
   },
   motionGuardBox: {
     borderWidth: 1,

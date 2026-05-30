@@ -43,6 +43,12 @@ import {
   isPresetAfterQuestReward,
 } from '@/lib/after-quest-reward';
 import {
+  getDefaultPreQuestRitualPreset,
+  getPreQuestRitualCopy,
+  isPresetPreQuestRitual,
+  PRE_QUEST_RITUAL_PRESETS,
+} from '@/lib/pre-quest-ritual';
+import {
   getDefaultRecoveryCategory,
   getDefaultRecoveryTaskTitle,
   RECOVERY_QUEST_CATEGORIES,
@@ -94,6 +100,8 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
   const [prepStepTitle, setPrepStepTitle] = useState('');
   const [rewardEnabled, setRewardEnabled] = useState(false);
   const [rewardTitle, setRewardTitle] = useState('');
+  const [preQuestRitualEnabled, setPreQuestRitualEnabled] = useState(false);
+  const [preQuestRitualTitle, setPreQuestRitualTitle] = useState('');
   const [riskLevel, setRiskLevel] = useState<QuestRiskLevel>(DEFAULT_QUEST_RISK_LEVEL);
   const [behaviorToolsOpen, setBehaviorToolsOpen] = useState(false);
   const [repeatMode, setRepeatMode] = useState<'none' | RecurrenceType>('none');
@@ -109,6 +117,7 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
   const starterCopy = getStarterToggleCopy(activeUniverse.id);
   const prepCopy = getQuestPrepCopy(activeUniverse.id);
   const rewardCopy = getAfterQuestRewardCopy(activeUniverse.id);
+  const preQuestRitualCopy = getPreQuestRitualCopy(activeUniverse.id);
   const focusLockCopy = getFocusLockCopy(activeUniverse.id);
   const prepPresets = useMemo(() => (category ? getPrepPresets(category) : []), [category]);
   const riskOptions = useMemo(() => getQuestRiskOptions(), []);
@@ -160,6 +169,8 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
     setPrepStepTitle('');
     setRewardEnabled(false);
     setRewardTitle('');
+    setPreQuestRitualEnabled(false);
+    setPreQuestRitualTitle('');
     setRiskLevel(DEFAULT_QUEST_RISK_LEVEL);
     setBehaviorToolsOpen(false);
     setRepeatMode('none');
@@ -238,6 +249,7 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
     const starter = easierToStart ? starterTitle.trim() || suggestedStarter : '';
     const prep = prepEnabled ? prepStepTitle.trim() : '';
     const reward = rewardEnabled ? rewardTitle.trim() : '';
+    const preQuestRitual = preQuestRitualEnabled ? preQuestRitualTitle.trim() : '';
     const todayWeekday = getWeekdayKeyForDate(getLocalDateKey());
     const weeklyDays =
       preferredDays.size > 0 ? Array.from(preferredDays) : [todayWeekday];
@@ -255,6 +267,7 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
       ...(starter ? { starterTaskTitle: starter } : {}),
       ...(prep ? { prepStepTitle: prep } : {}),
       ...(reward ? { afterQuestReward: reward } : {}),
+      ...(preQuestRitual ? { preQuestRitual } : {}),
       riskLevel,
       ...(recurring ? { recurring } : {}),
       ...(plannedTimeLabel.trim() ? { plannedTimeLabel: plannedTimeLabel.trim() } : {}),
@@ -305,6 +318,16 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
       setRewardTitle(getDefaultAfterQuestRewardPreset());
     } else {
       setRewardTitle('');
+    }
+  };
+
+  const handleTogglePreQuestRitual = (enabled: boolean) => {
+    void Haptics.selectionAsync();
+    setPreQuestRitualEnabled(enabled);
+    if (enabled) {
+      setPreQuestRitualTitle(getDefaultPreQuestRitualPreset());
+    } else {
+      setPreQuestRitualTitle('');
     }
   };
 
@@ -795,6 +818,68 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
                     value={prepStepTitle}
                     onChangeText={setPrepStepTitle}
                     placeholder={category ? getDefaultPrepPreset(category) : 'Prep step…'}
+                    placeholderTextColor={`${palette.fog}88`}
+                    style={[
+                      styles.input,
+                      { color: palette.bone, borderColor: palette.panelBorder, backgroundColor: palette.panel },
+                    ]}
+                  />
+                </View>
+              )}
+
+              <View style={[styles.toggleRow, { borderColor: palette.panelBorder }]}>
+                <View style={styles.toggleCopy}>
+                  <Text style={[styles.toggleLabel, { color: palette.bone }]}>
+                    {preQuestRitualCopy.sectionPrompt}
+                  </Text>
+                  <Text style={[styles.toggleHint, { color: palette.fog }]}>
+                    {preQuestRitualCopy.helperText}
+                  </Text>
+                  <Text style={[styles.toggleHint, { color: palette.gold, fontStyle: 'italic' }]}>
+                    {preQuestRitualCopy.universeHint}
+                  </Text>
+                </View>
+                <Switch
+                  value={preQuestRitualEnabled}
+                  onValueChange={handleTogglePreQuestRitual}
+                  trackColor={{ false: palette.panelBorder, true: palette.primary }}
+                  thumbColor={preQuestRitualEnabled ? palette.gold : palette.fog}
+                />
+              </View>
+
+              {preQuestRitualEnabled && (
+                <View style={[styles.prepBox, { backgroundColor: palette.night, borderColor: palette.gold }]}>
+                  <Text style={[styles.prepLabel, { color: palette.gold }]}>START RITUAL</Text>
+                  <View style={styles.presetList}>
+                    {PRE_QUEST_RITUAL_PRESETS.map((preset) => {
+                      const selected = preQuestRitualTitle === preset;
+                      return (
+                        <Pressable
+                          key={preset}
+                          onPress={() => {
+                            void Haptics.selectionAsync();
+                            setPreQuestRitualTitle(preset);
+                          }}
+                          style={[
+                            styles.presetChip,
+                            {
+                              backgroundColor: selected ? palette.primary : palette.panel,
+                              borderColor: selected ? palette.gold : palette.panelBorder,
+                            },
+                          ]}>
+                          <Text
+                            style={[styles.presetChipText, { color: selected ? palette.bone : palette.fog }]}
+                            numberOfLines={2}>
+                            {preset}
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                  <TextInput
+                    value={isPresetPreQuestRitual(preQuestRitualTitle) ? '' : preQuestRitualTitle}
+                    onChangeText={setPreQuestRitualTitle}
+                    placeholder="Your own ritual…"
                     placeholderTextColor={`${palette.fog}88`}
                     style={[
                       styles.input,

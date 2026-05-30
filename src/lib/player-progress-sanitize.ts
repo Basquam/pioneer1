@@ -124,6 +124,10 @@ export function sanitizeUserQuest(raw: unknown): UserQuest | null {
     sanitized.afterQuestReward = quest.afterQuestReward;
   }
 
+  if (typeof quest.preQuestRitual === 'string' && quest.preQuestRitual.length > 0) {
+    sanitized.preQuestRitual = quest.preQuestRitual.slice(0, 200);
+  }
+
   const riskLevel = typeof quest.riskLevel === 'string' ? quest.riskLevel : null;
   if (riskLevel === 'low' || riskLevel === 'standard' || riskLevel === 'high') {
     sanitized.riskLevel = riskLevel;

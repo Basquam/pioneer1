@@ -71,6 +71,7 @@ export function userQuestToBoardQuest(
     ...(quest.afterCurrentHabit ? { afterCurrentHabit: quest.afterCurrentHabit } : {}),
     ...(quest.startedAt ? { startedAt: quest.startedAt, isStarted: true } : {}),
     ...(quest.afterQuestReward ? { afterQuestReward: quest.afterQuestReward } : {}),
+    ...(quest.preQuestRitual ? { preQuestRitual: quest.preQuestRitual } : {}),
     riskLevel: resolveQuestRiskLevel(quest.riskLevel),
     ...(quest.lastFocusDistraction ? { lastFocusDistraction: quest.lastFocusDistraction } : {}),
     ...(quest.frictionShieldAppliedAt ? { frictionShieldAppliedAt: quest.frictionShieldAppliedAt } : {}),

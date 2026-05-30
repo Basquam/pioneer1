@@ -36,6 +36,19 @@ import {
   pickQuestIdForFocusInsight,
 } from '../src/lib/systems-insights';
 import {
+  formatPreQuestRitualCardLine,
+  formatPreQuestRitualFocusLine,
+  getPreQuestRitualCopy,
+  isMotivationLinePreset,
+  isPresetPreQuestRitual,
+} from '../src/lib/pre-quest-ritual';
+import {
+  generateGoldilocksRecommendation,
+  getGoldilocksCoachFlavor,
+  hasEnoughGoldilocksCoachData,
+  pickHighRiskQuestForSplit,
+} from '../src/lib/goldilocks-coach';
+import {
   appendEvidenceEvent,
   createEvidenceEvent,
   groupEvidenceByDate,
@@ -715,6 +728,111 @@ assert(
   'snapshot marks enough data',
 );
 assert(pickQuestIdForFocusInsight(highRiskProgress) === 'risk-1', 'focus insight picks first active quest');
+
+// Pre-quest ritual
+assert(getPreQuestRitualCopy('dust-and-iron').universeHint === 'Steady your hand before the ride.', 'pre-quest flavor');
+assert(isPresetPreQuestRitual('Put on headphones'), 'pre-quest preset match');
+assert(
+  formatPreQuestRitualCardLine('Put on headphones', 'dust-and-iron') === 'Start ritual: Put on headphones',
+  'pre-quest card line',
+);
+assert(
+  formatPreQuestRitualFocusLine('Take three deep breaths', 'neuronet') === 'Before you begin: Take three deep breaths',
+  'pre-quest focus line',
+);
+assert(
+  formatPreQuestRitualFocusLine('Read the character motivation line', 'dust-and-iron', 'Ride steady.') ===
+    'Before you begin: Ride steady.',
+  'motivation preset resolves in focus',
+);
+const legacyQuest = sanitizeUserQuest({
+  id: 'user-legacy-1',
+  originalTitle: 'Task',
+  category: 'work',
+  narrativeTitle: 'Title',
+  narrativeDescription: 'Desc',
+  sourceUniverseId: 'dust-and-iron',
+  sourceSagaId: 'vulture-gang',
+  sourceChapterId: 'vulture-gang-ch1',
+  isCompleted: false,
+  xpReward: 10,
+  reputationReward: 2,
+  reactionCharacterId: 'deputy',
+});
+assert(legacyQuest?.preQuestRitual == null, 'legacy quest import omits preQuestRitual');
+const ritualQuest = sanitizeUserQuest({
+  ...legacyQuest!,
+  preQuestRitual: 'Start ambience',
+});
+assert(ritualQuest?.preQuestRitual === 'Start ambience', 'preQuestRitual persists on sanitize');
+
+// Goldilocks coach
+assert(
+  getGoldilocksCoachFlavor('dust-and-iron') ===
+    'Choose a trail that tests you, not one that breaks the horse.',
+  'goldilocks flavor',
+);
+const goldilocksRec = generateGoldilocksRecommendation(highRiskProgress, new Date('2026-05-27T12:00:00'));
+assert(goldilocksRec?.id === 'high-risk-heavy', 'goldilocks high-risk heavy recommendation');
+assert(
+  pickHighRiskQuestForSplit(highRiskProgress.userQuests) === 'risk-1',
+  'goldilocks picks splittable high-risk quest',
+);
+const lowRiskOnlyProgress = {
+  ...baseProgress(),
+  userQuests: [
+    {
+      id: 'user-low-1',
+      originalTitle: 'Easy A',
+      category: 'errand',
+      narrativeTitle: 'Easy A',
+      narrativeDescription: 'Desc',
+      sourceUniverseId: 'dust-and-iron',
+      sourceSagaId: 'vulture-gang',
+      sourceChapterId: 'vulture-gang-ch1',
+      isCompleted: true,
+      xpReward: 8,
+      reputationReward: 1,
+      reactionCharacterId: 'deputy',
+      riskLevel: 'low',
+      createdOnDate: '2026-05-25',
+      completedAt: '2026-05-25T18:00:00.000Z',
+    },
+    {
+      id: 'user-low-2',
+      originalTitle: 'Easy B',
+      category: 'cleaning',
+      narrativeTitle: 'Easy B',
+      narrativeDescription: 'Desc',
+      sourceUniverseId: 'dust-and-iron',
+      sourceSagaId: 'vulture-gang',
+      sourceChapterId: 'vulture-gang-ch1',
+      isCompleted: true,
+      xpReward: 8,
+      reputationReward: 1,
+      reactionCharacterId: 'deputy',
+      riskLevel: 'low',
+      createdOnDate: '2026-05-26',
+      completedAt: '2026-05-26T18:00:00.000Z',
+    },
+  ] as UserQuest[],
+};
+const lowRiskRec = generateGoldilocksRecommendation(lowRiskOnlyProgress, new Date('2026-05-27T12:00:00'));
+assert(lowRiskRec?.id === 'low-risk-steady', 'goldilocks low-risk steady recommendation');
+assert(
+  hasEnoughGoldilocksCoachData({
+    windowDateKeys: ['2026-05-27'],
+    recentUserQuests: lowRiskOnlyProgress.userQuests,
+    activeIncompleteQuests: [],
+    completedInWindow: lowRiskOnlyProgress.userQuests,
+    createdInWindow: lowRiskOnlyProgress.userQuests,
+    highRiskIncomplete: [],
+    lowReadinessIncomplete: [],
+    completedByRisk: { low: 2, standard: 0, high: 0 },
+    abandonedHighRisk: [],
+  }),
+  'goldilocks snapshot enough data',
+);
 
 if (failures.length) {
   console.error('FAILED:\n' + failures.map((f) => ` - ${f}`).join('\n'));

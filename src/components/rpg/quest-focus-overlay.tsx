@@ -42,6 +42,11 @@ import {
 } from '@/lib/decisive-moment';
 import { getAfterQuestRewardCopy } from '@/lib/after-quest-reward';
 import {
+  formatPreQuestRitualFocusLine,
+  getPreQuestRitualCopy,
+  isMotivationLinePreset,
+} from '@/lib/pre-quest-ritual';
+import {
   DISTRACTION_SHIELD_OPTIONS,
   FRICTION_SHIELD_APPLIED_MESSAGE,
   getFrictionShieldAction,
@@ -68,26 +73,35 @@ export function QuestFocusOverlay() {
   const copy = getQuestFocusCopy(activeUniverse.id);
   const ritualCopy = getQuestStartRitualCopy(activeUniverse.id);
   const rewardCopy = getAfterQuestRewardCopy(activeUniverse.id);
+  const preQuestRitualCopy = getPreQuestRitualCopy(activeUniverse.id);
   const [ritualStep, setRitualStep] = useState<RitualStep>(0);
+  const [preQuestRitualDone, setPreQuestRitualDone] = useState(false);
   const [selectedDistraction, setSelectedDistraction] = useState<QuestDistractionType | null>(null);
   const [shieldExpanded, setShieldExpanded] = useState(false);
   const [sessionShieldApplied, setSessionShieldApplied] = useState(false);
   const completePulse = useSharedValue(1);
+  const starterPulse = useSharedValue(1);
   const ritualComplete = ritualStep === 4;
   const shieldApplied =
     sessionShieldApplied || Boolean(focusQuest?.frictionShieldAppliedAt);
 
   useEffect(() => {
     setRitualStep(0);
+    setPreQuestRitualDone(false);
     setSelectedDistraction(focusQuest?.lastFocusDistraction ?? null);
     setShieldExpanded(Boolean(focusQuest?.lastFocusDistraction));
     setSessionShieldApplied(false);
     completePulse.value = 1;
-  }, [focusQuest?.id, focusQuest?.lastFocusDistraction, focusQuest?.frictionShieldAppliedAt, completePulse]);
+    starterPulse.value = 1;
+  }, [focusQuest?.id, focusQuest?.lastFocusDistraction, focusQuest?.frictionShieldAppliedAt, completePulse, starterPulse]);
 
   const completeWrapStyle = useAnimatedStyle(() => ({
     transform: [{ scale: completePulse.value }],
-    opacity: ritualComplete ? 1 : 0.72,
+    opacity: ritualComplete || preQuestRitualDone ? 1 : 0.72,
+  }));
+
+  const starterWrapStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: starterPulse.value }],
   }));
 
   if (!focusQuest) return null;
@@ -97,6 +111,7 @@ export function QuestFocusOverlay() {
   const showDecisiveStarter = showDecisiveHighlight && hasStarterMove(focusQuest);
   const ritualActive = ritualStep >= 1 && ritualStep <= 3;
   const hasRewardRitual = Boolean(focusQuest.afterQuestReward?.trim());
+  const hasPreQuestRitual = Boolean(focusQuest.preQuestRitual?.trim());
   const sourceLabel = getQuestFocusSourceLabel(focusQuest, ui);
   const clearedLabel = getQuestFocusClearedLabel(focusQuest, ui);
   const taskSectionLabel =
@@ -105,6 +120,16 @@ export function QuestFocusOverlay() {
   const motivationLine = character
     ? shortenMotivationLine(pickCharacterLine(character, 'questComplete', focusQuest.id.length))
     : shortenMotivationLine(ui.questCompleteFallbackLine);
+  const preQuestRitualDisplay = hasPreQuestRitual
+    ? formatPreQuestRitualFocusLine(
+        focusQuest.preQuestRitual!,
+        activeUniverse.id,
+        isMotivationLinePreset(focusQuest.preQuestRitual) ? motivationLine : undefined,
+      )
+    : null;
+  const highlightStarterAfterPreQuest =
+    preQuestRitualDone &&
+    (showDecisiveStarter || Boolean(focusQuest.starterTaskTitle && !showDecisiveStarter));
   const trait = getIdentityTraitMeta(getTraitForCategory(focusQuest.category));
   const crewCodeLine = getDailyCrewCodeLine(activeSaga);
   const motionGuardActive = focusQuest.isTooMuchMotion === true;
@@ -156,6 +181,24 @@ export function QuestFocusOverlay() {
     }
   };
 
+  const handlePreQuestRitualDone = () => {
+    void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    setPreQuestRitualDone(true);
+    const shouldHighlightStarter =
+      showDecisiveStarter || Boolean(focusQuest.starterTaskTitle && !showDecisiveStarter);
+    if (shouldHighlightStarter) {
+      starterPulse.value = withSequence(
+        withSpring(1.06, { damping: 8, stiffness: 220 }),
+        withSpring(1, { damping: 12, stiffness: 180 }),
+      );
+    } else {
+      completePulse.value = withSequence(
+        withSpring(1.08, { damping: 8, stiffness: 220 }),
+        withSpring(1, { damping: 12, stiffness: 180 }),
+      );
+    }
+  };
+
   const hasQuestSupports =
     Boolean(focusQuest.starterTaskTitle && !showDecisiveStarter) ||
     Boolean(focusQuest.implementationIntention) ||
@@ -199,6 +242,38 @@ export function QuestFocusOverlay() {
             {copy.tagline}
           </Animated.Text>
 
+          {!isCompleted && hasPreQuestRitual && preQuestRitualDisplay ? (
+            <Animated.View
+              entering={FadeInDown.duration(400).delay(100)}
+              style={[
+                styles.preQuestRitualBlock,
+                {
+                  borderColor: preQuestRitualDone ? palette.accent : palette.gold,
+                  backgroundColor: palette.panel,
+                },
+              ]}>
+              <Text style={[styles.preQuestRitualLabel, { color: palette.gold }]}>
+                {preQuestRitualCopy.universeHint}
+              </Text>
+              <Text style={[styles.preQuestRitualLine, { color: palette.bone }]}>
+                {preQuestRitualDisplay}
+              </Text>
+              {preQuestRitualDone ? (
+                <Text style={[styles.preQuestRitualDoneHint, { color: palette.accent }]}>
+                  {preQuestRitualCopy.ritualCompleteHint}
+                </Text>
+              ) : (
+                <Pressable
+                  onPress={handlePreQuestRitualDone}
+                  style={[styles.preQuestRitualButton, { borderColor: palette.gold, backgroundColor: palette.primary }]}>
+                  <Text style={[styles.preQuestRitualButtonText, { color: palette.bone }]}>
+                    {preQuestRitualCopy.ritualDoneLabel}
+                  </Text>
+                </Pressable>
+              )}
+            </Animated.View>
+          ) : null}
+
           {!isCompleted && crewCodeLine ? (
             <Animated.View
               entering={FadeInDown.duration(400).delay(140)}
@@ -222,9 +297,10 @@ export function QuestFocusOverlay() {
               entering={FadeInDown.duration(420).delay(120)}
               style={[
                 styles.decisiveCard,
+                starterWrapStyle,
                 {
                   backgroundColor: `${palette.primary}cc`,
-                  borderColor: palette.gold,
+                  borderColor: highlightStarterAfterPreQuest ? palette.accent : palette.gold,
                 },
               ]}>
               {showDecisiveStarter ? (
@@ -285,12 +361,21 @@ export function QuestFocusOverlay() {
                 <Text style={[styles.supportsLabel, { color: palette.gold }]}>QUEST SUPPORTS</Text>
 
                 {focusQuest.starterTaskTitle && !showDecisiveStarter ? (
-                  <View style={styles.supportItem}>
+                  <Animated.View
+                    style={[
+                      styles.supportItem,
+                      starterWrapStyle,
+                      highlightStarterAfterPreQuest && {
+                        borderWidth: 1,
+                        borderColor: palette.accent,
+                        padding: 8,
+                      },
+                    ]}>
                     <Text style={[styles.supportItemLabel, { color: palette.fog }]}>Starter move</Text>
                     <Text style={[styles.supportItemBody, { color: palette.bone }]}>
                       {formatStarterMoveLine(focusQuest.starterTaskTitle, activeUniverse.id)}
                     </Text>
-                  </View>
+                  </Animated.View>
                 ) : null}
 
                 {focusQuest.implementationIntention ? (
@@ -471,9 +556,11 @@ export function QuestFocusOverlay() {
                 <GlowButton
                   label={copy.completeLabel}
                   hint={
-                    ritualComplete
+                    ritualComplete || preQuestRitualDone
                       ? 'You are ready to complete'
-                      : 'Optional — skip the ritual anytime'
+                      : hasPreQuestRitual
+                        ? 'Optional — ritual or completion anytime'
+                        : 'Optional — skip the ritual anytime'
                   }
                   onPress={handleComplete}
                 />
@@ -510,6 +597,44 @@ const styles = StyleSheet.create({
     fontFamily: GameFonts.displayRegular,
     fontSize: 15,
     lineHeight: 22,
+    fontStyle: 'italic',
+    textAlign: 'center',
+  },
+  preQuestRitualBlock: {
+    borderWidth: 1,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    gap: 8,
+    transform: [{ skewX: '-2deg' }],
+  },
+  preQuestRitualLabel: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 9,
+    letterSpacing: 1.4,
+    textAlign: 'center',
+    fontStyle: 'italic',
+  },
+  preQuestRitualLine: {
+    fontFamily: GameFonts.displayRegular,
+    fontSize: 14,
+    lineHeight: 20,
+    textAlign: 'center',
+  },
+  preQuestRitualButton: {
+    alignSelf: 'center',
+    borderWidth: 1,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
+  preQuestRitualButtonText: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 10,
+    letterSpacing: 1.2,
+  },
+  preQuestRitualDoneHint: {
+    fontFamily: GameFonts.displayRegular,
+    fontSize: 12,
+    lineHeight: 17,
     fontStyle: 'italic',
     textAlign: 'center',
   },
