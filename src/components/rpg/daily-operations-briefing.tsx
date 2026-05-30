@@ -25,6 +25,7 @@ import { getDailyCrewCodeLine } from '@/lib/crew-code';
 import { getStoryDrivenBriefingHint } from '@/lib/quest-style-profile';
 import { NextBestActionCard } from '@/components/rpg/next-best-action-card';
 import { MinimumViableDayBriefingActivate } from '@/components/rpg/minimum-viable-day-banner';
+import { QuestLoadMeter } from '@/components/rpg/quest-load-meter';
 import { QuickCaptureInput } from '@/components/rpg/quick-capture-input';
 import { TraitAlignedSuggestionsPanel } from '@/components/rpg/trait-aligned-suggestions';
 
@@ -132,6 +133,8 @@ export function DailyOperationsBriefing() {
         <DailyStreakDisplay variant="briefing" />
 
         <TodayFocusDisplay variant="briefing" />
+
+        <QuestLoadMeter />
 
         <QuickCaptureInput />
 

@@ -183,6 +183,7 @@ import {
   pickSuggestedSmallQuest,
   shouldAutoActivateMvdFromAwareness,
 } from '../src/lib/minimum-viable-day';
+import { getQuestLoadStatus } from '../src/lib/quest-load';
 import { shouldShowRecoveryPrompt } from '../src/lib/recovery-quest';
 const AMBIENT_UNIVERSE_IDS = ['dust-and-iron', 'neuronet', 'neon-ashes'] as const;
 
@@ -1295,6 +1296,63 @@ assert(doSmallAction.actionType === 'do-one-small-quest', 'nba do one small ques
 assert(doSmallAction.ctaLabel === 'DO ONE SMALL QUEST', 'mvd cta label');
 assert(!hasCompletedQuestToday(activeMvdNoQuest), 'no quest completed today baseline');
 assert(pickSuggestedSmallQuest(activeMvdNoQuest, 'dust-and-iron') === null, 'no small quest when empty');
+
+// Quest load meter
+const loadToday = getLocalDateKey();
+const loadDustSaga = UNIVERSES.find((u) => u.id === 'dust-and-iron')!.sagas.find((s) => s.chapters.length > 0)!;
+const loadDustChapter = loadDustSaga.chapters[0]!;
+const loadBaseProgress = {
+  ...baseProgress(),
+  selectedUniverseId: 'dust-and-iron',
+  selectedSagaId: loadDustSaga.id,
+  currentChapterId: loadDustChapter.id,
+};
+function makeTodayQuests(count: number): UserQuest[] {
+  return Array.from({ length: count }, (_, index) => ({
+    ...simulateAddUserQuest(loadBaseProgress, 'dust-and-iron'),
+    id: createUserQuestId(),
+    createdOnDate: loadToday,
+    originalTitle: `Load quest ${index + 1}`,
+  }));
+}
+const emptyLoad = getQuestLoadStatus({
+  progress: loadBaseProgress,
+  universeId: 'dust-and-iron',
+  today: loadToday,
+});
+assert(emptyLoad.loadLevel === 'light', 'quest load empty is light');
+assert(emptyLoad.suggestedAction.type === 'add-one-quest', 'quest load light action');
+assert(emptyLoad.universeFlavor.includes('trail'), 'quest load dust flavor');
+const balancedLoad = getQuestLoadStatus({
+  progress: { ...loadBaseProgress, userQuests: makeTodayQuests(4) },
+  universeId: 'dust-and-iron',
+  today: loadToday,
+});
+assert(balancedLoad.loadLevel === 'balanced', 'quest load four today balanced');
+assert(balancedLoad.suggestedAction.label === 'START FOCUS', 'quest load balanced focus cta');
+const heavyLoad = getQuestLoadStatus({
+  progress: { ...loadBaseProgress, userQuests: makeTodayQuests(6) },
+  universeId: 'dust-and-iron',
+  today: loadToday,
+});
+assert(heavyLoad.loadLevel === 'heavy', 'quest load six today heavy');
+assert(heavyLoad.suggestedAction.type === 'review-quest-load', 'quest load heavy review');
+const staleQuestForLoad = {
+  ...simulateAddUserQuest(loadBaseProgress, 'dust-and-iron'),
+  id: createUserQuestId(),
+  createdOnDate: '2020-01-01',
+  originalTitle: 'Stale quest',
+};
+const overloadedLoad = getQuestLoadStatus({
+  progress: {
+    ...loadBaseProgress,
+    userQuests: [...makeTodayQuests(7), staleQuestForLoad, staleQuestForLoad],
+  },
+  universeId: 'dust-and-iron',
+  today: loadToday,
+});
+assert(overloadedLoad.loadLevel === 'overloaded', 'quest load overloaded board');
+assert(overloadedLoad.score >= 0 && overloadedLoad.score <= 100, 'quest load score bounded');
 
 if (failures.length) {
   console.error('FAILED:\n' + failures.map((f) => ` - ${f}`).join('\n'));
