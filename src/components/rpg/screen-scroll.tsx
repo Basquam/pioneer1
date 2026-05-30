@@ -1,4 +1,4 @@
-import { type ReactNode } from 'react';
+import { type ReactNode, type RefObject } from 'react';
 import { ScrollView, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { GameLayout } from '@/constants/layout';
@@ -9,17 +9,20 @@ type ScreenScrollProps = {
   contentContainerStyle?: StyleProp<ViewStyle>;
   /** Set false for non-tab screens that manage their own bottom inset. */
   includeTabBarInset?: boolean;
+  scrollRef?: RefObject<ScrollView | null>;
 };
 
 export function ScreenScroll({
   children,
   contentContainerStyle,
   includeTabBarInset = true,
+  scrollRef,
 }: ScreenScrollProps) {
   const tabBarInset = useTabBarScrollInset();
 
   return (
     <ScrollView
+      ref={scrollRef}
       style={styles.scroll}
       contentContainerStyle={[
         includeTabBarInset && { paddingBottom: tabBarInset },

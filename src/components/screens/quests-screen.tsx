@@ -13,6 +13,7 @@ import { NarrativeMomentOverlay } from '@/components/rpg/narrative-moment-overla
 import { QuestBoardEntryList } from '@/components/rpg/quest-board-entry-list';
 import { QuestBoardFiltersBar } from '@/components/rpg/quest-board-filters-bar';
 import { QuestBoardTabBar } from '@/components/rpg/quest-board-tab-bar';
+import { QuestLifecycleReviewList } from '@/components/rpg/quest-lifecycle-review-list';
 import { QuestCard } from '@/components/rpg/quest-card';
 import { QuestInboxPanel } from '@/components/rpg/quest-inbox-panel';
 import { RecurringQuestsPanel } from '@/components/rpg/recurring-quests-panel';
@@ -34,9 +35,11 @@ import {
   countQuestBoardTabItems,
   DEFAULT_QUEST_BOARD_FILTERS,
   getChapterBoardTabLabel,
+  QUEST_LIFECYCLE_NEEDS_DECISION_COPY,
   type QuestBoardFilters,
   type QuestBoardTab,
 } from '@/lib/quest-board-organization';
+import { getQuestLifecycleReviewFlavor } from '@/lib/quest-lifecycle';
 
 export function QuestsScreen() {
   const ui = useUniverseUiCopy();
@@ -53,6 +56,8 @@ export function QuestsScreen() {
     restoreDefaultStory,
     isTodayFocusLocked,
     lockTodayFocus,
+    requestedQuestBoardTab,
+    clearRequestedQuestBoardTab,
   } = useGame();
 
   const [activeTab, setActiveTab] = useState<QuestBoardTab>('today');
@@ -61,6 +66,12 @@ export function QuestsScreen() {
   const [expandedCompletedDates, setExpandedCompletedDates] = useState<Record<string, boolean>>(() => ({
     [getLocalDateKey()]: true,
   }));
+
+  useEffect(() => {
+    if (!requestedQuestBoardTab) return;
+    setActiveTab(requestedQuestBoardTab);
+    clearRequestedQuestBoardTab();
+  }, [clearRequestedQuestBoardTab, requestedQuestBoardTab]);
 
   useEffect(() => {
     if (!currentChapter) return;
@@ -89,7 +100,15 @@ export function QuestsScreen() {
 
   const tabCounts = useMemo(() => {
     const counts: Partial<Record<QuestBoardTab, number>> = {};
-    const tabs: QuestBoardTab[] = ['today', 'focus', 'chapter', 'inbox', 'recurring', 'completed'];
+    const tabs: QuestBoardTab[] = [
+      'today',
+      'review',
+      'focus',
+      'chapter',
+      'inbox',
+      'recurring',
+      'completed',
+    ];
     for (const tab of tabs) {
       counts[tab] = countQuestBoardTabItems({
         tab,
@@ -174,6 +193,26 @@ export function QuestsScreen() {
               Quick-captured tasks waiting to become quests.
             </Text>
             <QuestInboxPanel />
+          </>
+        );
+
+      case 'review':
+        if (tabContent.entries.length === 0) {
+          return (
+            <Text style={[styles.emptyLine, { color: palette.fog }]}>
+              No quests waiting for a decision.
+            </Text>
+          );
+        }
+        return (
+          <>
+            <Text style={[styles.tabHint, { color: palette.fog }]}>
+              {getQuestLifecycleReviewFlavor(activeUniverse.id)}
+            </Text>
+            <Text style={[styles.reviewDecisionLine, { color: palette.bone }]}>
+              {QUEST_LIFECYCLE_NEEDS_DECISION_COPY}
+            </Text>
+            <QuestLifecycleReviewList entries={tabContent.entries} palette={palette} />
           </>
         );
 
@@ -360,6 +399,12 @@ const styles = StyleSheet.create({
     lineHeight: 17,
     fontStyle: 'italic',
     marginBottom: 4,
+  },
+  reviewDecisionLine: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 12,
+    lineHeight: 17,
+    marginBottom: 8,
   },
   sectionMiniLabel: {
     fontFamily: GameFonts.ui,

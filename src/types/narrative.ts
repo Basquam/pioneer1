@@ -249,6 +249,14 @@ export type UserQuest = {
   sourceSagaId: string;
   sourceChapterId: string;
   isCompleted: boolean;
+  /** Lifecycle state for board aging and review. */
+  status?: QuestLifecycleStatus;
+  /** Local calendar date when the quest was first created. */
+  createdDate?: string;
+  /** Local date when the quest was carried forward to the board. */
+  carriedToDate?: string;
+  /** Hide from active board until this local date. */
+  snoozedUntilDate?: string;
   xpReward: number;
   reputationReward: number;
   reactionCharacterId: string;
@@ -343,6 +351,8 @@ export type QuestDistractionType =
 
 export type QuestRiskLevel = 'low' | 'standard' | 'high';
 
+export type QuestLifecycleStatus = 'active' | 'completed' | 'carried' | 'snoozed' | 'archived';
+
 export type RecurrenceType = 'daily' | 'weekly' | 'monthly';
 
 export type WeekdayKey = 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun';
@@ -402,6 +412,11 @@ export type BoardQuest = {
   reputationReward: number;
   reactionCharacterId: string;
   completed: boolean;
+  lifecycleStatus?: QuestLifecycleStatus;
+  createdDate?: string;
+  carriedToDate?: string;
+  snoozedUntilDate?: string;
+  needsReview?: boolean;
   /** First N user quests created today — highlighted on the board. */
   isDailyFocus?: boolean;
   /** Pinned as part of today's locked focus commitment. */
@@ -490,10 +505,14 @@ export type DailyShutdownHelpedBy =
   | 'nothing-yet';
 
 export type DailyShutdownOpenQuestAction =
-  | 'keep-tomorrow'
-  | 'convert-starter'
+  | 'carry-today'
+  | 'snooze'
+  | 'split'
   | 'archive'
-  | 'leave';
+  | 'complete'
+  | 'leave'
+  | 'keep-tomorrow'
+  | 'convert-starter';
 
 export type DailyShutdownOpenQuestSummary = {
   questId: string;
@@ -618,6 +637,10 @@ export type PlayerProgress = {
   templateQuestStartedAt: Record<string, string>;
   /** Weekly reflection answers keyed by local week (Sunday start date YYYY-MM-DD). */
   weeklyReviewByWeek: Record<string, WeeklyReviewEntry>;
+  /** Local month keys (YYYY-MM) when the user closed/archived the monthly season report. */
+  monthlyReviewSeenByMonth: Record<string, string>;
+  /** Local dates when the user dismissed the HQ next best action card. */
+  dismissedNextBestActionByDate: Record<string, boolean>;
   /** Local recurring routine templates — spawn user quest instances on schedule. */
   recurringQuestTemplates: RecurringQuestTemplate[];
   /** Recent quest completion events for the evidence timeline. */

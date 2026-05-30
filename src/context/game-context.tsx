@@ -12,7 +12,7 @@ import {
   restoreDefaultStoryProgress,
 } from '@/lib/narrative-state';
 import { narrativeWarn } from '@/lib/narrative-state-debug';
-import { getLocalDateKey } from '@/lib/daily-streak';
+import { getLocalDateKey, getTomorrowDateKey } from '@/lib/daily-streak';
 import {
   canLockTodayFocus,
   isTodayFocusLocked,
@@ -77,12 +77,22 @@ import {
   shouldShowDailyAwarenessCheck,
 } from '@/lib/daily-awareness';
 import {
-  applyKeepQuestForTomorrow,
+  applyArchiveQuestLifecycle,
+  applyCarryQuestToToday,
+  applyCompleteQuestLifecycle,
+  applySnoozeQuest,
+} from '@/lib/quest-lifecycle';
+import {
   dismissDailyShutdownForToday,
   recordDailyShutdown,
   shouldShowDailyShutdownPrompt,
 } from '@/lib/daily-shutdown';
 import { recordWeeklyReview } from '@/lib/weekly-review';
+import { markMonthlyReviewSeen } from '@/lib/monthly-review';
+import {
+  dismissNextBestActionForToday as recordNextBestActionDismissed,
+} from '@/lib/next-best-action';
+import type { QuestBoardTab } from '@/lib/quest-board-organization';
 import type {
   DailyAwarenessBlocker,
   DailyShutdownHelpedBy,
@@ -315,11 +325,20 @@ type GameContextValue = {
     helpedBy: DailyShutdownHelpedBy | undefined,
     openQuestActions: DailyShutdownOpenQuestSummary[],
   ) => void;
+  carryQuestToToday: (questId: string) => void;
+  snoozeQuest: (questId: string, untilDate: string) => void;
   carryQuestToTomorrow: (questId: string) => void;
   submitWeeklyReview: (
     helpedFactors: WeeklyReviewHelpedFactor[],
     slowdownFactor: WeeklyReviewSlowdownFactor,
   ) => void;
+  closeMonthlySeasonReport: (monthKey?: string) => void;
+  requestedQuestBoardTab: QuestBoardTab | null;
+  requestQuestBoardTab: (tab: QuestBoardTab) => void;
+  clearRequestedQuestBoardTab: () => void;
+  dismissNextBestActionForToday: () => void;
+  hqScrollNonce: number;
+  requestHqScrollToDailyAwareness: () => void;
   dismissXpBurst: () => void;
   markChapterIntroSeen: () => void;
   dismissHqTutorial: () => void;
@@ -375,6 +394,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [improveQuestId, setImproveQuestId] = useState<string | null>(null);
   const [splitQuestChainId, setSplitQuestChainId] = useState<string | null>(null);
   const [frictionReviewQuestId, setFrictionReviewQuestId] = useState<string | null>(null);
+  const [requestedQuestBoardTab, setRequestedQuestBoardTab] = useState<QuestBoardTab | null>(null);
+  const [hqScrollNonce, setHqScrollNonce] = useState(0);
   const pendingChapterCompleteRef = useRef<ChapterCompleteState | null>(null);
 
   useEffect(() => {
@@ -1101,12 +1122,35 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setProgress((prev) => ({
       ...prev,
       userQuests: prev.userQuests.map((quest) =>
-        quest.id === questId
-          ? { ...quest, archivedAt: getLocalDateKey() }
-          : quest,
+        quest.id === questId ? applyArchiveQuestLifecycle(quest) : quest,
       ),
     }));
   }, []);
+
+  const carryQuestToToday = useCallback((questId: string) => {
+    setProgress((prev) => ({
+      ...prev,
+      userQuests: prev.userQuests.map((quest) =>
+        quest.id === questId ? applyCarryQuestToToday(quest) : quest,
+      ),
+    }));
+  }, []);
+
+  const snoozeQuest = useCallback((questId: string, untilDate: string) => {
+    setProgress((prev) => ({
+      ...prev,
+      userQuests: prev.userQuests.map((quest) =>
+        quest.id === questId ? applySnoozeQuest(quest, untilDate) : quest,
+      ),
+    }));
+  }, []);
+
+  const carryQuestToTomorrow = useCallback(
+    (questId: string) => {
+      snoozeQuest(questId, getTomorrowDateKey());
+    },
+    [snoozeQuest],
+  );
 
   const recordFocusDistraction = useCallback(
     (questId: string, distraction: QuestDistractionType) => {
@@ -1152,15 +1196,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setProgress((prev) => dismissDailyShutdownForToday(prev));
   }, []);
 
-  const carryQuestToTomorrow = useCallback((questId: string) => {
-    setProgress((prev) => ({
-      ...prev,
-      userQuests: prev.userQuests.map((quest) =>
-        quest.id === questId ? applyKeepQuestForTomorrow(quest) : quest,
-      ),
-    }));
-  }, []);
-
   const completeDailyShutdown = useCallback(
     (
       helpedBy: DailyShutdownHelpedBy | undefined,
@@ -1177,6 +1212,26 @@ export function GameProvider({ children }: { children: ReactNode }) {
     },
     [],
   );
+
+  const closeMonthlySeasonReport = useCallback((monthKey?: string) => {
+    setProgress((prev) => markMonthlyReviewSeen(prev, monthKey));
+  }, []);
+
+  const requestQuestBoardTab = useCallback((tab: QuestBoardTab) => {
+    setRequestedQuestBoardTab(tab);
+  }, []);
+
+  const clearRequestedQuestBoardTab = useCallback(() => {
+    setRequestedQuestBoardTab(null);
+  }, []);
+
+  const dismissNextBestActionForToday = useCallback(() => {
+    setProgress((prev) => recordNextBestActionDismissed(prev));
+  }, []);
+
+  const requestHqScrollToDailyAwareness = useCallback(() => {
+    setHqScrollNonce((current) => current + 1);
+  }, []);
 
   const lockTodayFocusCommit = useCallback(() => {
     setProgress((prev) => lockTodayFocus(prev, activeUniverse.id));
@@ -1343,9 +1398,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
               userQuests:
                 boardQuest.source === 'user'
                   ? prev.userQuests.map((quest) =>
-                      quest.id === questId
-                        ? recordQuestCompletedAt({ ...quest, isCompleted: true })
-                        : quest,
+                      quest.id === questId ? applyCompleteQuestLifecycle(quest) : quest,
                     )
                   : prev.userQuests,
               totalXp: nextTotalXp,
@@ -1837,8 +1890,17 @@ export function GameProvider({ children }: { children: ReactNode }) {
       closeDailyShutdown,
       dismissDailyShutdownPrompt,
       completeDailyShutdown,
+      carryQuestToToday,
+      snoozeQuest,
       carryQuestToTomorrow,
       submitWeeklyReview,
+      closeMonthlySeasonReport,
+      requestedQuestBoardTab,
+      requestQuestBoardTab,
+      clearRequestedQuestBoardTab,
+      dismissNextBestActionForToday,
+      hqScrollNonce,
+      requestHqScrollToDailyAwareness,
       dismissXpBurst,
       markChapterIntroSeen,
       dismissHqTutorial,
@@ -1914,6 +1976,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       openDailyShutdown,
       closeDailyShutdown,
       completeDailyShutdown,
+      carryQuestToToday,
+      snoozeQuest,
       carryQuestToTomorrow,
       dailyShutdownOpen,
       dismissHqTutorial,
@@ -1966,6 +2030,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
       storyLine,
       submitDailyAwareness,
       submitWeeklyReview,
+      closeMonthlySeasonReport,
+      requestedQuestBoardTab,
+      requestQuestBoardTab,
+      clearRequestedQuestBoardTab,
+      dismissNextBestActionForToday,
+      hqScrollNonce,
+      requestHqScrollToDailyAwareness,
       startQuestNow,
       splitUserQuestIntoChain,
       switchSaga,

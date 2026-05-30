@@ -1,5 +1,6 @@
 import { resolveQuestCreatedOnDate } from '@/lib/daily-focus';
 import { getLocalDateKey } from '@/lib/daily-streak';
+import { isQuestLifecycleArchived } from '@/lib/quest-lifecycle';
 import type { BoardQuest, QuestFrictionReason, UserQuest } from '@/types/narrative';
 
 export const LOW_READINESS_THRESHOLD = 2;
@@ -85,8 +86,10 @@ export function shouldShowFrictionReview(
   return createdBeforeToday || lowReadiness;
 }
 
-export function isUserQuestArchived(quest: Pick<UserQuest, 'archivedAt'>): boolean {
-  return Boolean(quest.archivedAt?.trim());
+export function isUserQuestArchived(
+  quest: Pick<UserQuest, 'status' | 'archivedAt'>,
+): boolean {
+  return isQuestLifecycleArchived(quest);
 }
 
 export function buildHabitStackPlan(habit: string, taskTitle: string): string {

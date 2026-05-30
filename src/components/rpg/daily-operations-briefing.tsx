@@ -23,6 +23,7 @@ import { canLockTodayFocus, getFocusLockCopy } from '@/lib/focus-lock';
 import { buildPromiseCard } from '@/lib/promise-card';
 import { getDailyCrewCodeLine } from '@/lib/crew-code';
 import { getStoryDrivenBriefingHint } from '@/lib/quest-style-profile';
+import { NextBestActionCard } from '@/components/rpg/next-best-action-card';
 import { QuickCaptureInput } from '@/components/rpg/quick-capture-input';
 import { TraitAlignedSuggestionsPanel } from '@/components/rpg/trait-aligned-suggestions';
 
@@ -122,6 +123,8 @@ export function DailyOperationsBriefing() {
             {storyStyleHint}
           </Text>
         ) : null}
+
+        <NextBestActionCard />
 
         <DailyStreakDisplay variant="briefing" />
 

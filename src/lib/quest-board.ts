@@ -1,9 +1,16 @@
 import type { BoardQuest, Chapter, PlayerProgress, QuestTemplate, Saga, UserQuest } from '@/types/narrative';
 
 import { getDailyFocusLimit, getDailyFocusQuestIds, resolveQuestCreatedOnDate } from '@/lib/daily-focus';
-import { resolveQuestRiskLevel } from '@/lib/quest-risk';
 import { getLocalDateKey } from '@/lib/daily-streak';
-import { isUserQuestArchived, shouldShowFrictionReview } from '@/lib/quest-friction';
+import {
+  inferQuestLifecycleStatus,
+  isQuestVisibleOnQuestBoard,
+  isQuestNeedsReview,
+  resolveQuestCreatedDate,
+  resolveQuestCarriedToDate,
+} from '@/lib/quest-lifecycle';
+import { resolveQuestRiskLevel } from '@/lib/quest-risk';
+import { shouldShowFrictionReview } from '@/lib/quest-friction';
 import { getLockedFocusQuestIdSet } from '@/lib/focus-lock';
 import { computeQuestReadiness } from '@/lib/quest-readiness';
 import { isTooMuchMotion } from '@/lib/motion-vs-action';
@@ -48,7 +55,12 @@ export function userQuestToBoardQuest(
   isDailyFocus = false,
   isFocusLocked = false,
   boardProgress?: Pick<PlayerProgress, 'routineRepetitionByKey' | 'userQuests'>,
+  today: string = getLocalDateKey(),
 ): BoardQuest {
+  const lifecycleStatus = quest.status ?? inferQuestLifecycleStatus(quest, today);
+  const createdDate = resolveQuestCreatedDate(quest);
+  const carriedToDate = resolveQuestCarriedToDate(quest);
+
   const boardQuest: BoardQuest = {
     id: quest.id,
     source: 'user',
@@ -60,6 +72,11 @@ export function userQuestToBoardQuest(
     reputationReward: quest.reputationReward,
     reactionCharacterId: quest.reactionCharacterId,
     completed: quest.isCompleted,
+    lifecycleStatus,
+    createdDate,
+    ...(carriedToDate ? { carriedToDate } : {}),
+    ...(quest.snoozedUntilDate ? { snoozedUntilDate: quest.snoozedUntilDate } : {}),
+    needsReview: isQuestNeedsReview(quest, today),
     isDailyFocus,
     ...(isFocusLocked ? { isFocusLocked: true } : {}),
     ...(quest.createdOnDate ? { createdOnDate: quest.createdOnDate } : {}),
@@ -159,7 +176,7 @@ export function buildBoardQuests(
   const userQuests = progress.userQuests
     .filter(
       (quest) =>
-        !isUserQuestArchived(quest) &&
+        isQuestVisibleOnQuestBoard(quest, today) &&
         quest.sourceSagaId === saga.id &&
         quest.sourceChapterId === chapter.id,
     )
@@ -169,6 +186,7 @@ export function buildBoardQuests(
         focusQuestIds.has(quest.id),
         lockedFocusQuestIds.has(quest.id),
         progress,
+        today,
       ),
     );
 

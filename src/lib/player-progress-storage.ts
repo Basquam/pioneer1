@@ -24,6 +24,11 @@ import {
 } from '@/lib/daily-awareness';
 import { pruneWeeklyReviewByWeek, sanitizeWeeklyReviewByWeek } from '@/lib/weekly-review';
 import {
+  pruneMonthlyReviewSeenByMonth,
+  sanitizeMonthlyReviewSeenByMonth,
+} from '@/lib/monthly-review';
+import { sanitizeDismissedNextBestActionByDate } from '@/lib/next-best-action';
+import {
   sanitizeDailyShutdownByDate,
   sanitizeDailyShutdownDismissedDates,
 } from '@/lib/daily-shutdown';
@@ -186,6 +191,8 @@ export function createInitialProgress(): PlayerProgress {
     dailyShutdownDismissedDates: [],
     templateQuestStartedAt: {},
     weeklyReviewByWeek: {},
+    monthlyReviewSeenByMonth: {},
+    dismissedNextBestActionByDate: {},
     recurringQuestTemplates: [],
     evidenceLog: [],
     momentumReserve: 0,
@@ -247,6 +254,12 @@ function normalizeProgress(raw: Partial<PlayerProgress> & Record<string, unknown
     ),
     templateQuestStartedAt: sanitizeTemplateQuestStartedAt(raw.templateQuestStartedAt),
     weeklyReviewByWeek: sanitizeWeeklyReviewByWeek(raw.weeklyReviewByWeek),
+    monthlyReviewSeenByMonth: sanitizeMonthlyReviewSeenByMonth(
+      raw.monthlyReviewSeenByMonth ?? base.monthlyReviewSeenByMonth,
+    ),
+    dismissedNextBestActionByDate: sanitizeDismissedNextBestActionByDate(
+      raw.dismissedNextBestActionByDate ?? base.dismissedNextBestActionByDate,
+    ),
     recurringQuestTemplates: sanitizeRecurringQuestTemplates(
       raw.recurringQuestTemplates ?? base.recurringQuestTemplates,
     ),

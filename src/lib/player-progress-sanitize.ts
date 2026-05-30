@@ -16,13 +16,22 @@ import { sanitizeChildQuestIds } from '@/lib/quest-chain';
 import { sanitizeDesiredIdentityTraits } from '@/lib/identity-compass';
 import { sanitizeQuestStyleProfile } from '@/lib/quest-style-profile';
 import { sanitizeReminderPreferences } from '@/lib/reminder-preferences';
-import { pruneWeeklyReviewByWeek } from '@/lib/weekly-review';
+import { pruneWeeklyReviewByWeek, sanitizeWeeklyReviewByWeek } from '@/lib/weekly-review';
+import {
+  pruneMonthlyReviewSeenByMonth,
+  sanitizeMonthlyReviewSeenByMonth,
+} from '@/lib/monthly-review';
+import {
+  pruneDismissedNextBestActionByDate,
+  sanitizeDismissedNextBestActionByDate,
+} from '@/lib/next-best-action';
 import {
   pruneDailyShutdownByDate,
   sanitizeDailyShutdownByDate,
   sanitizeDailyShutdownDismissedDates,
 } from '@/lib/daily-shutdown';
-import type { DailyActivity, PlayerProgress, QuestFrictionReason, TaskCategory, UserQuest } from '@/types/narrative';
+import { normalizeQuestLifecycleUserQuest } from '@/lib/quest-lifecycle';
+import type { DailyActivity, PlayerProgress, QuestFrictionReason, QuestLifecycleStatus, TaskCategory, UserQuest } from '@/types/narrative';
 
 export const MAX_STORED_USER_QUESTS = 300;
 export const ACTIVITY_RETENTION_DAYS = 90;
@@ -89,6 +98,29 @@ export function sanitizeUserQuest(raw: unknown): UserQuest | null {
 
   if (typeof quest.createdOnDate === 'string' && quest.createdOnDate.length > 0) {
     sanitized.createdOnDate = quest.createdOnDate;
+  }
+
+  if (typeof quest.createdDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(quest.createdDate)) {
+    sanitized.createdDate = quest.createdDate;
+  }
+
+  const status = quest.status;
+  if (
+    status === 'active' ||
+    status === 'completed' ||
+    status === 'carried' ||
+    status === 'snoozed' ||
+    status === 'archived'
+  ) {
+    sanitized.status = status as QuestLifecycleStatus;
+  }
+
+  if (typeof quest.carriedToDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(quest.carriedToDate)) {
+    sanitized.carriedToDate = quest.carriedToDate;
+  }
+
+  if (typeof quest.snoozedUntilDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(quest.snoozedUntilDate)) {
+    sanitized.snoozedUntilDate = quest.snoozedUntilDate;
   }
 
   if (typeof quest.starterTaskTitle === 'string' && quest.starterTaskTitle.length > 0) {
@@ -225,7 +257,7 @@ export function sanitizeUserQuest(raw: unknown): UserQuest | null {
     if (reviews.length > 0) sanitized.frictionReviews = reviews;
   }
 
-  return sanitized;
+  return normalizeQuestLifecycleUserQuest(sanitized);
 }
 
 const FRICTION_REASONS = new Set([
@@ -347,6 +379,12 @@ export function sanitizePersistedProgress(progress: PlayerProgress): PlayerProgr
       progress.weeklyReviewByWeek ?? {},
       new Date(),
       ACTIVITY_RETENTION_DAYS,
+    ),
+    monthlyReviewSeenByMonth: pruneMonthlyReviewSeenByMonth(
+      sanitizeMonthlyReviewSeenByMonth(progress.monthlyReviewSeenByMonth),
+    ),
+    dismissedNextBestActionByDate: pruneDismissedNextBestActionByDate(
+      sanitizeDismissedNextBestActionByDate(progress.dismissedNextBestActionByDate),
     ),
     evidenceLog: pruneEvidenceLog(progress.evidenceLog ?? []),
     momentumReserve: sanitizeMomentumReserve(progress.momentumReserve),

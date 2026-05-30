@@ -1,10 +1,22 @@
 import { getLocalDateKey } from '@/lib/daily-streak';
 import { resolveQuestCreatedOnDate } from '@/lib/daily-focus';
+import {
+  isBoardQuestInTodayTab,
+  isBoardQuestNeedsReview,
+  QUEST_LIFECYCLE_NEEDS_DECISION_COPY,
+} from '@/lib/quest-lifecycle';
 import { resolveQuestRiskLevel } from '@/lib/quest-risk';
 import type { QuestBoardEntry } from '@/lib/quest-chain';
 import type { BoardQuest, QuestRiskLevel, TaskCategory } from '@/types/narrative';
 
-export type QuestBoardTab = 'today' | 'focus' | 'chapter' | 'inbox' | 'recurring' | 'completed';
+export type QuestBoardTab =
+  | 'today'
+  | 'review'
+  | 'focus'
+  | 'chapter'
+  | 'inbox'
+  | 'recurring'
+  | 'completed';
 
 export type QuestBoardSourceFilter = 'user' | 'chapter' | 'recurring' | 'chain';
 
@@ -28,6 +40,7 @@ export const DEFAULT_QUEST_BOARD_FILTERS: QuestBoardFilters = {
 
 export const QUEST_BOARD_TAB_ORDER: QuestBoardTab[] = [
   'today',
+  'review',
   'focus',
   'chapter',
   'inbox',
@@ -55,6 +68,8 @@ export function getQuestBoardTabLabel(tab: QuestBoardTab, universeId: string): s
   switch (tab) {
     case 'today':
       return 'Today';
+    case 'review':
+      return 'Needs Review';
     case 'focus':
       return 'Focus';
     case 'chapter':
@@ -107,6 +122,45 @@ export function matchesQuestBoardFilters(quest: BoardQuest, filters: QuestBoardF
   return true;
 }
 
+function isActiveBoardQuest(quest: BoardQuest, today: string): boolean {
+  if (quest.completed) return false;
+  if (quest.lifecycleStatus === 'archived' || quest.lifecycleStatus === 'completed') return false;
+  if (quest.lifecycleStatus === 'snoozed' && quest.snoozedUntilDate && quest.snoozedUntilDate > today) {
+    return false;
+  }
+  return true;
+}
+
+function entryHasActiveQuest(entry: QuestBoardEntry, today: string): boolean {
+  if (entry.kind === 'chain') {
+    return (
+      isActiveBoardQuest(entry.parent, today) ||
+      entry.children.some((child) => isActiveBoardQuest(child, today))
+    );
+  }
+  return isActiveBoardQuest(entry.quest, today);
+}
+
+function entryIsInTodayTab(entry: QuestBoardEntry, today: string): boolean {
+  if (entry.kind === 'chain') {
+    return (
+      isBoardQuestInTodayTab(entry.parent, today) ||
+      entry.children.some((child) => isBoardQuestInTodayTab(child, today))
+    );
+  }
+  return isBoardQuestInTodayTab(entry.quest, today);
+}
+
+function entryNeedsReview(entry: QuestBoardEntry, today: string): boolean {
+  if (entry.kind === 'chain') {
+    return (
+      isBoardQuestNeedsReview(entry.parent, today) ||
+      entry.children.some((child) => isBoardQuestNeedsReview(child, today))
+    );
+  }
+  return isBoardQuestNeedsReview(entry.quest, today);
+}
+
 function flattenBoardEntries(entries: QuestBoardEntry[]): BoardQuest[] {
   const quests: BoardQuest[] = [];
   for (const entry of entries) {
@@ -147,7 +201,8 @@ export function getTodayQuestPriority(quest: BoardQuest, today: string = getLoca
   if (quest.isFocusLocked) score -= 500;
   if (quest.isDailyFocus) score -= 400;
   if (quest.isStarted) score -= 300;
-  if (quest.carryForwardDate === today) score -= 280;
+  const carriedTo = quest.carriedToDate ?? quest.carryForwardDate;
+  if (carriedTo === today) score -= 280;
   if (quest.reminderEnabled) score -= 200;
   if (quest.source === 'template') score -= 150;
 
@@ -180,12 +235,9 @@ function buildTodayEntries(
   chapterQuests: BoardQuest[],
   today: string,
 ): QuestBoardEntry[] {
-  const activeUserEntries = userEntries.filter((entry) => {
-    if (entry.kind === 'chain') {
-      return !entry.parent.completed || entry.children.some((child) => !child.completed);
-    }
-    return !entry.quest.completed;
-  });
+  const activeUserEntries = userEntries.filter(
+    (entry) => entryHasActiveQuest(entry, today) && entryIsInTodayTab(entry, today),
+  );
 
   const sortedUser = sortEntriesForToday(activeUserEntries, today);
   const sortedChapter = [...chapterQuests]
@@ -196,8 +248,23 @@ function buildTodayEntries(
   return [...sortedUser, ...sortedChapter];
 }
 
-function buildFocusEntries(userEntries: QuestBoardEntry[]): QuestBoardEntry[] {
+function buildReviewEntries(userEntries: QuestBoardEntry[], today: string): QuestBoardEntry[] {
+  return userEntries
+    .filter((entry) => entryHasActiveQuest(entry, today) && entryNeedsReview(entry, today))
+    .sort((left, right) => {
+      const leftQuest = left.kind === 'chain' ? left.parent : left.quest;
+      const rightQuest = right.kind === 'chain' ? right.parent : right.quest;
+      const createdDiff = (leftQuest.createdDate ?? leftQuest.createdOnDate ?? '').localeCompare(
+        rightQuest.createdDate ?? rightQuest.createdOnDate ?? '',
+      );
+      if (createdDiff !== 0) return createdDiff;
+      return leftQuest.narrativeTitle.localeCompare(rightQuest.narrativeTitle);
+    });
+}
+
+function buildFocusEntries(userEntries: QuestBoardEntry[], today: string): QuestBoardEntry[] {
   return userEntries.filter((entry) => {
+    if (!entryHasActiveQuest(entry, today)) return false;
     if (entry.kind === 'chain') {
       return (
         (entry.parent.isDailyFocus || entry.parent.isFocusLocked) &&
@@ -211,8 +278,9 @@ function buildFocusEntries(userEntries: QuestBoardEntry[]): QuestBoardEntry[] {
   });
 }
 
-function buildRecurringEntries(userEntries: QuestBoardEntry[]): QuestBoardEntry[] {
+function buildRecurringEntries(userEntries: QuestBoardEntry[], today: string): QuestBoardEntry[] {
   return userEntries.filter((entry) => {
+    if (!entryHasActiveQuest(entry, today)) return false;
     if (entry.kind === 'chain') {
       return (
         entry.parent.generatedFromRecurringQuestId != null ||
@@ -260,7 +328,9 @@ export function groupCompletedBoardQuests(
   cutoff.setDate(cutoff.getDate() - lookbackDays);
   const cutoffKey = getLocalDateKey(cutoff);
 
-  const completed = quests.filter((quest) => quest.completed);
+  const completed = quests.filter(
+    (quest) => quest.completed && quest.lifecycleStatus !== 'archived',
+  );
   const groups = new Map<string, BoardQuest[]>();
 
   for (const quest of completed) {
@@ -303,9 +373,15 @@ export function buildQuestBoardTabContent(input: {
         chapterQuests: [],
         completedGroups: [],
       };
+    case 'review':
+      return {
+        entries: filterQuestBoardEntries(buildReviewEntries(input.userEntries, today), filters),
+        chapterQuests: [],
+        completedGroups: [],
+      };
     case 'focus':
       return {
-        entries: filterQuestBoardEntries(buildFocusEntries(input.userEntries), filters),
+        entries: filterQuestBoardEntries(buildFocusEntries(input.userEntries, today), filters),
         chapterQuests: [],
         completedGroups: [],
       };
@@ -320,7 +396,7 @@ export function buildQuestBoardTabContent(input: {
       };
     case 'recurring':
       return {
-        entries: filterQuestBoardEntries(buildRecurringEntries(input.userEntries), filters),
+        entries: filterQuestBoardEntries(buildRecurringEntries(input.userEntries, today), filters),
         chapterQuests: [],
         completedGroups: [],
       };
@@ -373,6 +449,8 @@ export function countQuestBoardTabItems(input: {
       return content.entries.length + content.chapterQuests.length;
   }
 }
+
+export { QUEST_LIFECYCLE_NEEDS_DECISION_COPY };
 
 export function resolveBoardQuestCreatedOnDate(quest: BoardQuest): string {
   if (quest.createdOnDate) return quest.createdOnDate;

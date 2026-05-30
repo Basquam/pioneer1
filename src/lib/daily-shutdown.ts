@@ -1,13 +1,17 @@
 import { getLocalDateKey, getTomorrowDateKey } from '@/lib/daily-streak';
 import {
   getDailyFocusLimit,
-  getTodayUserQuests,
   isDailyFocusQuest,
   resolveQuestCreatedOnDate,
 } from '@/lib/daily-focus';
 import { isQuestInLockedFocus } from '@/lib/focus-lock';
 import { EMPTY_ACTIVITY } from '@/lib/player-progress-sanitize';
-import { isUserQuestArchived } from '@/lib/quest-friction';
+import {
+  applySnoozeQuest,
+  isQuestInTodayTab,
+  isQuestOnActiveBoard,
+  mapLegacyShutdownAction,
+} from '@/lib/quest-lifecycle';
 import type {
   DailyShutdownEntry,
   DailyShutdownHelpedBy,
@@ -59,10 +63,14 @@ const HELPED_BY_VALUES = new Set<DailyShutdownHelpedBy>(
 );
 
 const OPEN_QUEST_ACTIONS = new Set<DailyShutdownOpenQuestAction>([
+  'carry-today',
+  'snooze',
+  'split',
+  'archive',
+  'complete',
+  'leave',
   'keep-tomorrow',
   'convert-starter',
-  'archive',
-  'leave',
 ]);
 
 const UNIVERSE_COPY: Record<string, DailyShutdownUniverseCopy> = {
@@ -124,12 +132,11 @@ export function shouldShowDailyShutdownPrompt(
   return true;
 }
 
-function filterActiveUserQuests(userQuests: UserQuest[], universeId: string): UserQuest[] {
+function filterActiveUserQuests(userQuests: UserQuest[], universeId: string, dateKey: string): UserQuest[] {
   return userQuests.filter(
     (quest) =>
       quest.sourceUniverseId === universeId &&
-      !quest.isCompleted &&
-      !isUserQuestArchived(quest),
+      isQuestOnActiveBoard(quest, dateKey),
   );
 }
 
@@ -161,19 +168,14 @@ export function computeDailyShutdownOpenQuests(
   dateKey: string = getLocalDateKey(),
 ): DailyShutdownOpenQuestItem[] {
   const focusLimit = getDailyFocusLimit(progress);
-  const activeQuests = filterActiveUserQuests(progress.userQuests, universeId);
-  const todayQuestIds = new Set(
-    getTodayUserQuests(progress.userQuests, dateKey, universeId)
-      .filter((quest) => !quest.isCompleted && !isUserQuestArchived(quest))
-      .map((quest) => quest.id),
-  );
+  const activeQuests = filterActiveUserQuests(progress.userQuests, universeId, dateKey);
 
   const items = new Map<string, DailyShutdownOpenQuestItem>();
 
   for (const quest of activeQuests) {
     const categories: DailyShutdownOpenQuestCategory[] = [];
 
-    if (todayQuestIds.has(quest.id)) {
+    if (isQuestInTodayTab(quest, dateKey)) {
       categories.push('today');
     }
     if (quest.generatedFromRecurringQuestId) {
@@ -200,13 +202,10 @@ export function applyKeepQuestForTomorrow(
   quest: UserQuest,
   today: string = getLocalDateKey(),
 ): UserQuest {
-  const tomorrow = getTomorrowDateKey(today);
-  return {
-    ...quest,
-    carryForwardDate: tomorrow,
-    plannedTimeLabel: quest.plannedTimeLabel?.trim() || 'Tomorrow',
-  };
+  return applySnoozeQuest(quest, getTomorrowDateKey(today), today);
 }
+
+export { mapLegacyShutdownAction };
 
 export function recordDailyShutdown(
   progress: PlayerProgress,
@@ -274,15 +273,14 @@ export function sanitizeDailyShutdownByDate(
             if (!item || typeof item !== 'object') return null;
             const record = item as Record<string, unknown>;
             if (typeof record.questId !== 'string' || !record.questId.startsWith('user-')) return null;
-            if (
-              typeof record.action !== 'string' ||
-              !OPEN_QUEST_ACTIONS.has(record.action as DailyShutdownOpenQuestAction)
-            ) {
-              return null;
-            }
+            if (typeof record.action !== 'string') return null;
+
+            const action = record.action as DailyShutdownOpenQuestAction;
+            if (!OPEN_QUEST_ACTIONS.has(action)) return null;
+
             return {
               questId: record.questId,
-              action: record.action as DailyShutdownOpenQuestAction,
+              action,
             };
           })
           .filter((item): item is DailyShutdownOpenQuestSummary => item !== null)

@@ -1,5 +1,6 @@
 import { createUserQuestFromTask, createUserQuestId } from '@/lib/convert-task-to-quest';
 import { LOW_READINESS_THRESHOLD } from '@/lib/quest-friction';
+import { isQuestLifecycleArchived } from '@/lib/quest-lifecycle';
 import { isHighRiskQuest } from '@/lib/quest-risk';
 import { recordQuestCompletedAt } from '@/lib/motion-vs-action';
 import type { BoardQuest, Chapter, PlayerProgress, Saga, TaskCategory, Universe, UserQuest } from '@/types/narrative';
@@ -48,10 +49,12 @@ export function splitChildReputationReward(parentRep: number, stepCount: number)
   return Math.max(1, Math.floor(parentRep / stepCount));
 }
 
-export function isQuestChainSplittable(quest: Pick<UserQuest, 'id' | 'isCompleted' | 'archivedAt' | 'isQuestChainParent' | 'parentQuestId'>): boolean {
+export function isQuestChainSplittable(
+  quest: Pick<UserQuest, 'id' | 'isCompleted' | 'archivedAt' | 'status' | 'isQuestChainParent' | 'parentQuestId'>,
+): boolean {
   if (!quest.id.startsWith('user-')) return false;
-  if (quest.isCompleted) return false;
-  if (quest.archivedAt) return false;
+  if (quest.isCompleted || quest.status === 'completed') return false;
+  if (isQuestLifecycleArchived(quest)) return false;
   if (quest.isQuestChainParent) return false;
   if (quest.parentQuestId) return false;
   return true;

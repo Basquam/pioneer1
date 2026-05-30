@@ -16,6 +16,7 @@ import { EvidenceTimelinePanel } from '@/components/rpg/evidence-timeline-panel'
 import { MomentumReservePanel } from '@/components/rpg/momentum-reserve-panel';
 import { TodayFocusDisplay } from '@/components/rpg/today-focus-display';
 import { WeeklyRecapCard } from '@/components/rpg/weekly-recap-card';
+import { MonthlySeasonReportCard } from '@/components/rpg/monthly-season-report-card';
 import { QuestCalendarPanel } from '@/components/rpg/quest-calendar-panel';
 import { SystemsInsightPanel } from '@/components/rpg/systems-insight-panel';
 import { GoldilocksCoachPanel } from '@/components/rpg/goldilocks-coach-panel';
@@ -215,6 +216,7 @@ export function ProfileScreen() {
           <GoldilocksCoachPanel />
           <DailyShutdownBanner variant="profile" />
           <WeeklyRecapCard />
+          <MonthlySeasonReportCard />
         </ProfileSection>
 
         <ProfileSection title="RECURRING QUESTS">

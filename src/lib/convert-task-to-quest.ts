@@ -3,6 +3,7 @@ import {
   getRoutineRepetitionRecord,
   resolveRoutineRepetitionKey,
 } from '@/lib/routine-boredom-guard';
+import { createUserQuestLifecycleDefaults } from '@/lib/quest-lifecycle';
 import type {
   Chapter,
   PlayerProgress,
@@ -121,8 +122,7 @@ export function createUserQuestFromTask(
   return {
     ...converted,
     id: createUserQuestId(),
-    isCompleted: false,
-    createdOnDate,
+    ...createUserQuestLifecycleDefaults(createdOnDate),
     ...(options?.starterTaskTitle ? { starterTaskTitle: options.starterTaskTitle.trim() } : {}),
     ...(options?.prepStepTitle ? { prepStepTitle: options.prepStepTitle.trim() } : {}),
     ...(options?.afterQuestReward ? { afterQuestReward: options.afterQuestReward.trim() } : {}),

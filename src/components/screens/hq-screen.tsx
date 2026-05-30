@@ -1,6 +1,6 @@
 import { type Href, router } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { findNodeHandle, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { DailyShutdownBanner } from '@/components/rpg/daily-shutdown-banner';
@@ -34,8 +34,30 @@ export function HqScreen() {
     completedQuestCount,
     isSagaPreview,
     maybeShowVillainTaunt,
+    hqScrollNonce,
   } = useGame();
   const [sagaSwitcherVisible, setSagaSwitcherVisible] = useState(false);
+  const scrollRef = useRef<ScrollView>(null);
+  const awarenessAnchorRef = useRef<View>(null);
+
+  useEffect(() => {
+    if (hqScrollNonce === 0) return;
+
+    const scrollView = scrollRef.current;
+    const anchor = awarenessAnchorRef.current;
+    if (!scrollView || !anchor) return;
+
+    const scrollHandle = findNodeHandle(scrollView);
+    if (!scrollHandle) return;
+
+    anchor.measureLayout(
+      scrollHandle,
+      (_left, top) => {
+        scrollView.scrollTo({ y: Math.max(0, top - 24), animated: true });
+      },
+      () => {},
+    );
+  }, [hqScrollNonce]);
 
   useEffect(() => {
     if (!currentChapter) return;
@@ -49,7 +71,7 @@ export function HqScreen() {
 
   return (
     <ScreenShell edges={['top']} padded={false}>
-      <ScreenScroll>
+      <ScreenScroll scrollRef={scrollRef}>
         <Animated.View entering={FadeInDown.duration(500)}>
           <Text style={styles.icon}>{activeUniverse.icon}</Text>
           <SectionHeader
@@ -64,7 +86,9 @@ export function HqScreen() {
         <SectionLabel>QUEST INBOX</SectionLabel>
         <QuestInboxPanel />
 
-        <DailyAwarenessCheck />
+        <View ref={awarenessAnchorRef} collapsable={false}>
+          <DailyAwarenessCheck />
+        </View>
 
         <DailyShutdownBanner />
 

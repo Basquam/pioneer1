@@ -146,7 +146,7 @@ import {
   getChapterBoardTabLabel,
   getTodayQuestPriority,
 } from '../src/lib/quest-board-organization';
-import type { BoardQuest } from '../src/types/narrative';
+import type { BoardQuest, IdentityTraitKey, PlayerProgress, QuestRiskLevel, TaskCategory, UserQuest } from '../src/types/narrative';
 import {
   applyKeepQuestForTomorrow,
   computeDailyShutdownOpenQuests,
@@ -154,8 +154,25 @@ import {
   recordDailyShutdown,
   shouldShowDailyShutdownPrompt,
 } from '../src/lib/daily-shutdown';
-import type { PlayerProgress, QuestRiskLevel, TaskCategory, UserQuest } from '../src/types/narrative';
-
+import {
+  applyCarryQuestToToday,
+  isQuestInTodayTab,
+  isQuestNeedsReview,
+} from '../src/lib/quest-lifecycle';
+import {
+  computeMonthlySeasonReport,
+  getLocalMonthKey,
+  getMonthlyReportTitle,
+  isMonthlyReviewClosed,
+  markMonthlyReviewSeen,
+  MONTHLY_IDENTITY_COPY,
+} from '../src/lib/monthly-review';
+import {
+  dismissNextBestActionForToday,
+  getNextBestAction,
+  isNextBestActionDismissedToday,
+} from '../src/lib/next-best-action';
+import { shouldShowRecoveryPrompt } from '../src/lib/recovery-quest';
 const AMBIENT_UNIVERSE_IDS = ['dust-and-iron', 'neuronet', 'neon-ashes'] as const;
 
 const failures: string[] = [];
@@ -214,6 +231,8 @@ function baseProgress(): PlayerProgress {
     reminderPreferences: createDefaultReminderPreferences(),
     dailyShutdownByDate: {},
     dailyShutdownDismissedDates: [],
+    monthlyReviewSeenByMonth: {},
+    dismissedNextBestActionByDate: {},
   } as PlayerProgress;
 
   for (const universe of UNIVERSES) {
@@ -992,7 +1011,8 @@ const carryQuest = applyKeepQuestForTomorrow({
   reactionCharacterId: 'deputy',
   createdOnDate: getLocalDateKey(),
 });
-assert(carryQuest.carryForwardDate != null, 'carry forward date set');
+assert(carryQuest.status === 'snoozed', 'keep for tomorrow snoozes quest');
+assert(carryQuest.snoozedUntilDate != null, 'snooze until date set');
 const openShutdownQuests = computeDailyShutdownOpenQuests(
   {
     ...baseProgress(),
@@ -1034,6 +1054,8 @@ const lockedFocusQuest: BoardQuest = {
   completed: false,
   isFocusLocked: true,
   createdOnDate: getLocalDateKey(),
+  createdDate: getLocalDateKey(),
+  lifecycleStatus: 'active',
 };
 const regularQuest: BoardQuest = {
   ...lockedFocusQuest,
@@ -1054,6 +1076,167 @@ const todayBoard = buildQuestBoardTabContent({
   chapterQuests: [],
 });
 assert(todayBoard.entries[0]?.kind === 'quest' && todayBoard.entries[0].quest.id === 'user-focus-1', 'today tab ordering');
+
+const lifecycleStaleQuest = sanitizeUserQuest({
+  id: 'user-stale-1',
+  originalTitle: 'Old quest',
+  category: 'work',
+  narrativeTitle: 'Old',
+  narrativeDescription: 'Old',
+  sourceUniverseId: 'dust-and-iron',
+  sourceSagaId: 'vulture-gang',
+  sourceChapterId: 'vulture-gang-ch1',
+  isCompleted: false,
+  xpReward: 10,
+  reputationReward: 2,
+  reactionCharacterId: 'deputy',
+  createdOnDate: '2026-05-20',
+});
+assert(lifecycleStaleQuest != null, 'stale quest sanitizes');
+assert(isQuestNeedsReview(lifecycleStaleQuest!, '2026-05-27'), 'stale quest needs review');
+assert(!isQuestInTodayTab(lifecycleStaleQuest!, '2026-05-27'), 'stale quest not in today tab');
+const carried = applyCarryQuestToToday(lifecycleStaleQuest!, '2026-05-27');
+assert(isQuestInTodayTab(carried, '2026-05-27'), 'carried quest returns to today');
+const completedLegacy = sanitizeUserQuest({
+  id: 'user-done-1',
+  originalTitle: 'Done',
+  category: 'work',
+  narrativeTitle: 'Done',
+  narrativeDescription: 'Done',
+  sourceUniverseId: 'dust-and-iron',
+  sourceSagaId: 'vulture-gang',
+  sourceChapterId: 'vulture-gang-ch1',
+  isCompleted: true,
+  xpReward: 10,
+  reputationReward: 2,
+  reactionCharacterId: 'deputy',
+});
+assert(completedLegacy?.status === 'completed', 'completed legacy quest normalizes to completed');
+const reviewBoard = buildQuestBoardTabContent({
+  tab: 'review',
+  userEntries: [
+    {
+      kind: 'quest',
+      quest: {
+        ...regularQuest,
+        id: 'user-review-1',
+        createdDate: '2026-05-20',
+        createdOnDate: '2026-05-20',
+        needsReview: true,
+        lifecycleStatus: 'active',
+      },
+    },
+  ],
+  chapterQuests: [],
+  today: '2026-05-27',
+});
+assert(reviewBoard.entries.length === 1, 'review tab lists stale quests');
+
+// Monthly season report
+assert(getMonthlyReportTitle('dust-and-iron') === 'Frontier Season Report', 'monthly report title');
+assert(getMonthlyReportTitle('neuronet') === 'Signal Cycle Report', 'neuronet monthly title');
+assert(getMonthlyReportTitle('neon-ashes') === 'Monthly Case File', 'neon ashes monthly title');
+assert(MONTHLY_IDENTITY_COPY.includes('evidence'), 'monthly identity copy');
+const monthKey = getLocalMonthKey(new Date('2026-05-27T12:00:00'));
+const monthlyProgress = {
+  ...baseProgress(),
+  activityByDate: {
+    '2026-05-10': {
+      questsCompleted: 2,
+      xpEarned: 20,
+      reputationEarned: 4,
+      chaptersCompleted: 0,
+      highRiskQuestsCompleted: 1,
+    },
+    '2026-05-15': {
+      questsCompleted: 1,
+      xpEarned: 10,
+      reputationEarned: 2,
+      chaptersCompleted: 1,
+      highRiskQuestsCompleted: 0,
+    },
+  },
+  evidenceLog: [
+    {
+      id: 'evidence-m1',
+      date: '2026-05-10',
+      timestamp: '2026-05-10T18:00:00.000Z',
+      universeId: 'dust-and-iron',
+      sagaId: 'vulture-gang',
+      chapterId: 'vulture-gang-ch1',
+      questTitle: 'Trail ride',
+      category: 'work',
+      identityTraitGained: 'Reliable',
+      xpEarned: 10,
+      reputationEarned: 2,
+      source: 'userQuest',
+    },
+    {
+      id: 'evidence-m2',
+      date: '2026-05-10',
+      timestamp: '2026-05-10T19:00:00.000Z',
+      universeId: 'dust-and-iron',
+      sagaId: 'vulture-gang',
+      chapterId: 'vulture-gang-ch1',
+      questTitle: 'Supply run',
+      category: 'errand',
+      identityTraitGained: 'Reliable',
+      xpEarned: 10,
+      reputationEarned: 2,
+      source: 'userQuest',
+    },
+  ],
+  desiredIdentityTraits: ['reliable'] as IdentityTraitKey[],
+};
+const monthlyReport = computeMonthlySeasonReport(
+  monthlyProgress as PlayerProgress,
+  'dust-and-iron',
+  new Date('2026-05-27T12:00:00'),
+  monthKey,
+);
+assert(monthlyReport.questsCompleted === 3, 'monthly quests completed');
+assert(monthlyReport.identityVotesGained === 2, 'monthly identity votes');
+assert(monthlyReport.strongestTrait?.trait.key === 'reliable', 'monthly strongest trait');
+assert(monthlyReport.becomingSummary.length >= 2, 'monthly becoming summary');
+assert(monthlyReport.activeDays === 2, 'monthly active days');
+const closedMonthly = markMonthlyReviewSeen(monthlyProgress as PlayerProgress, monthKey);
+assert(isMonthlyReviewClosed(closedMonthly, monthKey), 'monthly review closed');
+
+// Next best action
+const recoveryProgress = {
+  ...baseProgress(),
+  hasOnboarded: true,
+  recoveryQuestOfferedForDate: getLocalDateKey(),
+  recoveryQuestCompletedDates: [],
+};
+assert(shouldShowRecoveryPrompt(recoveryProgress), 'recovery prompt active');
+const recoveryAction = getNextBestAction({
+  progress: recoveryProgress,
+  universeId: 'dust-and-iron',
+  remainingChapterBounties: 0,
+});
+assert(recoveryAction.actionType === 'recovery-quest', 'next best action recovery');
+assert(recoveryAction.ctaLabel === 'START RECOVERY QUEST', 'recovery cta');
+const dismissedNba = dismissNextBestActionForToday(baseProgress());
+assert(isNextBestActionDismissedToday(dismissedNba), 'next best action dismissed today');
+const inboxAction = getNextBestAction({
+  progress: {
+    ...baseProgress(),
+    hasOnboarded: true,
+    dailyAwarenessDismissedDates: [getLocalDateKey()],
+    questInbox: [
+      {
+        id: 'inbox-1',
+        title: 'Call dentist',
+        createdAt: new Date().toISOString(),
+        status: 'inbox',
+      },
+    ],
+  },
+  universeId: 'dust-and-iron',
+  remainingChapterBounties: 0,
+});
+assert(inboxAction.actionType === 'convert-inbox', 'next best action inbox');
 
 if (failures.length) {
   console.error('FAILED:\n' + failures.map((f) => ` - ${f}`).join('\n'));

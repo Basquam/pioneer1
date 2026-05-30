@@ -1,7 +1,6 @@
 import * as Haptics from 'expo-haptics';
 import { useEffect, useMemo, useState } from 'react';
 import {
-  Alert,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -13,6 +12,7 @@ import {
 } from 'react-native';
 
 import { GlowButton } from '@/components/rpg/glow-button';
+import { QuestLifecycleActions } from '@/components/rpg/quest-lifecycle-actions';
 import { GameLayout } from '@/constants/layout';
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
@@ -26,6 +26,7 @@ import {
   getDailyShutdownCopy,
   getDailyShutdownEntry,
 } from '@/lib/daily-shutdown';
+import { QUEST_LIFECYCLE_NEEDS_DECISION_COPY } from '@/lib/quest-lifecycle';
 import type {
   DailyShutdownHelpedBy,
   DailyShutdownOpenQuestAction,
@@ -39,24 +40,11 @@ type DailyShutdownSheetProps = {
 
 type ShutdownPhase = 'summary' | 'reflect' | 'done';
 
-const OPEN_QUEST_ACTION_OPTIONS: Array<{
-  action: DailyShutdownOpenQuestAction;
-  label: string;
-}> = [
-  { action: 'keep-tomorrow', label: 'Keep for tomorrow' },
-  { action: 'convert-starter', label: 'Starter move' },
-  { action: 'archive', label: 'Archive' },
-  { action: 'leave', label: 'Leave as is' },
-];
-
 export function DailyShutdownSheet({ visible, onClose }: DailyShutdownSheetProps) {
   const {
     activeUniverse,
     playerProgress,
     completeDailyShutdown,
-    carryQuestToTomorrow,
-    archiveUserQuest,
-    openImproveQuest,
     closeDailyShutdown,
   } = useGame();
   const { palette } = activeUniverse;
@@ -104,36 +92,7 @@ export function DailyShutdownSheet({ visible, onClose }: DailyShutdownSheetProps
   };
 
   const handleSelectAction = (questId: string, action: DailyShutdownOpenQuestAction) => {
-    void Haptics.selectionAsync();
     setActionByQuestId((current) => ({ ...current, [questId]: action }));
-
-    if (action === 'keep-tomorrow') {
-      carryQuestToTomorrow(questId);
-      return;
-    }
-
-    if (action === 'convert-starter') {
-      handleClose();
-      openImproveQuest(questId);
-      return;
-    }
-
-    if (action === 'archive') {
-      Alert.alert(
-        'Archive this quest?',
-        'It leaves your active board but stays in your history.',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          {
-            text: 'Archive',
-            style: 'destructive',
-            onPress: () => {
-              archiveUserQuest(questId);
-            },
-          },
-        ],
-      );
-    }
   };
 
   const buildOpenQuestSummaries = (): DailyShutdownOpenQuestSummary[] =>
@@ -240,48 +199,30 @@ export function DailyShutdownSheet({ visible, onClose }: DailyShutdownSheetProps
                   <View style={[styles.section, { borderColor: palette.panelBorder }]}>
                     <Text style={[styles.sectionLabel, { color: palette.gold }]}>STILL OPEN</Text>
                     <Text style={[styles.sectionHint, { color: palette.fog }]}>
-                      Unfinished quests can wait — choose what helps tomorrow.
+                      {QUEST_LIFECYCLE_NEEDS_DECISION_COPY} Choose what helps tomorrow.
                     </Text>
-                    {openQuests.map(({ quest, categories }) => {
-                      const selectedAction = actionByQuestId[quest.id] ?? 'leave';
-                      return (
-                        <View
-                          key={quest.id}
-                          style={[styles.openQuestCard, { borderColor: palette.panelBorder, backgroundColor: palette.panel }]}>
-                          <Text style={[styles.openQuestTitle, { color: palette.bone }]} numberOfLines={2}>
-                            {quest.originalTitle}
-                          </Text>
-                          <Text style={[styles.openQuestMeta, { color: palette.fog }]}>
-                            {formatOpenQuestCategories(categories)}
-                          </Text>
-                          <View style={styles.actionRow}>
-                            {OPEN_QUEST_ACTION_OPTIONS.map((option) => {
-                              const selected = selectedAction === option.action;
-                              return (
-                                <Pressable
-                                  key={option.action}
-                                  onPress={() => handleSelectAction(quest.id, option.action)}
-                                  style={[
-                                    styles.actionChip,
-                                    {
-                                      backgroundColor: selected ? palette.primary : palette.night,
-                                      borderColor: selected ? palette.gold : palette.panelBorder,
-                                    },
-                                  ]}>
-                                  <Text
-                                    style={[
-                                      styles.actionChipText,
-                                      { color: selected ? palette.bone : palette.fog },
-                                    ]}>
-                                    {option.label}
-                                  </Text>
-                                </Pressable>
-                              );
-                            })}
-                          </View>
-                        </View>
-                      );
-                    })}
+                    {openQuests.map(({ quest, categories }) => (
+                      <View
+                        key={quest.id}
+                        style={[
+                          styles.openQuestCard,
+                          { borderColor: palette.panelBorder, backgroundColor: palette.panel },
+                        ]}>
+                        <Text style={[styles.openQuestTitle, { color: palette.bone }]} numberOfLines={2}>
+                          {quest.originalTitle}
+                        </Text>
+                        <Text style={[styles.openQuestMeta, { color: palette.fog }]}>
+                          {formatOpenQuestCategories(categories)}
+                        </Text>
+                        <QuestLifecycleActions
+                          questId={quest.id}
+                          palette={palette}
+                          showLeave
+                          selectedAction={actionByQuestId[quest.id] ?? 'leave'}
+                          onSelectAction={(action) => handleSelectAction(quest.id, action)}
+                        />
+                      </View>
+                    ))}
                   </View>
                 ) : null}
 
@@ -460,22 +401,6 @@ const styles = StyleSheet.create({
     fontFamily: GameFonts.ui,
     fontSize: 10,
     letterSpacing: 0.4,
-  },
-  actionRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
-  },
-  actionChip: {
-    borderWidth: 1,
-    borderRadius: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-  },
-  actionChipText: {
-    fontFamily: GameFonts.ui,
-    fontSize: 10,
-    letterSpacing: 0.3,
   },
   helpedOptions: {
     flexDirection: 'row',
