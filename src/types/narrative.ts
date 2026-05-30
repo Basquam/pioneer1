@@ -634,6 +634,27 @@ export type FeatureDiscoveryState = {
   currentTier: number;
 };
 
+export type ProcessAchievementId =
+  | 'first-step-taken'
+  | 'small-move-counts'
+  | 'trail-marked'
+  | 'prepared-before-starting'
+  | 'focus-entered'
+  | 'minimum-day-secured'
+  | 'back-on-track'
+  | 'clutter-cleared'
+  | 'big-quest-broken'
+  | 'promise-kept'
+  | 'system-builder'
+  | 'reflection-logged';
+
+export type ProcessAchievementEntry = {
+  achievementId: ProcessAchievementId;
+  unlockedAt: string;
+  relatedUniverseId?: string;
+  relatedQuestId?: string;
+};
+
 export type PlayerProgress = {
   hasOnboarded: boolean;
   /** First-session HQ tutorial — shown once after onboarding. */
@@ -706,6 +727,8 @@ export type PlayerProgress = {
   dismissedCoachTipsByDate: Record<string, string[]>;
   /** Progressive feature disclosure — guided unlocks and discovery tracking. */
   featureDiscoveryState: FeatureDiscoveryState;
+  /** Behavior-design process achievements unlocked locally. */
+  processAchievements: ProcessAchievementEntry[];
   /** Minimum viable / low-energy day mode keyed by local date (YYYY-MM-DD). */
   minimumViableDayByDate: Record<string, MinimumViableDayEntry>;
   /** Prime-tomorrow setup keyed by the local date it applies to (YYYY-MM-DD). */

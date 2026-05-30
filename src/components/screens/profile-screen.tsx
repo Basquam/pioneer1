@@ -36,6 +36,7 @@ import { GlossarySheet } from '@/components/rpg/glossary-sheet';
 import { QuestDefaultsPanel } from '@/components/rpg/quest-defaults-panel';
 import { RecurringQuestsPanel } from '@/components/rpg/recurring-quests-panel';
 import { ProfileAppInfo } from '@/components/rpg/profile-app-info';
+import { ProcessAchievementsPanel } from '@/components/rpg/process-achievements-panel';
 import { ProfileSection } from '@/components/rpg/profile-section';
 import { ProgressBackupPanel } from '@/components/rpg/progress-backup-panel';
 import { ScreenScroll } from '@/components/rpg/screen-scroll';
@@ -270,6 +271,10 @@ export function ProfileScreen() {
               affinity={playerProgress.characterAffinity[character.id] ?? 0}
             />
           ))}
+        </ProfileSection>
+
+        <ProfileSection title="PROCESS ACHIEVEMENTS" hint="Marks for using healthy behavior systems.">
+          <ProcessAchievementsPanel />
         </ProfileSection>
 
         <ProfileSection title="REWARDS / UNLOCKS">

@@ -33,6 +33,7 @@ import {
   refreshFeatureDiscoveryState,
   sanitizeFeatureDiscoveryState,
 } from '@/lib/feature-discovery';
+import { sanitizeProcessAchievements } from '@/lib/process-achievements';
 import {
   pruneMinimumViableDayByDate,
   sanitizeMinimumViableDayByDate,
@@ -424,6 +425,7 @@ export function sanitizePersistedProgress(progress: PlayerProgress): PlayerProgr
       progress.featureDiscoveryState,
       progress,
     ),
+    processAchievements: sanitizeProcessAchievements(progress.processAchievements),
   });
 }
 

@@ -110,6 +110,25 @@ import {
   setShowAdvancedFeatureTools as applyShowAdvancedFeatureTools,
 } from '@/lib/feature-discovery';
 import {
+  advanceRewardQueue,
+  buildChapterRewardCelebrationEvent,
+  buildProcessAchievementCelebrationEvents,
+  buildQuestCompleteCelebrationEvents,
+  enqueueRewardEvents,
+  getActiveRewardEvent,
+  mergeCelebrationBatch,
+  type RewardEvent,
+  type RewardEventInput,
+} from '@/lib/reward-event-queue';
+import {
+  detectProcessAchievementUnlocks,
+  hasQuestDefaultsConfigured,
+  toProcessAchievementToasts,
+  unlockProcessAchievements,
+  wasQuestNeedsReviewBeforeLifecycleAction,
+  type ProcessAchievementUnlock,
+} from '@/lib/process-achievements';
+import {
   activateMinimumViableDay as applyMinimumViableDayActivation,
   getMinimumViableDayCompletionFlavor,
   getMinimumViableDayCopy,
@@ -262,8 +281,8 @@ type GameContextValue = {
   villainInfluence: number;
   xpBurst: XpBurst | null;
   narrativeMoment: NarrativeMoment | null;
-  chapterComplete: ChapterCompleteState | null;
-  questComplete: QuestCompleteState | null;
+  activeCelebration: RewardEvent | null;
+  isCelebrationActive: boolean;
   questCreated: UserQuest | null;
   addQuestSheetOpen: boolean;
   addQuestRecoveryMode: boolean;
@@ -378,6 +397,7 @@ type GameContextValue = {
   clearRequestedQuestBoardTab: () => void;
   dismissNextBestActionForToday: () => void;
   dismissCoachTipForToday: (tipId: string) => void;
+  dismissCelebration: () => void;
   setGuidedFeatureDiscovery: (enabled: boolean) => void;
   setShowAdvancedFeatureTools: (enabled: boolean) => void;
   hqScrollNonce: number;
@@ -387,9 +407,12 @@ type GameContextValue = {
   dismissHqTutorial: () => void;
   startHqTutorialAddQuest: () => void;
   dismissNarrativeMoment: () => void;
-  dismissQuestComplete: () => void;
-  continueFromChapterComplete: () => void;
-  startUnlockedSagaFromChapterComplete: (sagaId: string, entryChapterId: string) => void;
+  continueFromChapterComplete: (chapter: ChapterCompleteState) => void;
+  startUnlockedSagaFromChapterComplete: (
+    sagaId: string,
+    entryChapterId: string,
+    chapter: ChapterCompleteState,
+  ) => void;
   maybeShowVillainTaunt: () => void;
   resetProgress: () => Promise<void>;
   importProgress: (progress: PlayerProgress) => Promise<void>;
@@ -422,8 +445,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [isHydrated, setIsHydrated] = useState(false);
   const [xpBurst, setXpBurst] = useState<XpBurst | null>(null);
   const [narrativeMoment, setNarrativeMoment] = useState<NarrativeMoment | null>(null);
-  const [chapterComplete, setChapterComplete] = useState<ChapterCompleteState | null>(null);
-  const [questComplete, setQuestComplete] = useState<QuestCompleteState | null>(null);
+  const [celebrationQueue, setCelebrationQueue] = useState<RewardEvent[]>([]);
+  const activeCelebration = getActiveRewardEvent(celebrationQueue);
+  const isCelebrationActive = celebrationQueue.length > 0;
   const [questCreated, setQuestCreated] = useState<UserQuest | null>(null);
   const [addQuestSheetOpen, setAddQuestSheetOpen] = useState(false);
   const [dailyShutdownOpen, setDailyShutdownOpen] = useState(false);
@@ -441,6 +465,29 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [requestedQuestBoardTab, setRequestedQuestBoardTab] = useState<QuestBoardTab | null>(null);
   const [hqScrollNonce, setHqScrollNonce] = useState(0);
   const pendingChapterCompleteRef = useRef<ChapterCompleteState | null>(null);
+
+  const enqueueCelebrations = useCallback((incoming: RewardEventInput[]) => {
+    if (incoming.length === 0) return;
+    setCelebrationQueue((queue) => enqueueRewardEvents(queue, incoming));
+  }, []);
+
+  const dismissCelebration = useCallback(() => {
+    setCelebrationQueue((queue) => advanceRewardQueue(queue));
+  }, []);
+
+  const enqueueProcessAchievementUnlocks = useCallback(
+    (unlocks: ProcessAchievementUnlock[], universeId: string, batchId?: string) => {
+      const toasts = toProcessAchievementToasts(unlocks, universeId);
+      const events = buildProcessAchievementCelebrationEvents(
+        toasts,
+        batchId ?? `process-${Date.now()}`,
+      );
+      setCelebrationQueue((queue) =>
+        enqueueRewardEvents(queue, events, { coalesceIncomingSmall: true }),
+      );
+    },
+    [],
+  );
 
   useEffect(() => {
     let active = true;
@@ -576,7 +623,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     currentChapter !== null &&
     (currentChapter.introScene?.length ?? 0) > 0 &&
     !progress.seenChapterIntros.includes(currentChapter.id) &&
-    chapterComplete === null;
+    !isCelebrationActive;
 
   const showRecoveryPrompt = useMemo(
     () => isHydrated && shouldShowRecoveryPrompt(progress),
@@ -598,8 +645,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     progress.hasOnboarded &&
     !progress.tutorialSeen &&
     !showChapterIntro &&
-    chapterComplete === null &&
-    questComplete === null &&
+    !isCelebrationActive &&
     questCreated === null &&
     narrativeMoment === null;
 
@@ -697,6 +743,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       const trimmed = originalTitle.trim();
       if (!trimmed || !currentChapter) return;
 
+      let achievementUnlocks: ProcessAchievementUnlock[] = [];
+
       setProgress((prev) => {
         const { recurring, convertFromInboxItemId, ...questOptions } = options ?? {};
         let recurringQuestTemplates = prev.recurringQuestTemplates;
@@ -738,7 +786,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
           ? markInboxItemConverted(prev.questInbox, convertFromInboxItemId)
           : prev.questInbox;
 
-        return refreshFeatureDiscoveryState(
+        const next = refreshFeatureDiscoveryState(
           recordRoutineQuestSpawned(
             {
               ...prev,
@@ -749,9 +797,19 @@ export function GameProvider({ children }: { children: ReactNode }) {
             quest,
           ),
         );
+
+        achievementUnlocks = detectProcessAchievementUnlocks(prev, {
+          type: 'quest-created',
+          universeId: activeUniverse.id,
+          quest,
+        });
+
+        return unlockProcessAchievements(next, achievementUnlocks);
       });
+
+      enqueueProcessAchievementUnlocks(achievementUnlocks, activeUniverse.id);
     },
-    [activeSaga, activeUniverse, currentChapter],
+    [activeSaga, activeUniverse, currentChapter, enqueueProcessAchievementUnlocks],
   );
 
   const disableRecurringQuest = useCallback((templateId: string) => {
@@ -799,20 +857,44 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   const updateCategoryQuestDefaults = useCallback(
     (category: TaskCategory, updates: Partial<CategoryQuestDefaults>) => {
-      setProgress((prev) => ({
-        ...prev,
-        questDefaults: updateCategoryQuestDefaultsInSettings(prev.questDefaults, category, updates),
-      }));
+      let achievementUnlocks: ProcessAchievementUnlock[] = [];
+
+      setProgress((prev) => {
+        const next = {
+          ...prev,
+          questDefaults: updateCategoryQuestDefaultsInSettings(prev.questDefaults, category, updates),
+        };
+        if (!hasQuestDefaultsConfigured(next.questDefaults)) return next;
+        achievementUnlocks = detectProcessAchievementUnlocks(prev, {
+          type: 'quest-defaults-configured',
+          universeId: activeUniverse.id,
+        });
+        return unlockProcessAchievements(next, achievementUnlocks);
+      });
+
+      enqueueProcessAchievementUnlocks(achievementUnlocks, activeUniverse.id);
     },
-    [],
+    [activeUniverse.id, enqueueProcessAchievementUnlocks],
   );
 
   const applyQuestDefaultsPreset = useCallback((presetId: QuestDefaultsPresetId) => {
-    setProgress((prev) => ({
-      ...prev,
-      questDefaults: buildQuestDefaultsPreset(presetId),
-    }));
-  }, []);
+    let achievementUnlocks: ProcessAchievementUnlock[] = [];
+
+    setProgress((prev) => {
+      const next = {
+        ...prev,
+        questDefaults: buildQuestDefaultsPreset(presetId),
+      };
+      if (!hasQuestDefaultsConfigured(next.questDefaults)) return next;
+      achievementUnlocks = detectProcessAchievementUnlocks(prev, {
+        type: 'quest-defaults-configured',
+        universeId: activeUniverse.id,
+      });
+      return unlockProcessAchievements(next, achievementUnlocks);
+    });
+
+    enqueueProcessAchievementUnlocks(achievementUnlocks, activeUniverse.id);
+  }, [activeUniverse.id, enqueueProcessAchievementUnlocks]);
 
   const setDesiredIdentityTraits = useCallback((traits: IdentityTraitKey[]) => {
     setProgress((prev) => ({
@@ -1084,6 +1166,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
     (parentQuestId: string, steps: QuestChainStepInput[]) => {
       if (!currentChapter) return;
 
+      let achievementUnlocks: ProcessAchievementUnlock[] = [];
+
       setProgress((prev) => {
         const parent = prev.userQuests.find((quest) => quest.id === parentQuestId);
         if (!parent || !isQuestChainSplittable(parent)) return prev;
@@ -1100,26 +1184,35 @@ export function GameProvider({ children }: { children: ReactNode }) {
             getLocalDateKey(),
           );
 
-          return refreshFeatureDiscoveryState(
-            markFeatureDiscovered(
-              {
-                ...prev,
-                userQuests: pruneUserQuests([
-                  ...prev.userQuests.map((quest) => (quest.id === parentQuestId ? updatedParent : quest)),
-                  ...childQuests,
-                ]),
-              },
-              'questChain',
+          const next = {
+            ...prev,
+            userQuests: pruneUserQuests([
+              ...prev.userQuests.map((quest) => (quest.id === parentQuestId ? updatedParent : quest)),
+              ...childQuests,
+            ]),
+          };
+
+          achievementUnlocks = detectProcessAchievementUnlocks(prev, {
+            type: 'quest-chain-split',
+            universeId: activeUniverse.id,
+            parentQuest: parent,
+          });
+
+          return unlockProcessAchievements(
+            refreshFeatureDiscoveryState(
+              markFeatureDiscovered(next, 'questChain'),
             ),
+            achievementUnlocks,
           );
         } catch {
           return prev;
         }
       });
 
+      enqueueProcessAchievementUnlocks(achievementUnlocks, activeUniverse.id);
       setSplitQuestChainId(null);
     },
-    [activeSaga, activeUniverse, currentChapter],
+    [activeSaga, activeUniverse, currentChapter, enqueueProcessAchievementUnlocks],
   );
 
   const openFrictionReview = useCallback((questId: string) => {
@@ -1261,31 +1354,85 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   const archiveUserQuest = useCallback((questId: string) => {
     void cancelQuestReminderNotification(questId);
-    setProgress((prev) => ({
-      ...prev,
-      userQuests: prev.userQuests.map((quest) =>
-        quest.id === questId ? applyArchiveQuestLifecycle(quest) : quest,
-      ),
-    }));
-  }, []);
+    let achievementUnlocks: ProcessAchievementUnlock[] = [];
+    const today = getLocalDateKey();
+
+    setProgress((prev) => {
+      const quest = prev.userQuests.find((entry) => entry.id === questId);
+      const wasNeedsReview = quest
+        ? wasQuestNeedsReviewBeforeLifecycleAction(quest, today)
+        : false;
+      const next = {
+        ...prev,
+        userQuests: prev.userQuests.map((entry) =>
+          entry.id === questId ? applyArchiveQuestLifecycle(entry) : entry,
+        ),
+      };
+      achievementUnlocks = detectProcessAchievementUnlocks(prev, {
+        type: 'quest-lifecycle-resolved',
+        universeId: activeUniverse.id,
+        questId,
+        wasNeedsReview,
+      });
+      return unlockProcessAchievements(next, achievementUnlocks);
+    });
+
+    enqueueProcessAchievementUnlocks(achievementUnlocks, activeUniverse.id);
+  }, [activeUniverse.id, enqueueProcessAchievementUnlocks]);
 
   const carryQuestToToday = useCallback((questId: string) => {
-    setProgress((prev) => ({
-      ...prev,
-      userQuests: prev.userQuests.map((quest) =>
-        quest.id === questId ? applyCarryQuestToToday(quest) : quest,
-      ),
-    }));
-  }, []);
+    let achievementUnlocks: ProcessAchievementUnlock[] = [];
+    const today = getLocalDateKey();
+
+    setProgress((prev) => {
+      const quest = prev.userQuests.find((entry) => entry.id === questId);
+      const wasNeedsReview = quest
+        ? wasQuestNeedsReviewBeforeLifecycleAction(quest, today)
+        : false;
+      const next = {
+        ...prev,
+        userQuests: prev.userQuests.map((entry) =>
+          entry.id === questId ? applyCarryQuestToToday(entry) : entry,
+        ),
+      };
+      achievementUnlocks = detectProcessAchievementUnlocks(prev, {
+        type: 'quest-lifecycle-resolved',
+        universeId: activeUniverse.id,
+        questId,
+        wasNeedsReview,
+      });
+      return unlockProcessAchievements(next, achievementUnlocks);
+    });
+
+    enqueueProcessAchievementUnlocks(achievementUnlocks, activeUniverse.id);
+  }, [activeUniverse.id, enqueueProcessAchievementUnlocks]);
 
   const snoozeQuest = useCallback((questId: string, untilDate: string) => {
-    setProgress((prev) => ({
-      ...prev,
-      userQuests: prev.userQuests.map((quest) =>
-        quest.id === questId ? applySnoozeQuest(quest, untilDate) : quest,
-      ),
-    }));
-  }, []);
+    let achievementUnlocks: ProcessAchievementUnlock[] = [];
+    const today = getLocalDateKey();
+
+    setProgress((prev) => {
+      const quest = prev.userQuests.find((entry) => entry.id === questId);
+      const wasNeedsReview = quest
+        ? wasQuestNeedsReviewBeforeLifecycleAction(quest, today)
+        : false;
+      const next = {
+        ...prev,
+        userQuests: prev.userQuests.map((entry) =>
+          entry.id === questId ? applySnoozeQuest(entry, untilDate) : entry,
+        ),
+      };
+      achievementUnlocks = detectProcessAchievementUnlocks(prev, {
+        type: 'quest-lifecycle-resolved',
+        universeId: activeUniverse.id,
+        questId,
+        wasNeedsReview,
+      });
+      return unlockProcessAchievements(next, achievementUnlocks);
+    });
+
+    enqueueProcessAchievementUnlocks(achievementUnlocks, activeUniverse.id);
+  }, [activeUniverse.id, enqueueProcessAchievementUnlocks]);
 
   const carryQuestToTomorrow = useCallback(
     (questId: string) => {
@@ -1364,13 +1511,25 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   const submitWeeklyReview = useCallback(
     (helpedFactors: WeeklyReviewHelpedFactor[], slowdownFactor: WeeklyReviewSlowdownFactor) => {
-      setProgress((prev) =>
-        refreshFeatureDiscoveryState(
-          markFeatureDiscovered(recordWeeklyReview(prev, helpedFactors, slowdownFactor), 'weeklyReview'),
-        ),
-      );
+      let achievementUnlocks: ProcessAchievementUnlock[] = [];
+
+      setProgress((prev) => {
+        const next = recordWeeklyReview(prev, helpedFactors, slowdownFactor);
+        achievementUnlocks = detectProcessAchievementUnlocks(prev, {
+          type: 'weekly-review-completed',
+          universeId: activeUniverse.id,
+        });
+        return unlockProcessAchievements(
+          refreshFeatureDiscoveryState(
+            markFeatureDiscovered(next, 'weeklyReview'),
+          ),
+          achievementUnlocks,
+        );
+      });
+
+      enqueueProcessAchievementUnlocks(achievementUnlocks, activeUniverse.id);
     },
-    [],
+    [activeUniverse.id, enqueueProcessAchievementUnlocks],
   );
 
   const closeMonthlySeasonReport = useCallback((monthKey?: string) => {
@@ -1462,6 +1621,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const maybeShowVillainTaunt = useCallback(() => {
     if (!currentChapter) return;
     if (narrativeMoment) return;
+    if (isCelebrationActive) return;
     if (allQuestsComplete) return;
     if (getSagaDismissedTauntChapterId(activeSaga.id, progress) === currentChapter.id) return;
 
@@ -1480,13 +1640,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
     completedQuestCount,
     currentChapter,
     narrativeMoment,
+    isCelebrationActive,
     progress.dismissedTauntBySagaId,
   ]);
 
   const completeQuest = useCallback(
     (questId: string) => {
       if (!currentChapter) return;
-      if (questComplete || chapterComplete) return;
+      if (isCelebrationActive) return;
 
       const boardQuest = findBoardQuest(quests, questId);
       if (!boardQuest || boardQuest.completed) return;
@@ -1495,7 +1656,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
       triggerQuestCompleteHaptic();
 
       const completingUserQuest =
-        boardQuest.source === 'user' ? progress.userQuests.find((quest) => quest.id === questId) : null;
+        boardQuest.source === 'user'
+          ? (progress.userQuests.find((quest) => quest.id === questId) ?? null)
+          : null;
       const chainParent =
         completingUserQuest?.parentQuestId != null
           ? progress.userQuests.find((quest) => quest.id === completingUserQuest.parentQuestId)
@@ -1555,6 +1718,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
         sanitizeMomentumReserve(progress.momentumReserve) + momentumGain,
         sanitizeMomentumMilestonesReached(progress.momentumMilestonesReached),
       );
+      const today = getLocalDateKey();
+      let achievementUnlocks: ProcessAchievementUnlock[] = [];
 
       setProgress((prev) => {
         const withQuestCompletion =
@@ -1635,7 +1800,19 @@ export function GameProvider({ children }: { children: ReactNode }) {
               }
             : withRoutine;
 
-        return refreshFeatureDiscoveryState(applyMomentumGain(withChainParent, momentumGain).progress);
+        achievementUnlocks = detectProcessAchievementUnlocks(prev, {
+          type: 'quest-complete',
+          universeId: activeUniverse.id,
+          today,
+          questId,
+          boardQuest,
+          userQuest: completingUserQuest,
+        });
+
+        return unlockProcessAchievements(
+          refreshFeatureDiscoveryState(applyMomentumGain(withChainParent, momentumGain).progress),
+          achievementUnlocks,
+        );
       });
 
       const chapterAllDone = chapterDoneCount === currentChapter.questTemplates.length;
@@ -1662,7 +1839,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       const desiredIdentityHighlightLine = isDesiredIdentityTrait(traitKey, progress.desiredIdentityTraits)
         ? formatDesiredIdentityHighlight(traitKey)
         : undefined;
-      setQuestComplete({
+
+      const questState: QuestCompleteState = {
         questId,
         source: boardQuest.source,
         narrativeTitle: boardQuest.narrativeTitle,
@@ -1703,14 +1881,21 @@ export function GameProvider({ children }: { children: ReactNode }) {
           : {}),
         ...(questChainCompleteLine ? { questChainCompleteLine } : {}),
         ...(desiredIdentityHighlightLine ? { desiredIdentityHighlightLine } : {}),
-      });
-    },
-    [activeSaga, activeUniverse, chapterComplete, currentChapter, progress, questComplete, quests, sagaCompletedQuestIds],
-  );
+      };
 
-  const dismissQuestComplete = useCallback(() => {
-    setQuestComplete((current) => {
-      if (!current) return null;
+      const batchId = `quest-${questId}-${Date.now()}`;
+      const progressMessage =
+        boardQuest.source === 'user' ? ui.userQuestCompleteMessage : ui.templateQuestCompleteMessage;
+      let celebrationEvents = buildQuestCompleteCelebrationEvents(questState, {
+        batchId,
+        progressMessage,
+      });
+
+      const processAchievementEvents = buildProcessAchievementCelebrationEvents(
+        toProcessAchievementToasts(achievementUnlocks, activeUniverse.id),
+        batchId,
+      );
+      celebrationEvents = mergeCelebrationBatch([...celebrationEvents, ...processAchievementEvents]);
 
       const pendingChapter = pendingChapterCompleteRef.current;
       pendingChapterCompleteRef.current = null;
@@ -1718,18 +1903,25 @@ export function GameProvider({ children }: { children: ReactNode }) {
         if (pendingChapter.newRewards?.length) {
           setProgress((prev) => ({
             ...prev,
-            unlockedRewards: unlockChapterRewards(
-              prev.unlockedRewards,
-              pendingChapter.newRewards!,
-            ),
+            unlockedRewards: unlockChapterRewards(prev.unlockedRewards, pendingChapter.newRewards!),
           }));
         }
-        setChapterComplete(pendingChapter);
+        celebrationEvents.push(buildChapterRewardCelebrationEvent(pendingChapter));
       }
 
-      return null;
-    });
-  }, []);
+      enqueueCelebrations(celebrationEvents);
+    },
+    [
+      activeSaga,
+      activeUniverse,
+      currentChapter,
+      enqueueCelebrations,
+      isCelebrationActive,
+      progress,
+      quests,
+      sagaCompletedQuestIds,
+    ],
+  );
 
   const dismissNarrativeMoment = useCallback(() => {
     setNarrativeMoment((moment) => {
@@ -1750,64 +1942,63 @@ export function GameProvider({ children }: { children: ReactNode }) {
   }, [activeSaga.id, currentChapter]);
 
   const finalizeChapterComplete = useCallback(
-    (options?: { switchToSagaId?: string; entryChapterId?: string }) => {
-      setChapterComplete((current) => {
-        if (!current) return null;
+    (chapter: ChapterCompleteState, options?: { switchToSagaId?: string; entryChapterId?: string }) => {
+      setProgress((prev) => {
+        let next = appendSagaCompletedChapter(prev, activeSaga.id, chapter.chapterId);
 
-        setProgress((prev) => {
-          let next = appendSagaCompletedChapter(prev, activeSaga.id, current.chapterId);
+        if (options?.switchToSagaId) {
+          const targetSaga = getSaga(activeUniverse, options.switchToSagaId);
+          const chapterId =
+            options.entryChapterId ??
+            targetSaga.chapters[0]?.id ??
+            getSagaActiveChapterId(targetSaga, next);
 
-          if (options?.switchToSagaId) {
-            const targetSaga = getSaga(activeUniverse, options.switchToSagaId);
-            const chapterId =
-              options.entryChapterId ??
-              targetSaga.chapters[0]?.id ??
-              getSagaActiveChapterId(targetSaga, next);
-
-            next = setSagaActiveChapter(next, targetSaga.id, chapterId);
-            next = {
-              ...next,
-              dismissedTauntBySagaId: {
-                ...next.dismissedTauntBySagaId,
-                [targetSaga.id]: null,
-              },
-              villainInfluenceBySaga: {
-                ...next.villainInfluenceBySaga,
-                [targetSaga.id]: next.villainInfluenceBySaga[targetSaga.id] ?? 100,
-              },
-            };
-            return recordChapterCompleted(next);
-          }
-
-          if (current.nextChapterId) {
-            next = setSagaActiveChapter(next, activeSaga.id, current.nextChapterId);
-            next = {
-              ...next,
-              dismissedTauntBySagaId: {
-                ...next.dismissedTauntBySagaId,
-                [activeSaga.id]: null,
-              },
-            };
-          }
-
+          next = setSagaActiveChapter(next, targetSaga.id, chapterId);
+          next = {
+            ...next,
+            dismissedTauntBySagaId: {
+              ...next.dismissedTauntBySagaId,
+              [targetSaga.id]: null,
+            },
+            villainInfluenceBySaga: {
+              ...next.villainInfluenceBySaga,
+              [targetSaga.id]: next.villainInfluenceBySaga[targetSaga.id] ?? 100,
+            },
+          };
           return recordChapterCompleted(next);
-        });
+        }
 
-        return null;
+        if (chapter.nextChapterId) {
+          next = setSagaActiveChapter(next, activeSaga.id, chapter.nextChapterId);
+          next = {
+            ...next,
+            dismissedTauntBySagaId: {
+              ...next.dismissedTauntBySagaId,
+              [activeSaga.id]: null,
+            },
+          };
+        }
+
+        return recordChapterCompleted(next);
       });
     },
     [activeSaga.id, activeUniverse],
   );
 
-  const continueFromChapterComplete = useCallback(() => {
-    finalizeChapterComplete();
-  }, [finalizeChapterComplete]);
+  const continueFromChapterComplete = useCallback(
+    (chapter: ChapterCompleteState) => {
+      finalizeChapterComplete(chapter);
+      dismissCelebration();
+    },
+    [dismissCelebration, finalizeChapterComplete],
+  );
 
   const startUnlockedSagaFromChapterComplete = useCallback(
-    (sagaId: string, entryChapterId: string) => {
-      finalizeChapterComplete({ switchToSagaId: sagaId, entryChapterId });
+    (sagaId: string, entryChapterId: string, chapter: ChapterCompleteState) => {
+      finalizeChapterComplete(chapter, { switchToSagaId: sagaId, entryChapterId });
+      dismissCelebration();
     },
-    [finalizeChapterComplete],
+    [dismissCelebration, finalizeChapterComplete],
   );
 
   const dismissXpBurst = useCallback(() => setXpBurst(null), []);
@@ -1931,8 +2122,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     if (!__DEV__) return;
     setProgress((prev) => applyDevSwitchToNeonAshes(prev));
     setNarrativeMoment(null);
-    setChapterComplete(null);
-    setQuestComplete(null);
+    setCelebrationQueue([]);
     pendingChapterCompleteRef.current = null;
   }, []);
 
@@ -1940,8 +2130,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     if (!__DEV__) return;
     setProgress((prev) => applyDevSwitchToNeuroNet(prev));
     setNarrativeMoment(null);
-    setChapterComplete(null);
-    setQuestComplete(null);
+    setCelebrationQueue([]);
     pendingChapterCompleteRef.current = null;
   }, []);
 
@@ -1949,16 +2138,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
     if (!__DEV__) return;
     setProgress((prev) => applyDevSwitchToDustAndIron(prev));
     setNarrativeMoment(null);
-    setChapterComplete(null);
-    setQuestComplete(null);
+    setCelebrationQueue([]);
     pendingChapterCompleteRef.current = null;
   }, []);
 
   const restoreDefaultStory = useCallback(() => {
     setProgress((prev) => restoreDefaultStoryProgress(prev));
     setNarrativeMoment(null);
-    setChapterComplete(null);
-    setQuestComplete(null);
+    setCelebrationQueue([]);
     pendingChapterCompleteRef.current = null;
   }, []);
 
@@ -1968,8 +2155,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setProgress(fresh);
     setXpBurst(null);
     setNarrativeMoment(null);
-    setChapterComplete(null);
-    setQuestComplete(null);
+    setCelebrationQueue([]);
     setQuestCreated(null);
     setAddQuestSheetOpen(false);
     pendingChapterCompleteRef.current = null;
@@ -1981,8 +2167,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setProgress(restored);
     setXpBurst(null);
     setNarrativeMoment(null);
-    setChapterComplete(null);
-    setQuestComplete(null);
+    setCelebrationQueue([]);
     setQuestCreated(null);
     setAddQuestSheetOpen(false);
     setAddQuestRecoveryMode(false);
@@ -2007,8 +2192,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       villainInfluence,
       xpBurst,
       narrativeMoment,
-      chapterComplete,
-      questComplete,
+      activeCelebration,
+      isCelebrationActive,
       questCreated,
       addQuestSheetOpen,
       addQuestRecoveryMode,
@@ -2100,6 +2285,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       clearRequestedQuestBoardTab,
       dismissNextBestActionForToday,
       dismissCoachTipForToday,
+      dismissCelebration,
       setGuidedFeatureDiscovery,
       setShowAdvancedFeatureTools,
       hqScrollNonce,
@@ -2109,7 +2295,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
       dismissHqTutorial,
       startHqTutorialAddQuest,
       dismissNarrativeMoment,
-      dismissQuestComplete,
       continueFromChapterComplete,
       startUnlockedSagaFromChapterComplete,
       maybeShowVillainTaunt,
@@ -2163,7 +2348,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       applyQuestReminderSyncUpdates,
       chapters,
       characters,
-      chapterComplete,
+      activeCelebration,
       closeAddQuestSheet,
       closeFrictionReview,
       closeImproveQuest,
@@ -2195,7 +2380,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       dailyShutdownOpen,
       dismissHqTutorial,
       dismissNarrativeMoment,
-      dismissQuestComplete,
+      dismissCelebration,
       dismissXpBurst,
       focusDecisiveMoment,
       focusQuest,
@@ -2203,6 +2388,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       improveQuestId,
       editRecurringQuestId,
       splitQuestChainId,
+      activeCelebration,
+      isCelebrationActive,
       isHydrated,
       isSagaPreview,
       todayFocusLocked,
@@ -2223,7 +2410,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
       player,
       narrativeStateValid,
       progress,
-      questComplete,
       questCreated,
       questPackSheetOpen,
       quests,
@@ -2251,6 +2437,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       clearRequestedQuestBoardTab,
       dismissNextBestActionForToday,
       dismissCoachTipForToday,
+      dismissCelebration,
       setGuidedFeatureDiscovery,
       setShowAdvancedFeatureTools,
       hqScrollNonce,

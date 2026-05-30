@@ -206,6 +206,19 @@ import {
   setGuidedFeatureDiscoveryEnabled,
 } from '../src/lib/feature-discovery';
 import {
+  detectProcessAchievementUnlocks,
+  getProcessAchievementDefinition,
+  isProcessAchievementUnlocked,
+  unlockProcessAchievements,
+} from '../src/lib/process-achievements';
+import {
+  advanceRewardQueue,
+  buildQuestCompleteCelebrationEvents,
+  createRewardEvent,
+  enqueueRewardEvents,
+  getActiveRewardEvent,
+} from '../src/lib/reward-event-queue';
+import {
   addStarterToRecurringQuestTemplate,
   createRecurringQuestTemplate,
   lowerRecurringQuestTemplateDifficulty,
@@ -274,6 +287,7 @@ function baseProgress(): PlayerProgress {
     dismissedNextBestActionByDate: {},
     dismissedCoachTipsByDate: {},
     featureDiscoveryState: createDefaultFeatureDiscoveryState(),
+    processAchievements: [],
     minimumViableDayByDate: {},
     tomorrowSetupByDate: {},
   } as PlayerProgress;
@@ -1602,6 +1616,78 @@ const veteranProgress = setGuidedFeatureDiscoveryEnabled(
   false,
 );
 assert(veteranProgress.featureDiscoveryState.guidedDiscoveryEnabled === false, 'guided discovery off for veterans');
+
+// Process achievements
+assert(!isProcessAchievementUnlocked(loadBaseProgress, 'first-step-taken'), 'no achievements baseline');
+const firstStepUnlocks = detectProcessAchievementUnlocks(loadBaseProgress, {
+  type: 'quest-complete',
+  universeId: 'dust-and-iron',
+  today: loadToday,
+  questId: 'user-test-1',
+  boardQuest: {
+    id: 'user-test-1',
+    source: 'user',
+    category: 'health',
+    originalTitle: 'Test',
+    narrativeTitle: 'Test',
+    narrativeDescription: 'Test desc',
+    xpReward: 10,
+    reputationReward: 1,
+    reactionCharacterId: 'char',
+    completed: false,
+  },
+  userQuest: null,
+});
+assert(firstStepUnlocks.some((entry) => entry.achievementId === 'first-step-taken'), 'first step unlock');
+const withFirstStep = unlockProcessAchievements(loadBaseProgress, firstStepUnlocks);
+assert(isProcessAchievementUnlocked(withFirstStep, 'first-step-taken'), 'first step persisted');
+assert(
+  getProcessAchievementDefinition('trail-marked').getTitle('neuronet') === 'Signal Locked',
+  'plan achievement neuronet title',
+);
+
+// Reward event queue
+const questCelebrations = buildQuestCompleteCelebrationEvents(
+  {
+    questId: 'q1',
+    source: 'user',
+    narrativeTitle: 'Test Quest',
+    earnedXp: 10,
+    earnedReputation: 2,
+    characterId: 'char-1',
+    characterLine: 'Well done.',
+    identityMilestoneUnlock: {
+      headline: 'Reliable x3',
+      universeFlavorLine: 'Trail mark.',
+    },
+    momentumMilestoneUnlock: {
+      message: 'Momentum stored',
+      label: 'Steady Pace',
+    },
+  },
+  { batchId: 'batch-test', progressMessage: 'Quest cleared.' },
+);
+assert(questCelebrations[0]?.type === 'questCompletion', 'quest completion first');
+assert(questCelebrations[1]?.type === 'characterReaction', 'character reaction second');
+assert(
+  questCelebrations.some((event) => event.title === '2 rewards earned' || event.type === 'identityMilestone'),
+  'small rewards coalesced or present',
+);
+
+const queue = enqueueRewardEvents([], questCelebrations);
+assert(getActiveRewardEvent(queue)?.type === 'questCompletion', 'active celebration is first queued');
+const advanced = advanceRewardQueue(queue);
+assert(getActiveRewardEvent(advanced)?.type === 'characterReaction', 'dismiss advances queue');
+
+const duplicateQueue = enqueueRewardEvents(queue, [
+  createRewardEvent({
+    id: questCelebrations[0].id,
+    type: 'questCompletion',
+    title: 'Dup',
+    message: 'Dup',
+  }),
+]);
+assert(duplicateQueue.length === queue.length, 'duplicate event ids ignored');
 
 if (failures.length) {
   console.error('FAILED:\n' + failures.map((f) => ` - ${f}`).join('\n'));

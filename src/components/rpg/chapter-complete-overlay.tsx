@@ -21,15 +21,16 @@ import {
   REWARD_TYPE_LABELS,
   resolveStoryUnlockSaga,
 } from '@/lib/reward-unlocks';
+import type { ChapterCompleteState } from '@/types/narrative';
+
 import { useGame } from '@/hooks/use-game';
 import { useUniverseVisualTheme } from '@/hooks/use-universe-visual-theme';
 import { useUniverseUiCopy } from '@/lib/universe-ui-copy';
 
-export function ChapterCompleteOverlay() {
+export function ChapterCompleteOverlay({ chapterComplete }: { chapterComplete: ChapterCompleteState }) {
   const ui = useUniverseUiCopy();
   const {
     activeUniverse,
-    chapterComplete,
     continueFromChapterComplete,
     startUnlockedSagaFromChapterComplete,
   } = useGame();
@@ -52,12 +53,12 @@ export function ChapterCompleteOverlay() {
 
   const handleStartUnlockedSaga = () => {
     if (!unlockedSaga || !unlockedSagaFirstChapterId) return;
-    startUnlockedSagaFromChapterComplete(unlockedSaga.id, unlockedSagaFirstChapterId);
+    startUnlockedSagaFromChapterComplete(unlockedSaga.id, unlockedSagaFirstChapterId, chapterComplete);
     router.replace('/(game)/hq' as Href);
   };
 
   return (
-    <Modal visible transparent animationType="fade" statusBarTranslucent>
+    <Modal visible transparent animationType="fade" statusBarTranslucent onRequestClose={() => continueFromChapterComplete(chapterComplete)}>
       <View style={[styles.backdrop, { backgroundColor: `${palette.void}f2` }]}>
         {visualTheme.showScanlines && <ScanlineOverlay color={palette.accent} lineCount={36} />}
         <View style={[styles.vignetteTop, { backgroundColor: visualTheme.panelUsesHolographic ? palette.accent : palette.primary }]} />
@@ -149,14 +150,14 @@ export function ChapterCompleteOverlay() {
                   }
                   palette={palette}
                   visualTheme={visualTheme}
-                  onPress={continueFromChapterComplete}
+                  onPress={() => continueFromChapterComplete(chapterComplete)}
                 />
               </>
             ) : (
               <GlowButton
                 label="CONTINUE"
                 hint={hasNextChapter ? ui.continueHintNext : ui.continueHintHome}
-                onPress={continueFromChapterComplete}
+                onPress={() => continueFromChapterComplete(chapterComplete)}
               />
             )}
           </Animated.View>

@@ -6,11 +6,10 @@ import { FrictionReviewSheet } from '@/components/rpg/friction-review-sheet';
 import { ImproveQuestSheet } from '@/components/rpg/improve-quest-sheet';
 import { RecurringRoutineEditSheet } from '@/components/rpg/recurring-routine-edit-sheet';
 import { SplitQuestChainSheet } from '@/components/rpg/split-quest-chain-sheet';
-import { ChapterCompleteOverlay } from '@/components/rpg/chapter-complete-overlay';
 import { ChapterIntroScene } from '@/components/rpg/chapter-intro-scene';
 import { HqTutorialOverlay } from '@/components/rpg/hq-tutorial-overlay';
+import { CelebrationOverlay } from '@/components/rpg/celebration-overlay';
 import { QuestFocusOverlay } from '@/components/rpg/quest-focus-overlay';
-import { QuestCompleteOverlay } from '@/components/rpg/quest-complete-overlay';
 import { QuestCreatedOverlay } from '@/components/rpg/quest-created-overlay';
 import { useGame } from '@/hooks/use-game';
 
@@ -40,9 +39,8 @@ export function GameFlowOverlays() {
   return (
     <>
       <QuestReminderSync />
-      <ChapterCompleteOverlay />
+      <CelebrationOverlay />
       <QuestFocusOverlay />
-      <QuestCompleteOverlay />
       <QuestCreatedOverlay />
       <ChapterIntroScene visible={showChapterIntro} onComplete={markChapterIntroSeen} />
       <HqTutorialOverlay

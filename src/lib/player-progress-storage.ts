@@ -36,6 +36,7 @@ import {
   refreshFeatureDiscoveryState,
   sanitizeFeatureDiscoveryState,
 } from '@/lib/feature-discovery';
+import { sanitizeProcessAchievements } from '@/lib/process-achievements';
 import { sanitizeMinimumViableDayByDate } from '@/lib/minimum-viable-day';
 import { sanitizeTomorrowSetupByDate } from '@/lib/tomorrow-setup';
 import {
@@ -205,6 +206,7 @@ export function createInitialProgress(): PlayerProgress {
     dismissedNextBestActionByDate: {},
     dismissedCoachTipsByDate: {},
     featureDiscoveryState: createDefaultFeatureDiscoveryState(),
+    processAchievements: [],
     minimumViableDayByDate: {},
     tomorrowSetupByDate: {},
     recurringQuestTemplates: [],
@@ -279,6 +281,9 @@ function normalizeProgress(raw: Partial<PlayerProgress> & Record<string, unknown
     ),
     featureDiscoveryState: sanitizeFeatureDiscoveryState(
       raw.featureDiscoveryState ?? base.featureDiscoveryState,
+    ),
+    processAchievements: sanitizeProcessAchievements(
+      raw.processAchievements ?? base.processAchievements,
     ),
     minimumViableDayByDate: sanitizeMinimumViableDayByDate(
       raw.minimumViableDayByDate ?? base.minimumViableDayByDate,
