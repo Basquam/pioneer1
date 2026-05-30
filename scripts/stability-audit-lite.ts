@@ -212,6 +212,14 @@ import {
   unlockProcessAchievements,
 } from '../src/lib/process-achievements';
 import {
+  createLegacyMinimalSaveFixture,
+  CURRENT_PLAYER_PROGRESS_SCHEMA_VERSION,
+  migratePlayerProgress,
+  readPlayerProgressSchemaVersion,
+  testSaveMigration,
+} from '../src/lib/player-progress-migration';
+import { restorePlayerProgress } from '../src/lib/player-progress-storage';
+import {
   advanceRewardQueue,
   buildQuestCompleteCelebrationEvents,
   createRewardEvent,
@@ -234,6 +242,7 @@ const assert = (ok: boolean, msg: string) => {
 
 function baseProgress(): PlayerProgress {
   const progress = {
+    schemaVersion: 1,
     hasOnboarded: true,
     tutorialSeen: false,
     firstUniverseId: null,
@@ -1645,6 +1654,21 @@ assert(
   getProcessAchievementDefinition('trail-marked').getTitle('neuronet') === 'Signal Locked',
   'plan achievement neuronet title',
 );
+
+// Player progress migration
+const legacyFixture = createLegacyMinimalSaveFixture();
+assert(readPlayerProgressSchemaVersion(legacyFixture) === 0, 'legacy save has no schema version');
+const legacyMigrated = migratePlayerProgress(legacyFixture);
+assert(legacyMigrated.fromVersion === 0, 'legacy migration from v0');
+assert(legacyMigrated.toVersion === CURRENT_PLAYER_PROGRESS_SCHEMA_VERSION, 'legacy migration to current');
+assert(legacyMigrated.appliedMigrations.includes('v0-to-v1'), 'v0-to-v1 applied');
+const legacyRestored = restorePlayerProgress(legacyFixture);
+assert(legacyRestored.schemaVersion === CURRENT_PLAYER_PROGRESS_SCHEMA_VERSION, 'legacy restore schema');
+assert(legacyRestored.totalXp === 42, 'legacy xp preserved');
+assert(Array.isArray(legacyRestored.processAchievements), 'legacy process achievements default');
+assert(legacyRestored.identityVotes != null, 'legacy identity votes default');
+const migrationTest = testSaveMigration(restorePlayerProgress);
+assert(migrationTest.ok, 'dev migration smoke test');
 
 // Reward event queue
 const questCelebrations = buildQuestCompleteCelebrationEvents(

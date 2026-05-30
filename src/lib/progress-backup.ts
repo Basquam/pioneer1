@@ -1,6 +1,11 @@
 import { Platform } from 'react-native';
 
-import { getAppVersion } from '@/lib/app-info';
+import { getAppVersion, getAppVersionLabel } from '@/lib/app-info';
+import { restorePlayerProgress } from '@/lib/player-progress-storage';
+import {
+  CURRENT_PLAYER_PROGRESS_SCHEMA_VERSION,
+  readPlayerProgressSchemaVersion,
+} from '@/lib/player-progress-migration';
 import type { PlayerProgress } from '@/types/narrative';
 
 export const PROGRESS_BACKUP_FORMAT = 'pioneer-progress-backup' as const;
@@ -10,7 +15,10 @@ export type ProgressBackupFile = {
   format: typeof PROGRESS_BACKUP_FORMAT;
   formatVersion: typeof PROGRESS_BACKUP_FORMAT_VERSION;
   appVersion: string;
+  /** Human-readable version + native build when available. */
+  appVersionLabel: string;
   exportedAt: string;
+  schemaVersion: number;
   playerProgress: PlayerProgress;
 };
 
@@ -18,15 +26,18 @@ export type ProgressBackupValidationResult =
   | { ok: true; backup: ProgressBackupFile; playerProgress: PlayerProgress }
   | { ok: false; error: string };
 
-export { getAppVersion } from '@/lib/app-info';
+export { getAppVersion, getAppVersionLabel } from '@/lib/app-info';
 
 export function createProgressBackup(playerProgress: PlayerProgress): ProgressBackupFile {
+  const restored = restorePlayerProgress(playerProgress);
   return {
     format: PROGRESS_BACKUP_FORMAT,
     formatVersion: PROGRESS_BACKUP_FORMAT_VERSION,
     appVersion: getAppVersion(),
+    appVersionLabel: getAppVersionLabel(),
     exportedAt: new Date().toISOString(),
-    playerProgress,
+    schemaVersion: restored.schemaVersion,
+    playerProgress: restored,
   };
 }
 
@@ -55,8 +66,8 @@ function isStringArrayRecord(value: unknown): value is Record<string, string[]> 
   );
 }
 
-/** Basic structural validation before normalize/import replaces current progress. */
-export function validatePlayerProgressShape(raw: unknown): raw is PlayerProgress {
+/** Core fields required before migration can safely run. */
+export function hasMinimalPlayerProgressFields(raw: unknown): boolean {
   if (!isRecord(raw)) return false;
   if (typeof raw.hasOnboarded !== 'boolean') return false;
   if (typeof raw.selectedUniverseId !== 'string') return false;
@@ -95,22 +106,36 @@ export function validatePlayerProgressShape(raw: unknown): raw is PlayerProgress
   ) {
     return false;
   }
+  if (
+    raw.schemaVersion !== undefined &&
+    (typeof raw.schemaVersion !== 'number' || !Number.isFinite(raw.schemaVersion))
+  ) {
+    return false;
+  }
 
   return true;
 }
 
-function extractPlayerProgress(parsed: unknown): PlayerProgress | null {
+/** Basic structural validation after migration + sanitize. */
+export function validatePlayerProgressShape(raw: unknown): raw is PlayerProgress {
+  if (!isRecord(raw)) return false;
+  if (!hasMinimalPlayerProgressFields(raw)) return false;
+  if (typeof raw.schemaVersion !== 'number') return false;
+  return true;
+}
+
+function extractRawPlayerProgress(parsed: unknown): Record<string, unknown> | null {
   if (!isRecord(parsed)) return null;
 
-  if (validatePlayerProgressShape(parsed)) {
+  if (hasMinimalPlayerProgressFields(parsed)) {
     return parsed;
   }
 
   if (parsed.format === PROGRESS_BACKUP_FORMAT && isRecord(parsed.playerProgress)) {
-    return validatePlayerProgressShape(parsed.playerProgress) ? parsed.playerProgress : null;
+    return hasMinimalPlayerProgressFields(parsed.playerProgress) ? parsed.playerProgress : null;
   }
 
-  if (validatePlayerProgressShape(parsed.playerProgress)) {
+  if (isRecord(parsed.playerProgress) && hasMinimalPlayerProgressFields(parsed.playerProgress)) {
     return parsed.playerProgress;
   }
 
@@ -130,26 +155,43 @@ export function validateProgressBackupJson(rawJson: string): ProgressBackupValid
     return { ok: false, error: 'Invalid JSON. Check the text and try again.' };
   }
 
-  const playerProgress = extractPlayerProgress(parsed);
-  if (!playerProgress) {
+  const rawProgress = extractRawPlayerProgress(parsed);
+  if (!rawProgress) {
     return {
       ok: false,
       error: 'Backup is missing required save fields.',
     };
   }
 
+  let playerProgress: PlayerProgress;
+  try {
+    playerProgress = restorePlayerProgress(rawProgress);
+  } catch {
+    return {
+      ok: false,
+      error: 'Backup could not be migrated safely. Check the file and try again.',
+    };
+  }
+
   const backup: ProgressBackupFile = isRecord(parsed) &&
     parsed.format === PROGRESS_BACKUP_FORMAT &&
-    typeof parsed.exportedAt === 'string' &&
-    typeof parsed.appVersion === 'string'
+    typeof parsed.exportedAt === 'string'
     ? {
         format: PROGRESS_BACKUP_FORMAT,
         formatVersion:
           typeof parsed.formatVersion === 'number'
             ? (parsed.formatVersion as ProgressBackupFile['formatVersion'])
             : PROGRESS_BACKUP_FORMAT_VERSION,
-        appVersion: parsed.appVersion,
+        appVersion: typeof parsed.appVersion === 'string' ? parsed.appVersion : getAppVersion(),
+        appVersionLabel:
+          typeof parsed.appVersionLabel === 'string'
+            ? parsed.appVersionLabel
+            : getAppVersionLabel(),
         exportedAt: parsed.exportedAt,
+        schemaVersion:
+          typeof parsed.schemaVersion === 'number'
+            ? parsed.schemaVersion
+            : readPlayerProgressSchemaVersion(rawProgress),
         playerProgress,
       }
     : createProgressBackup(playerProgress);
@@ -185,3 +227,5 @@ export function downloadProgressBackupJson(json: string, filename = buildProgres
   URL.revokeObjectURL(url);
   return true;
 }
+
+export { CURRENT_PLAYER_PROGRESS_SCHEMA_VERSION };

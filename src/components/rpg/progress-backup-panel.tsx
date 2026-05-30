@@ -22,7 +22,7 @@ import {
   buildProgressBackupFilename,
   copyTextToClipboard,
   downloadProgressBackupJson,
-  getAppVersion,
+  getAppVersionLabel,
   serializeProgressBackup,
   validateProgressBackupJson,
 } from '@/lib/progress-backup';
@@ -122,7 +122,7 @@ export function ProgressBackupPanel({ embedded = false }: ProgressBackupPanelPro
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     closeImportModal();
     clearStatusLater(
-      `Save restored from backup v${result.backup.appVersion} (${result.backup.exportedAt.slice(0, 10)}).`,
+      `Save restored · schema v${result.playerProgress.schemaVersion} · backup ${result.backup.appVersionLabel} (${result.backup.exportedAt.slice(0, 10)}).`,
     );
   };
 
@@ -160,7 +160,7 @@ export function ProgressBackupPanel({ embedded = false }: ProgressBackupPanelPro
         Local backup only — this device, no cloud sync.
       </Text>
       <Text style={[styles.versionHint, { color: palette.fog }]}>
-        App version {getAppVersion()}
+        App {getAppVersionLabel()} · save schema v{playerProgress.schemaVersion}
       </Text>
 
       <Pressable

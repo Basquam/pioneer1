@@ -4,6 +4,8 @@ import { Alert, Platform, Pressable, StyleSheet, Text, View } from 'react-native
 import { GameLayout } from '@/constants/layout';
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
+import { testSaveMigration } from '@/lib/player-progress-migration';
+import { restorePlayerProgress } from '@/lib/player-progress-storage';
 
 const RESET_CONFIRM_TITLE = 'Erase All Progress?';
 const RESET_CONFIRM_MESSAGE =
@@ -59,7 +61,29 @@ export function DevToolsPanel({ embedded = false }: { embedded?: boolean }) {
     ]);
   };
 
+  const handleTestSaveMigration = () => {
+    const result = testSaveMigration(restorePlayerProgress);
+    if (__DEV__) {
+      console.log('[PlayerProgress] TEST SAVE MIGRATION', result);
+    }
+
+    if (Platform.OS === 'web') {
+      window.alert(result.message);
+      return;
+    }
+
+    Alert.alert(
+      result.ok ? 'Migration Test Passed' : 'Migration Test Failed',
+      result.message,
+    );
+  };
+
   const tools: DevToolButton[] = [
+    {
+      label: 'TEST SAVE MIGRATION',
+      hint: 'Simulate loading a legacy minimal save and verify migration',
+      onPress: handleTestSaveMigration,
+    },
     {
       label: 'ADD +100 XP',
       hint: 'Bump operative level for quick testing',

@@ -656,6 +656,8 @@ export type ProcessAchievementEntry = {
 };
 
 export type PlayerProgress = {
+  /** Local save schema version — used for ordered migrations on load/import. */
+  schemaVersion: number;
   hasOnboarded: boolean;
   /** First-session HQ tutorial — shown once after onboarding. */
   tutorialSeen: boolean;

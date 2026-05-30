@@ -45,6 +45,10 @@ import {
 } from '@/lib/daily-shutdown';
 import { findUniverse } from '@/lib/narrative-state';
 import { narrativeWarn } from '@/lib/narrative-state-debug';
+import {
+  CURRENT_PLAYER_PROGRESS_SCHEMA_VERSION,
+  migratePlayerProgress,
+} from '@/lib/player-progress-migration';
 import type { PlayerProgress } from '@/types/narrative';
 import { migrateLegacyProgress } from '@/lib/saga-progress';
 import {
@@ -163,6 +167,7 @@ export function createInitialProgress(): PlayerProgress {
   const sagaMaps = createDefaultSagaMapsForAllUniverses();
 
   return {
+    schemaVersion: CURRENT_PLAYER_PROGRESS_SCHEMA_VERSION,
     hasOnboarded: false,
     tutorialSeen: false,
     firstUniverseId: null,
@@ -221,10 +226,9 @@ export function createInitialProgress(): PlayerProgress {
   };
 }
 
-export function restorePlayerProgress(
-  raw: Partial<PlayerProgress> & Record<string, unknown>,
-): PlayerProgress {
-  return normalizeProgress(raw);
+export function restorePlayerProgress(raw: unknown): PlayerProgress {
+  const { progress: migrated } = migratePlayerProgress(raw);
+  return normalizeProgress(migrated);
 }
 
 function normalizeProgress(raw: Partial<PlayerProgress> & Record<string, unknown>): PlayerProgress {
@@ -324,6 +328,7 @@ function normalizeProgress(raw: Partial<PlayerProgress> & Record<string, unknown
       ...merged,
       ...sagaMaps,
       lastSagaByUniverseId,
+      schemaVersion: CURRENT_PLAYER_PROGRESS_SCHEMA_VERSION,
       selectedUniverseId: merged.selectedUniverseId,
       selectedSagaId: merged.selectedSagaId,
       currentChapterId: merged.currentChapterId || sagaMaps.currentChapterId,
@@ -348,7 +353,7 @@ export async function loadPlayerProgress(): Promise<PlayerProgress | null> {
   try {
     const raw = await AsyncStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
-    return normalizeProgress(JSON.parse(raw) as Partial<PlayerProgress> & Record<string, unknown>);
+    return restorePlayerProgress(JSON.parse(raw));
   } catch {
     return null;
   }
