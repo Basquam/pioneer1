@@ -1,6 +1,6 @@
 import { type Href, router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { findNodeHandle, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { DailyShutdownBanner } from '@/components/rpg/daily-shutdown-banner';
@@ -8,6 +8,7 @@ import { DailyAwarenessCheck } from '@/components/rpg/daily-awareness-check';
 import { QuestInboxPanel } from '@/components/rpg/quest-inbox-panel';
 import { DailyOperationsBriefing } from '@/components/rpg/daily-operations-briefing';
 import { DialoguePanel } from '@/components/rpg/dialogue-panel';
+import { MinimumViableDayBanner } from '@/components/rpg/minimum-viable-day-banner';
 import { NarrativeMomentOverlay } from '@/components/rpg/narrative-moment-overlay';
 import { QuestCard } from '@/components/rpg/quest-card';
 import { RecoveryQuestBanner } from '@/components/rpg/recovery-quest-banner';
@@ -38,25 +39,17 @@ export function HqScreen() {
   } = useGame();
   const [sagaSwitcherVisible, setSagaSwitcherVisible] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
-  const awarenessAnchorRef = useRef<View>(null);
+  const awarenessScrollYRef = useRef(0);
 
   useEffect(() => {
     if (hqScrollNonce === 0) return;
 
-    const scrollView = scrollRef.current;
-    const anchor = awarenessAnchorRef.current;
-    if (!scrollView || !anchor) return;
+    const scrollY = Math.max(0, awarenessScrollYRef.current - 24);
 
-    const scrollHandle = findNodeHandle(scrollView);
-    if (!scrollHandle) return;
-
-    anchor.measureLayout(
-      scrollHandle,
-      (_left, top) => {
-        scrollView.scrollTo({ y: Math.max(0, top - 24), animated: true });
-      },
-      () => {},
-    );
+    scrollRef.current?.scrollTo({
+      y: scrollY,
+      animated: Platform.OS !== 'web',
+    });
   }, [hqScrollNonce]);
 
   useEffect(() => {
@@ -81,12 +74,18 @@ export function HqScreen() {
           />
         </Animated.View>
 
+        <MinimumViableDayBanner />
+
         <DailyOperationsBriefing />
 
         <SectionLabel>QUEST INBOX</SectionLabel>
         <QuestInboxPanel />
 
-        <View ref={awarenessAnchorRef} collapsable={false}>
+        <View
+          collapsable={false}
+          onLayout={(event) => {
+            awarenessScrollYRef.current = event.nativeEvent.layout.y;
+          }}>
           <DailyAwarenessCheck />
         </View>
 

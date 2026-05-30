@@ -58,6 +58,7 @@ export function QuestsScreen() {
     lockTodayFocus,
     requestedQuestBoardTab,
     clearRequestedQuestBoardTab,
+    showMinimumViableDayActive,
   } = useGame();
 
   const [activeTab, setActiveTab] = useState<QuestBoardTab>('today');
@@ -117,10 +118,11 @@ export function QuestsScreen() {
         inboxCount: activeInboxItems.length,
         recurringTemplateCount,
         today,
+        minimumViableDayActive: showMinimumViableDayActive,
       });
     }
     return counts;
-  }, [activeInboxItems.length, chapterQuests, recurringTemplateCount, today, userQuestEntries]);
+  }, [activeInboxItems.length, chapterQuests, recurringTemplateCount, showMinimumViableDayActive, today, userQuestEntries]);
 
   const tabContent = useMemo(
     () =>
@@ -130,8 +132,9 @@ export function QuestsScreen() {
         chapterQuests,
         filters,
         today,
+        minimumViableDayActive: showMinimumViableDayActive,
       }),
-    [activeTab, chapterQuests, filters, today, userQuestEntries],
+    [activeTab, chapterQuests, filters, showMinimumViableDayActive, today, userQuestEntries],
   );
 
   const hasPersonalQuests = playerProgress.userQuests.some(

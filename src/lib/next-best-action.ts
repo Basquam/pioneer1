@@ -1,4 +1,4 @@
-import { shouldShowDailyAwarenessCheck } from '@/lib/daily-awareness';
+import { shouldShowDailyAwarenessCheck, getTodayDailyAwarenessEntry } from '@/lib/daily-awareness';
 import { getDailyShutdownEntry, shouldShowDailyShutdownPrompt } from '@/lib/daily-shutdown';
 import { countTodayUserQuests } from '@/lib/daily-focus';
 import { isQuestStarted } from '@/lib/decisive-moment';
@@ -7,6 +7,14 @@ import { isTodayFocusLocked } from '@/lib/focus-lock';
 import { getActiveInboxItems } from '@/lib/quest-inbox';
 import { isQuestNeedsReview, isQuestOnActiveBoard } from '@/lib/quest-lifecycle';
 import { isMonthlyReviewClosed } from '@/lib/monthly-review';
+import {
+  getMinimumViableDayCopy,
+  hasCompletedQuestToday,
+  isMinimumViableDayActive,
+  isMinimumViableDaySecuredToday,
+  pickSuggestedSmallQuest,
+  shouldSuggestMvdFromAwarenessBlocker,
+} from '@/lib/minimum-viable-day';
 import { shouldShowRecoveryPrompt } from '@/lib/recovery-quest';
 import { computeWeeklyRecap, getLocalWeekKey } from '@/lib/weekly-recap';
 import { getWeeklyReviewEntry } from '@/lib/weekly-review';
@@ -15,6 +23,8 @@ import type { PlayerProgress, UserQuest } from '@/types/narrative';
 export type NextBestActionType =
   | 'recovery-quest'
   | 'daily-awareness'
+  | 'activate-minimum-day'
+  | 'do-one-small-quest'
   | 'locked-focus'
   | 'continue-started'
   | 'review-stale'
@@ -243,6 +253,58 @@ export function getNextBestAction(context: NextBestActionContext): NextBestActio
       ctaLabel: "CHECK TODAY'S FRICTION",
       actionType: 'daily-awareness',
       route: '/(game)/hq',
+      universeFlavor: flavor,
+    };
+  }
+
+  if (shouldShowDailyAwarenessCheck(progress, today)) {
+    return {
+      id: 'daily-awareness',
+      priority: 2,
+      title: 'Check in first',
+      description: 'Name what might slow you down today — then pick a move that fits.',
+      ctaLabel: "CHECK TODAY'S FRICTION",
+      actionType: 'daily-awareness',
+      route: '/(game)/hq',
+      universeFlavor: flavor,
+    };
+  }
+
+  const awarenessEntry = getTodayDailyAwarenessEntry(progress, today);
+  if (
+    awarenessEntry &&
+    shouldSuggestMvdFromAwarenessBlocker(awarenessEntry.selectedBlocker) &&
+    !isMinimumViableDayActive(progress, today)
+  ) {
+    const mvdCopy = getMinimumViableDayCopy(universeId);
+    return {
+      id: 'activate-minimum-day',
+      priority: 2.5,
+      title: 'Lighten today',
+      description: 'Low energy still counts — one small quest is enough to hold momentum.',
+      ctaLabel: 'ENABLE MINIMUM VIABLE DAY',
+      actionType: 'activate-minimum-day',
+      route: '/(game)/hq',
+      universeFlavor: mvdCopy.title,
+    };
+  }
+
+  if (
+    isMinimumViableDayActive(progress, today) &&
+    !isMinimumViableDaySecuredToday(progress, today) &&
+    !hasCompletedQuestToday(progress, today)
+  ) {
+    const suggestedQuest = pickSuggestedSmallQuest(progress, universeId, today);
+    const mvdCopy = getMinimumViableDayCopy(universeId);
+    return {
+      id: 'do-one-small-quest',
+      priority: 2.6,
+      title: suggestedQuest?.originalTitle ?? 'One small quest',
+      description: mvdCopy.title,
+      ctaLabel: 'DO ONE SMALL QUEST',
+      actionType: 'do-one-small-quest',
+      targetQuestId: suggestedQuest?.id,
+      route: suggestedQuest ? '/(game)/quests' : '/(game)/hq',
       universeFlavor: flavor,
     };
   }

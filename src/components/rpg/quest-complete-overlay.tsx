@@ -143,7 +143,8 @@ export function QuestCompleteOverlay() {
               {(questComplete.identityVoteGainLine ||
                 questComplete.identityMilestoneUnlock ||
                 questComplete.rewardRitualUnlockedLine ||
-                questComplete.recoveryCompleteLine) && (
+                questComplete.recoveryCompleteLine ||
+                questComplete.minimumViableDayCompleteLine) && (
                 <Animated.View
                   entering={FadeInUp.duration(450).delay(460)}
                   style={[styles.outcomesBox, { borderColor: palette.panelBorder }]}>
@@ -199,6 +200,19 @@ export function QuestCompleteOverlay() {
                       <Text style={[styles.recoveryComplete, { color: palette.accent }]}>
                         {questComplete.recoveryCompleteLine}
                       </Text>
+                    </View>
+                  )}
+
+                  {questComplete.minimumViableDayCompleteLine && (
+                    <View style={styles.outcomeBlock}>
+                      <Text style={[styles.recoveryComplete, { color: palette.accent }]}>
+                        {questComplete.minimumViableDayCompleteLine}
+                      </Text>
+                      {questComplete.minimumViableDayFlavorLine ? (
+                        <Text style={[styles.identityUniverseLine, { color: palette.fog }]}>
+                          {questComplete.minimumViableDayFlavorLine}
+                        </Text>
+                      ) : null}
                     </View>
                   )}
                 </Animated.View>

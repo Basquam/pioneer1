@@ -92,11 +92,22 @@ import { markMonthlyReviewSeen } from '@/lib/monthly-review';
 import {
   dismissNextBestActionForToday as recordNextBestActionDismissed,
 } from '@/lib/next-best-action';
+import {
+  activateMinimumViableDay as applyMinimumViableDayActivation,
+  getMinimumViableDayCompletionFlavor,
+  getMinimumViableDayCopy,
+  isMinimumViableDayActive,
+  markMinimumViableDaySecured,
+  pickSuggestedSmallQuest,
+  shouldAutoActivateMvdFromAwareness,
+  shouldMarkMinimumViableDaySecuredOnQuestComplete,
+} from '@/lib/minimum-viable-day';
 import type { QuestBoardTab } from '@/lib/quest-board-organization';
 import type {
   DailyAwarenessBlocker,
   DailyShutdownHelpedBy,
   DailyShutdownOpenQuestSummary,
+  MinimumViableDaySource,
   QuestDistractionType,
   QuestFrictionReason,
   WeeklyReviewHelpedFactor,
@@ -248,6 +259,7 @@ type GameContextValue = {
   focusQuest: BoardQuest | null;
   focusDecisiveMoment: boolean;
   showRecoveryPrompt: boolean;
+  showMinimumViableDayActive: boolean;
   showDailyAwarenessCheck: boolean;
   showDailyShutdownPrompt: boolean;
   dailyShutdownOpen: boolean;
@@ -276,6 +288,8 @@ type GameContextValue = {
     >,
   ) => void;
   openRecoveryQuestSheet: () => void;
+  activateMinimumViableDay: (source?: MinimumViableDaySource) => void;
+  doOneSmallQuest: () => void;
   captureInboxTask: (title: string) => void;
   convertInboxItem: (inboxItemId: string) => void;
   archiveInboxItem: (inboxItemId: string) => void;
@@ -536,6 +550,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   const showRecoveryPrompt = useMemo(
     () => isHydrated && shouldShowRecoveryPrompt(progress),
+    [isHydrated, progress],
+  );
+
+  const showMinimumViableDayActive = useMemo(
+    () => isHydrated && isMinimumViableDayActive(progress),
     [isHydrated, progress],
   );
 
@@ -866,6 +885,38 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setAddQuestSheetOpen(true);
   }, []);
 
+  const activateMinimumViableDay = useCallback((source: MinimumViableDaySource = 'briefing') => {
+    setProgress((prev) => applyMinimumViableDayActivation(prev, source));
+  }, []);
+
+  const doOneSmallQuest = useCallback(() => {
+    const today = getLocalDateKey();
+    const suggested = pickSuggestedSmallQuest(progress, activeUniverse.id, today);
+    if (suggested) {
+      setFocusDecisiveMoment(false);
+      setFocusQuestId(suggested.id);
+      setProgress((prev) => ({
+        ...prev,
+        userQuests: prev.userQuests.map((quest) =>
+          quest.id === suggested.id ? recordFocusStartedActivity(quest) : quest,
+        ),
+      }));
+      router.push('/(game)/quests' as Href);
+      return;
+    }
+
+    setAddQuestRecoveryMode(true);
+    setAddQuestInboxPrefill(null);
+    setAddQuestTraitSuggestionPrefill({
+      title: '',
+      category: 'health',
+      traitKey: 'reliable',
+      reason: 'minimum-viable-day',
+      enableStarter: true,
+    });
+    setAddQuestSheetOpen(true);
+  }, [activeUniverse.id, progress]);
+
   const captureInboxTask = useCallback((title: string) => {
     const trimmed = title.trim();
     if (!trimmed) return;
@@ -1177,7 +1228,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const submitDailyAwareness = useCallback((blocker: DailyAwarenessBlocker) => {
-    setProgress((prev) => recordDailyAwarenessAnswer(prev, blocker));
+    setProgress((prev) => {
+      let next = recordDailyAwarenessAnswer(prev, blocker);
+      if (shouldAutoActivateMvdFromAwareness(blocker)) {
+        next = applyMinimumViableDayActivation(next, 'awareness');
+      }
+      return next;
+    });
   }, []);
 
   const dismissDailyAwarenessCheck = useCallback(() => {
@@ -1369,6 +1426,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
       const chapterDoneCount = countCompletedTemplates(currentChapter, updatedCompletedIds);
       const completingRecovery = shouldMarkRecoveryOnQuestComplete(progress);
+      const securingMinimumDay = shouldMarkMinimumViableDaySecuredOnQuestComplete(
+        progress,
+        getLocalDateKey(),
+      );
       const momentumGain = computeMomentumGainFromQuest(boardQuest);
       const momentumMilestoneUnlock = detectMomentumMilestoneUnlock(
         sanitizeMomentumReserve(progress.momentumReserve),
@@ -1383,6 +1444,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
             : prev;
 
         const withRecovery = completingRecovery ? markRecoveryQuestComplete(withQuestCompletion) : withQuestCompletion;
+        const withMinimumDay = securingMinimumDay
+          ? markMinimumViableDaySecured(withRecovery, getLocalDateKey())
+          : withRecovery;
 
         const evidenceEvent = buildEvidenceEventFromQuestCompletion(boardQuest, {
           universeId: activeUniverse.id,
@@ -1394,7 +1458,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         const withActivity = appendEvidenceEvent(
           recordQuestCompleted(
             {
-              ...withRecovery,
+              ...withMinimumDay,
               userQuests:
                 boardQuest.source === 'user'
                   ? prev.userQuests.map((quest) =>
@@ -1494,6 +1558,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
         ...(identityMilestoneUnlock ? { identityMilestoneUnlock } : {}),
         ...(completingRecovery
           ? { recoveryCompleteLine: getRecoveryQuestCopy(activeUniverse.id).completeMessage }
+          : {}),
+        ...(securingMinimumDay
+          ? {
+              minimumViableDayCompleteLine: getMinimumViableDayCopy(activeUniverse.id).completion,
+              minimumViableDayFlavorLine: getMinimumViableDayCompletionFlavor(activeUniverse.id),
+            }
           : {}),
         ...(afterQuestReward
           ? {
@@ -1832,6 +1902,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       focusQuest,
       focusDecisiveMoment,
       showRecoveryPrompt,
+      showMinimumViableDayActive,
       showDailyAwarenessCheck,
       showDailyShutdownPrompt,
       dailyShutdownOpen,
@@ -1853,6 +1924,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       openAddQuestSheet,
       openAddQuestFromTraitSuggestion,
       openRecoveryQuestSheet,
+      activateMinimumViableDay,
+      doOneSmallQuest,
       captureInboxTask,
       convertInboxItem,
       archiveInboxItem,
@@ -1938,6 +2011,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       addUserQuestPack,
       allQuestsComplete,
       closeQuestPackSheet,
+      activateMinimumViableDay,
+      doOneSmallQuest,
       archiveUserQuest,
       archiveInboxItem,
       captureInboxTask,
@@ -2024,6 +2099,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       showDailyAwarenessCheck,
       showHqTutorial,
       showRecoveryPrompt,
+      showMinimumViableDayActive,
       todayFocusLocked,
       startHqTutorialAddQuest,
       startUnlockedSagaFromChapterComplete,

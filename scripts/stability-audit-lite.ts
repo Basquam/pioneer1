@@ -172,6 +172,17 @@ import {
   getNextBestAction,
   isNextBestActionDismissedToday,
 } from '../src/lib/next-best-action';
+import {
+  activateMinimumViableDay,
+  countMinimumDaysSecuredThisMonth,
+  getMinimumViableDayCopy,
+  hasCompletedQuestToday,
+  isMinimumViableDayActive,
+  isMinimumViableDaySecuredToday,
+  markMinimumViableDaySecured,
+  pickSuggestedSmallQuest,
+  shouldAutoActivateMvdFromAwareness,
+} from '../src/lib/minimum-viable-day';
 import { shouldShowRecoveryPrompt } from '../src/lib/recovery-quest';
 const AMBIENT_UNIVERSE_IDS = ['dust-and-iron', 'neuronet', 'neon-ashes'] as const;
 
@@ -233,6 +244,7 @@ function baseProgress(): PlayerProgress {
     dailyShutdownDismissedDates: [],
     monthlyReviewSeenByMonth: {},
     dismissedNextBestActionByDate: {},
+    minimumViableDayByDate: {},
   } as PlayerProgress;
 
   for (const universe of UNIVERSES) {
@@ -1237,6 +1249,52 @@ const inboxAction = getNextBestAction({
   remainingChapterBounties: 0,
 });
 assert(inboxAction.actionType === 'convert-inbox', 'next best action inbox');
+
+// Minimum viable day
+assert(shouldAutoActivateMvdFromAwareness('low-energy'), 'mvd auto from low energy');
+assert(!shouldAutoActivateMvdFromAwareness('ready'), 'mvd not auto from ready');
+const mvdProgress = activateMinimumViableDay(baseProgress(), 'briefing', getLocalDateKey());
+assert(isMinimumViableDayActive(mvdProgress), 'mvd active after activation');
+assert(getMinimumViableDayCopy('dust-and-iron').title.includes('ride'), 'mvd dust copy');
+const securedMvd = markMinimumViableDaySecured(mvdProgress, getLocalDateKey());
+assert(isMinimumViableDaySecuredToday(securedMvd), 'mvd secured today');
+assert(countMinimumDaysSecuredThisMonth(securedMvd) === 1, 'mvd secured count this month');
+const lowEnergyAwarenessProgress = {
+  ...baseProgress(),
+  hasOnboarded: true,
+  dailyAwarenessByDate: {
+    [getLocalDateKey()]: {
+      date: getLocalDateKey(),
+      selectedBlocker: 'low-energy' as const,
+      createdAt: new Date().toISOString(),
+    },
+  },
+  dailyAwarenessDismissedDates: [getLocalDateKey()],
+};
+const activateMvdAction = getNextBestAction({
+  progress: lowEnergyAwarenessProgress,
+  universeId: 'dust-and-iron',
+  remainingChapterBounties: 0,
+});
+assert(activateMvdAction.actionType === 'activate-minimum-day', 'nba suggests mvd activation');
+const activeMvdNoQuest = activateMinimumViableDay(
+  {
+    ...baseProgress(),
+    hasOnboarded: true,
+    dailyAwarenessDismissedDates: [getLocalDateKey()],
+  },
+  'briefing',
+  getLocalDateKey(),
+);
+const doSmallAction = getNextBestAction({
+  progress: activeMvdNoQuest,
+  universeId: 'dust-and-iron',
+  remainingChapterBounties: 0,
+});
+assert(doSmallAction.actionType === 'do-one-small-quest', 'nba do one small quest');
+assert(doSmallAction.ctaLabel === 'DO ONE SMALL QUEST', 'mvd cta label');
+assert(!hasCompletedQuestToday(activeMvdNoQuest), 'no quest completed today baseline');
+assert(pickSuggestedSmallQuest(activeMvdNoQuest, 'dust-and-iron') === null, 'no small quest when empty');
 
 if (failures.length) {
   console.error('FAILED:\n' + failures.map((f) => ` - ${f}`).join('\n'));

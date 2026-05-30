@@ -17,6 +17,7 @@ import { MomentumReservePanel } from '@/components/rpg/momentum-reserve-panel';
 import { TodayFocusDisplay } from '@/components/rpg/today-focus-display';
 import { WeeklyRecapCard } from '@/components/rpg/weekly-recap-card';
 import { MonthlySeasonReportCard } from '@/components/rpg/monthly-season-report-card';
+import { MinimumViableDayProfileStat } from '@/components/rpg/minimum-viable-day-profile-stat';
 import { QuestCalendarPanel } from '@/components/rpg/quest-calendar-panel';
 import { SystemsInsightPanel } from '@/components/rpg/systems-insight-panel';
 import { GoldilocksCoachPanel } from '@/components/rpg/goldilocks-coach-panel';
@@ -210,6 +211,7 @@ export function ProfileScreen() {
 
         <ProfileSection title="HABITS & REFLECTION">
           <DailyStreakDisplay variant="profile" />
+          <MinimumViableDayProfileStat />
           <TodayFocusDisplay variant="profile" />
           <QuestCalendarPanel />
           <SystemsInsightPanel onEditIdentityCompass={() => setIdentityCompassVisible(true)} />

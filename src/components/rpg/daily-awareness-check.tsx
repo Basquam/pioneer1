@@ -10,12 +10,16 @@ import {
   getDailyAwarenessRecommendation,
   getDailyAwarenessTagline,
 } from '@/lib/daily-awareness';
+import {
+  getMinimumViableDayCopy,
+  shouldAutoActivateMvdFromAwareness,
+} from '@/lib/minimum-viable-day';
 import type { DailyAwarenessBlocker } from '@/types/narrative';
 
 type AwarenessPhase = 'pick' | 'result' | 'hidden';
 
 export function DailyAwarenessCheck() {
-  const { activeUniverse, showDailyAwarenessCheck, submitDailyAwareness, dismissDailyAwarenessCheck, playerProgress } =
+  const { activeUniverse, showDailyAwarenessCheck, submitDailyAwareness, dismissDailyAwarenessCheck, playerProgress, doOneSmallQuest } =
     useGame();
   const { palette } = activeUniverse;
   const [phase, setPhase] = useState<AwarenessPhase>(() => (showDailyAwarenessCheck ? 'pick' : 'hidden'));
@@ -76,6 +80,24 @@ export function DailyAwarenessCheck() {
       ) : (
         <View style={styles.result}>
           <Text style={[styles.recommendation, { color: palette.bone }]}>{recommendation}</Text>
+          {selectedBlocker && shouldAutoActivateMvdFromAwareness(selectedBlocker) ? (
+            <>
+              <Text style={[styles.mvdNote, { color: palette.fog }]}>
+                Minimum Viable Day is on — one small quest is enough for today.
+              </Text>
+              <Text style={[styles.mvdFlavor, { color: palette.gold }]}>
+                {getMinimumViableDayCopy(activeUniverse.id).title}
+              </Text>
+              <Pressable
+                onPress={() => {
+                  void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  doOneSmallQuest();
+                }}
+                style={[styles.smallQuestCta, { borderColor: palette.gold, backgroundColor: palette.primary }]}>
+                <Text style={[styles.smallQuestCtaText, { color: palette.bone }]}>DO ONE SMALL QUEST</Text>
+              </Pressable>
+            </>
+          ) : null}
           <Pressable onPress={handleDismiss} style={[styles.gotIt, { borderColor: palette.gold }]}>
             <Text style={[styles.gotItText, { color: palette.bone }]}>Got it</Text>
           </Pressable>
@@ -125,6 +147,29 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     fontStyle: 'italic',
+  },
+  mvdNote: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 12,
+    lineHeight: 17,
+  },
+  mvdFlavor: {
+    fontFamily: GameFonts.displayRegular,
+    fontSize: 13,
+    lineHeight: 18,
+    fontStyle: 'italic',
+  },
+  smallQuestCta: {
+    borderWidth: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    alignItems: 'center',
+    transform: [{ skewX: '-4deg' }],
+  },
+  smallQuestCtaText: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 10,
+    letterSpacing: 1.5,
   },
   gotIt: {
     alignSelf: 'flex-start',

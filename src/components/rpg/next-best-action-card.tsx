@@ -25,6 +25,8 @@ export function NextBestActionCard() {
     openDailyShutdown,
     requestQuestBoardTab,
     requestHqScrollToDailyAwareness,
+    activateMinimumViableDay,
+    doOneSmallQuest,
   } = useGame();
   const { palette } = activeUniverse;
 
@@ -59,6 +61,8 @@ export function NextBestActionCard() {
       openDailyShutdown,
       requestQuestBoardTab,
       requestHqScrollToDailyAwareness,
+      activateMinimumViableDay,
+      doOneSmallQuest,
     });
   };
 
@@ -94,6 +98,8 @@ function executeNextBestAction(
     openDailyShutdown: () => void;
     requestQuestBoardTab: (tab: 'review' | 'chapter' | 'today') => void;
     requestHqScrollToDailyAwareness: () => void;
+    activateMinimumViableDay: () => void;
+    doOneSmallQuest: () => void;
   },
 ) {
   switch (action.actionType) {
@@ -102,6 +108,17 @@ function executeNextBestAction(
       return;
     case 'daily-awareness':
       handlers.requestHqScrollToDailyAwareness();
+      return;
+    case 'activate-minimum-day':
+      handlers.activateMinimumViableDay();
+      return;
+    case 'do-one-small-quest':
+      if (action.targetQuestId && action.route === '/(game)/quests') {
+        router.push('/(game)/quests' as Href);
+        handlers.openQuestFocus(action.targetQuestId);
+        return;
+      }
+      handlers.doOneSmallQuest();
       return;
     case 'locked-focus':
     case 'continue-started':

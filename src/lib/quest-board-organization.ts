@@ -1,5 +1,6 @@
 import { getLocalDateKey } from '@/lib/daily-streak';
 import { resolveQuestCreatedOnDate } from '@/lib/daily-focus';
+import { getMinimumViableDayBoardPriorityAdjustments } from '@/lib/minimum-viable-day';
 import {
   isBoardQuestInTodayTab,
   isBoardQuestNeedsReview,
@@ -194,7 +195,11 @@ export function filterBoardQuests(quests: BoardQuest[], filters: QuestBoardFilte
 }
 
 /** Lower score = higher priority on Today tab. */
-export function getTodayQuestPriority(quest: BoardQuest, today: string = getLocalDateKey()): number {
+export function getTodayQuestPriority(
+  quest: BoardQuest,
+  today: string = getLocalDateKey(),
+  options?: { minimumViableDayActive?: boolean },
+): number {
   if (quest.completed) return 10_000;
 
   let score = 0;
@@ -209,11 +214,20 @@ export function getTodayQuestPriority(quest: BoardQuest, today: string = getLoca
   const createdOn = quest.createdOnDate ?? '';
   if (createdOn === today) score -= 50;
 
+  if (options?.minimumViableDayActive) {
+    score += getMinimumViableDayBoardPriorityAdjustments(true, quest);
+  }
+
   return score;
 }
 
-export function compareTodayBoardQuests(a: BoardQuest, b: BoardQuest, today: string = getLocalDateKey()): number {
-  const priorityDiff = getTodayQuestPriority(a, today) - getTodayQuestPriority(b, today);
+export function compareTodayBoardQuests(
+  a: BoardQuest,
+  b: BoardQuest,
+  today: string = getLocalDateKey(),
+  options?: { minimumViableDayActive?: boolean },
+): number {
+  const priorityDiff = getTodayQuestPriority(a, today, options) - getTodayQuestPriority(b, today, options);
   if (priorityDiff !== 0) return priorityDiff;
 
   const createdDiff = (b.createdOnDate ?? '').localeCompare(a.createdOnDate ?? '');
@@ -222,11 +236,15 @@ export function compareTodayBoardQuests(a: BoardQuest, b: BoardQuest, today: str
   return a.narrativeTitle.localeCompare(b.narrativeTitle);
 }
 
-function sortEntriesForToday(entries: QuestBoardEntry[], today: string): QuestBoardEntry[] {
+function sortEntriesForToday(
+  entries: QuestBoardEntry[],
+  today: string,
+  options?: { minimumViableDayActive?: boolean },
+): QuestBoardEntry[] {
   return [...entries].sort((left, right) => {
     const leftQuest = left.kind === 'chain' ? left.parent : left.quest;
     const rightQuest = right.kind === 'chain' ? right.parent : right.quest;
-    return compareTodayBoardQuests(leftQuest, rightQuest, today);
+    return compareTodayBoardQuests(leftQuest, rightQuest, today, options);
   });
 }
 
@@ -234,15 +252,16 @@ function buildTodayEntries(
   userEntries: QuestBoardEntry[],
   chapterQuests: BoardQuest[],
   today: string,
+  options?: { minimumViableDayActive?: boolean },
 ): QuestBoardEntry[] {
   const activeUserEntries = userEntries.filter(
     (entry) => entryHasActiveQuest(entry, today) && entryIsInTodayTab(entry, today),
   );
 
-  const sortedUser = sortEntriesForToday(activeUserEntries, today);
+  const sortedUser = sortEntriesForToday(activeUserEntries, today, options);
   const sortedChapter = [...chapterQuests]
     .filter((quest) => !quest.completed)
-    .sort((a, b) => compareTodayBoardQuests(a, b, today))
+    .sort((a, b) => compareTodayBoardQuests(a, b, today, options))
     .map((quest) => ({ kind: 'quest' as const, quest }));
 
   return [...sortedUser, ...sortedChapter];
@@ -356,6 +375,7 @@ export function buildQuestBoardTabContent(input: {
   chapterQuests: BoardQuest[];
   filters?: QuestBoardFilters;
   today?: string;
+  minimumViableDayActive?: boolean;
 }): {
   entries: QuestBoardEntry[];
   chapterQuests: BoardQuest[];
@@ -365,11 +385,14 @@ export function buildQuestBoardTabContent(input: {
   const filters = input.filters ?? DEFAULT_QUEST_BOARD_FILTERS;
   const filteredUserEntries = filterQuestBoardEntries(input.userEntries, filters);
   const filteredChapterQuests = filterBoardQuests(input.chapterQuests, filters);
+  const boardOptions = input.minimumViableDayActive
+    ? { minimumViableDayActive: true as const }
+    : undefined;
 
   switch (input.tab) {
     case 'today':
       return {
-        entries: buildTodayEntries(filteredUserEntries, filteredChapterQuests, today),
+        entries: buildTodayEntries(filteredUserEntries, filteredChapterQuests, today, boardOptions),
         chapterQuests: [],
         completedGroups: [],
       };
@@ -390,7 +413,7 @@ export function buildQuestBoardTabContent(input: {
         entries: [],
         chapterQuests: [...filteredChapterQuests].sort((a, b) => {
           if (a.completed !== b.completed) return a.completed ? 1 : -1;
-          return compareTodayBoardQuests(a, b, today);
+          return compareTodayBoardQuests(a, b, today, boardOptions);
         }),
         completedGroups: [],
       };
@@ -427,6 +450,7 @@ export function countQuestBoardTabItems(input: {
   inboxCount: number;
   recurringTemplateCount: number;
   today?: string;
+  minimumViableDayActive?: boolean;
 }): number {
   const content = buildQuestBoardTabContent({
     tab: input.tab,
@@ -434,6 +458,7 @@ export function countQuestBoardTabItems(input: {
     chapterQuests: input.chapterQuests,
     filters: DEFAULT_QUEST_BOARD_FILTERS,
     today: input.today,
+    minimumViableDayActive: input.minimumViableDayActive,
   });
 
   switch (input.tab) {

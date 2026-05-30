@@ -26,6 +26,10 @@ import {
   sanitizeDismissedNextBestActionByDate,
 } from '@/lib/next-best-action';
 import {
+  pruneMinimumViableDayByDate,
+  sanitizeMinimumViableDayByDate,
+} from '@/lib/minimum-viable-day';
+import {
   pruneDailyShutdownByDate,
   sanitizeDailyShutdownByDate,
   sanitizeDailyShutdownDismissedDates,
@@ -385,6 +389,9 @@ export function sanitizePersistedProgress(progress: PlayerProgress): PlayerProgr
     ),
     dismissedNextBestActionByDate: pruneDismissedNextBestActionByDate(
       sanitizeDismissedNextBestActionByDate(progress.dismissedNextBestActionByDate),
+    ),
+    minimumViableDayByDate: pruneMinimumViableDayByDate(
+      sanitizeMinimumViableDayByDate(progress.minimumViableDayByDate),
     ),
     evidenceLog: pruneEvidenceLog(progress.evidenceLog ?? []),
     momentumReserve: sanitizeMomentumReserve(progress.momentumReserve),

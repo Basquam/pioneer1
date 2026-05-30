@@ -200,6 +200,10 @@ export type QuestCompleteState = {
   identityUniverseLine?: string;
   /** Encouraging line when a recovery quest cycle is completed. */
   recoveryCompleteLine?: string;
+  /** Shown when a minimum viable day is secured. */
+  minimumViableDayCompleteLine?: string;
+  /** Universe-flavored line when a minimum viable day is secured. */
+  minimumViableDayFlavorLine?: string;
   /** Temptation-bundled reward unlocked after completing a user quest. */
   rewardRitualUnlockedLine?: string;
   /** Universe-flavored reward ritual line. */
@@ -480,6 +484,15 @@ export type DailyActivity = {
   highRiskQuestsCompleted: number;
 };
 
+export type MinimumViableDaySource = 'awareness' | 'briefing' | 'next-best-action';
+
+export type MinimumViableDayEntry = {
+  date: string;
+  activatedAt: string;
+  source?: MinimumViableDaySource;
+  securedAt?: string;
+};
+
 export type DailyAwarenessBlocker =
   | 'low-energy'
   | 'too-many-tasks'
@@ -641,6 +654,8 @@ export type PlayerProgress = {
   monthlyReviewSeenByMonth: Record<string, string>;
   /** Local dates when the user dismissed the HQ next best action card. */
   dismissedNextBestActionByDate: Record<string, boolean>;
+  /** Minimum viable / low-energy day mode keyed by local date (YYYY-MM-DD). */
+  minimumViableDayByDate: Record<string, MinimumViableDayEntry>;
   /** Local recurring routine templates — spawn user quest instances on schedule. */
   recurringQuestTemplates: RecurringQuestTemplate[];
   /** Recent quest completion events for the evidence timeline. */
