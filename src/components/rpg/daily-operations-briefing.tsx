@@ -24,6 +24,7 @@ import { buildPromiseCard } from '@/lib/promise-card';
 import { getDailyCrewCodeLine } from '@/lib/crew-code';
 import { getStoryDrivenBriefingHint } from '@/lib/quest-style-profile';
 import { NextBestActionCard } from '@/components/rpg/next-best-action-card';
+import { ContextualCoachTipCard } from '@/components/rpg/contextual-coach-tip-card';
 import { MinimumViableDayBriefingActivate } from '@/components/rpg/minimum-viable-day-banner';
 import { QuestLoadMeter } from '@/components/rpg/quest-load-meter';
 import { QuickCaptureInput } from '@/components/rpg/quick-capture-input';
@@ -127,6 +128,8 @@ export function DailyOperationsBriefing() {
         ) : null}
 
         <NextBestActionCard />
+
+        <ContextualCoachTipCard />
 
         <MinimumViableDayBriefingActivate />
 

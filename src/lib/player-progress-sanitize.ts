@@ -26,6 +26,10 @@ import {
   sanitizeDismissedNextBestActionByDate,
 } from '@/lib/next-best-action';
 import {
+  pruneDismissedCoachTipsByDate,
+  sanitizeDismissedCoachTipsByDate,
+} from '@/lib/contextual-coach-tip';
+import {
   pruneMinimumViableDayByDate,
   sanitizeMinimumViableDayByDate,
 } from '@/lib/minimum-viable-day';
@@ -393,6 +397,9 @@ export function sanitizePersistedProgress(progress: PlayerProgress): PlayerProgr
     ),
     dismissedNextBestActionByDate: pruneDismissedNextBestActionByDate(
       sanitizeDismissedNextBestActionByDate(progress.dismissedNextBestActionByDate),
+    ),
+    dismissedCoachTipsByDate: pruneDismissedCoachTipsByDate(
+      sanitizeDismissedCoachTipsByDate(progress.dismissedCoachTipsByDate),
     ),
     minimumViableDayByDate: pruneMinimumViableDayByDate(
       sanitizeMinimumViableDayByDate(progress.minimumViableDayByDate),

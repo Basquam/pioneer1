@@ -194,6 +194,11 @@ import {
   recordTomorrowSetup,
 } from '../src/lib/tomorrow-setup';
 import {
+  dismissCoachTipForToday,
+  getContextualCoachTip,
+  isCoachTipDismissedToday,
+} from '../src/lib/contextual-coach-tip';
+import {
   addStarterToRecurringQuestTemplate,
   createRecurringQuestTemplate,
   lowerRecurringQuestTemplateDifficulty,
@@ -260,6 +265,7 @@ function baseProgress(): PlayerProgress {
     dailyShutdownDismissedDates: [],
     monthlyReviewSeenByMonth: {},
     dismissedNextBestActionByDate: {},
+    dismissedCoachTipsByDate: {},
     minimumViableDayByDate: {},
     tomorrowSetupByDate: {},
   } as PlayerProgress;
@@ -1463,6 +1469,100 @@ assert(
   withCapture.questInbox.some((item) => item.title === 'Email the clinic' && item.targetDate === tomorrow),
   'tomorrow inbox target date',
 );
+
+// Contextual coach tips
+const highRiskQuest = {
+  ...simulateAddUserQuest(loadBaseProgress, 'dust-and-iron', { riskLevel: 'high' }),
+  id: createUserQuestId(),
+  createdOnDate: loadToday,
+  originalTitle: 'High risk no starter',
+  starterTaskTitle: undefined,
+};
+const coachHighRiskProgress = {
+  ...loadBaseProgress,
+  userQuests: [highRiskQuest],
+};
+const highRiskTip = getContextualCoachTip({
+  progress: coachHighRiskProgress,
+  universeId: 'dust-and-iron',
+  today: loadToday,
+});
+assert(highRiskTip?.id === 'high-risk-no-starter', 'coach tip high risk no starter');
+assert(highRiskTip?.ctaLabel === 'Add Starter Move', 'coach tip starter cta');
+assert(highRiskTip?.universeFlavorLabel === 'Trail Advice', 'coach tip dust flavor');
+const dismissedCoach = dismissCoachTipForToday(coachHighRiskProgress, 'high-risk-no-starter', loadToday);
+assert(
+  isCoachTipDismissedToday(dismissedCoach, 'high-risk-no-starter', loadToday),
+  'coach tip dismissed today',
+);
+assert(
+  getContextualCoachTip({
+    progress: dismissedCoach,
+    universeId: 'dust-and-iron',
+    today: loadToday,
+  })?.id !== 'high-risk-no-starter',
+  'dismissed coach tip hidden',
+);
+const lowEnergyCoachProgress = {
+  ...loadBaseProgress,
+  userQuests: [],
+  dailyAwarenessByDate: {
+    [loadToday]: {
+      date: loadToday,
+      selectedBlocker: 'low-energy' as const,
+      createdAt: new Date().toISOString(),
+    },
+  },
+};
+const lowEnergyTip = getContextualCoachTip({
+  progress: lowEnergyCoachProgress,
+  universeId: 'dust-and-iron',
+  today: loadToday,
+});
+assert(lowEnergyTip?.id === 'low-energy-minimum-day', 'coach tip low energy mvd');
+const overloadedCoachProgress = {
+  ...loadBaseProgress,
+  userQuests: Array.from({ length: 9 }, (_, index) => ({
+    ...simulateAddUserQuest(loadBaseProgress, 'dust-and-iron', {
+      starterTaskTitle: 'Start small',
+      prepStepTitle: 'Prep surface',
+    }),
+    id: createUserQuestId(),
+    createdOnDate: loadToday,
+    implementationIntention: 'When desk, then work',
+    originalTitle: `Load quest ${index + 1}`,
+  })),
+};
+const overloadedTip = getContextualCoachTip({
+  progress: overloadedCoachProgress,
+  universeId: 'dust-and-iron',
+  today: loadToday,
+});
+assert(overloadedTip?.id === 'board-overloaded', 'coach tip overloaded board');
+const neuronetUniverse = UNIVERSES.find((u) => u.id === 'neuronet')!;
+const neuronetSaga = neuronetUniverse.sagas.find((s) => s.chapters.length > 0)!;
+const neuronetChapter = neuronetSaga.chapters[0]!;
+const neuronetProgress = {
+  ...loadBaseProgress,
+  selectedUniverseId: 'neuronet',
+  selectedSagaId: neuronetSaga.id,
+  currentChapterId: neuronetChapter.id,
+};
+const neuronetTip = getContextualCoachTip({
+  progress: {
+    ...neuronetProgress,
+    userQuests: [
+      {
+        ...simulateAddUserQuest(neuronetProgress, 'neuronet', { riskLevel: 'high' }),
+        id: createUserQuestId(),
+        createdOnDate: loadToday,
+      },
+    ],
+  },
+  universeId: 'neuronet',
+  today: loadToday,
+});
+assert(neuronetTip?.universeFlavorLabel === 'Signal Guidance', 'coach tip neuronet flavor');
 
 if (failures.length) {
   console.error('FAILED:\n' + failures.map((f) => ` - ${f}`).join('\n'));

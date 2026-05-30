@@ -676,6 +676,8 @@ export type PlayerProgress = {
   monthlyReviewSeenByMonth: Record<string, string>;
   /** Local dates when the user dismissed the HQ next best action card. */
   dismissedNextBestActionByDate: Record<string, boolean>;
+  /** Coach tip ids dismissed per local date (YYYY-MM-DD). */
+  dismissedCoachTipsByDate: Record<string, string[]>;
   /** Minimum viable / low-energy day mode keyed by local date (YYYY-MM-DD). */
   minimumViableDayByDate: Record<string, MinimumViableDayEntry>;
   /** Prime-tomorrow setup keyed by the local date it applies to (YYYY-MM-DD). */

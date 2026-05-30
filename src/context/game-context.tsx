@@ -101,6 +101,9 @@ import {
   dismissNextBestActionForToday as recordNextBestActionDismissed,
 } from '@/lib/next-best-action';
 import {
+  dismissCoachTipForToday as recordCoachTipDismissed,
+} from '@/lib/contextual-coach-tip';
+import {
   activateMinimumViableDay as applyMinimumViableDayActivation,
   getMinimumViableDayCompletionFlavor,
   getMinimumViableDayCopy,
@@ -368,6 +371,7 @@ type GameContextValue = {
   requestQuestBoardTab: (tab: QuestBoardTab) => void;
   clearRequestedQuestBoardTab: () => void;
   dismissNextBestActionForToday: () => void;
+  dismissCoachTipForToday: (tipId: string) => void;
   hqScrollNonce: number;
   requestHqScrollToDailyAwareness: () => void;
   dismissXpBurst: () => void;
@@ -1348,6 +1352,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setProgress((prev) => recordNextBestActionDismissed(prev));
   }, []);
 
+  const dismissCoachTipForToday = useCallback((tipId: string) => {
+    setProgress((prev) => recordCoachTipDismissed(prev, tipId));
+  }, []);
+
   const requestHqScrollToDailyAwareness = useCallback(() => {
     setHqScrollNonce((current) => current + 1);
   }, []);
@@ -2042,6 +2050,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       requestQuestBoardTab,
       clearRequestedQuestBoardTab,
       dismissNextBestActionForToday,
+      dismissCoachTipForToday,
       hqScrollNonce,
       requestHqScrollToDailyAwareness,
       dismissXpBurst,
@@ -2190,6 +2199,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       requestQuestBoardTab,
       clearRequestedQuestBoardTab,
       dismissNextBestActionForToday,
+      dismissCoachTipForToday,
       hqScrollNonce,
       requestHqScrollToDailyAwareness,
       startQuestNow,
