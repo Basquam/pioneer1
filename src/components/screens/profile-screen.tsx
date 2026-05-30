@@ -10,6 +10,7 @@ import { CinematicEmptyState } from '@/components/rpg/cinematic-empty-state';
 import { DailyStreakDisplay } from '@/components/rpg/daily-streak-display';
 import { BecomingPathPanel } from '@/components/rpg/identity-evidence-panel';
 import { IdentityCompassSheet } from '@/components/rpg/identity-compass-sheet';
+import { QuestStyleSheet } from '@/components/rpg/quest-style-sheet';
 import { EvidenceTimelinePanel } from '@/components/rpg/evidence-timeline-panel';
 import { MomentumReservePanel } from '@/components/rpg/momentum-reserve-panel';
 import { TodayFocusDisplay } from '@/components/rpg/today-focus-display';
@@ -38,12 +39,14 @@ import {
   getUniverseNameById,
 } from '@/lib/onboarding-origin-display';
 import { getUnlockedRewardEntries, isSagaUnlocked, REWARD_TYPE_LABELS } from '@/lib/reward-unlocks';
+import { formatQuestStyleSummary } from '@/lib/quest-style-profile';
 import { getSagaActiveChapter } from '@/lib/saga-progress';
 
 export function ProfileScreen() {
   const ui = useUniverseUiCopy();
   const [glossaryVisible, setGlossaryVisible] = useState(false);
   const [identityCompassVisible, setIdentityCompassVisible] = useState(false);
+  const [questStyleVisible, setQuestStyleVisible] = useState(false);
   const {
     activeUniverse,
     activeSaga,
@@ -251,6 +254,19 @@ export function ProfileScreen() {
         </ProfileSection>
 
         <ProfileSection title="SETTINGS">
+          <Pressable
+            onPress={() => setQuestStyleVisible(true)}
+            style={[styles.questStyleButton, { borderColor: activeUniverse.palette.panelBorder, backgroundColor: activeUniverse.palette.panel }]}>
+            <View style={styles.questStyleCopy}>
+              <Text style={[styles.questStyleTitle, { color: activeUniverse.palette.bone }]}>Quest Style</Text>
+              <Text style={[styles.questStyleSubtitle, { color: activeUniverse.palette.fog }]}>
+                Tune the app to the way you actually start.
+              </Text>
+            </View>
+            <Text style={[styles.questStyleValue, { color: activeUniverse.palette.gold }]}>
+              {formatQuestStyleSummary(playerProgress.questStyleProfile)}
+            </Text>
+          </Pressable>
           <GlossaryHelpButton onPress={() => setGlossaryVisible(true)} />
           <AmbientAudioToggle />
           {__DEV__ ? <AudioDevTools /> : null}
@@ -265,6 +281,7 @@ export function ProfileScreen() {
           visible={identityCompassVisible}
           onClose={() => setIdentityCompassVisible(false)}
         />
+        <QuestStyleSheet visible={questStyleVisible} onClose={() => setQuestStyleVisible(false)} />
 
         <ProfileSection title="BACKUP" badge="experimental">
           <ProgressBackupPanel embedded />
@@ -338,6 +355,32 @@ const styles = StyleSheet.create({
     fontFamily: GameFonts.uiSemi,
     fontSize: 9,
     letterSpacing: 1.5,
+  },
+  questStyleButton: {
+    borderWidth: 1,
+    padding: 14,
+    gap: 8,
+    transform: [{ skewX: '-2deg' }],
+    marginBottom: 4,
+  },
+  questStyleCopy: {
+    gap: 4,
+  },
+  questStyleTitle: {
+    fontFamily: GameFonts.ui,
+    fontSize: 14,
+    letterSpacing: 0.5,
+  },
+  questStyleSubtitle: {
+    fontFamily: GameFonts.displayRegular,
+    fontSize: 11,
+    lineHeight: 16,
+    fontStyle: 'italic',
+  },
+  questStyleValue: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 10,
+    letterSpacing: 0.8,
   },
   card: {
     alignItems: 'center',

@@ -14,6 +14,7 @@ import { sanitizeQuestDefaultsSettings } from '@/lib/quest-defaults';
 import { sanitizeQuestInbox } from '@/lib/quest-inbox';
 import { sanitizeChildQuestIds } from '@/lib/quest-chain';
 import { sanitizeDesiredIdentityTraits } from '@/lib/identity-compass';
+import { sanitizeQuestStyleProfile } from '@/lib/quest-style-profile';
 import { pruneWeeklyReviewByWeek } from '@/lib/weekly-review';
 import type { DailyActivity, PlayerProgress, QuestFrictionReason, TaskCategory, UserQuest } from '@/types/narrative';
 
@@ -321,6 +322,7 @@ export function sanitizePersistedProgress(progress: PlayerProgress): PlayerProgr
     questDefaults: sanitizeQuestDefaultsSettings(progress.questDefaults),
     questInbox: sanitizeQuestInbox(progress.questInbox),
     desiredIdentityTraits: sanitizeDesiredIdentityTraits(progress.desiredIdentityTraits),
+    questStyleProfile: sanitizeQuestStyleProfile(progress.questStyleProfile),
   };
 }
 

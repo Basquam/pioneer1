@@ -5,7 +5,7 @@ import { isQuestChainSplittable } from '@/lib/quest-chain';
 import { computeQuestReadiness, hasStarterMove } from '@/lib/quest-readiness';
 import { isHighRiskQuest, resolveQuestRiskLevel } from '@/lib/quest-risk';
 import { userQuestToBoardQuest } from '@/lib/quest-board';
-import type { PlayerProgress, QuestRiskLevel, UserQuest } from '@/types/narrative';
+import type { PlayerProgress, QuestRiskLevel, QuestStyleProfile, UserQuest } from '@/types/narrative';
 
 export const GOLDILOCKS_COACH_WINDOW_DAYS = 14;
 
@@ -280,6 +280,77 @@ export function generateGoldilocksRecommendation(
   if (candidates.length === 0) return null;
 
   return candidates.sort((left, right) => right.priority - left.priority)[0] ?? null;
+}
+
+function applyGoldilocksStyleCopy(
+  recommendation: GoldilocksRecommendation,
+  profile: QuestStyleProfile | undefined,
+): GoldilocksRecommendation {
+  const styleKey = profile?.primaryStyle;
+  if (!styleKey) return recommendation;
+
+  if (styleKey === 'challenge-seeker' && recommendation.id === 'standard-ready-for-high') {
+    return {
+      ...recommendation,
+      suggestedAction: 'Your style welcomes stretch — try one high-risk quest with a clear starter.',
+    };
+  }
+
+  if (styleKey === 'recovery-mode' && recommendation.id === 'high-risk-heavy') {
+    return {
+      ...recommendation,
+      suggestedAction: 'This might help to split or simplify before taking on heavy missions.',
+    };
+  }
+
+  if (styleKey === 'quick-wins' && recommendation.id === 'low-readiness') {
+    return {
+      ...recommendation,
+      suggestedAction: 'Try a two-minute starter so the first move stays tiny.',
+    };
+  }
+
+  if (styleKey === 'deep-work' && recommendation.id === 'low-readiness') {
+    return {
+      ...recommendation,
+      suggestedAction: 'Try adding a when/where plan and prep step before you begin.',
+    };
+  }
+
+  return recommendation;
+}
+
+function adjustGoldilocksPriorityForStyle(
+  recommendation: GoldilocksRecommendation,
+  profile: QuestStyleProfile | undefined,
+): GoldilocksRecommendation {
+  const styleKey = profile?.primaryStyle;
+  if (!styleKey) return recommendation;
+
+  let priority = recommendation.priority;
+
+  if (styleKey === 'challenge-seeker' && recommendation.id === 'standard-ready-for-high') {
+    priority += 8;
+  }
+  if (styleKey === 'recovery-mode' && recommendation.id === 'high-risk-heavy') {
+    priority += 6;
+  }
+  if (styleKey === 'quick-wins' && recommendation.id === 'low-readiness') {
+    priority += 4;
+  }
+
+  return { ...recommendation, priority };
+}
+
+export function generateGoldilocksRecommendationWithStyle(
+  progress: PlayerProgress,
+  referenceDate = new Date(),
+): GoldilocksRecommendation | null {
+  const recommendation = generateGoldilocksRecommendation(progress, referenceDate);
+  if (!recommendation) return null;
+
+  const adjusted = adjustGoldilocksPriorityForStyle(recommendation, progress.questStyleProfile);
+  return applyGoldilocksStyleCopy(adjusted, progress.questStyleProfile);
 }
 
 export function formatGoldilocksCoachEmptyMessage(): string {

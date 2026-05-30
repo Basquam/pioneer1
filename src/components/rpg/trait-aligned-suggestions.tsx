@@ -17,8 +17,12 @@ export function TraitAlignedSuggestionsPanel() {
   const { palette } = activeUniverse;
 
   const suggestions = useMemo(
-    () => getTraitAlignedSuggestions(playerProgress.desiredIdentityTraits ?? []),
-    [playerProgress.desiredIdentityTraits],
+    () => getTraitAlignedSuggestions(
+      playerProgress.desiredIdentityTraits ?? [],
+      3,
+      playerProgress.questStyleProfile,
+    ),
+    [playerProgress.desiredIdentityTraits, playerProgress.questStyleProfile],
   );
 
   if (suggestions.length === 0) return null;

@@ -135,6 +135,7 @@ import {
   markInboxItemArchived,
   markInboxItemConverted,
 } from '@/lib/quest-inbox';
+import { sanitizeQuestStyleProfile } from '@/lib/quest-style-profile';
 import {
   formatDesiredIdentityHighlight,
   isDesiredIdentityTrait,
@@ -165,6 +166,7 @@ import type {
   CategoryQuestDefaults,
   QuestDefaultsPresetId,
   QuestInboxItem,
+  QuestStyleProfile,
 } from '@/types/narrative';
 
 export type XpBurst = { id: string; amount: number };
@@ -281,6 +283,7 @@ type GameContextValue = {
   ) => void;
   applyQuestDefaultsPreset: (presetId: QuestDefaultsPresetId) => void;
   setDesiredIdentityTraits: (traits: IdentityTraitKey[]) => void;
+  setQuestStyleProfile: (profile: QuestStyleProfile) => void;
   recordFocusDistraction: (questId: string, distraction: QuestDistractionType) => void;
   markFrictionShieldApplied: (questId: string) => void;
   submitDailyAwareness: (blocker: DailyAwarenessBlocker) => void;
@@ -666,6 +669,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setProgress((prev) => ({
       ...prev,
       desiredIdentityTraits: sanitizeDesiredIdentityTraits(traits),
+    }));
+  }, []);
+
+  const setQuestStyleProfile = useCallback((profile: QuestStyleProfile) => {
+    setProgress((prev) => ({
+      ...prev,
+      questStyleProfile: sanitizeQuestStyleProfile(profile),
     }));
   }, []);
 
@@ -1687,6 +1697,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       updateCategoryQuestDefaults,
       applyQuestDefaultsPreset,
       setDesiredIdentityTraits,
+      setQuestStyleProfile,
       recordFocusDistraction,
       markFrictionShieldApplied,
       submitDailyAwareness,
@@ -1737,6 +1748,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       updateCategoryQuestDefaults,
       applyQuestDefaultsPreset,
       setDesiredIdentityTraits,
+      setQuestStyleProfile,
       chapters,
       characters,
       chapterComplete,

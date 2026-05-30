@@ -22,6 +22,7 @@ import { useUniverseUiCopy } from '@/lib/universe-ui-copy';
 import { canLockTodayFocus, getFocusLockCopy } from '@/lib/focus-lock';
 import { buildPromiseCard } from '@/lib/promise-card';
 import { getDailyCrewCodeLine } from '@/lib/crew-code';
+import { getStoryDrivenBriefingHint } from '@/lib/quest-style-profile';
 import { QuickCaptureInput } from '@/components/rpg/quick-capture-input';
 import { TraitAlignedSuggestionsPanel } from '@/components/rpg/trait-aligned-suggestions';
 
@@ -48,6 +49,10 @@ export function DailyOperationsBriefing() {
   const showLockButton = canLockTodayFocus(playerProgress, activeUniverse.id);
   const [promiseCardVisible, setPromiseCardVisible] = useState(false);
   const crewCodeLine = useMemo(() => getDailyCrewCodeLine(activeSaga), [activeSaga]);
+  const storyStyleHint = useMemo(
+    () => getStoryDrivenBriefingHint(playerProgress.questStyleProfile),
+    [playerProgress.questStyleProfile],
+  );
 
   const promiseCard = useMemo(
     () =>
@@ -109,6 +114,12 @@ export function DailyOperationsBriefing() {
         {crewCodeLine ? (
           <Text style={[styles.crewCodeLine, { color: palette.gold }]} numberOfLines={3}>
             {crewCodeLine}
+          </Text>
+        ) : null}
+
+        {storyStyleHint ? (
+          <Text style={[styles.storyStyleHint, { color: palette.fog }]} numberOfLines={3}>
+            {storyStyleHint}
           </Text>
         ) : null}
 
@@ -226,6 +237,12 @@ const styles = StyleSheet.create({
     lineHeight: 17,
     fontStyle: 'italic',
     marginTop: -4,
+  },
+  storyStyleHint: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 11,
+    lineHeight: 16,
+    fontStyle: 'italic',
   },
   chapterBlock: {
     borderTopWidth: 1,

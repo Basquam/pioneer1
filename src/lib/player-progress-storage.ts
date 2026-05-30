@@ -13,6 +13,7 @@ import {
 } from '@/lib/momentum-reserve';
 import { createEmptyQuestDefaultsSettings, sanitizeQuestDefaultsSettings } from '@/lib/quest-defaults';
 import { sanitizeQuestInbox } from '@/lib/quest-inbox';
+import { sanitizeQuestStyleProfile } from '@/lib/quest-style-profile';
 import { sanitizeRoutineRepetitionByKey } from '@/lib/routine-boredom-guard';
 import { sanitizeTemplateQuestStartedAt } from '@/lib/decisive-moment';
 import {
@@ -184,6 +185,7 @@ export function createInitialProgress(): PlayerProgress {
     routineRepetitionByKey: {},
     questDefaults: createEmptyQuestDefaultsSettings(),
     questInbox: [],
+    questStyleProfile: {},
   };
 }
 
@@ -243,6 +245,7 @@ function normalizeProgress(raw: Partial<PlayerProgress> & Record<string, unknown
     ),
     questDefaults: sanitizeQuestDefaultsSettings(raw.questDefaults ?? base.questDefaults),
     questInbox: sanitizeQuestInbox(raw.questInbox ?? base.questInbox),
+    questStyleProfile: sanitizeQuestStyleProfile(raw.questStyleProfile ?? base.questStyleProfile),
   };
 
   const universeForMigration = findUniverse(merged.selectedUniverseId) ?? DUST_AND_IRON_UNIVERSE;

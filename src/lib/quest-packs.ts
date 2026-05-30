@@ -2,8 +2,9 @@ import {
   convertTaskToUserQuest,
   type CreateUserQuestOptions,
 } from '@/lib/convert-task-to-quest';
+import { sortPackIdsByStyle } from '@/lib/quest-style-profile';
 import { generateStarterTaskTitle } from '@/lib/two-minute-starter';
-import type { Chapter, Saga, TaskCategory, Universe, UserQuest } from '@/types/narrative';
+import type { Chapter, QuestStyleProfile, Saga, TaskCategory, Universe, UserQuest } from '@/types/narrative';
 
 export type QuestPackItem = {
   id: string;
@@ -124,6 +125,18 @@ export function previewQuestPack(
       options: item.options,
     };
   });
+}
+
+export function sortQuestPacksForProfile(
+  packs: QuestPack[],
+  profile: QuestStyleProfile | undefined,
+): QuestPack[] {
+  const order = sortPackIdsByStyle(
+    packs.map((pack) => pack.id),
+    profile,
+  );
+  const byId = new Map(packs.map((pack) => [pack.id, pack]));
+  return order.map((id) => byId.get(id)).filter((pack): pack is QuestPack => pack != null);
 }
 
 export function packItemsToCreateInputs(

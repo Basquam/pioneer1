@@ -1,5 +1,6 @@
 import { getLocalDateKey } from '@/lib/daily-streak';
-import type { DailyAwarenessBlocker, PlayerProgress } from '@/types/narrative';
+import { getDailyAwarenessStyleRecommendation } from '@/lib/quest-style-profile';
+import type { DailyAwarenessBlocker, PlayerProgress, QuestStyleProfile } from '@/types/narrative';
 
 export type DailyAwarenessBlockerOption = {
   blocker: DailyAwarenessBlocker;
@@ -34,7 +35,12 @@ export function getDailyAwarenessTagline(universeId: string): string {
   return UNIVERSE_TAGLINE[universeId] ?? UNIVERSE_TAGLINE['dust-and-iron'];
 }
 
-export function getDailyAwarenessRecommendation(blocker: DailyAwarenessBlocker): string {
+export function getDailyAwarenessRecommendation(
+  blocker: DailyAwarenessBlocker,
+  profile?: QuestStyleProfile,
+): string {
+  const styled = getDailyAwarenessStyleRecommendation(blocker, profile);
+  if (styled) return styled;
   return BLOCKER_RECOMMENDATIONS[blocker];
 }
 

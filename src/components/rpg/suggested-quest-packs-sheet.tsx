@@ -29,6 +29,7 @@ import {
   packItemsToCreateInputs,
   previewQuestPack,
   QUEST_PACKS,
+  sortQuestPacksForProfile,
   type QuestPack,
 } from '@/lib/quest-packs';
 import { getTaskCategoryMeta } from '@/lib/task-categories';
@@ -57,6 +58,11 @@ export function SuggestedQuestPacksSheet({ visible, onClose }: SuggestedQuestPac
   const [selectedPackId, setSelectedPackId] = useState<string | null>(null);
   const [selectedItemIds, setSelectedItemIds] = useState<Set<string>>(new Set());
   const [confirmOverLimit, setConfirmOverLimit] = useState(false);
+
+  const orderedPacks = useMemo(
+    () => sortQuestPacksForProfile(QUEST_PACKS, playerProgress.questStyleProfile),
+    [playerProgress.questStyleProfile],
+  );
 
   const selectedPack = selectedPackId ? getQuestPackById(selectedPackId) : undefined;
 
@@ -180,7 +186,7 @@ export function SuggestedQuestPacksSheet({ visible, onClose }: SuggestedQuestPac
                 </Text>
 
                 <View style={styles.packList}>
-                  {QUEST_PACKS.map((pack) => (
+                  {orderedPacks.map((pack) => (
                     <Pressable
                       key={pack.id}
                       onPress={() => handlePickPack(pack)}

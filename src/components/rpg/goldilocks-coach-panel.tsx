@@ -6,8 +6,8 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
 import {
+  generateGoldilocksRecommendationWithStyle,
   formatGoldilocksCoachEmptyMessage,
-  generateGoldilocksRecommendation,
   getGoldilocksCoachFlavor,
   type GoldilocksCoachAction,
   type GoldilocksRecommendation,
@@ -27,7 +27,7 @@ export function GoldilocksCoachPanel() {
   const { palette } = activeUniverse;
 
   const recommendation = useMemo(
-    () => generateGoldilocksRecommendation(playerProgress),
+    () => generateGoldilocksRecommendationWithStyle(playerProgress),
     [playerProgress],
   );
 

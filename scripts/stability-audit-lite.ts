@@ -44,10 +44,21 @@ import {
 } from '../src/lib/pre-quest-ritual';
 import {
   generateGoldilocksRecommendation,
+  generateGoldilocksRecommendationWithStyle,
   getGoldilocksCoachFlavor,
   hasEnoughGoldilocksCoachData,
   pickHighRiskQuestForSplit,
 } from '../src/lib/goldilocks-coach';
+import {
+  createQuestStyleProfileUpdate,
+  formatQuestStyleSummary,
+  mergeResolvedAddQuestDefaults,
+  resolveQuestStyleAddQuestDefaults,
+  sanitizeQuestStyleProfile,
+  sortPackIdsByStyle,
+} from '../src/lib/quest-style-profile';
+import { QUEST_PACKS, sortQuestPacksForProfile } from '../src/lib/quest-packs';
+import { getDailyAwarenessRecommendation } from '../src/lib/daily-awareness';
 import {
   appendEvidenceEvent,
   createEvidenceEvent,
@@ -174,6 +185,7 @@ function baseProgress(): PlayerProgress {
     routineRepetitionByKey: {},
     questDefaults: createEmptyQuestDefaultsSettings(),
     questInbox: [],
+    questStyleProfile: {},
   } as PlayerProgress;
 
   for (const universe of UNIVERSES) {
@@ -833,6 +845,43 @@ assert(
   }),
   'goldilocks snapshot enough data',
 );
+
+// Quest style profile
+const styleProfile = createQuestStyleProfileUpdate('quick-wins', 'deep-work');
+assert(styleProfile.primaryStyle === 'quick-wins', 'quest style primary');
+assert(styleProfile.secondaryStyle === 'deep-work', 'quest style secondary');
+assert(formatQuestStyleSummary(styleProfile) === 'Quick Wins · Deep Work', 'quest style summary');
+const legacyStyle = sanitizeQuestStyleProfile(undefined);
+assert(legacyStyle.primaryStyle == null, 'legacy style import empty');
+const quickDefaults = resolveQuestStyleAddQuestDefaults(styleProfile, 'health', 'Drink water');
+assert(quickDefaults.riskLevel === 'low', 'quick wins default risk');
+assert(quickDefaults.starterEnabled === true, 'quick wins starter default');
+const mergedDefaults = mergeResolvedAddQuestDefaults(quickDefaults, { riskLevel: 'standard' });
+assert(mergedDefaults.riskLevel === 'standard', 'quest defaults override style');
+const packOrder = sortPackIdsByStyle(
+  QUEST_PACKS.map((pack) => pack.id),
+  styleProfile,
+);
+assert(packOrder[0] === 'morning-reset', 'style sorts morning reset first');
+const styledPacks = sortQuestPacksForProfile(QUEST_PACKS, styleProfile);
+assert(styledPacks[0]?.id === 'morning-reset', 'styled pack list order');
+assert(
+  getTraitAlignedSuggestions([], 3, styleProfile).every((entry) => entry.enableStarter),
+  'quick wins boosts starter suggestions',
+);
+assert(
+  getDailyAwarenessRecommendation('low-energy', styleProfile).includes('2-minute starter'),
+  'styled daily awareness recommendation',
+);
+const challengeProfile = createQuestStyleProfileUpdate('challenge-seeker');
+const styledGoldilocks = generateGoldilocksRecommendationWithStyle(
+  {
+    ...lowRiskOnlyProgress,
+    questStyleProfile: challengeProfile,
+  },
+  new Date('2026-05-27T12:00:00'),
+);
+assert(styledGoldilocks?.id === 'low-risk-steady', 'styled goldilocks recommendation');
 
 if (failures.length) {
   console.error('FAILED:\n' + failures.map((f) => ` - ${f}`).join('\n'));

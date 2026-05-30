@@ -15,7 +15,7 @@ import type { DailyAwarenessBlocker } from '@/types/narrative';
 type AwarenessPhase = 'pick' | 'result' | 'hidden';
 
 export function DailyAwarenessCheck() {
-  const { activeUniverse, showDailyAwarenessCheck, submitDailyAwareness, dismissDailyAwarenessCheck } =
+  const { activeUniverse, showDailyAwarenessCheck, submitDailyAwareness, dismissDailyAwarenessCheck, playerProgress } =
     useGame();
   const { palette } = activeUniverse;
   const [phase, setPhase] = useState<AwarenessPhase>(() => (showDailyAwarenessCheck ? 'pick' : 'hidden'));
@@ -25,7 +25,9 @@ export function DailyAwarenessCheck() {
   if (phase === 'pick' && !showDailyAwarenessCheck) return null;
 
   const tagline = getDailyAwarenessTagline(activeUniverse.id);
-  const recommendation = selectedBlocker ? getDailyAwarenessRecommendation(selectedBlocker) : null;
+  const recommendation = selectedBlocker
+    ? getDailyAwarenessRecommendation(selectedBlocker, playerProgress.questStyleProfile)
+    : null;
 
   const handleDismiss = () => {
     void Haptics.selectionAsync();

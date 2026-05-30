@@ -60,9 +60,13 @@ import {
   getQuestRiskOptions,
 } from '@/lib/quest-risk';
 import {
-  QUEST_DEFAULTS_APPLIED_COPY,
   resolveAddQuestDefaults,
+  QUEST_DEFAULTS_APPLIED_COPY,
 } from '@/lib/quest-defaults';
+import {
+  mergeResolvedAddQuestDefaults,
+  resolveQuestStyleAddQuestDefaults,
+} from '@/lib/quest-style-profile';
 import { suggestTaskCategory } from '@/lib/suggest-task-category';
 import { formatTraitSuggestionLabel } from '@/lib/trait-aligned-suggestions';
 import type { QuestRiskLevel, RecurrenceType, TaskCategory, WeekdayKey } from '@/types/narrative';
@@ -190,8 +194,15 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
       return;
     }
 
-    const resolved = resolveAddQuestDefaults(playerProgress.questDefaults, nextCategory, taskTitle);
+    const styleResolved = resolveQuestStyleAddQuestDefaults(
+      playerProgress.questStyleProfile,
+      nextCategory,
+      taskTitle,
+    );
+    const defaultsResolved = resolveAddQuestDefaults(playerProgress.questDefaults, nextCategory, taskTitle);
+    const resolved = mergeResolvedAddQuestDefaults(styleResolved, defaultsResolved);
     const hasDefaults = Object.keys(resolved).length > 0;
+    const hasStyleDefaults = Object.keys(styleResolved).length > 0;
 
     if (resolved.riskLevel) {
       setRiskLevel(resolved.riskLevel);
@@ -222,9 +233,9 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
     setPlanText(resolved.implementationIntention ?? '');
     setMarkAsFocus(resolved.focusPinned === true);
 
-    if (hasDefaults) {
+    if (hasDefaults || hasStyleDefaults) {
       setBehaviorToolsOpen(true);
-      setDefaultsApplied(true);
+      setDefaultsApplied(hasDefaults);
     } else {
       setDefaultsApplied(false);
     }
@@ -368,7 +379,7 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
   useEffect(() => {
     if (!visible || addQuestRecoveryMode || category == null) return;
     applyCategoryDefaults(category, trimmedTitle);
-  }, [category, visible, addQuestRecoveryMode, playerProgress.questDefaults]);
+  }, [category, visible, addQuestRecoveryMode, playerProgress.questDefaults, playerProgress.questStyleProfile]);
 
   useEffect(() => {
     if (!visible || addQuestRecoveryMode || !defaultsApplied || !trimmedTitle || category == null) return;

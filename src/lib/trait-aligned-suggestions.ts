@@ -1,5 +1,9 @@
 import { getIdentityTraitMeta } from '@/lib/identity-votes';
-import type { IdentityTraitKey, TaskCategory } from '@/types/narrative';
+import {
+  applyQuestStyleToTraitSuggestions,
+  getTraitKeysForStyleSuggestions,
+} from '@/lib/quest-style-profile';
+import type { IdentityTraitKey, QuestStyleProfile, TaskCategory } from '@/types/narrative';
 
 export const TRAIT_ALIGNED_SECTION_TITLE = "Suggested for who you're becoming";
 
@@ -194,13 +198,15 @@ export function getTraitSuggestionFlavor(universeId: string): string {
 export function getTraitAlignedSuggestions(
   desiredTraits: IdentityTraitKey[],
   maxCount = 3,
+  profile?: QuestStyleProfile,
 ): TraitAlignedSuggestion[] {
-  if (desiredTraits.length === 0) return [];
+  const traitKeys = getTraitKeysForStyleSuggestions(desiredTraits, profile);
+  if (traitKeys.length === 0) return [];
 
   const usedTitles = new Set<string>();
   const results: TraitAlignedSuggestion[] = [];
 
-  for (const traitKey of desiredTraits) {
+  for (const traitKey of traitKeys) {
     if (results.length >= maxCount) break;
 
     const pool = TRAIT_SUGGESTION_POOL[traitKey] ?? [];
@@ -214,7 +220,7 @@ export function getTraitAlignedSuggestions(
     });
   }
 
-  return results;
+  return applyQuestStyleToTraitSuggestions(results, profile);
 }
 
 export function formatTraitSuggestionLabel(traitKey: IdentityTraitKey): string {

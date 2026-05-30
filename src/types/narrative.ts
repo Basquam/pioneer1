@@ -577,6 +577,22 @@ export type PlayerProgress = {
   questDefaults: QuestDefaultsSettings;
   /** Quick-captured tasks waiting to become quests. */
   questInbox: QuestInboxItem[];
+  /** Personal productivity style calibration — emphasis only, never restrictive. */
+  questStyleProfile: QuestStyleProfile;
+};
+
+export type QuestStyleKey =
+  | 'quick-wins'
+  | 'deep-work'
+  | 'story-driven'
+  | 'recovery-mode'
+  | 'challenge-seeker'
+  | 'creative-builder';
+
+export type QuestStyleProfile = {
+  primaryStyle?: QuestStyleKey;
+  secondaryStyle?: QuestStyleKey;
+  updatedAt?: string;
 };
 
 export type CategoryQuestDefaults = {

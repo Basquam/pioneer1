@@ -29,7 +29,7 @@ export function OnboardingIdentityCompassScreen() {
   const handleContinue = () => {
     if (!canContinue) return;
     setDesiredIdentityTraits(selectedTraits);
-    router.push('/onboarding/intro' as Href);
+    router.push('/onboarding/style' as Href);
   };
 
   return (
