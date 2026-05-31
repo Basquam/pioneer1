@@ -58,6 +58,13 @@ export const HONEST_BUSINESSMAN_CHARACTERS: NarrativeCharacter[] = [
     sagaId: 'honest-businessman',
     name: 'Victor Crane',
     portrait: '💼',
+    media: {
+      portraitImageKey: 'dust-and-iron.character.victor-crane-neutral',
+      portraitExpressions: {
+        neutral: 'dust-and-iron.character.victor-crane-neutral',
+        taunting: 'dust-and-iron.character.victor-crane-smirk',
+      },
+    },
     role: 'Corrupt Merchant Prince',
     personality:
       'Polished, patient, and cruel in fine print — he treats Dustfall as a portfolio and honesty as a negotiating weakness.',

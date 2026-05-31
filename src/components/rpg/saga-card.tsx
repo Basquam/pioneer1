@@ -3,6 +3,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { ContentProgressBar } from '@/components/rpg/content-progress-bar';
 import { ChapterRewardBadge } from '@/components/rpg/chapter-reward-badge';
+import { CharacterPortrait } from '@/components/rpg/character-portrait';
 import { NarrativeMediaFrame } from '@/components/rpg/narrative-media-frame';
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
@@ -10,6 +11,7 @@ import {
   formatChapterProgress,
   type SagaLibraryProgress,
 } from '@/lib/content-library-progress';
+import { getCharacter } from '@/lib/narrative-helpers';
 import { getSagaBannerImage, getSagaDetailImage } from '@/lib/narrative-media';
 import { findRewardById } from '@/lib/reward-unlocks';
 import { useUniverseUiCopy } from '@/lib/universe-ui-copy';
@@ -46,6 +48,9 @@ export function SagaCard({
     !unlocked && saga.requiredUnlockId
       ? findRewardById(activeUniverse, saga.requiredUnlockId)
       : undefined;
+  const villainCharacter = saga.villainCharacterId
+    ? getCharacter(saga, saga.villainCharacterId)
+    : undefined;
   const playerRole = saga.rankTitles[0];
   const chapterLabel =
     libraryProgress.totalChapters === 1 ? 'chapter' : 'chapters';
@@ -151,6 +156,9 @@ export function SagaCard({
 
         {!unlocked && unlockHint && (
           <View style={styles.requirementRow}>
+            {villainCharacter ? (
+              <CharacterPortrait character={villainCharacter} size="sm" context="lockedTeaser" />
+            ) : null}
             {unlockReward ? (
               <ChapterRewardBadge reward={unlockReward} palette={palette} size="sm" />
             ) : null}

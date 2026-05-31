@@ -94,6 +94,10 @@ const ironRailwayCompanySaga: Saga = {
 const honestBusinessmanSaga: Saga = {
   id: 'honest-businessman',
   title: 'Honest Businessman',
+  media: {
+    bannerImageKey: 'dust-and-iron.saga.honest-businessman-banner',
+    detailImageKey: 'dust-and-iron.saga.honest-businessman-office',
+  },
   allyName: 'Mara Bell',
   villainName: 'Victor Crane',
   villainTitle: 'Corrupt Merchant Prince',

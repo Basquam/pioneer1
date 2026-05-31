@@ -38,4 +38,9 @@ export const DUST_AND_IRON_MEDIA_ASSETS: Record<string, ImageSourcePropType> = {
   'dust-and-iron.reward.iron-railway.track-repair-kit': require('@/assets/images/narrative/dust-and-iron/ui/iron-railway/reward-track-repair-kit.png.png'),
   'dust-and-iron.reward.iron-railway.route-marshal-badge': require('@/assets/images/narrative/dust-and-iron/ui/iron-railway/reward-route-marshal-badge.png.png'),
   'dust-and-iron.reward.iron-railway.golden-route-charter': require('@/assets/images/narrative/dust-and-iron/ui/iron-railway/reward-golden-route-charter.png.png'),
+  'dust-and-iron.saga.honest-businessman-banner': require('@/assets/images/narrative/dust-and-iron/sagas/honest-businessman-banner.png.png'),
+  'dust-and-iron.saga.honest-businessman-office': require('@/assets/images/narrative/dust-and-iron/chapters/honest-businessman/honest-businessman-office.png.png'),
+  'dust-and-iron.character.victor-crane-neutral': require('@/assets/images/narrative/dust-and-iron/characters/honest-businessman-antagonist-neutral.png.png'),
+  'dust-and-iron.character.victor-crane-smirk': require('@/assets/images/narrative/dust-and-iron/characters/honest-businessman-antagonist-smirk.png.png'),
+  'dust-and-iron.reward.honest-businessman.silver-contract': require('@/assets/images/narrative/dust-and-iron/ui/honest-businessman/reward-silver-contract.png.png'),
 };

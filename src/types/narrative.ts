@@ -78,7 +78,8 @@ export type CharacterPortraitContext =
   | 'chapterFailure'
   | 'confrontation'
   | 'encouragement'
-  | 'setback';
+  | 'setback'
+  | 'lockedTeaser';
 
 export type CharacterMedia = {
   /** Default portrait — neutral expression. */

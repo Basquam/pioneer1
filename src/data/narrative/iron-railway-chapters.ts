@@ -273,6 +273,7 @@ const IRON_RAILWAY_CHAPTERS_RAW: Chapter[] = [
         type: 'storyUnlock',
         name: 'Honest Businessman',
         unlockTargetId: 'honest-businessman',
+        media: { rewardImageKey: 'dust-and-iron.reward.honest-businessman.silver-contract' },
       },
     ],
   },

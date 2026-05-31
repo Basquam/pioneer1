@@ -23,10 +23,12 @@ const UNIVERSE_MOOD_BY_ID: Record<string, string> = {
 const SAGA_BANNER_BY_ID: Record<string, string> = {
   'vulture-gang': 'dust-and-iron.saga.vulture-gang-banner',
   'iron-railway-company': 'dust-and-iron.saga.iron-railway-company-banner',
+  'honest-businessman': 'dust-and-iron.saga.honest-businessman-banner',
 };
 
 const SAGA_DETAIL_BY_ID: Record<string, string> = {
   'iron-railway-company': 'dust-and-iron.saga.iron-railway-office',
+  'honest-businessman': 'dust-and-iron.saga.honest-businessman-office',
 };
 
 const CHAPTER_SCENE_BY_ID: Record<string, string> = {
@@ -53,6 +55,7 @@ const REWARD_IMAGE_BY_ID: Record<string, string> = {
   'broken-tracks-cosmetic': 'dust-and-iron.reward.iron-railway.track-repair-kit',
   'freight-war-badge': 'dust-and-iron.reward.iron-railway.route-marshal-badge',
   'golden-route-title': 'dust-and-iron.reward.iron-railway.golden-route-charter',
+  'honest-businessman-story-unlock': 'dust-and-iron.reward.honest-businessman.silver-contract',
 };
 
 const CHARACTER_NEUTRAL_PORTRAIT_BY_ID: Record<string, string> = {
@@ -60,6 +63,7 @@ const CHARACTER_NEUTRAL_PORTRAIT_BY_ID: Record<string, string> = {
   'elias-crow': 'dust-and-iron.character.elias-crow-neutral',
   'station-master-briggs': 'dust-and-iron.character.station-master-briggs-neutral',
   'silas-vane': 'dust-and-iron.character.silas-vane-neutral',
+  'victor-crane': 'dust-and-iron.character.victor-crane-neutral',
 };
 
 const CHARACTER_EXPRESSION_ASSETS: Record<string, Partial<Record<CharacterPortraitExpression, string>>> = {
@@ -81,6 +85,10 @@ const CHARACTER_EXPRESSION_ASSETS: Record<string, Partial<Record<CharacterPortra
   'silas-vane': {
     neutral: 'dust-and-iron.character.silas-vane-neutral',
     angry: 'dust-and-iron.character.silas-vane-angry',
+  },
+  'victor-crane': {
+    neutral: 'dust-and-iron.character.victor-crane-neutral',
+    taunting: 'dust-and-iron.character.victor-crane-smirk',
   },
 };
 
@@ -131,7 +139,8 @@ export function portraitContextToExpression(
       if (characterId === 'station-master-briggs') return 'concerned';
       return 'neutral';
     case 'villainTaunt':
-      if (characterId === 'elias-crow') return 'taunting';
+    case 'lockedTeaser':
+      if (characterId === 'elias-crow' || characterId === 'victor-crane') return 'taunting';
       return 'neutral';
     case 'confrontation':
       if (characterId === 'elias-crow' || characterId === 'silas-vane') return 'angry';
@@ -154,6 +163,7 @@ export function inferPortraitContextFromDialogueBeat(
       if (badge === 'CHAPTER IV') return 'villainTaunt';
     }
     if (character.id === 'silas-vane' && badge === 'CHAPTER IV') return 'confrontation';
+    if (character.id === 'victor-crane' && VILLAIN_TAUNT_BADGES.has(badge)) return 'villainTaunt';
     return 'default';
   }
 
