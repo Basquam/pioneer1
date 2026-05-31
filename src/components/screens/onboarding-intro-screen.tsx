@@ -5,6 +5,7 @@ import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 
 import { CharacterDialoguePanel } from '@/components/rpg/character-dialogue-panel';
 import { GlowButton } from '@/components/rpg/glow-button';
+import { NarrativeMediaFrame } from '@/components/rpg/narrative-media-frame';
 import { OnboardingScroll } from '@/components/rpg/onboarding-scroll';
 import { ScreenShell } from '@/components/rpg/screen-shell';
 import { SectionHeader } from '@/components/rpg/section-header';
@@ -12,6 +13,7 @@ import { VillainMeter } from '@/components/rpg/villain-meter';
 import { GameLayout } from '@/constants/layout';
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
+import { getChapterSceneImage } from '@/lib/narrative-media';
 
 export function OnboardingIntroScreen() {
   const { activeUniverse, activeSaga, currentChapter, completeOnboarding, markChapterIntroSeen } =
@@ -50,6 +52,8 @@ export function OnboardingIntroScreen() {
     return null;
   }
 
+  const sceneImage = getChapterSceneImage(currentChapter);
+
   return (
     <ScreenShell edges={['top', 'bottom']}>
       <OnboardingScroll
@@ -58,6 +62,9 @@ export function OnboardingIntroScreen() {
           eyebrow={`PROLOGUE · ${activeSaga.title.toUpperCase()}`}
           title={activeUniverse.locationName.toUpperCase()}
         />
+        {sceneImage ? (
+          <NarrativeMediaFrame source={sceneImage} height={120} scrim="bottom" style={styles.sceneBanner} />
+        ) : null}
         <VillainMeter />
 
         <View style={styles.dialogueArea}>
@@ -87,6 +94,7 @@ export function OnboardingIntroScreen() {
 }
 
 const styles = StyleSheet.create({
+  sceneBanner: { marginBottom: 4 },
   dialogueArea: {
     flexGrow: 1,
     justifyContent: 'flex-end',

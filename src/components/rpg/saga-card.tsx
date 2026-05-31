@@ -2,11 +2,13 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { ContentProgressBar } from '@/components/rpg/content-progress-bar';
+import { NarrativeMediaFrame } from '@/components/rpg/narrative-media-frame';
 import { GameFonts } from '@/constants/typography';
 import {
   formatChapterProgress,
   type SagaLibraryProgress,
 } from '@/lib/content-library-progress';
+import { getSagaBannerImage } from '@/lib/narrative-media';
 import { useUniverseUiCopy } from '@/lib/universe-ui-copy';
 import type { Saga, UniversePalette } from '@/types/narrative';
 
@@ -34,6 +36,7 @@ export function SagaCard({
   compact = false,
 }: SagaCardProps) {
   const ui = useUniverseUiCopy();
+  const bannerImage = getSagaBannerImage(saga);
   const playerRole = saga.rankTitles[0];
   const chapterLabel =
     libraryProgress.totalChapters === 1 ? 'chapter' : 'chapters';
@@ -52,81 +55,92 @@ export function SagaCard({
             opacity: unlocked ? 1 : 0.72,
           },
         ]}>
-        <View style={styles.headerRow}>
-          <Text style={[styles.title, { color: palette.bone }]} numberOfLines={2}>
-            {saga.title}
-          </Text>
-          <View
-            style={[
-              styles.statusBadge,
-              {
-                borderColor: unlocked ? palette.gold : palette.fog,
-                backgroundColor: unlocked ? `${palette.primary}33` : `${palette.ink}88`,
-              },
-            ]}>
-            <Text style={[styles.statusText, { color: unlocked ? palette.gold : palette.fog }]}>
-              {unlocked ? 'UNLOCKED' : 'LOCKED'}
-            </Text>
-          </View>
-        </View>
-
-        <Text style={[styles.meta, { color: palette.fog }]}>
-          {libraryProgress.totalChapters} {chapterLabel}
-          {showProgress
-            ? ` · ${formatChapterProgress(
-                libraryProgress.completedChapters,
-                libraryProgress.totalChapters,
-              )} complete`
-            : libraryProgress.totalChapters === 0
-              ? ' · coming soon'
-              : ''}
-        </Text>
-
-        {showProgress && (
-          <ContentProgressBar
-            completed={libraryProgress.completedChapters}
-            total={libraryProgress.totalChapters}
-            palette={palette}
+        {bannerImage ? (
+          <NarrativeMediaFrame
+            source={bannerImage}
+            height={compact ? 72 : 96}
+            scrim="bottom"
+            style={styles.banner}
           />
-        )}
-
-        <Text style={[styles.label, { color: palette.accent }]}>YOUR ROLE</Text>
-        <Text style={[styles.value, { color: palette.bone }]}>{playerRole}</Text>
-
-        {!compact && (
-          <>
-            <Text style={[styles.label, { color: palette.accent }]}>STORY FANTASY</Text>
-            <Text style={[styles.summary, { color: palette.fog }]} numberOfLines={2}>
-              {saga.summary}
-            </Text>
-          </>
-        )}
-
-        {saga.allyName ? (
-          <>
-            <Text style={[styles.label, { color: palette.accent }]}>MAIN ALLY</Text>
-            <Text style={[styles.value, { color: palette.bone }]}>{saga.allyName}</Text>
-          </>
         ) : null}
 
-        {saga.villainName ? (
-          <>
-            <Text style={[styles.label, { color: palette.accent }]}>{ui.villainLabel}</Text>
-            <Text style={[styles.villain, { color: palette.villainGlow }]}>
-              {saga.villainName} · {saga.villainTitle}
+        <View style={styles.body}>
+          <View style={styles.headerRow}>
+            <Text style={[styles.title, { color: palette.bone }]} numberOfLines={2}>
+              {saga.title}
             </Text>
-          </>
-        ) : null}
+            <View
+              style={[
+                styles.statusBadge,
+                {
+                  borderColor: unlocked ? palette.gold : palette.fog,
+                  backgroundColor: unlocked ? `${palette.primary}33` : `${palette.ink}88`,
+                },
+              ]}>
+              <Text style={[styles.statusText, { color: unlocked ? palette.gold : palette.fog }]}>
+                {unlocked ? 'UNLOCKED' : 'LOCKED'}
+              </Text>
+            </View>
+          </View>
 
-        {!unlocked && unlockHint && (
-          <Text style={[styles.requirement, { color: palette.villainGlow }]}>
-            REQUIRES: {unlockHint.toUpperCase()}
+          <Text style={[styles.meta, { color: palette.fog }]}>
+            {libraryProgress.totalChapters} {chapterLabel}
+            {showProgress
+              ? ` · ${formatChapterProgress(
+                  libraryProgress.completedChapters,
+                  libraryProgress.totalChapters,
+                )} complete`
+              : libraryProgress.totalChapters === 0
+                ? ' · coming soon'
+                : ''}
           </Text>
-        )}
 
-        {selected && unlocked && (
-          <Text style={[styles.selected, { color: palette.gold }]}>SELECTED</Text>
-        )}
+          {showProgress && (
+            <ContentProgressBar
+              completed={libraryProgress.completedChapters}
+              total={libraryProgress.totalChapters}
+              palette={palette}
+            />
+          )}
+
+          <Text style={[styles.label, { color: palette.accent }]}>YOUR ROLE</Text>
+          <Text style={[styles.value, { color: palette.bone }]}>{playerRole}</Text>
+
+          {!compact && (
+            <>
+              <Text style={[styles.label, { color: palette.accent }]}>STORY FANTASY</Text>
+              <Text style={[styles.summary, { color: palette.fog }]} numberOfLines={2}>
+                {saga.summary}
+              </Text>
+            </>
+          )}
+
+          {saga.allyName ? (
+            <>
+              <Text style={[styles.label, { color: palette.accent }]}>MAIN ALLY</Text>
+              <Text style={[styles.value, { color: palette.bone }]}>{saga.allyName}</Text>
+            </>
+          ) : null}
+
+          {saga.villainName ? (
+            <>
+              <Text style={[styles.label, { color: palette.accent }]}>{ui.villainLabel}</Text>
+              <Text style={[styles.villain, { color: palette.villainGlow }]}>
+                {saga.villainName} · {saga.villainTitle}
+              </Text>
+            </>
+          ) : null}
+
+          {!unlocked && unlockHint && (
+            <Text style={[styles.requirement, { color: palette.villainGlow }]}>
+              REQUIRES: {unlockHint.toUpperCase()}
+            </Text>
+          )}
+
+          {selected && unlocked && (
+            <Text style={[styles.selected, { color: palette.gold }]}>SELECTED</Text>
+          )}
+        </View>
       </Pressable>
     </Animated.View>
   );
@@ -134,12 +148,13 @@ export function SagaCard({
 
 const styles = StyleSheet.create({
   card: {
-    padding: 16,
     borderWidth: 2,
     marginBottom: 12,
-    gap: 4,
+    overflow: 'hidden',
     transform: [{ skewX: '-2deg' }],
   },
+  banner: { marginBottom: 0 },
+  body: { padding: 16, gap: 4 },
   headerRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },
   title: { fontFamily: GameFonts.ui, fontSize: 18, letterSpacing: 2, flex: 1, minWidth: 120 },
   statusBadge: {

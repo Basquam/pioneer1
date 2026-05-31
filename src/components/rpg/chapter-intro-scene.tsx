@@ -1,3 +1,5 @@
+import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useCallback, useEffect, useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
@@ -6,6 +8,7 @@ import { CharacterDialoguePanel } from '@/components/rpg/character-dialogue-pane
 import { GlowButton } from '@/components/rpg/glow-button';
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
+import { getChapterSceneImage } from '@/lib/narrative-media';
 import { useUniverseUiCopy } from '@/lib/universe-ui-copy';
 
 type ChapterIntroSceneProps = {
@@ -17,14 +20,17 @@ export function ChapterIntroScene({ visible, onComplete }: ChapterIntroSceneProp
   const ui = useUniverseUiCopy();
   const { activeUniverse, currentChapter } = useGame();
   const { palette } = activeUniverse;
+  const sceneImage = currentChapter ? getChapterSceneImage(currentChapter) : null;
   const beats = currentChapter?.introScene ?? [];
   const [beatIndex, setBeatIndex] = useState(0);
   const [typingDone, setTypingDone] = useState(false);
+  const [sceneFailed, setSceneFailed] = useState(false);
 
   useEffect(() => {
     if (!visible || !currentChapter) return;
     setBeatIndex(0);
     setTypingDone(false);
+    setSceneFailed(false);
   }, [visible, currentChapter?.id, currentChapter]);
 
   const beat = beats[beatIndex];
@@ -44,9 +50,30 @@ export function ChapterIntroScene({ visible, onComplete }: ChapterIntroSceneProp
 
   if (!visible || !currentChapter || !beat) return null;
 
+  const showScene = sceneImage && !sceneFailed;
+
   return (
     <Modal visible transparent animationType="fade" statusBarTranslucent>
-      <View style={[styles.backdrop, { backgroundColor: `${palette.void}ee` }]}>
+      <View style={[styles.backdrop, { backgroundColor: palette.void }]}>
+        {showScene ? (
+          <Image
+            source={sceneImage}
+            style={StyleSheet.absoluteFill}
+            contentFit="cover"
+            onError={() => setSceneFailed(true)}
+            transition={300}
+          />
+        ) : null}
+        <LinearGradient
+          colors={
+            showScene
+              ? ['rgba(0,0,0,0.55)', 'rgba(0,0,0,0.72)', 'rgba(5,3,8,0.95)']
+              : [`${palette.void}ee`, `${palette.void}ee`]
+          }
+          locations={[0, 0.45, 1]}
+          style={StyleSheet.absoluteFill}
+        />
+
         <Animated.View entering={FadeIn.duration(400)} exiting={FadeOut.duration(300)} style={styles.content}>
           <Text style={[styles.chapterLabel, { color: palette.accent }]}>
             {ui.sectorIntroLabel(currentChapter.order, currentChapter.title)}

@@ -49,6 +49,7 @@ export const DUST_AND_IRON_FACTIONS: UniverseFaction[] = [
 const vultureGangSaga: Saga = {
   id: 'vulture-gang',
   title: 'Vulture Gang',
+  media: { bannerImageKey: 'dust-and-iron.saga.vulture-gang-banner' },
   allyName: 'Sheriff Ada Mercer',
   villainName: 'Elias Crow',
   villainTitle: 'Black Vulture Leader',
@@ -112,6 +113,7 @@ export const DUST_AND_IRON_UNIVERSE: Universe = {
   name: 'Dust & Iron',
   tagline: 'Dust storms, hard law, and fragile hope.',
   icon: '🤠',
+  media: { moodImageKey: 'dust-and-iron.mood' },
   mentorName: 'Sheriff Ada Mercer',
   locationName: 'Dustfall',
   mood: 'Dusty, dark, dramatic — a frontier where order is fragile and every habit holds the line.',

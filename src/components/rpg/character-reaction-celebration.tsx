@@ -40,7 +40,7 @@ export function CharacterReactionCelebration({ payload, onDismiss }: Props) {
                   styles.reactionCard,
                   { backgroundColor: palette.panel, borderColor: palette.gold },
                 ]}>
-                {character && <CharacterPortrait character={character} />}
+                {character && <CharacterPortrait character={character} size="lg" context="questComplete" />}
                 <View style={styles.reactionBody}>
                   <Text style={[styles.reactionBadge, { color: palette.gold }]}>{reactionBadge}</Text>
                   {character && (

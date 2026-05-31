@@ -37,7 +37,7 @@ export function NarrativeMomentOverlay() {
                 borderColor: palette.villainGlow,
               },
             ]}>
-            <CharacterPortrait character={character} />
+            <CharacterPortrait character={character} context="villainTaunt" />
             <View style={styles.momentBody}>
               <Text style={[styles.momentBadge, { color: palette.villainGlow }]}>{ui.antagonistTauntBadge}</Text>
               <Text style={[styles.momentName, { color: palette.bone }]}>{character.name}</Text>

@@ -44,6 +44,47 @@ export type UniversePalette = {
 
 export type RelationshipTier = 'distant' | 'warming' | 'trusted' | 'bonded';
 
+/** Optional local media keys — resolved via narrative-media registry. */
+export type UniverseMedia = {
+  moodImageKey?: string;
+};
+
+export type SagaMedia = {
+  bannerImageKey?: string;
+};
+
+export type ChapterMedia = {
+  sceneImageKey?: string;
+};
+
+export type CharacterPortraitExpression =
+  | 'neutral'
+  | 'approving'
+  | 'worried'
+  | 'taunting'
+  | 'angry'
+  | 'concerned';
+
+/** Narrative context used to pick a character portrait expression. */
+export type CharacterPortraitContext =
+  | 'default'
+  | 'questComplete'
+  | 'questMissed'
+  | 'villainTaunt'
+  | 'chapterIntro'
+  | 'chapterSuccess'
+  | 'chapterFailure'
+  | 'confrontation'
+  | 'encouragement'
+  | 'setback';
+
+export type CharacterMedia = {
+  /** Default portrait — neutral expression. */
+  portraitImageKey?: string;
+  /** Optional expression portrait keys keyed by expression id. */
+  portraitExpressions?: Partial<Record<CharacterPortraitExpression, string>>;
+};
+
 export type NarrativeCharacter = {
   id: string;
   sagaId: string;
@@ -52,6 +93,8 @@ export type NarrativeCharacter = {
   role: string;
   personality: string;
   isVillain?: boolean;
+  /** Optional bundled portrait image key — emoji portrait remains fallback. */
+  media?: CharacterMedia;
   /** Character-specific affinity label — e.g. Trust, Respect, Rivalry. */
   affinityLabel?: string;
   lines: {
@@ -117,6 +160,8 @@ export type Chapter = {
   title: string;
   territoryName: string;
   mapPosition: { x: number; y: number };
+  /** Optional bundled scene image key for chapter intros and detail sheets. */
+  media?: ChapterMedia;
   summary: string;
   dramaticPurpose: string;
   introDialogue: string;
@@ -133,6 +178,8 @@ export type Saga = {
   villainName: string;
   villainTitle: string;
   villainCharacterId: string;
+  /** Optional bundled banner image key for saga cards and detail views. */
+  media?: SagaMedia;
   /** Main ally name — shown in saga selection when chapters are not yet playable. */
   allyName?: string;
   status: 'available' | 'locked';
@@ -152,6 +199,8 @@ export type Universe = {
   name: string;
   tagline: string;
   icon: string;
+  /** Optional bundled mood image key for universe cards and previews. */
+  media?: UniverseMedia;
   mentorName: string;
   locationName: string;
   mood: string;

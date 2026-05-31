@@ -12,6 +12,7 @@ import {
   skewTransform,
 } from '@/constants/universe-visual-theme';
 import { getCharacter } from '@/lib/narrative-helpers';
+import { inferPortraitContextFromDialogueBeat } from '@/lib/narrative-media';
 import { formatRelationshipHeader, getRelationshipProgress } from '@/lib/relationship-progress';
 import { useGame } from '@/hooks/use-game';
 import { useUniverseVisualTheme } from '@/hooks/use-universe-visual-theme';
@@ -62,6 +63,7 @@ export function CharacterDialoguePanel({
   const affinity = playerProgress.characterAffinity[character.id] ?? 0;
   const { tier } = getRelationshipProgress(affinity);
   const relationshipHeader = formatRelationshipHeader(character, tier);
+  const portraitContext = inferPortraitContextFromDialogueBeat(beat, character);
 
   return (
     <Animated.View entering={FadeInLeft.duration(400)} style={styles.wrapper}>
@@ -92,7 +94,7 @@ export function CharacterDialoguePanel({
           ]}
         />
         <View style={styles.row}>
-          <CharacterPortrait character={character} size="md" />
+          <CharacterPortrait character={character} size="md" context={portraitContext} />
           <View style={styles.body}>
             <View style={styles.headerRow}>
               <View style={styles.nameBlock}>

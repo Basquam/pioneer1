@@ -1,5 +1,8 @@
 import { type Href, router } from 'expo-router';
+import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
 import Animated, { FadeIn, FadeInDown, FadeInUp, ZoomIn } from 'react-native-reanimated';
 
 import { DialoguePanel } from '@/components/rpg/dialogue-panel';
@@ -15,6 +18,7 @@ import {
   type UniverseVisualTheme,
 } from '@/constants/universe-visual-theme';
 import { parseDialogueLine } from '@/lib/narrative-helpers';
+import { getChapterSceneImageById } from '@/lib/narrative-media';
 import { findStoryUnlockReward } from '@/lib/chapter-rewards';
 import {
   getStartSagaCtaLabel,
@@ -38,6 +42,9 @@ export function ChapterCompleteOverlay({ chapterComplete }: { chapterComplete: C
   const { palette } = activeUniverse;
   const panelBorder = getPanelBorderColor(palette, visualTheme);
   const goldAccent = getPanelAccentColor(palette, visualTheme, 'gold');
+  const sceneImage = getChapterSceneImageById(chapterComplete.chapterId);
+  const [sceneFailed, setSceneFailed] = useState(false);
+  const showScene = sceneImage && !sceneFailed;
 
   if (!chapterComplete) return null;
 
@@ -59,7 +66,25 @@ export function ChapterCompleteOverlay({ chapterComplete }: { chapterComplete: C
 
   return (
     <Modal visible transparent animationType="fade" statusBarTranslucent onRequestClose={() => continueFromChapterComplete(chapterComplete)}>
-      <View style={[styles.backdrop, { backgroundColor: `${palette.void}f2` }]}>
+      <View style={[styles.backdrop, { backgroundColor: palette.void }]}>
+        {showScene ? (
+          <Image
+            source={sceneImage}
+            style={StyleSheet.absoluteFill}
+            contentFit="cover"
+            onError={() => setSceneFailed(true)}
+            transition={300}
+          />
+        ) : null}
+        <LinearGradient
+          colors={
+            showScene
+              ? ['rgba(0,0,0,0.5)', 'rgba(5,3,8,0.88)', 'rgba(5,3,8,0.96)']
+              : [`${palette.void}f2`, `${palette.void}f2`]
+          }
+          locations={[0, 0.35, 1]}
+          style={StyleSheet.absoluteFill}
+        />
         {visualTheme.showScanlines && <ScanlineOverlay color={palette.accent} lineCount={36} />}
         <View style={[styles.vignetteTop, { backgroundColor: visualTheme.panelUsesHolographic ? palette.accent : palette.primary }]} />
         <View style={[styles.vignetteBottom, { backgroundColor: visualTheme.panelUsesHolographic ? palette.primary : palette.accent }]} />
@@ -91,6 +116,7 @@ export function ChapterCompleteOverlay({ chapterComplete }: { chapterComplete: C
               line={dialogue.text}
               speaker={dialogue.speaker}
               badge="VICTORY"
+              portraitContext="chapterSuccess"
               animate
             />
           </Animated.View>

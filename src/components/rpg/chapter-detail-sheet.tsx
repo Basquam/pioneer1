@@ -3,9 +3,11 @@ import Animated, { FadeInUp } from 'react-native-reanimated';
 
 import { DialoguePanel } from '@/components/rpg/dialogue-panel';
 import { GlowButton } from '@/components/rpg/glow-button';
+import { NarrativeMediaFrame } from '@/components/rpg/narrative-media-frame';
 import { GameLayout } from '@/constants/layout';
 import { GameFonts } from '@/constants/typography';
 import { parseDialogueLine } from '@/lib/narrative-helpers';
+import { getChapterSceneImage } from '@/lib/narrative-media';
 import type { ChapterStatus } from '@/lib/chapter-progress';
 import { useGame } from '@/hooks/use-game';
 import { useUniverseUiCopy } from '@/lib/universe-ui-copy';
@@ -27,6 +29,7 @@ export function ChapterDetailSheet({ visible, chapter, mode, onClose }: ChapterD
 
   if (!visible || !mode || !chapter) return null;
 
+  const sceneImage = getChapterSceneImage(chapter);
   const successDialogue = parseDialogueLine(chapter.successDialogue);
   const statusLabel = ui.territoryStatusLabel(mode);
 
@@ -48,6 +51,12 @@ export function ChapterDetailSheet({ visible, chapter, mode, onClose }: ChapterD
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
             contentContainerStyle={styles.scrollContent}>
+            {sceneImage ? (
+              <Animated.View entering={FadeInUp.duration(350)}>
+                <NarrativeMediaFrame source={sceneImage} height={140} scrim="bottom" />
+              </Animated.View>
+            ) : null}
+
             {mode === 'locked' ? (
               <>
                 <Animated.Text entering={FadeInUp.duration(400)} style={[styles.eyebrow, { color: palette.villainGlow }]}>
@@ -117,6 +126,7 @@ export function ChapterDetailSheet({ visible, chapter, mode, onClose }: ChapterD
                     line={successDialogue.text}
                     speaker={successDialogue.speaker}
                     badge="AFTERMATH"
+                    portraitContext="chapterSuccess"
                     animate={false}
                   />
                 </Animated.View>

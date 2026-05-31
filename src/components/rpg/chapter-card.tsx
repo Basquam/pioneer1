@@ -3,6 +3,7 @@ import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { PanelChrome } from '@/components/rpg/panel-chrome';
+import { NarrativeMediaFrame } from '@/components/rpg/narrative-media-frame';
 import { GameFonts } from '@/constants/typography';
 import {
   getPanelAccentColor,
@@ -13,6 +14,7 @@ import {
 import { useGame } from '@/hooks/use-game';
 import { useUniverseVisualTheme } from '@/hooks/use-universe-visual-theme';
 import { useUniverseUiCopy } from '@/lib/universe-ui-copy';
+import { getChapterSceneImage } from '@/lib/narrative-media';
 import type { ChapterStatus } from '@/lib/chapter-progress';
 import type { Chapter } from '@/types/narrative';
 
@@ -36,6 +38,7 @@ export function ChapterCard({ chapter, status, index, onPress }: ChapterCardProp
   const isActive = status === 'active';
   const isCompleted = status === 'completed';
   const isLocked = status === 'locked';
+  const sceneImage = getChapterSceneImage(chapter);
 
   const handlePress = () => {
     if (Platform.OS !== 'web') {
@@ -60,6 +63,15 @@ export function ChapterCard({ chapter, status, index, onPress }: ChapterCardProp
         getPanelShadow(palette, visualTheme),
       ]}>
       <PanelChrome palette={palette} theme={visualTheme} />
+      {sceneImage ? (
+        <NarrativeMediaFrame
+          source={sceneImage}
+          height={52}
+          scrim="full"
+          style={styles.sceneStrip}
+        />
+      ) : null}
+      <View style={styles.cardBody}>
       <View
         style={[
           styles.index,
@@ -98,18 +110,22 @@ export function ChapterCard({ chapter, status, index, onPress }: ChapterCardProp
           <Text style={[styles.purpose, { color: palette.accent }]}>{chapter.dramaticPurpose}</Text>
         )}
       </View>
+      </View>
     </AnimatedPressable>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    flexDirection: 'row',
     borderWidth: 1,
-    padding: 14,
     marginBottom: 12,
-    gap: 12,
     overflow: 'hidden',
+  },
+  sceneStrip: { width: '100%' },
+  cardBody: {
+    flexDirection: 'row',
+    padding: 14,
+    gap: 12,
   },
   index: {
     width: 36,

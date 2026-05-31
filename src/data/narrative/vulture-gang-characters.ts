@@ -13,6 +13,14 @@ export const VULTURE_GANG_CHARACTERS: NarrativeCharacter[] = [
     sagaId: 'vulture-gang',
     name: 'Sheriff Ada Mercer',
     portrait: '★',
+    media: {
+      portraitImageKey: 'dust-and-iron.character.ada-mercer-neutral',
+      portraitExpressions: {
+        neutral: 'dust-and-iron.character.ada-mercer-neutral',
+        approving: 'dust-and-iron.character.ada-mercer-approving',
+        worried: 'dust-and-iron.character.ada-mercer-worried',
+      },
+    },
     role: 'Town Sheriff',
     personality:
       'Steady, protective, and iron-willed — slow to trust, impossible to shake once she does.',
@@ -60,6 +68,14 @@ export const VULTURE_GANG_CHARACTERS: NarrativeCharacter[] = [
     sagaId: 'vulture-gang',
     name: 'Elias Crow',
     portrait: '🦅',
+    media: {
+      portraitImageKey: 'dust-and-iron.character.elias-crow-neutral',
+      portraitExpressions: {
+        neutral: 'dust-and-iron.character.elias-crow-neutral',
+        taunting: 'dust-and-iron.character.elias-crow-taunting',
+        angry: 'dust-and-iron.character.elias-crow-angry',
+      },
+    },
     role: 'Black Vulture Leader',
     personality:
       'Charismatic and morally gray — he believes fear is the only law a forgotten frontier respects.',
@@ -96,6 +112,14 @@ export const VULTURE_GANG_CHARACTERS: NarrativeCharacter[] = [
     sagaId: 'vulture-gang',
     name: 'Station Master Briggs',
     portrait: '🚂',
+    media: {
+      portraitImageKey: 'dust-and-iron.character.station-master-briggs-neutral',
+      portraitExpressions: {
+        neutral: 'dust-and-iron.character.station-master-briggs-neutral',
+        approving: 'dust-and-iron.character.station-master-briggs-approving',
+        concerned: 'dust-and-iron.character.station-master-briggs-concerned',
+      },
+    },
     role: 'Rail Station Master',
     personality: 'Practical, dry-humored, loyal to the working folk.',
     affinityLabel: 'Respect',
