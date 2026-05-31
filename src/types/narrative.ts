@@ -51,6 +51,8 @@ export type UniverseMedia = {
 
 export type SagaMedia = {
   bannerImageKey?: string;
+  /** Optional detail / office reveal image for locked saga previews. */
+  detailImageKey?: string;
 };
 
 export type ChapterMedia = {
@@ -146,10 +148,17 @@ export type QuestTemplate = {
 
 export type ChapterRewardType = 'badge' | 'title' | 'cosmetic' | 'storyUnlock';
 
+export type ChapterRewardMedia = {
+  /** Local asset key for reward badge / unlock artwork. */
+  rewardImageKey?: string;
+};
+
 export type ChapterReward = {
   id: string;
   type: ChapterRewardType;
   name: string;
+  /** Optional bundled reward image key. */
+  media?: ChapterRewardMedia;
   /** Saga id unlocked when type is storyUnlock. */
   unlockTargetId?: string;
 };

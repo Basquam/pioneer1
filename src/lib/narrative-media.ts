@@ -3,6 +3,7 @@ import type { ImageSourcePropType } from 'react-native';
 import { DUST_AND_IRON_MEDIA_ASSETS } from '@/constants/narrative-media/dust-and-iron';
 import type {
   Chapter,
+  ChapterReward,
   CharacterPortraitContext,
   CharacterPortraitExpression,
   DialogueBeat,
@@ -21,6 +22,11 @@ const UNIVERSE_MOOD_BY_ID: Record<string, string> = {
 
 const SAGA_BANNER_BY_ID: Record<string, string> = {
   'vulture-gang': 'dust-and-iron.saga.vulture-gang-banner',
+  'iron-railway-company': 'dust-and-iron.saga.iron-railway-company-banner',
+};
+
+const SAGA_DETAIL_BY_ID: Record<string, string> = {
+  'iron-railway-company': 'dust-and-iron.saga.iron-railway-office',
 };
 
 const CHAPTER_SCENE_BY_ID: Record<string, string> = {
@@ -29,12 +35,31 @@ const CHAPTER_SCENE_BY_ID: Record<string, string> = {
   'broken-wagon': 'dust-and-iron.chapter.03-broken-wagon-trail',
   'night-ambush': 'dust-and-iron.chapter.04-ambush-canyon',
   'high-noon': 'dust-and-iron.chapter.05-high-noon-square',
+  'first-shipment': 'dust-and-iron.chapter.iron-railway.01-railyard-gate',
+  'delayed-cargo': 'dust-and-iron.chapter.iron-railway.02-cargo-hold-six',
+  'broken-tracks': 'dust-and-iron.chapter.iron-railway.03-broken-tracks-pass',
+  'freight-war': 'dust-and-iron.chapter.iron-railway.04-freight-war-junction',
+  'golden-route': 'dust-and-iron.chapter.iron-railway.05-golden-route-terminal',
+};
+
+const REWARD_IMAGE_BY_ID: Record<string, string> = {
+  'first-warning-badge': 'dust-and-iron.reward.first-dustfall-patrol',
+  'smoke-at-dawn-title': 'dust-and-iron.reward.smoke-watcher',
+  'broken-wagon-cosmetic': 'dust-and-iron.reward.railway-bandana',
+  'night-ambush-badge': 'dust-and-iron.reward.ambush-survivor',
+  'high-noon-story-unlock': 'dust-and-iron.reward.iron-railway-unlock',
+  'first-shipment-badge': 'dust-and-iron.reward.iron-railway.railyard-access-pass',
+  'delayed-cargo-title': 'dust-and-iron.reward.iron-railway.cargo-ledger-seal',
+  'broken-tracks-cosmetic': 'dust-and-iron.reward.iron-railway.track-repair-kit',
+  'freight-war-badge': 'dust-and-iron.reward.iron-railway.route-marshal-badge',
+  'golden-route-title': 'dust-and-iron.reward.iron-railway.golden-route-charter',
 };
 
 const CHARACTER_NEUTRAL_PORTRAIT_BY_ID: Record<string, string> = {
   'ada-mercer': 'dust-and-iron.character.ada-mercer-neutral',
   'elias-crow': 'dust-and-iron.character.elias-crow-neutral',
   'station-master-briggs': 'dust-and-iron.character.station-master-briggs-neutral',
+  'silas-vane': 'dust-and-iron.character.silas-vane-neutral',
 };
 
 const CHARACTER_EXPRESSION_ASSETS: Record<string, Partial<Record<CharacterPortraitExpression, string>>> = {
@@ -52,6 +77,10 @@ const CHARACTER_EXPRESSION_ASSETS: Record<string, Partial<Record<CharacterPortra
     neutral: 'dust-and-iron.character.station-master-briggs-neutral',
     approving: 'dust-and-iron.character.station-master-briggs-approving',
     concerned: 'dust-and-iron.character.station-master-briggs-concerned',
+  },
+  'silas-vane': {
+    neutral: 'dust-and-iron.character.silas-vane-neutral',
+    angry: 'dust-and-iron.character.silas-vane-angry',
   },
 };
 
@@ -105,7 +134,7 @@ export function portraitContextToExpression(
       if (characterId === 'elias-crow') return 'taunting';
       return 'neutral';
     case 'confrontation':
-      if (characterId === 'elias-crow') return 'angry';
+      if (characterId === 'elias-crow' || characterId === 'silas-vane') return 'angry';
       return 'neutral';
     default:
       return 'neutral';
@@ -119,9 +148,12 @@ export function inferPortraitContextFromDialogueBeat(
   const badge = beat.badge?.toUpperCase() ?? '';
 
   if (character.isVillain) {
-    if (VILLAIN_TAUNT_BADGES.has(badge)) return 'villainTaunt';
     if (CONFRONTATION_BADGES.has(badge)) return 'confrontation';
-    if (badge === 'CHAPTER IV') return 'villainTaunt';
+    if (character.id === 'elias-crow') {
+      if (VILLAIN_TAUNT_BADGES.has(badge)) return 'villainTaunt';
+      if (badge === 'CHAPTER IV') return 'villainTaunt';
+    }
+    if (character.id === 'silas-vane' && badge === 'CHAPTER IV') return 'confrontation';
     return 'default';
   }
 
@@ -156,12 +188,24 @@ export function getSagaBannerImage(saga: Saga): ImageSourcePropType | null {
   return resolveNarrativeMediaAsset(saga.media?.bannerImageKey ?? SAGA_BANNER_BY_ID[saga.id]);
 }
 
+export function getSagaDetailImage(saga: Saga): ImageSourcePropType | null {
+  return resolveNarrativeMediaAsset(saga.media?.detailImageKey ?? SAGA_DETAIL_BY_ID[saga.id]);
+}
+
 export function getChapterSceneImage(chapter: Chapter): ImageSourcePropType | null {
   return resolveNarrativeMediaAsset(chapter.media?.sceneImageKey ?? CHAPTER_SCENE_BY_ID[chapter.id]);
 }
 
 export function getChapterSceneImageById(chapterId: string): ImageSourcePropType | null {
   return resolveNarrativeMediaAsset(CHAPTER_SCENE_BY_ID[chapterId]);
+}
+
+export function getChapterRewardImage(reward: ChapterReward): ImageSourcePropType | null {
+  return resolveNarrativeMediaAsset(reward.media?.rewardImageKey ?? REWARD_IMAGE_BY_ID[reward.id]);
+}
+
+export function getChapterRewardImageById(rewardId: string): ImageSourcePropType | null {
+  return resolveNarrativeMediaAsset(REWARD_IMAGE_BY_ID[rewardId]);
 }
 
 /** @deprecated Prefer resolveCharacterPortrait with an explicit context. */

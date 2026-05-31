@@ -2,13 +2,16 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { ContentProgressBar } from '@/components/rpg/content-progress-bar';
+import { ChapterRewardBadge } from '@/components/rpg/chapter-reward-badge';
 import { NarrativeMediaFrame } from '@/components/rpg/narrative-media-frame';
 import { GameFonts } from '@/constants/typography';
+import { useGame } from '@/hooks/use-game';
 import {
   formatChapterProgress,
   type SagaLibraryProgress,
 } from '@/lib/content-library-progress';
-import { getSagaBannerImage } from '@/lib/narrative-media';
+import { getSagaBannerImage, getSagaDetailImage } from '@/lib/narrative-media';
+import { findRewardById } from '@/lib/reward-unlocks';
 import { useUniverseUiCopy } from '@/lib/universe-ui-copy';
 import type { Saga, UniversePalette } from '@/types/narrative';
 
@@ -36,7 +39,13 @@ export function SagaCard({
   compact = false,
 }: SagaCardProps) {
   const ui = useUniverseUiCopy();
+  const { activeUniverse } = useGame();
   const bannerImage = getSagaBannerImage(saga);
+  const detailImage = !unlocked ? getSagaDetailImage(saga) : null;
+  const unlockReward =
+    !unlocked && saga.requiredUnlockId
+      ? findRewardById(activeUniverse, saga.requiredUnlockId)
+      : undefined;
   const playerRole = saga.rankTitles[0];
   const chapterLabel =
     libraryProgress.totalChapters === 1 ? 'chapter' : 'chapters';
@@ -61,6 +70,15 @@ export function SagaCard({
             height={compact ? 72 : 96}
             scrim="bottom"
             style={styles.banner}
+          />
+        ) : null}
+
+        {!unlocked && detailImage ? (
+          <NarrativeMediaFrame
+            source={detailImage}
+            height={56}
+            scrim="full"
+            style={styles.detailStrip}
           />
         ) : null}
 
@@ -131,11 +149,16 @@ export function SagaCard({
             </>
           ) : null}
 
-          {!unlocked && unlockHint && (
+        {!unlocked && unlockHint && (
+          <View style={styles.requirementRow}>
+            {unlockReward ? (
+              <ChapterRewardBadge reward={unlockReward} palette={palette} size="sm" />
+            ) : null}
             <Text style={[styles.requirement, { color: palette.villainGlow }]}>
               REQUIRES: {unlockHint.toUpperCase()}
             </Text>
-          )}
+          </View>
+        )}
 
           {selected && unlocked && (
             <Text style={[styles.selected, { color: palette.gold }]}>SELECTED</Text>
@@ -154,6 +177,7 @@ const styles = StyleSheet.create({
     transform: [{ skewX: '-2deg' }],
   },
   banner: { marginBottom: 0 },
+  detailStrip: { marginBottom: 0 },
   body: { padding: 16, gap: 4 },
   headerRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },
   title: { fontFamily: GameFonts.ui, fontSize: 18, letterSpacing: 2, flex: 1, minWidth: 120 },
@@ -169,7 +193,8 @@ const styles = StyleSheet.create({
   value: { fontFamily: GameFonts.ui, fontSize: 14, letterSpacing: 1 },
   summary: { fontFamily: GameFonts.displayRegular, fontSize: 13, fontStyle: 'italic', lineHeight: 19 },
   villain: { fontFamily: GameFonts.uiSemi, fontSize: 10, letterSpacing: 1.5 },
-  requirement: { fontFamily: GameFonts.uiSemi, fontSize: 9, letterSpacing: 1.5, marginTop: 8 },
+  requirementRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 8 },
+  requirement: { fontFamily: GameFonts.uiSemi, fontSize: 9, letterSpacing: 1.5, flex: 1 },
   selected: {
     fontFamily: GameFonts.ui,
     fontSize: 10,

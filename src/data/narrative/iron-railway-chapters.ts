@@ -48,6 +48,7 @@ const IRON_RAILWAY_CHAPTERS_RAW: Chapter[] = [
     order: 1,
     title: 'First Shipment',
     territoryName: 'Railyard Gate',
+    media: { sceneImageKey: 'dust-and-iron.chapter.iron-railway.01-railyard-gate' },
     mapPosition: { x: 14, y: 80 },
     summary:
       'Your first freight run after High Noon — progress always costs something, and Vane already sent the invoice.',
@@ -85,13 +86,14 @@ const IRON_RAILWAY_CHAPTERS_RAW: Chapter[] = [
       template('first-shipment', 'creative', 'Sketch the Route Map', 'Create a short design or writing piece', 'Your map keeps the next crew from guessing.', 115, 8, BRIGGS_ID, FIRST_SHIPMENT_QUEST_VARIATIONS.creative),
       template('first-shipment', 'errand', 'Fetch the Seal Stamp', 'Complete one pending errand', 'No stamp, no shipment — simple as steel.', 110, 8, BRIGGS_ID, FIRST_SHIPMENT_QUEST_VARIATIONS.errand),
     ],
-    chapterRewards: [{ id: 'first-shipment-badge', type: 'badge', name: 'First Shipment Cleared' }],
+    chapterRewards: [{ id: 'first-shipment-badge', type: 'badge', name: 'First Shipment Cleared', media: { rewardImageKey: 'dust-and-iron.reward.iron-railway.railyard-access-pass' } }],
   },
   {
     id: 'delayed-cargo',
     order: 2,
     title: 'Delayed Cargo',
     territoryName: 'Cargo Hold Six',
+    media: { sceneImageKey: 'dust-and-iron.chapter.iron-railway.02-cargo-hold-six' },
     mapPosition: { x: 32, y: 62 },
     summary:
       'Vane slows the line with red tape — proof that progress always costs something when power owns the clock.',
@@ -129,13 +131,14 @@ const IRON_RAILWAY_CHAPTERS_RAW: Chapter[] = [
       template('delayed-cargo', 'creative', 'Hold Six Manifest Anthem', 'Create a short audio/text/art piece', 'Morale moves cargo when lawyers stall.', 115, 8, BRIGGS_ID),
       template('delayed-cargo', 'errand', 'Run the Release Slip', 'Finish one practical chore outside', 'The slip is in town. The train is here. Close the gap.', 115, 8, BRIGGS_ID),
     ],
-    chapterRewards: [{ id: 'delayed-cargo-title', type: 'title', name: 'Cargo Clerk' }],
+    chapterRewards: [{ id: 'delayed-cargo-title', type: 'title', name: 'Cargo Clerk', media: { rewardImageKey: 'dust-and-iron.reward.iron-railway.cargo-ledger-seal' } }],
   },
   {
     id: 'broken-tracks',
     order: 3,
     title: 'Broken Tracks',
     territoryName: 'Broken Tracks Pass',
+    media: { sceneImageKey: 'dust-and-iron.chapter.iron-railway.03-broken-tracks-pass' },
     mapPosition: { x: 50, y: 44 },
     summary:
       'Sabotage on the main line — progress always costs something when steel snaps and towns go silent.',
@@ -173,13 +176,14 @@ const IRON_RAILWAY_CHAPTERS_RAW: Chapter[] = [
       template('broken-tracks', 'creative', 'Paint the Line Crest', 'Create/update something expressive', 'Symbols remind crews what the pass protects.', 120, 9, BRIGGS_ID),
       template('broken-tracks', 'errand', 'Fetch Rail Spikes', 'Complete a practical pickup errand', 'The forge is ten miles. The train is today.', 120, 9, BRIGGS_ID),
     ],
-    chapterRewards: [{ id: 'broken-tracks-cosmetic', type: 'cosmetic', name: 'Brass Switch Key' }],
+    chapterRewards: [{ id: 'broken-tracks-cosmetic', type: 'cosmetic', name: 'Brass Switch Key', media: { rewardImageKey: 'dust-and-iron.reward.iron-railway.track-repair-kit' } }],
   },
   {
     id: 'freight-war',
     order: 4,
     title: 'Freight War',
     territoryName: 'Freight War Junction',
+    media: { sceneImageKey: 'dust-and-iron.chapter.iron-railway.04-freight-war-junction' },
     mapPosition: { x: 68, y: 26 },
     summary:
       'Open economic warfare on the network — progress always costs something when rivals undercut your lifeline.',
@@ -217,13 +221,14 @@ const IRON_RAILWAY_CHAPTERS_RAW: Chapter[] = [
       template('freight-war', 'creative', 'Junction War Poster', 'Creative micro-session', 'In darkness, even small symbols hold the line.', 125, 9, BRIGGS_ID),
       template('freight-war', 'errand', 'Deliver the Loyalty Contracts', 'Complete a practical checklist errand', 'Ink on paper keeps carriers on our side.', 125, 10, BRIGGS_ID),
     ],
-    chapterRewards: [{ id: 'freight-war-badge', type: 'badge', name: 'Junction Defender' }],
+    chapterRewards: [{ id: 'freight-war-badge', type: 'badge', name: 'Junction Defender', media: { rewardImageKey: 'dust-and-iron.reward.iron-railway.route-marshal-badge' } }],
   },
   {
     id: 'golden-route',
     order: 5,
     title: 'The Golden Route',
     territoryName: 'Golden Route Terminal',
+    media: { sceneImageKey: 'dust-and-iron.chapter.iron-railway.05-golden-route-terminal' },
     mapPosition: { x: 86, y: 8 },
     summary:
       'Control of the Golden Route — progress always costs something, and this is the price of a free frontier.',
@@ -262,7 +267,7 @@ const IRON_RAILWAY_CHAPTERS_RAW: Chapter[] = [
       template('golden-route', 'errand', 'Deliver the Route Seal', 'Finish critical practical errand', 'The seal reaches the terminal or Vane wins by default.', 140, 11, BRIGGS_ID),
     ],
     chapterRewards: [
-      { id: 'golden-route-title', type: 'title', name: 'Golden Route Master' },
+      { id: 'golden-route-title', type: 'title', name: 'Golden Route Master', media: { rewardImageKey: 'dust-and-iron.reward.iron-railway.golden-route-charter' } },
       {
         id: 'honest-businessman-story-unlock',
         type: 'storyUnlock',

@@ -6,6 +6,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { AmbientAudioToggle } from '@/components/rpg/ambient-audio-toggle';
 import { AudioDevTools } from '@/components/rpg/audio-dev-tools';
 import { CharacterCard } from '@/components/rpg/character-card';
+import { ChapterRewardBadge } from '@/components/rpg/chapter-reward-badge';
 import { CinematicEmptyState } from '@/components/rpg/cinematic-empty-state';
 import { DailyStreakDisplay } from '@/components/rpg/daily-streak-display';
 import { BecomingPathPanel } from '@/components/rpg/identity-evidence-panel';
@@ -293,12 +294,15 @@ export function ProfileScreen() {
                   styles.rewardRow,
                   { backgroundColor: activeUniverse.palette.panel, borderColor: activeUniverse.palette.panelBorder },
                 ]}>
-                <Text style={[styles.rewardType, { color: activeUniverse.palette.accent }]}>
-                  {REWARD_TYPE_LABELS[reward.type]}
-                </Text>
-                <Text style={[styles.rewardName, { color: activeUniverse.palette.bone }]} numberOfLines={2}>
-                  {reward.name}
-                </Text>
+                <ChapterRewardBadge reward={reward} palette={activeUniverse.palette} size="sm" />
+                <View style={styles.rewardCopy}>
+                  <Text style={[styles.rewardType, { color: activeUniverse.palette.accent }]}>
+                    {REWARD_TYPE_LABELS[reward.type]}
+                  </Text>
+                  <Text style={[styles.rewardName, { color: activeUniverse.palette.bone }]} numberOfLines={2}>
+                    {reward.name}
+                  </Text>
+                </View>
               </View>
             ))
           )}
@@ -508,9 +512,12 @@ const styles = StyleSheet.create({
   rewardRow: {
     borderWidth: 1,
     padding: 12,
-    gap: 4,
+    gap: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
     transform: [{ skewX: '-2deg' }],
   },
+  rewardCopy: { flex: 1, gap: 4, minWidth: 0 },
   rewardType: { fontFamily: GameFonts.uiSemi, fontSize: 9, letterSpacing: 2 },
   rewardName: { fontFamily: GameFonts.ui, fontSize: 15, letterSpacing: 1, lineHeight: 20 },
   sagaProgressRow: {

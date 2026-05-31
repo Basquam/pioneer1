@@ -69,6 +69,10 @@ const vultureGangSaga: Saga = {
 const ironRailwayCompanySaga: Saga = {
   id: 'iron-railway-company',
   title: 'Iron Railway Company',
+  media: {
+    bannerImageKey: 'dust-and-iron.saga.iron-railway-company-banner',
+    detailImageKey: 'dust-and-iron.saga.iron-railway-office',
+  },
   allyName: 'Station Master Briggs',
   villainName: 'Silas Vane',
   villainTitle: 'Corrupt Railway Baron',

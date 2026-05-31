@@ -6,6 +6,7 @@ import { useState } from 'react';
 import Animated, { FadeIn, FadeInDown, FadeInUp, ZoomIn } from 'react-native-reanimated';
 
 import { DialoguePanel } from '@/components/rpg/dialogue-panel';
+import { ChapterRewardBadge } from '@/components/rpg/chapter-reward-badge';
 import { GlowButton } from '@/components/rpg/glow-button';
 import { PanelChrome } from '@/components/rpg/panel-chrome';
 import { ScanlineOverlay } from '@/components/rpg/visual-theme-overlay';
@@ -147,6 +148,7 @@ export function ChapterCompleteOverlay({ chapterComplete }: { chapterComplete: C
               {visualTheme.panelTopHighlight && (
                 <PanelChrome palette={palette} theme={visualTheme} />
               )}
+              <ChapterRewardBadge reward={reward} palette={palette} size="md" />
               <Text style={[styles.unlockEyebrow, { color: goldAccent }]}>
                 {reward.type === 'storyUnlock' ? 'STORY UNLOCKED' : 'NEW REWARD'}
               </Text>
@@ -302,7 +304,7 @@ const styles = StyleSheet.create({
   unlockCard: {
     borderWidth: 1,
     padding: 14,
-    gap: 4,
+    gap: 6,
     alignItems: 'center',
     overflow: 'hidden',
   },

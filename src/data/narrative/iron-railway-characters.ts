@@ -12,6 +12,14 @@ export const IRON_RAILWAY_CHARACTERS: NarrativeCharacter[] = [
     sagaId: 'iron-railway-company',
     name: 'Station Master Briggs',
     portrait: '🚂',
+    media: {
+      portraitImageKey: 'dust-and-iron.character.station-master-briggs-railway',
+      portraitExpressions: {
+        neutral: 'dust-and-iron.character.station-master-briggs-railway',
+        approving: 'dust-and-iron.character.station-master-briggs-approving',
+        concerned: 'dust-and-iron.character.station-master-briggs-concerned',
+      },
+    },
     role: 'Main Ally · Station Master',
     personality: 'Practical, dry-humored, loyal to the working folk on the line.',
     affinityLabel: 'Respect',
@@ -46,6 +54,13 @@ export const IRON_RAILWAY_CHARACTERS: NarrativeCharacter[] = [
     sagaId: 'iron-railway-company',
     name: 'Silas Vane',
     portrait: '🎩',
+    media: {
+      portraitImageKey: 'dust-and-iron.character.silas-vane-neutral',
+      portraitExpressions: {
+        neutral: 'dust-and-iron.character.silas-vane-neutral',
+        angry: 'dust-and-iron.character.silas-vane-angry',
+      },
+    },
     role: 'Corrupt Railway Baron',
     personality: 'Smug, calculating, treats towns as assets to squeeze — and calls it modernization.',
     isVillain: true,
