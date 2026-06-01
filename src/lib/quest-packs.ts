@@ -4,7 +4,8 @@ import {
 } from '@/lib/convert-task-to-quest';
 import { sortPackIdsByStyle } from '@/lib/quest-style-profile';
 import { generateStarterTaskTitle } from '@/lib/two-minute-starter';
-import type { Chapter, QuestStyleProfile, Saga, TaskCategory, Universe, UserQuest } from '@/types/narrative';
+import type { Chapter, QuestStyleProfile, QuestSuiteId, Saga, TaskCategory, Universe, UserQuest } from '@/types/narrative';
+import { getQuestSuiteById } from '@/constants/quest-suites';
 
 export type QuestPackItem = {
   id: string;
@@ -130,13 +131,26 @@ export function previewQuestPack(
 export function sortQuestPacksForProfile(
   packs: QuestPack[],
   profile: QuestStyleProfile | undefined,
+  activeSuiteId?: QuestSuiteId,
 ): QuestPack[] {
-  const order = sortPackIdsByStyle(
+  const styleOrdered = sortPackIdsByStyle(
     packs.map((pack) => pack.id),
     profile,
   );
   const byId = new Map(packs.map((pack) => [pack.id, pack]));
-  return order.map((id) => byId.get(id)).filter((pack): pack is QuestPack => pack != null);
+  const ordered = styleOrdered.map((id) => byId.get(id)).filter((pack): pack is QuestPack => pack != null);
+
+  if (!activeSuiteId) return ordered;
+
+  const suite = getQuestSuiteById(activeSuiteId);
+  if (!suite) return ordered;
+
+  const categories = new Set(suite.primaryCategories);
+  return [...ordered].sort((left, right) => {
+    const leftScore = left.items.filter((item) => categories.has(item.category)).length;
+    const rightScore = right.items.filter((item) => categories.has(item.category)).length;
+    return rightScore - leftScore;
+  });
 }
 
 export function packItemsToCreateInputs(

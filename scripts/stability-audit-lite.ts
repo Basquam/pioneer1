@@ -303,6 +303,7 @@ function baseProgress(): PlayerProgress {
     processAchievements: [],
     minimumViableDayByDate: {},
     tomorrowSetupByDate: {},
+    suiteStatsById: {},
   } as PlayerProgress;
 
   for (const universe of UNIVERSES) {

@@ -127,6 +127,15 @@ export function WeeklyRecapCard() {
                 {recap.highRiskQuestsCompleted}
               </Text>
             </View>
+
+            {recap.topSuite ? (
+              <View style={[styles.highRiskRow, { borderColor: palette.panelBorder }]}>
+                <Text style={[styles.highRiskLabel, { color: palette.fog }]}>Top suite this week</Text>
+                <Text style={[styles.highRiskValue, { color: palette.bone }]}>
+                  {recap.topSuite.label} ({recap.topSuite.completed})
+                </Text>
+              </View>
+            ) : null}
           </>
         )}
 

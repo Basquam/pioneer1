@@ -12,6 +12,11 @@ import {
   sanitizeMomentumReserve,
 } from '@/lib/momentum-reserve';
 import { createEmptyQuestDefaultsSettings, sanitizeQuestDefaultsSettings } from '@/lib/quest-defaults';
+import {
+  createInitialSuiteStatsById,
+  sanitizeActiveSuiteId,
+  sanitizeSuiteStatsById,
+} from '@/lib/quest-suite-stats';
 import { sanitizeQuestInbox } from '@/lib/quest-inbox';
 import { sanitizeQuestStyleProfile } from '@/lib/quest-style-profile';
 import { sanitizeReminderPreferences } from '@/lib/reminder-preferences';
@@ -223,6 +228,7 @@ export function createInitialProgress(): PlayerProgress {
     questInbox: [],
     questStyleProfile: {},
     reminderPreferences: createDefaultReminderPreferences(),
+    suiteStatsById: createInitialSuiteStatsById(),
   };
 }
 
@@ -310,6 +316,8 @@ function normalizeProgress(raw: Partial<PlayerProgress> & Record<string, unknown
     questInbox: sanitizeQuestInbox(raw.questInbox ?? base.questInbox),
     questStyleProfile: sanitizeQuestStyleProfile(raw.questStyleProfile ?? base.questStyleProfile),
     reminderPreferences: sanitizeReminderPreferences(raw.reminderPreferences ?? base.reminderPreferences),
+    activeSuiteId: sanitizeActiveSuiteId(raw.activeSuiteId),
+    suiteStatsById: sanitizeSuiteStatsById(raw.suiteStatsById ?? base.suiteStatsById),
   };
 
   const universeForMigration = findUniverse(merged.selectedUniverseId) ?? DUST_AND_IRON_UNIVERSE;

@@ -29,6 +29,11 @@ import {
 import { recordChapterCompleted, recordQuestCompleted } from '@/lib/weekly-recap';
 import { isHighRiskQuest } from '@/lib/quest-risk';
 import { createUserQuestFromTask, type CreateUserQuestOptions, isUserQuestId } from '@/lib/convert-task-to-quest';
+import { suggestSuiteForCategory } from '@/constants/quest-suites';
+import {
+  recordSuiteQuestCompleted,
+  recordSuiteQuestCreated,
+} from '@/lib/quest-suite-stats';
 import {
   addStarterToRecurringQuestTemplate,
   archiveRecurringQuestTemplate,
@@ -238,6 +243,7 @@ import type {
   QuestInboxItem,
   QuestStyleProfile,
   ReminderPreferences,
+  QuestSuiteId,
 } from '@/types/narrative';
 
 export type XpBurst = { id: string; amount: number };
@@ -282,6 +288,7 @@ type GameContextValue = {
   xpBurst: XpBurst | null;
   narrativeMoment: NarrativeMoment | null;
   activeCelebration: RewardEvent | null;
+  celebrationQueue: RewardEvent[];
   isCelebrationActive: boolean;
   questCreated: UserQuest | null;
   addQuestSheetOpen: boolean;
@@ -367,6 +374,8 @@ type GameContextValue = {
   ) => void;
   applyQuestDefaultsPreset: (presetId: QuestDefaultsPresetId) => void;
   setDesiredIdentityTraits: (traits: IdentityTraitKey[]) => void;
+  setActiveSuiteId: (suiteId: QuestSuiteId) => void;
+  clearActiveSuiteId: () => void;
   setQuestStyleProfile: (profile: QuestStyleProfile) => void;
   setReminderPreferences: (preferences: ReminderPreferences) => void;
   applyQuestReminderSyncUpdates: (
@@ -786,25 +795,31 @@ export function GameProvider({ children }: { children: ReactNode }) {
           ? markInboxItemConverted(prev.questInbox, convertFromInboxItemId)
           : prev.questInbox;
 
-        const next = refreshFeatureDiscoveryState(
-          recordRoutineQuestSpawned(
-            {
-              ...prev,
-              recurringQuestTemplates,
-              questInbox,
-              userQuests: pruneUserQuests([...prev.userQuests, quest]),
-            },
-            quest,
-          ),
-        );
-
         achievementUnlocks = detectProcessAchievementUnlocks(prev, {
           type: 'quest-created',
           universeId: activeUniverse.id,
           quest,
         });
 
-        return unlockProcessAchievements(next, achievementUnlocks);
+        const next = unlockProcessAchievements(
+          refreshFeatureDiscoveryState(
+            recordSuiteQuestCreated(
+              recordRoutineQuestSpawned(
+                {
+                  ...prev,
+                  recurringQuestTemplates,
+                  questInbox,
+                  userQuests: pruneUserQuests([...prev.userQuests, quest]),
+                },
+                quest,
+              ),
+              quest.suiteId,
+            ),
+          ),
+          achievementUnlocks,
+        );
+
+        return next;
       });
 
       enqueueProcessAchievementUnlocks(achievementUnlocks, activeUniverse.id);
@@ -903,6 +918,21 @@ export function GameProvider({ children }: { children: ReactNode }) {
     }));
   }, []);
 
+  const setActiveSuiteId = useCallback((suiteId: QuestSuiteId) => {
+    setProgress((prev) => ({
+      ...prev,
+      activeSuiteId: suiteId,
+    }));
+  }, []);
+
+  const clearActiveSuiteId = useCallback(() => {
+    setProgress((prev) => {
+      const next = { ...prev };
+      delete next.activeSuiteId;
+      return next;
+    });
+  }, []);
+
   const setQuestStyleProfile = useCallback((profile: QuestStyleProfile) => {
     setProgress((prev) => ({
       ...prev,
@@ -968,7 +998,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
             activeSaga,
             currentChapter,
             workingQuests,
-            item.options,
+            {
+              ...item.options,
+              suiteId: item.options?.suiteId ?? suggestSuiteForCategory(item.category),
+            },
             getLocalDateKey(),
             prev,
           );
@@ -988,6 +1021,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
         for (const quest of created) {
           next = recordRoutineQuestSpawned(next, quest);
+          next = recordSuiteQuestCreated(next, quest.suiteId);
         }
 
         return next;
@@ -1800,6 +1834,22 @@ export function GameProvider({ children }: { children: ReactNode }) {
               }
             : withRoutine;
 
+        const completedUserQuest =
+          boardQuest.source === 'user'
+            ? withChainParent.userQuests.find((quest) => quest.id === questId) ?? null
+            : null;
+
+        const withSuiteStats =
+          completedUserQuest?.suiteId
+            ? recordSuiteQuestCompleted(
+                withChainParent,
+                completedUserQuest.suiteId,
+                boardQuest.xpReward,
+                boardQuest.reputationReward,
+                completedUserQuest.completedAt ?? new Date().toISOString(),
+              )
+            : withChainParent;
+
         achievementUnlocks = detectProcessAchievementUnlocks(prev, {
           type: 'quest-complete',
           universeId: activeUniverse.id,
@@ -1810,7 +1860,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         });
 
         return unlockProcessAchievements(
-          refreshFeatureDiscoveryState(applyMomentumGain(withChainParent, momentumGain).progress),
+          refreshFeatureDiscoveryState(applyMomentumGain(withSuiteStats, momentumGain).progress),
           achievementUnlocks,
         );
       });
@@ -2193,6 +2243,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       xpBurst,
       narrativeMoment,
       activeCelebration,
+      celebrationQueue,
       isCelebrationActive,
       questCreated,
       addQuestSheetOpen,
@@ -2264,6 +2315,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       updateCategoryQuestDefaults,
       applyQuestDefaultsPreset,
       setDesiredIdentityTraits,
+      setActiveSuiteId,
+      clearActiveSuiteId,
       setQuestStyleProfile,
       setReminderPreferences,
       applyQuestReminderSyncUpdates,
@@ -2343,6 +2396,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       updateCategoryQuestDefaults,
       applyQuestDefaultsPreset,
       setDesiredIdentityTraits,
+      setActiveSuiteId,
+      clearActiveSuiteId,
       setQuestStyleProfile,
       setReminderPreferences,
       applyQuestReminderSyncUpdates,
@@ -2389,6 +2444,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       editRecurringQuestId,
       splitQuestChainId,
       activeCelebration,
+      celebrationQueue,
       isCelebrationActive,
       isHydrated,
       isSagaPreview,

@@ -8,6 +8,33 @@ export type TaskCategory =
   | 'creative'
   | 'errand';
 
+export type QuestSuiteId =
+  | 'gym'
+  | 'business'
+  | 'scholar'
+  | 'home'
+  | 'wellness'
+  | 'creative'
+  | 'social'
+  | 'errand';
+
+export type QuestSuite = {
+  id: QuestSuiteId;
+  label: string;
+  shortLabel: string;
+  description: string;
+  icon: string;
+  primaryCategories: TaskCategory[];
+};
+
+export type QuestSuiteStats = {
+  questsCreated: number;
+  questsCompleted: number;
+  xpEarned: number;
+  reputationEarned: number;
+  lastCompletedAt: string | null;
+};
+
 export type UniverseTerminology = {
   questTerm: string;
   mapTerm: string;
@@ -391,6 +418,8 @@ export type UserQuest = {
   chainStepOrder?: number;
   /** Shared chain label — usually the parent original title. */
   chainTitle?: string;
+  /** Real-life domain / mode for personalization — optional for legacy quests. */
+  suiteId?: QuestSuiteId;
 };
 
 export type RoutineRepetitionRecord = {
@@ -537,6 +566,7 @@ export type BoardQuest = {
     completed: number;
     total: number;
   };
+  suiteId?: QuestSuiteId;
 };
 
 export type DailyActivity = {
@@ -812,6 +842,10 @@ export type PlayerProgress = {
   questStyleProfile: QuestStyleProfile;
   /** Global local reminder preferences. */
   reminderPreferences: ReminderPreferences;
+  /** Active real-life quest suite focus — optional personalization layer. */
+  activeSuiteId?: QuestSuiteId;
+  /** Per-suite activity stats keyed by QuestSuiteId. */
+  suiteStatsById: Partial<Record<QuestSuiteId, QuestSuiteStats>>;
 };
 
 export type QuestStyleKey =

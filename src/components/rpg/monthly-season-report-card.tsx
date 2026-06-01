@@ -97,6 +97,15 @@ export function MonthlySeasonReportCard() {
               </View>
             ) : null}
 
+            {report.topSuite ? (
+              <View style={[styles.detailRow, { borderColor: palette.panelBorder }]}>
+                <Text style={[styles.detailLabel, { color: palette.fog }]}>Top suite this month</Text>
+                <Text style={[styles.detailValue, { color: palette.bone }]}>
+                  {report.topSuite.label} ({report.topSuite.completed})
+                </Text>
+              </View>
+            ) : null}
+
             {report.topUniverse ? (
               <View style={[styles.detailRow, { borderColor: palette.panelBorder }]}>
                 <Text style={[styles.detailLabel, { color: palette.fog }]}>Most active universe</Text>

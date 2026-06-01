@@ -1,6 +1,10 @@
 import { Asset } from 'expo-asset';
 
-import { AMBIENT_AUDIO_BY_UNIVERSE_ID, getAmbientAudioModule } from '@/constants/audio';
+import {
+  AMBIENT_AUDIO_BY_UNIVERSE_ID,
+  getAmbientAudioModule,
+  getAmbientTensionAudioModule,
+} from '@/constants/audio';
 import { ambientDebug } from '@/lib/ambient-audio-debug';
 
 async function resolveModuleUri(module: number | string | { uri: string }): Promise<string> {
@@ -39,6 +43,15 @@ export async function resolveAmbientAudioUri(universeId: string): Promise<string
   const module = getAmbientAudioModule(universeId);
   if (!module) {
     throw new Error(`No ambient audio module for universe: ${universeId}`);
+  }
+
+  return resolveModuleUri(module);
+}
+
+export async function resolveAmbientTensionAudioUri(universeId: string): Promise<string> {
+  const module = getAmbientTensionAudioModule(universeId);
+  if (!module) {
+    throw new Error(`No ambient tension audio module for universe: ${universeId}`);
   }
 
   return resolveModuleUri(module);

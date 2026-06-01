@@ -1,3 +1,4 @@
+import { isQuestSuiteId } from '@/constants/quest-suites';
 import { getLocalDateKey } from '@/lib/daily-streak';
 import {
   sanitizePlanningTimestamp,
@@ -14,6 +15,10 @@ import { sanitizeQuestDefaultsSettings } from '@/lib/quest-defaults';
 import { sanitizeQuestInbox } from '@/lib/quest-inbox';
 import { sanitizeChildQuestIds } from '@/lib/quest-chain';
 import { sanitizeDesiredIdentityTraits } from '@/lib/identity-compass';
+import {
+  sanitizeActiveSuiteId,
+  sanitizeSuiteStatsById,
+} from '@/lib/quest-suite-stats';
 import { sanitizeQuestStyleProfile } from '@/lib/quest-style-profile';
 import { sanitizeReminderPreferences } from '@/lib/reminder-preferences';
 import { pruneWeeklyReviewByWeek, sanitizeWeeklyReviewByWeek } from '@/lib/weekly-review';
@@ -266,6 +271,10 @@ export function sanitizeUserQuest(raw: unknown): UserQuest | null {
     sanitized.chainTitle = quest.chainTitle.trim();
   }
 
+  if (isQuestSuiteId(quest.suiteId)) {
+    sanitized.suiteId = quest.suiteId;
+  }
+
   if (Array.isArray(quest.frictionReviews)) {
     const reviews = quest.frictionReviews
       .map((entry) => sanitizeFrictionReview(entry))
@@ -421,6 +430,8 @@ export function sanitizePersistedProgress(progress: PlayerProgress): PlayerProgr
     desiredIdentityTraits: sanitizeDesiredIdentityTraits(progress.desiredIdentityTraits),
     questStyleProfile: sanitizeQuestStyleProfile(progress.questStyleProfile),
     reminderPreferences: sanitizeReminderPreferences(progress.reminderPreferences),
+    activeSuiteId: sanitizeActiveSuiteId(progress.activeSuiteId),
+    suiteStatsById: sanitizeSuiteStatsById(progress.suiteStatsById),
     featureDiscoveryState: sanitizeFeatureDiscoveryState(
       progress.featureDiscoveryState,
       progress,

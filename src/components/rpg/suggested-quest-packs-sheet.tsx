@@ -60,8 +60,8 @@ export function SuggestedQuestPacksSheet({ visible, onClose }: SuggestedQuestPac
   const [confirmOverLimit, setConfirmOverLimit] = useState(false);
 
   const orderedPacks = useMemo(
-    () => sortQuestPacksForProfile(QUEST_PACKS, playerProgress.questStyleProfile),
-    [playerProgress.questStyleProfile],
+    () => sortQuestPacksForProfile(QUEST_PACKS, playerProgress.questStyleProfile, playerProgress.activeSuiteId),
+    [playerProgress.activeSuiteId, playerProgress.questStyleProfile],
   );
 
   const selectedPack = selectedPackId ? getQuestPackById(selectedPackId) : undefined;

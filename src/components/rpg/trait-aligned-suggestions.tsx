@@ -21,8 +21,9 @@ export function TraitAlignedSuggestionsPanel() {
       playerProgress.desiredIdentityTraits ?? [],
       3,
       playerProgress.questStyleProfile,
+      playerProgress.activeSuiteId,
     ),
-    [playerProgress.desiredIdentityTraits, playerProgress.questStyleProfile],
+    [playerProgress.activeSuiteId, playerProgress.desiredIdentityTraits, playerProgress.questStyleProfile],
   );
 
   if (suggestions.length === 0) return null;

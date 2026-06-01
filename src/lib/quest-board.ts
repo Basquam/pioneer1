@@ -116,6 +116,7 @@ export function userQuestToBoardQuest(
     ...(quest.isQuestChainParent ? { isQuestChainParent: true } : {}),
     ...(typeof quest.chainStepOrder === 'number' ? { chainStepOrder: quest.chainStepOrder } : {}),
     ...(quest.chainTitle ? { chainTitle: quest.chainTitle } : {}),
+    ...(quest.suiteId ? { suiteId: quest.suiteId } : {}),
   };
 
   if (!boardQuest.createdOnDate) {

@@ -8,6 +8,7 @@ import type {
   Chapter,
   PlayerProgress,
   QuestRiskLevel,
+  QuestSuiteId,
   Saga,
   TaskCategory,
   Universe,
@@ -93,6 +94,7 @@ export type CreateUserQuestOptions = {
   reminderEnabled?: boolean;
   reminderTime?: string;
   reminderLabel?: string;
+  suiteId?: QuestSuiteId;
 };
 
 /** Shared user-quest creation used by single and batch add flows. */
@@ -145,6 +147,7 @@ export function createUserQuestFromTask(
       ? { implementationIntention: options.implementationIntention.trim() }
       : {}),
     ...(options?.focusPinned ? { focusPinned: true } : {}),
+    ...(options?.suiteId ? { suiteId: options.suiteId } : {}),
   };
 }
 

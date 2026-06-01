@@ -1,4 +1,7 @@
 import { getLocalDateKey } from '@/lib/daily-streak';
+import { getQuestSuiteById } from '@/constants/quest-suites';
+import { computeTopSuiteForDateRange } from '@/lib/quest-suite-stats';
+import type { QuestSuiteId } from '@/types/narrative';
 import {
   EMPTY_ACTIVITY,
   pruneActivityByDate,
@@ -14,6 +17,7 @@ export type WeeklyRecapStats = {
   highRiskQuestsCompleted: number;
   dailyStreak: number;
   flavorLine: string;
+  topSuite: { suiteId: QuestSuiteId; label: string; completed: number } | null;
 };
 
 const IRON_RAILWAY_SAGA_ID = 'iron-railway-company';
@@ -141,5 +145,12 @@ export function computeWeeklyRecap(
     highRiskQuestsCompleted,
     dailyStreak: progress.dailyStreak,
     flavorLine: getWeeklyRecapFlavor(selectedSagaId, universeId),
+    topSuite: (() => {
+      const top = computeTopSuiteForDateRange(progress, weekKeys[0]!, weekKeys[6]!);
+      if (!top) return null;
+      const suite = getQuestSuiteById(top.suiteId);
+      if (!suite) return null;
+      return { suiteId: top.suiteId, label: suite.label, completed: top.completed };
+    })(),
   };
 }

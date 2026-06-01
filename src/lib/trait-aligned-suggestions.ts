@@ -1,9 +1,10 @@
 import { getIdentityTraitMeta } from '@/lib/identity-votes';
+import { getQuestSuiteById } from '@/constants/quest-suites';
 import {
   applyQuestStyleToTraitSuggestions,
   getTraitKeysForStyleSuggestions,
 } from '@/lib/quest-style-profile';
-import type { IdentityTraitKey, QuestStyleProfile, TaskCategory } from '@/types/narrative';
+import type { IdentityTraitKey, QuestStyleProfile, QuestSuiteId, TaskCategory } from '@/types/narrative';
 
 export const TRAIT_ALIGNED_SECTION_TITLE = "Suggested for who you're becoming";
 
@@ -199,6 +200,7 @@ export function getTraitAlignedSuggestions(
   desiredTraits: IdentityTraitKey[],
   maxCount = 3,
   profile?: QuestStyleProfile,
+  activeSuiteId?: QuestSuiteId,
 ): TraitAlignedSuggestion[] {
   const traitKeys = getTraitKeysForStyleSuggestions(desiredTraits, profile);
   if (traitKeys.length === 0) return [];
@@ -206,10 +208,21 @@ export function getTraitAlignedSuggestions(
   const usedTitles = new Set<string>();
   const results: TraitAlignedSuggestion[] = [];
 
+  const scoreForCategory = (category: TaskCategory): number => {
+    if (!activeSuiteId) return 0;
+    const suite = getQuestSuiteById(activeSuiteId);
+    if (!suite) return 0;
+    if (suite.primaryCategories[0] === category) return 2;
+    if (suite.primaryCategories.includes(category)) return 1;
+    return 0;
+  };
+
   for (const traitKey of traitKeys) {
     if (results.length >= maxCount) break;
 
-    const pool = TRAIT_SUGGESTION_POOL[traitKey] ?? [];
+    const pool = [...(TRAIT_SUGGESTION_POOL[traitKey] ?? [])].sort(
+      (left, right) => scoreForCategory(right.category) - scoreForCategory(left.category),
+    );
     const template = pool.find((entry) => !usedTitles.has(entry.title)) ?? pool[0];
     if (!template) continue;
 

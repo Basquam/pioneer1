@@ -29,6 +29,7 @@ import {
   MOTION_GUARD_CARD_PROMPT,
 } from '@/lib/motion-vs-action';
 import { getTaskCategoryMeta } from '@/lib/task-categories';
+import { SuiteBadge } from '@/components/rpg/suite-badge';
 import { formatChainProgressLabel, isQuestChainParentBlocked, isQuestChainSplittable, shouldHighlightQuestChainSplit } from '@/lib/quest-chain';
 import { formatPreQuestRitualCardLine } from '@/lib/pre-quest-ritual';
 import { formatQuestReminderCue } from '@/lib/quest-reminders';
@@ -243,6 +244,9 @@ export function QuestCard({ quest, index, variant = 'default' }: QuestCardProps)
                 {categoryMeta.icon} {categoryMeta.label.toUpperCase()}
               </Text>
             </View>
+            {quest.source === 'user' && quest.suiteId ? (
+              <SuiteBadge suiteId={quest.suiteId} palette={palette} />
+            ) : null}
             {visibleSecondaryBadges.map((badge) => (
               <View
                 key={badge.key}

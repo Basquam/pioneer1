@@ -73,8 +73,13 @@ import {
   resolveQuestStyleAddQuestDefaults,
 } from '@/lib/quest-style-profile';
 import { suggestTaskCategory } from '@/lib/suggest-task-category';
+import {
+  getQuestSuiteById,
+  QUEST_SUITES,
+  resolveAddQuestSuitePrefill,
+} from '@/constants/quest-suites';
 import { formatTraitSuggestionLabel } from '@/lib/trait-aligned-suggestions';
-import type { QuestRiskLevel, RecurrenceType, TaskCategory, WeekdayKey } from '@/types/narrative';
+import type { QuestRiskLevel, QuestSuiteId, RecurrenceType, TaskCategory, WeekdayKey } from '@/types/narrative';
 import {
   getWeekdayKeyForDate,
   WEEKDAY_OPTIONS,
@@ -119,6 +124,8 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState<TaskCategory | null>(null);
   const [categoryManuallySelected, setCategoryManuallySelected] = useState(false);
+  const [suiteId, setSuiteId] = useState<QuestSuiteId | null>(null);
+  const [suiteManuallySelected, setSuiteManuallySelected] = useState(false);
   const [confirmOverLimit, setConfirmOverLimit] = useState(false);
   const [easierToStart, setEasierToStart] = useState(false);
   const [starterTitle, setStarterTitle] = useState('');
@@ -177,6 +184,21 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
   );
 
   const selectedMeta = category ? getTaskCategoryMeta(category) : null;
+  const selectedSuite = suiteId ? getQuestSuiteById(suiteId) : null;
+  const suggestedSuiteId = useMemo(
+    () =>
+      resolveAddQuestSuitePrefill({
+        category,
+        activeSuiteId: playerProgress.activeSuiteId,
+        title: trimmedTitle,
+      }),
+    [category, playerProgress.activeSuiteId, trimmedTitle],
+  );
+  const showSuiteSuggestion =
+    !suiteManuallySelected &&
+    suggestedSuiteId != null &&
+    suiteId !== suggestedSuiteId &&
+    category != null;
   const modalBottomInset = useModalBottomInset(32);
   const focusLimit = getDailyFocusLimit(playerProgress);
   const todayFocusCount = countTodayUserQuests(
@@ -214,6 +236,8 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
     setTitle('');
     setCategory(null);
     setCategoryManuallySelected(false);
+    setSuiteId(null);
+    setSuiteManuallySelected(false);
     setConfirmOverLimit(false);
     setEasierToStart(false);
     setStarterTitle('');
@@ -305,8 +329,19 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
     applyCategoryDefaults(suggestedTaskCategory, trimmedTitle);
   };
 
+  useEffect(() => {
+    if (!visible || suiteManuallySelected) return;
+
+    const nextSuite = resolveAddQuestSuitePrefill({
+      category,
+      activeSuiteId: playerProgress.activeSuiteId,
+      title: trimmedTitle,
+    });
+    setSuiteId(nextSuite);
+  }, [category, playerProgress.activeSuiteId, suiteManuallySelected, trimmedTitle, visible]);
+
   const submitQuest = () => {
-    if (!trimmedTitle || !category) return;
+    if (!trimmedTitle || !category || !suiteId) return;
     const starter = easierToStart ? starterTitle.trim() || suggestedStarter : '';
     const prep = prepEnabled ? prepStepTitle.trim() : '';
     const reward = rewardEnabled ? rewardTitle.trim() : '';
@@ -333,6 +368,7 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
 
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     addUserQuest(trimmedTitle, category, {
+      suiteId,
       ...(starter ? { starterTaskTitle: starter } : {}),
       ...(prep ? { prepStepTitle: prep } : {}),
       ...(reward ? { afterQuestReward: reward } : {}),
@@ -359,7 +395,7 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
   };
 
   const handleCreate = () => {
-    if (!trimmedTitle || !category) return;
+    if (!trimmedTitle || !category || !suiteId) return;
     if (atFocusLimit && !confirmOverLimit) {
       setConfirmOverLimit(true);
       return;
@@ -672,6 +708,80 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
                 Select a category to continue.
               </Text>
             )}
+
+            {category ? (
+              <>
+                <Text style={[styles.label, { color: palette.gold }]}>QUEST SUITE</Text>
+                <Text style={[styles.categoryHelper, { color: palette.fog }]}>
+                  Your real-life domain — story stays the same, tasks get more personal.
+                </Text>
+
+                {showSuiteSuggestion && suggestedSuiteId ? (
+                  <View
+                    style={[
+                      styles.categorySuggestionBox,
+                      { borderColor: palette.panelBorder, backgroundColor: palette.panel },
+                    ]}>
+                    <Text style={[styles.categorySuggestionText, { color: palette.bone }]}>
+                      Suggested suite: {getQuestSuiteById(suggestedSuiteId)?.label ?? suggestedSuiteId}
+                    </Text>
+                    <Pressable
+                      onPress={() => {
+                        void Haptics.selectionAsync();
+                        setSuiteId(suggestedSuiteId);
+                        setSuiteManuallySelected(true);
+                      }}
+                      style={[
+                        styles.categorySuggestionApply,
+                        { borderColor: palette.gold, backgroundColor: palette.primary },
+                      ]}>
+                      <Text style={[styles.categorySuggestionApplyText, { color: palette.bone }]}>APPLY</Text>
+                    </Pressable>
+                  </View>
+                ) : null}
+
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
+                  {QUEST_SUITES.map((suite) => {
+                    const selected = suiteId === suite.id;
+                    return (
+                      <Pressable
+                        key={suite.id}
+                        onPress={() => {
+                          void Haptics.selectionAsync();
+                          setSuiteManuallySelected(true);
+                          setSuiteId(suite.id);
+                        }}
+                        style={[
+                          styles.chip,
+                          {
+                            backgroundColor: selected ? palette.primary : palette.panel,
+                            borderColor: selected ? palette.gold : palette.panelBorder,
+                          },
+                        ]}>
+                        <Text style={[styles.chipIcon, { color: selected ? palette.bone : palette.fog }]}>
+                          {suite.icon}
+                        </Text>
+                        <Text
+                          style={[styles.chipFlavor, { color: selected ? palette.bone : palette.fog }]}
+                          numberOfLines={2}>
+                          {suite.shortLabel}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </ScrollView>
+
+                {selectedSuite ? (
+                  <Text style={[styles.categoryHint, { color: palette.fog }]}>
+                    {selectedSuite.description}
+                  </Text>
+                ) : (
+                  <Text style={[styles.categoryHint, { color: palette.fog }]}>
+                    Pick a suite to continue.
+                  </Text>
+                )}
+              </>
+            ) : null}
 
             {defaultsApplied && !addQuestRecoveryMode ? (
               <Text style={[styles.defaultsHint, { color: palette.accent }]}>{QUEST_DEFAULTS_APPLIED_COPY}</Text>

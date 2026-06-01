@@ -14,6 +14,7 @@ import { setAudioModeAsync, useAudioPlayer } from 'expo-audio';
 import {
   AMBIENT_AUDIO_BY_UNIVERSE_ID,
   AMBIENT_AUDIO_MODULE,
+  AMBIENT_TENSION_AUDIO_BY_UNIVERSE_ID,
   AmbientAudioConfig,
   NEON_ASHES_AMBIENT_AUDIO_MODULE,
   NEURONET_AMBIENT_AUDIO_MODULE,
@@ -21,11 +22,24 @@ import {
   universeHasAmbientAudio,
 } from '@/constants/audio';
 import { GameFonts } from '@/constants/typography';
+import {
+  AmbientTensionRegistry,
+  EventStingRegistry,
+} from '@/components/rpg/event-sting-registry';
+import { EventStingCoordinator } from '@/components/rpg/event-sting-coordinator';
 import { useGame } from '@/hooks/use-game';
 import { ambientDebug } from '@/lib/ambient-audio-debug';
-import { resolveAmbientAudioUri } from '@/lib/ambient-audio-source';
+import {
+  resolveAmbientAudioUri,
+  resolveAmbientTensionAudioUri,
+} from '@/lib/ambient-audio-source';
 import { createExpoAmbientPlayer } from '@/lib/ambient-expo-player';
 import type { AmbientPlayerAdapter } from '@/lib/ambient-player-adapter';
+import {
+  DUST_AND_IRON_TENSION_ADAPTER_KEY,
+  isDustAndIronTensionActive,
+} from '@/lib/ambient-tension';
+import { applyDustAndIronTensionMix } from '@/lib/ambient-tension-playback';
 import {
   type AdapterRegistry,
   pauseAllExcept,
@@ -34,6 +48,12 @@ import {
   switchAmbientTrack,
 } from '@/lib/ambient-track-playback';
 import { createWebAmbientPlayer } from '@/lib/ambient-web-player';
+import type { EventStingKind } from '@/lib/celebration-sting-resolver';
+import {
+  type EventStingPlayerMap,
+  playEventSting,
+  stopWebEventSting,
+} from '@/lib/event-sting-playback';
 import { loadAudioSettings, saveAudioSettings } from '@/lib/audio-settings-storage';
 
 const IS_WEB = Platform.OS === 'web';
@@ -193,6 +213,89 @@ function WebAmbientTrack({
   return null;
 }
 
+function WebTensionTrack({
+  universeId,
+  adapterKey,
+  adaptersRef,
+  onRegistryChange,
+}: {
+  universeId: string;
+  adapterKey: string;
+  adaptersRef: React.MutableRefObject<AdapterRegistry>;
+  onRegistryChange: () => void;
+}) {
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    let active = true;
+
+    void resolveAmbientTensionAudioUri(universeId)
+      .then((uri) => {
+        if (!active) return;
+
+        ambientDebug('Web: creating tension HTMLAudioElement', { universeId, adapterKey, uri });
+        const audio = new Audio(uri);
+        audio.loop = true;
+        audio.preload = 'auto';
+        audio.volume = 0;
+        audioRef.current = audio;
+        adaptersRef.current[adapterKey] = createWebAmbientPlayer(audio);
+        onRegistryChange();
+      })
+      .catch((error: unknown) => {
+        const message = error instanceof Error ? error.message : String(error);
+        ambientDebug('Web tension track load failed', { universeId, adapterKey, error: message });
+      });
+
+    return () => {
+      active = false;
+      const audio = audioRef.current;
+      if (audio) {
+        audio.pause();
+        audio.volume = 0;
+        audio.currentTime = 0;
+        audio.src = '';
+      }
+      audioRef.current = null;
+      adaptersRef.current[adapterKey] = null;
+      onRegistryChange();
+    };
+  }, [adapterKey, adaptersRef, onRegistryChange, universeId]);
+
+  return null;
+}
+
+function AmbientTensionTrackRegistry({
+  adaptersRef,
+  onRegistryChange,
+}: {
+  adaptersRef: React.MutableRefObject<AdapterRegistry>;
+  onRegistryChange: () => void;
+}) {
+  const entries = useMemo(
+    () => Object.keys(AMBIENT_TENSION_AUDIO_BY_UNIVERSE_ID),
+    [],
+  );
+
+  if (IS_WEB) {
+    return (
+      <>
+        {entries.map((universeId) => (
+          <WebTensionTrack
+            key={`${universeId}::tension`}
+            universeId={universeId}
+            adapterKey={`${universeId}::tension`}
+            adaptersRef={adaptersRef}
+            onRegistryChange={onRegistryChange}
+          />
+        ))}
+      </>
+    );
+  }
+
+  return <AmbientTensionRegistry adaptersRef={adaptersRef} onRegistryChange={onRegistryChange} />;
+}
+
 function AmbientTrackRegistry({
   adaptersRef,
   onRegistryChange,
@@ -240,27 +343,53 @@ function AmbientTrackRegistry({
 
 function AmbientAudioEngine({
   adaptersRef,
+  tensionAdaptersRef,
   fadeCancelRef,
+  tensionFadeCancelRef,
   activeUniverseIdRef,
   playingUniverseIdRef,
 }: {
   adaptersRef: React.MutableRefObject<AdapterRegistry>;
+  tensionAdaptersRef: React.MutableRefObject<AdapterRegistry>;
   fadeCancelRef: React.MutableRefObject<(() => void) | null>;
+  tensionFadeCancelRef: React.MutableRefObject<(() => void) | null>;
   activeUniverseIdRef: React.MutableRefObject<string>;
   playingUniverseIdRef: React.MutableRefObject<string | null>;
 }) {
-  const { activeUniverse, isHydrated: gameHydrated } = useGame();
+  const {
+    activeUniverse,
+    activeSaga,
+    narrativeMoment,
+    activeCelebration,
+    isCelebrationActive,
+    isHydrated: gameHydrated,
+  } = useGame();
   const { ambientEnabled, isHydrated: settingsHydrated, webPlaybackUnlocked } = useAmbientAudio();
   const [registryVersion, setRegistryVersion] = useState(0);
+  const [tensionRegistryVersion, setTensionRegistryVersion] = useState(0);
 
   const activeUniverseId = activeUniverse.id;
   const hasTrack = universeHasAmbientAudio(activeUniverseId);
   const wantsAmbient =
     settingsHydrated && gameHydrated && ambientEnabled && hasTrack;
   const shouldPlay = wantsAmbient && (!IS_WEB || webPlaybackUnlocked);
+  const tensionActive =
+    shouldPlay &&
+    activeUniverseId === 'dust-and-iron' &&
+    isDustAndIronTensionActive({
+      universe: activeUniverse,
+      narrativeMoment,
+      isCelebrationActive,
+      activeCelebration,
+      activeSaga,
+    });
 
   const bumpRegistry = useCallback(() => {
     setRegistryVersion((version) => version + 1);
+  }, []);
+
+  const bumpTensionRegistry = useCallback(() => {
+    setTensionRegistryVersion((version) => version + 1);
   }, []);
 
   useEffect(() => {
@@ -344,6 +473,43 @@ function AmbientAudioEngine({
     shouldPlay,
   ]);
 
+  useEffect(() => {
+    applyDustAndIronTensionMix({
+      townAdapters: adaptersRef.current,
+      tensionAdapters: tensionAdaptersRef.current,
+      townAdapterKey: 'dust-and-iron',
+      tensionAdapterKey: DUST_AND_IRON_TENSION_ADAPTER_KEY,
+      tensionActive,
+      shouldPlay: shouldPlay && activeUniverseId === 'dust-and-iron',
+      fadeCancelRef: tensionFadeCancelRef,
+    });
+  }, [
+    activeCelebration,
+    activeUniverse,
+    activeUniverseId,
+    adaptersRef,
+    isCelebrationActive,
+    narrativeMoment,
+    shouldPlay,
+    tensionActive,
+    tensionAdaptersRef,
+    tensionFadeCancelRef,
+    tensionRegistryVersion,
+  ]);
+
+  useEffect(
+    () => () => {
+      tensionFadeCancelRef.current?.();
+      tensionFadeCancelRef.current = null;
+      const tensionAdapter = tensionAdaptersRef.current[DUST_AND_IRON_TENSION_ADAPTER_KEY];
+      if (tensionAdapter) {
+        tensionAdapter.pause();
+        tensionAdapter.setVolume(0);
+      }
+    },
+    [tensionAdaptersRef, tensionFadeCancelRef],
+  );
+
   useEffect(
     () => () => {
       fadeCancelRef.current?.();
@@ -361,6 +527,10 @@ function AmbientAudioEngine({
         playingUniverseIdRef={playingUniverseIdRef}
       />
       <AmbientTrackRegistry adaptersRef={adaptersRef} onRegistryChange={bumpRegistry} />
+      <AmbientTensionTrackRegistry
+        adaptersRef={tensionAdaptersRef}
+        onRegistryChange={bumpTensionRegistry}
+      />
     </>
   );
 }
@@ -406,9 +576,28 @@ export function AmbientAudioProvider({ children }: { children: ReactNode }) {
   const [isHydrated, setIsHydrated] = useState(false);
   const [webPlaybackUnlocked, setWebPlaybackUnlocked] = useState(!IS_WEB);
   const adaptersRef = useRef<AdapterRegistry>({});
+  const tensionAdaptersRef = useRef<AdapterRegistry>({});
+  const stingPlayersRef = useRef<EventStingPlayerMap>({});
   const fadeCancelRef = useRef<(() => void) | null>(null);
+  const tensionFadeCancelRef = useRef<(() => void) | null>(null);
   const activeUniverseIdRef = useRef('dust-and-iron');
   const playingUniverseIdRef = useRef<string | null>(null);
+  const bumpStingRegistry = useCallback(() => {}, []);
+
+  const playSting = useCallback(
+    (kind: EventStingKind) => {
+      void playEventSting(
+        kind,
+        {
+          ambientEnabled,
+          webPlaybackUnlocked,
+          universeId: activeUniverseIdRef.current,
+        },
+        stingPlayersRef.current,
+      );
+    },
+    [ambientEnabled, webPlaybackUnlocked],
+  );
 
   useEffect(() => {
     let mounted = true;
@@ -468,6 +657,9 @@ export function AmbientAudioProvider({ children }: { children: ReactNode }) {
     if (enabled && IS_WEB) {
       ambientDebug('Web playback unlocked (ambient toggle ON)');
       setWebPlaybackUnlocked(true);
+    }
+    if (!enabled) {
+      stopWebEventSting();
     }
     setAmbientEnabledState(enabled);
     void saveAudioSettings({ ambientEnabled: enabled });
@@ -559,10 +751,17 @@ export function AmbientAudioProvider({ children }: { children: ReactNode }) {
       <View style={styles.root}>
         <AmbientAudioEngine
           adaptersRef={adaptersRef}
+          tensionAdaptersRef={tensionAdaptersRef}
           fadeCancelRef={fadeCancelRef}
+          tensionFadeCancelRef={tensionFadeCancelRef}
           activeUniverseIdRef={activeUniverseIdRef}
           playingUniverseIdRef={playingUniverseIdRef}
         />
+        <EventStingRegistry
+          playersRef={stingPlayersRef}
+          onRegistryChange={bumpStingRegistry}
+        />
+        <EventStingCoordinator playSting={playSting} />
         <AmbientWebUnlockPrompt />
         {children}
       </View>

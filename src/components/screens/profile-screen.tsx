@@ -38,6 +38,7 @@ import { QuestDefaultsPanel } from '@/components/rpg/quest-defaults-panel';
 import { RecurringQuestsPanel } from '@/components/rpg/recurring-quests-panel';
 import { ProfileAppInfo } from '@/components/rpg/profile-app-info';
 import { ProcessAchievementsPanel } from '@/components/rpg/process-achievements-panel';
+import { SuiteMasteryPanel } from '@/components/rpg/suite-mastery-panel';
 import { ProfileSection } from '@/components/rpg/profile-section';
 import { ProgressBackupPanel } from '@/components/rpg/progress-backup-panel';
 import { ScreenScroll } from '@/components/rpg/screen-scroll';
@@ -196,6 +197,10 @@ export function ProfileScreen() {
               })}
             </View>
           ) : null}
+        </ProfileSection>
+
+        <ProfileSection title="SUITE MASTERY" hint="Real-life domains you have been building.">
+          <SuiteMasteryPanel progress={playerProgress} palette={activeUniverse.palette} />
         </ProfileSection>
 
         <ProfileSection

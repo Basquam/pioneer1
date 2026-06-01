@@ -9,8 +9,10 @@ import {
 import { isQuestLifecycleArchived, isQuestNeedsReview } from '@/lib/quest-lifecycle';
 import { isHighRiskQuest } from '@/lib/quest-risk';
 import { getTaskCategoryMeta } from '@/lib/task-categories';
+import { getQuestSuiteById } from '@/constants/quest-suites';
+import { computeTopSuiteForDateRange } from '@/lib/quest-suite-stats';
 import { getSagaTitleById, getUniverseNameById } from '@/lib/onboarding-origin-display';
-import type { IdentityTraitKey, PlayerProgress, TaskCategory, UserQuest } from '@/types/narrative';
+import type { IdentityTraitKey, PlayerProgress, QuestSuiteId, TaskCategory, UserQuest } from '@/types/narrative';
 
 export const MONTHLY_IDENTITY_COPY = 'Your small wins are becoming evidence.';
 
@@ -48,6 +50,7 @@ export type MonthlySeasonReportStats = {
   topCategories: MonthlyCategoryStat[];
   topUniverse: { id: string; name: string; count: number } | null;
   topSaga: { id: string; title: string; count: number } | null;
+  topSuite: { suiteId: QuestSuiteId; label: string; completed: number } | null;
   highRiskQuestsCompleted: number;
   recurringQuestsCompleted: number;
   focusQuestsCompleted: number;
@@ -385,6 +388,23 @@ export function computeMonthlySeasonReport(
 
   const topUniverseEntry = [...universeCounts.entries()].sort((a, b) => b[1] - a[1])[0];
   const topSagaEntry = [...sagaCounts.entries()].sort((a, b) => b[1] - a[1])[0];
+  const monthDateKeyList = [...monthDateKeys];
+  const topSuiteResult =
+    monthDateKeyList.length > 0
+      ? computeTopSuiteForDateRange(
+          progress,
+          monthDateKeyList[0]!,
+          monthDateKeyList[monthDateKeyList.length - 1]!,
+        )
+      : null;
+  const topSuite =
+    topSuiteResult && getQuestSuiteById(topSuiteResult.suiteId)
+      ? {
+          suiteId: topSuiteResult.suiteId,
+          label: getQuestSuiteById(topSuiteResult.suiteId)!.label,
+          completed: topSuiteResult.completed,
+        }
+      : null;
 
   const baseStats = {
     monthKey,
@@ -412,6 +432,7 @@ export function computeMonthlySeasonReport(
           count: topSagaEntry[1],
         }
       : null,
+    topSuite,
     highRiskQuestsCompleted,
     recurringQuestsCompleted,
     focusQuestsCompleted,

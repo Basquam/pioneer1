@@ -5,7 +5,7 @@ function isDevEnvironment(): boolean {
 }
 
 /** Bump when PlayerProgress shape changes and a migration step is required. */
-export const CURRENT_PLAYER_PROGRESS_SCHEMA_VERSION = 1;
+export const CURRENT_PLAYER_PROGRESS_SCHEMA_VERSION = 2;
 
 /** Saves written before schemaVersion existed. */
 export const LEGACY_PLAYER_PROGRESS_SCHEMA_VERSION = 0;
@@ -30,6 +30,12 @@ const MIGRATION_STEPS: PlayerProgressMigrationStep[] = [
     toVersion: 1,
     id: 'v0-to-v1',
     migrate: migrateV0ToV1,
+  },
+  {
+    fromVersion: 1,
+    toVersion: 2,
+    id: 'v1-to-v2',
+    migrate: migrateV1ToV2,
   },
 ];
 
@@ -166,6 +172,16 @@ export function migrateV0ToV1(raw: Record<string, unknown>): Record<string, unkn
   if (next.recoveryQuestCompletedDates === undefined) next.recoveryQuestCompletedDates = [];
 
   next.schemaVersion = 1;
+  return next;
+}
+
+/** v1 → v2: quest suite personalization fields. */
+export function migrateV1ToV2(raw: Record<string, unknown>): Record<string, unknown> {
+  const next: Record<string, unknown> = { ...raw };
+
+  if (next.suiteStatsById === undefined) next.suiteStatsById = {};
+
+  next.schemaVersion = 2;
   return next;
 }
 
