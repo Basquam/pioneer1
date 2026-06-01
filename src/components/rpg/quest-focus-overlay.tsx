@@ -16,6 +16,7 @@ import { GlowButton } from '@/components/rpg/glow-button';
 import { GameLayout } from '@/constants/layout';
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
+import { useModalBottomInset } from '@/hooks/use-scroll-insets';
 import { useUniverseUiCopy } from '@/lib/universe-ui-copy';
 import { getDailyCrewCodeLine } from '@/lib/crew-code';
 import {
@@ -69,12 +70,14 @@ export function QuestFocusOverlay() {
     focusQuest,
     focusDecisiveMoment,
     playerProgress,
+    hasOnboarded,
     closeQuestFocus,
     completeQuest,
     recordFocusDistraction,
     markFrictionShieldApplied,
   } = useGame();
   const { palette } = activeUniverse;
+  const modalBottomInset = useModalBottomInset(16);
   const copy = getQuestFocusCopy(activeUniverse.id);
   const ritualCopy = getQuestStartRitualCopy(activeUniverse.id);
   const rewardCopy = getAfterQuestRewardCopy(activeUniverse.id);
@@ -100,9 +103,12 @@ export function QuestFocusOverlay() {
     starterPulse.value = 1;
   }, [focusQuest?.id, focusQuest?.lastFocusDistraction, focusQuest?.frictionShieldAppliedAt, completePulse, starterPulse]);
 
+  const isFirstRunFocus = !hasOnboarded;
+  const readyToComplete = ritualComplete || preQuestRitualDone || isFirstRunFocus;
+
   const completeWrapStyle = useAnimatedStyle(() => ({
     transform: [{ scale: completePulse.value }],
-    opacity: ritualComplete || preQuestRitualDone ? 1 : 0.72,
+    opacity: readyToComplete ? 1 : 0.72,
   }));
 
   const starterWrapStyle = useAnimatedStyle(() => ({
@@ -248,7 +254,10 @@ export function QuestFocusOverlay() {
     <Modal visible transparent animationType="fade" statusBarTranslucent onRequestClose={closeQuestFocus}>
       <View style={[styles.backdrop, { backgroundColor: `${palette.void}f5` }]}>
         <ScrollView
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[
+            styles.scrollContent,
+            { paddingBottom: GameLayout.modalVerticalPadding + modalBottomInset },
+          ]}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled">
           <Animated.View entering={FadeIn.duration(300)} style={styles.header}>
@@ -264,7 +273,7 @@ export function QuestFocusOverlay() {
             {copy.tagline}
           </Animated.Text>
 
-          {!isCompleted && itemEffectLines.length > 0 ? (
+          {!isCompleted && !isFirstRunFocus && itemEffectLines.length > 0 ? (
             <Animated.View entering={FadeInDown.duration(380).delay(90)} style={styles.itemEffectWrap}>
               {itemEffectLines.map((line) => (
                 <Text
@@ -277,7 +286,7 @@ export function QuestFocusOverlay() {
             </Animated.View>
           ) : null}
 
-          {!isCompleted && hasPreQuestRitual && preQuestRitualDisplay ? (
+          {!isCompleted && !isFirstRunFocus && hasPreQuestRitual && preQuestRitualDisplay ? (
             <Animated.View
               entering={FadeInDown.duration(400).delay(100)}
               style={[
@@ -309,7 +318,7 @@ export function QuestFocusOverlay() {
             </Animated.View>
           ) : null}
 
-          {!isCompleted && crewCodeLine ? (
+          {!isCompleted && !isFirstRunFocus && crewCodeLine ? (
             <Animated.View
               entering={FadeInDown.duration(400).delay(140)}
               style={[styles.crewCodeBlock, { borderColor: palette.panelBorder, backgroundColor: palette.panel }]}>
@@ -318,7 +327,7 @@ export function QuestFocusOverlay() {
             </Animated.View>
           ) : null}
 
-          {!isCompleted && motionGuardActive ? (
+          {!isCompleted && !isFirstRunFocus && motionGuardActive ? (
             <Animated.View
               entering={FadeInDown.duration(400).delay(180)}
               style={[styles.motionGuardBlock, { borderColor: palette.accent, backgroundColor: `${palette.primary}33` }]}>
@@ -327,7 +336,7 @@ export function QuestFocusOverlay() {
             </Animated.View>
           ) : null}
 
-          {(showDecisiveHighlight || inventoryStarterProminent) && (
+          {!isFirstRunFocus && (showDecisiveHighlight || inventoryStarterProminent) && (
             <Animated.View
               entering={FadeInDown.duration(420).delay(120)}
               style={[
@@ -391,7 +400,7 @@ export function QuestFocusOverlay() {
               <Text style={[styles.sectionBody, { color: palette.bone }]}>{focusQuest.originalTitle}</Text>
             </View>
 
-            {hasQuestSupports && !isCompleted ? (
+            {hasQuestSupports && !isCompleted && !isFirstRunFocus ? (
               <View style={[styles.supportsBlock, { borderColor: palette.panelBorder }]}>
                 <Text style={[styles.supportsLabel, { color: palette.gold }]}>QUEST SUPPORTS</Text>
 
@@ -457,18 +466,20 @@ export function QuestFocusOverlay() {
                 <Text style={[styles.motivationBadge, { color: palette.gold }]}>{copy.motivationBadge}</Text>
                 <Text style={[styles.motivationName, { color: palette.bone }]}>{character.name}</Text>
                 <Text style={[styles.motivationLine, { color: palette.bone }]}>{motivationLine}</Text>
-                <View style={[styles.identityInline, { borderColor: palette.panelBorder }]}>
-                  <Text style={[styles.identityLabel, { color: palette.gold }]}>{copy.identityVoteLabel}</Text>
-                  <Text style={[styles.identityVote, { color: palette.bone }]}>
-                    {formatFocusIdentityVotePreview(trait.label)}
-                  </Text>
-                  <Text style={[styles.identityHint, { color: palette.fog }]}>{trait.encouragingLine}</Text>
-                </View>
+                {!isFirstRunFocus ? (
+                  <View style={[styles.identityInline, { borderColor: palette.panelBorder }]}>
+                    <Text style={[styles.identityLabel, { color: palette.gold }]}>{copy.identityVoteLabel}</Text>
+                    <Text style={[styles.identityVote, { color: palette.bone }]}>
+                      {formatFocusIdentityVotePreview(trait.label)}
+                    </Text>
+                    <Text style={[styles.identityHint, { color: palette.fog }]}>{trait.encouragingLine}</Text>
+                  </View>
+                ) : null}
               </View>
             </Animated.View>
           )}
 
-          {!isCompleted && !character && (
+          {!isCompleted && !character && !isFirstRunFocus && (
             <Animated.View
               entering={FadeInDown.duration(450).delay(220)}
               style={[styles.identityFallback, { borderColor: palette.panelBorder, backgroundColor: palette.panel }]}>
@@ -488,7 +499,7 @@ export function QuestFocusOverlay() {
             </Animated.Text>
           )}
 
-          {!isCompleted && (
+          {!isCompleted && !isFirstRunFocus && (
             <Animated.View entering={FadeInDown.duration(450).delay(300)}>
               <CollapsibleSection
                 title="Friction Shield"
@@ -546,7 +557,7 @@ export function QuestFocusOverlay() {
           )}
 
           <Animated.View entering={FadeInDown.duration(450).delay(340)} style={styles.actions}>
-            {!isCompleted && ritualActive && (
+            {!isCompleted && !isFirstRunFocus && ritualActive && (
               <Animated.View
                 key={`ritual-step-${ritualStep}`}
                 entering={FadeInDown.duration(280)}
@@ -572,13 +583,13 @@ export function QuestFocusOverlay() {
               </Animated.View>
             )}
 
-            {!isCompleted && ritualComplete && (
+            {!isCompleted && !isFirstRunFocus && ritualComplete && (
               <Animated.Text entering={FadeIn.duration(250)} style={[styles.ritualReady, { color: palette.accent }]}>
                 {ritualCopy.readyHint}
               </Animated.Text>
             )}
 
-            {!isCompleted && ritualStep === 0 && (
+            {!isCompleted && !isFirstRunFocus && ritualStep === 0 && (
               <Pressable
                 onPress={handleStartRitual}
                 style={[styles.ritualStart, { borderColor: palette.gold, backgroundColor: palette.primary }]}>
@@ -593,11 +604,13 @@ export function QuestFocusOverlay() {
                 <GlowButton
                   label={copy.completeLabel}
                   hint={
-                    ritualComplete || preQuestRitualDone
-                      ? 'You are ready to complete'
-                      : hasPreQuestRitual
-                        ? 'Optional — ritual or completion anytime'
-                        : 'Optional — skip the ritual anytime'
+                    isFirstRunFocus
+                      ? 'Tap when you are done'
+                      : ritualComplete || preQuestRitualDone
+                        ? 'You are ready to complete'
+                        : hasPreQuestRitual
+                          ? 'Optional — ritual or completion anytime'
+                          : 'Optional — skip the ritual anytime'
                   }
                   onPress={handleComplete}
                 />

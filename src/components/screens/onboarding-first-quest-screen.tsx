@@ -93,14 +93,11 @@ export function OnboardingFirstQuestScreen() {
           )
         }>
         <Animated.View entering={FadeInDown.duration(500)}>
-          <SectionHeader
-            eyebrow="FIRST QUEST"
-            title="TURN ONE REAL TASK INTO YOUR FIRST QUEST"
-          />
+          <SectionHeader eyebrow="FIRST QUEST" title="NAME ONE REAL TASK" />
         </Animated.View>
 
         <Text style={[styles.subtitle, { color: palette.fog }]}>
-          Keep it small. One visible move is enough.
+          Small is fine. Vague is fine. You can always complete it.
         </Text>
 
         <CoachMascotTip context={{ kind: 'onboarding-first-quest' }} />
@@ -113,6 +110,10 @@ export function OnboardingFirstQuestScreen() {
               placeholder={placeholder}
               placeholderTextColor={`${palette.fog}88`}
               autoFocus
+              returnKeyType="done"
+              onSubmitEditing={() => {
+                if (trimmedTitle && !createdQuest) handleCreate();
+              }}
               style={[
                 styles.input,
                 { color: palette.bone, borderColor: palette.panelBorder, backgroundColor: palette.panel },

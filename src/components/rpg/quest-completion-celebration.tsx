@@ -25,7 +25,7 @@ type Props = {
 
 export function QuestCompletionCelebration({ event, payload, onDismiss }: Props) {
   const ui = useUniverseUiCopy();
-  const { activeUniverse } = useGame();
+  const { activeUniverse, hasOnboarded } = useGame();
   const { palette } = activeUniverse;
   const stampScale = useSharedValue(0.4);
   const stampRotate = useSharedValue(-12);
@@ -88,7 +88,7 @@ export function QuestCompletionCelebration({ event, payload, onDismiss }: Props)
                 />
               </Animated.View>
 
-              {payload.momentumGainLine && (
+              {hasOnboarded && payload.momentumGainLine && (
                 <Animated.Text
                   entering={FadeInUp.duration(450).delay(440)}
                   style={[styles.momentumGain, { color: palette.gold }]}>
@@ -96,7 +96,7 @@ export function QuestCompletionCelebration({ event, payload, onDismiss }: Props)
                 </Animated.Text>
               )}
 
-              {payload.questChainCompleteLine && (
+              {hasOnboarded && payload.questChainCompleteLine && (
                 <Animated.Text
                   entering={FadeInUp.duration(450).delay(480)}
                   style={[styles.chainCompleteLine, { color: palette.gold }]}>
@@ -105,8 +105,8 @@ export function QuestCompletionCelebration({ event, payload, onDismiss }: Props)
               )}
 
               {(payload.identityVoteGainLine ||
-                payload.recoveryCompleteLine ||
-                payload.minimumViableDayCompleteLine) && (
+                (hasOnboarded && payload.recoveryCompleteLine) ||
+                (hasOnboarded && payload.minimumViableDayCompleteLine)) && (
                 <Animated.View
                   entering={FadeInUp.duration(450).delay(460)}
                   style={[styles.outcomesBox, { borderColor: palette.panelBorder }]}>
@@ -129,7 +129,7 @@ export function QuestCompletionCelebration({ event, payload, onDismiss }: Props)
                     </View>
                   )}
 
-                  {payload.recoveryCompleteLine && (
+                  {hasOnboarded && payload.recoveryCompleteLine && (
                     <View style={styles.outcomeBlock}>
                       <Text style={[styles.recoveryComplete, { color: palette.accent }]}>
                         {payload.recoveryCompleteLine}
@@ -137,7 +137,7 @@ export function QuestCompletionCelebration({ event, payload, onDismiss }: Props)
                     </View>
                   )}
 
-                  {payload.minimumViableDayCompleteLine && (
+                  {hasOnboarded && payload.minimumViableDayCompleteLine && (
                     <View style={styles.outcomeBlock}>
                       <Text style={[styles.recoveryComplete, { color: palette.accent }]}>
                         {payload.minimumViableDayCompleteLine}
@@ -186,7 +186,6 @@ const styles = StyleSheet.create({
   backdrop: { flex: 1 },
   scrollContent: {
     flexGrow: 1,
-    justifyContent: 'center',
     paddingHorizontal: GameLayout.modalHorizontalPadding,
     paddingVertical: GameLayout.modalVerticalPadding,
   },

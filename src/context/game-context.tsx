@@ -564,12 +564,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
     }
   }, [isHydrated, onboardingFirstQuestId, progress.hasOnboarded, progress.onboardingStep, progress.onboardingSuiteComplete, progress.userQuests]);
 
-  useEffect(() => {
-    if (!pendingOnboardingInsight || isCelebrationActive || focusQuestId) return;
-    setShowOnboardingFirstQuestInsight(true);
-    setPendingOnboardingInsight(false);
-  }, [focusQuestId, isCelebrationActive, pendingOnboardingInsight]);
-
   const resolvedNarrative = useMemo(() => resolveNarrativeState(progress), [progress]);
   const narrativeStateValid = resolvedNarrative.isValid;
   const activeUniverse = resolvedNarrative.universe ?? getDefaultUniverse();
@@ -1850,6 +1844,16 @@ export function GameProvider({ children }: { children: ReactNode }) {
     markTutorialSeen();
     completeOnboarding();
   }, [completeOnboarding, markChapterIntroSeen, markTutorialSeen]);
+
+  useEffect(() => {
+    if (!pendingOnboardingInsight || isCelebrationActive || focusQuestId) return;
+    dismissOnboardingFirstQuestInsight();
+  }, [
+    dismissOnboardingFirstQuestInsight,
+    focusQuestId,
+    isCelebrationActive,
+    pendingOnboardingInsight,
+  ]);
 
   const startHqTutorialAddQuest = useCallback(() => {
     markTutorialSeen();

@@ -62,11 +62,11 @@ export function OnboardingSuiteScreen() {
           </>
         }>
         <Animated.View entering={FadeInDown.duration(500)}>
-          <SectionHeader eyebrow="YOUR FOCUS" title="WHERE SHOULD YOUR FIRST QUESTS HELP YOU?" />
+          <SectionHeader eyebrow="YOUR FOCUS" title="OPTIONAL: PICK A QUEST SUITE" />
         </Animated.View>
 
         <Text style={[styles.subtitle, { color: palette.fog }]}>
-          You can change this anytime. This only shapes suggestions.
+          Shapes suggestions only. Skip if you are not sure yet.
         </Text>
 
         <View style={styles.list}>

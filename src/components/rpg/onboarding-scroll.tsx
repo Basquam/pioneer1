@@ -1,5 +1,5 @@
 import { type ReactNode } from 'react';
-import { ScrollView, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { GameLayout } from '@/constants/layout';
 import { useOnboardingScrollInset } from '@/hooks/use-scroll-insets';
@@ -14,7 +14,10 @@ export function OnboardingScroll({ children, footer, contentContainerStyle }: On
   const scrollInset = useOnboardingScrollInset(Boolean(footer));
 
   return (
-    <View style={styles.root}>
+    <KeyboardAvoidingView
+      style={styles.root}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 4 : 0}>
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={[
@@ -28,7 +31,7 @@ export function OnboardingScroll({ children, footer, contentContainerStyle }: On
         {children}
       </ScrollView>
       {footer ? <View style={styles.footer}>{footer}</View> : null}
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 

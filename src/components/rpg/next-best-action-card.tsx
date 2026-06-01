@@ -8,6 +8,7 @@ import { CoachMascotTip } from '@/components/rpg/coach-mascot-tip';
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
 import { getMascotPreference } from '@/lib/app-mascot-coach';
+import { isEarlyHqExperience } from '@/lib/hq-experience';
 import {
   getNextBestAction,
   isNextBestActionDismissedToday,
@@ -19,6 +20,7 @@ export function NextBestActionCard() {
     activeUniverse,
     playerProgress,
     quests,
+    hasOnboarded,
     dismissNextBestActionForToday,
     openRecoveryQuestSheet,
     openQuestFocus,
@@ -47,6 +49,8 @@ export function NextBestActionCard() {
   if (isNextBestActionDismissedToday(playerProgress)) {
     return null;
   }
+
+  const earlyHq = isEarlyHqExperience({ ...playerProgress, hasOnboarded });
 
   const handleDismiss = () => {
     void Haptics.selectionAsync();
@@ -81,7 +85,9 @@ export function NextBestActionCard() {
         </Pressable>
       </View>
 
-      <Text style={[styles.flavor, { color: palette.fog }]}>{action.universeFlavor}</Text>
+      {!earlyHq ? (
+        <Text style={[styles.flavor, { color: palette.fog }]}>{action.universeFlavor}</Text>
+      ) : null}
       <CoachMascotTip
         context={{ kind: 'next-best-action', actionType: action.actionType }}
         messageOverride={action.description}

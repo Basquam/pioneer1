@@ -1,5 +1,5 @@
 import { type Href, router } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
@@ -24,6 +24,7 @@ import { StorylinesSection } from '@/components/rpg/storylines-section';
 import { XpPopup } from '@/components/rpg/xp-popup';
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
+import { isEarlyHqExperience } from '@/lib/hq-experience';
 import { useUniverseUiCopy } from '@/lib/universe-ui-copy';
 
 export function HqScreen() {
@@ -40,10 +41,16 @@ export function HqScreen() {
     hqScrollNonce,
     activeInboxItems,
     hasOnboarded,
+    playerProgress,
   } = useGame();
   const [sagaSwitcherVisible, setSagaSwitcherVisible] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
   const awarenessScrollYRef = useRef(0);
+
+  const earlyHq = useMemo(
+    () => isEarlyHqExperience({ ...playerProgress, hasOnboarded }),
+    [hasOnboarded, playerProgress],
+  );
 
   useEffect(() => {
     if (hqScrollNonce === 0) return;
@@ -80,21 +87,21 @@ export function HqScreen() {
 
         {hasOnboarded ? (
           <>
-            <MinimumViableDayBanner />
-            <PreparedForTodayCard />
-            <ActiveSuiteFocusCard />
+            {!earlyHq ? <MinimumViableDayBanner /> : null}
+            {!earlyHq ? <PreparedForTodayCard /> : null}
+            {!earlyHq ? <ActiveSuiteFocusCard /> : null}
             <DailyOperationsBriefing />
           </>
         ) : null}
 
-        {hasOnboarded && activeInboxItems.length > 0 ? (
+        {hasOnboarded && !earlyHq && activeInboxItems.length > 0 ? (
           <>
             <SectionLabel>QUEST INBOX</SectionLabel>
             <QuestInboxPanel />
           </>
         ) : null}
 
-        {hasOnboarded ? (
+        {hasOnboarded && !earlyHq ? (
           <>
             <View
               collapsable={false}
@@ -109,35 +116,35 @@ export function HqScreen() {
           </>
         ) : null}
 
-        {isSagaPreview && hasOnboarded ? <SagaPreviewEmptyState /> : null}
+        {isSagaPreview && hasOnboarded && !earlyHq ? <SagaPreviewEmptyState /> : null}
 
-        {hasOnboarded ? (
+        {hasOnboarded && !earlyHq ? (
           <DialoguePanel line={storyLine} badge="FIELD REPORT" animate={false} />
         ) : null}
 
-        {hasOnboarded ? (
+        {hasOnboarded && !earlyHq ? (
           <View style={styles.quickRow}>
-          <QuickLink
-            label="STORY"
-            sub={
-              currentChapter
-                ? ui.activeSectorProgressSub(currentChapter.order)
-                : ui.sectorUnavailableSub
-            }
-            color={activeUniverse.palette.gold}
-            onPress={() => router.push('/(game)/story' as Href)}
-          />
-          <QuickLink
-            label={ui.worldMapQuickLink}
-            sub={activeUniverse.locationName}
-            color={activeUniverse.palette.accent}
-            onPress={() => router.push('/(game)/map' as Href)}
-          />
-        </View>
+            <QuickLink
+              label="STORY"
+              sub={
+                currentChapter
+                  ? ui.activeSectorProgressSub(currentChapter.order)
+                  : ui.sectorUnavailableSub
+              }
+              color={activeUniverse.palette.gold}
+              onPress={() => router.push('/(game)/story' as Href)}
+            />
+            <QuickLink
+              label={ui.worldMapQuickLink}
+              sub={activeUniverse.locationName}
+              color={activeUniverse.palette.accent}
+              onPress={() => router.push('/(game)/map' as Href)}
+            />
+          </View>
         ) : null}
 
         <SectionLabel>{hasOnboarded ? 'UP NEXT' : 'YOUR FIRST QUEST'}</SectionLabel>
-        {quests.slice(0, 2).map((q, i) => (
+        {quests.slice(0, earlyHq ? 1 : 2).map((q, i) => (
           <QuestCard key={q.id} quest={q} index={i} />
         ))}
         {completedQuestCount < quests.length && (

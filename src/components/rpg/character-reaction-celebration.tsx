@@ -7,6 +7,7 @@ import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
 import { useUniverseUiCopy } from '@/lib/universe-ui-copy';
 import { getCharacter } from '@/lib/narrative-helpers';
+import { ONBOARDING_FIRST_QUEST_INSIGHT } from '@/lib/onboarding-flow';
 import { formatAffinityGain } from '@/lib/relationship-progress';
 import type { CharacterReactionPayload, RewardEvent } from '@/lib/reward-event-queue';
 
@@ -18,11 +19,13 @@ type Props = {
 
 export function CharacterReactionCelebration({ payload, onDismiss }: Props) {
   const ui = useUniverseUiCopy();
-  const { activeUniverse, activeSaga } = useGame();
+  const { activeUniverse, activeSaga, hasOnboarded } = useGame();
   const { palette } = activeUniverse;
   const character = getCharacter(activeSaga, payload.characterId);
-  const affinityGainLabel = character ? formatAffinityGain(character) : null;
+  const affinityGainLabel =
+    hasOnboarded && character ? formatAffinityGain(character) : null;
   const reactionBadge = character?.isVillain ? ui.antagonistReactionBadge : ui.allyReactionBadge;
+  const tapHint = hasOnboarded ? 'TAP TO DISMISS' : 'TAP TO ENTER HQ ›';
 
   return (
     <Modal visible transparent animationType="fade" statusBarTranslucent onRequestClose={onDismiss}>
@@ -53,7 +56,10 @@ export function CharacterReactionCelebration({ payload, onDismiss }: Props) {
                     {payload.narrativeTitle}
                   </Text>
                   <Text style={[styles.reactionLine, { color: palette.bone }]}>{payload.characterLine}</Text>
-                  <Text style={[styles.tapHint, { color: palette.fog }]}>TAP TO DISMISS</Text>
+                  {!hasOnboarded ? (
+                    <Text style={[styles.storyHint, { color: palette.fog }]}>{ONBOARDING_FIRST_QUEST_INSIGHT}</Text>
+                  ) : null}
+                  <Text style={[styles.tapHint, { color: palette.fog }]}>{tapHint}</Text>
                 </View>
               </Pressable>
             </Animated.View>
@@ -68,7 +74,6 @@ const styles = StyleSheet.create({
   backdrop: { flex: 1 },
   scrollContent: {
     flexGrow: 1,
-    justifyContent: 'center',
     paddingHorizontal: GameLayout.modalHorizontalPadding,
     paddingVertical: GameLayout.modalVerticalPadding,
   },
@@ -92,6 +97,14 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     fontStyle: 'italic',
     marginTop: 4,
+  },
+  storyHint: {
+    fontFamily: GameFonts.ui,
+    fontSize: 11,
+    lineHeight: 16,
+    letterSpacing: 0.3,
+    textAlign: 'center',
+    marginTop: 6,
   },
   affinityGain: {
     fontFamily: GameFonts.uiSemi,

@@ -108,13 +108,14 @@ export function SplashScreen() {
   useEffect(() => {
     if (!isHydrated) return;
 
+    const delay = hasOnboarded ? 2800 : 1600;
     const timer = setTimeout(() => {
       if (hasOnboarded) {
         router.replace('/(game)/hq' as Href);
       } else {
         router.replace(getOnboardingResumeHref(playerProgress));
       }
-    }, 2800);
+    }, delay);
     return () => clearTimeout(timer);
   }, [hasOnboarded, isHydrated, playerProgress]);
 

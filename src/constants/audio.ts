@@ -4,8 +4,8 @@ export const AmbientAudioConfig = {
   wildWestUniverseId: 'dust-and-iron',
   neuronetUniverseId: 'neuronet',
   neonAshesUniverseId: 'neon-ashes',
-  /** Temporarily raised for easier verification — tune down before release. */
-  targetVolume: 0.35,
+  /** Primary ambience level (0–1). */
+  targetVolume: 0.28,
   devTestVolume: 0.8,
   fadeInMs: 3500,
   fadeOutMs: 1200,

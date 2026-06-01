@@ -291,7 +291,7 @@ export function buildQuestCompleteCelebrationEvents(
     batchId?: string;
     progressMessage?: string;
     affinityGainLabel?: string | null;
-    /** First-run onboarding: keep only the quest completion beat. */
+    /** First-run onboarding: quest completion + character reaction only. */
     onboardingSimplified?: boolean;
   },
 ): RewardEvent[] {
@@ -407,7 +407,7 @@ export function buildQuestCompleteCelebrationEvents(
   }
 
   if (options?.onboardingSimplified) {
-    return [questCompletion];
+    return [questCompletion, characterReaction];
   }
 
   return coalesceSmallRewardEvents([questCompletion, characterReaction, ...smallEvents]);

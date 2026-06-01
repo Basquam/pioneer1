@@ -22,6 +22,7 @@ import { useUniverseUiCopy } from '@/lib/universe-ui-copy';
 import { canLockTodayFocus, getFocusLockCopy } from '@/lib/focus-lock';
 import { buildPromiseCard } from '@/lib/promise-card';
 import { getDailyCrewCodeLine } from '@/lib/crew-code';
+import { getEarlyHqWelcomeLine, isEarlyHqExperience } from '@/lib/hq-experience';
 import { getStoryDrivenBriefingHint } from '@/lib/quest-style-profile';
 import { NextBestActionCard } from '@/components/rpg/next-best-action-card';
 import { ContextualCoachTipCard } from '@/components/rpg/contextual-coach-tip-card';
@@ -38,11 +39,13 @@ export function DailyOperationsBriefing() {
     currentChapter,
     player,
     playerProgress,
+    hasOnboarded,
     quests,
     villainInfluence,
     isTodayFocusLocked,
     lockTodayFocus,
     openQuestPackSheet,
+    requestQuestBoardTab,
   } = useGame();
   const visualTheme = useUniverseVisualTheme();
   const { palette } = activeUniverse;
@@ -52,6 +55,15 @@ export function DailyOperationsBriefing() {
   const focusLockCopy = getFocusLockCopy(activeUniverse.id);
   const showLockButton = canLockTodayFocus(playerProgress, activeUniverse.id);
   const [promiseCardVisible, setPromiseCardVisible] = useState(false);
+  const [showMoreTools, setShowMoreTools] = useState(false);
+
+  const earlyHq = useMemo(
+    () => isEarlyHqExperience({ ...playerProgress, hasOnboarded }),
+    [hasOnboarded, playerProgress],
+  );
+  const showAdvancedTools = !earlyHq || showMoreTools;
+  const welcomeLine = useMemo(() => getEarlyHqWelcomeLine(playerProgress), [playerProgress]);
+
   const crewCodeLine = useMemo(() => getDailyCrewCodeLine(activeSaga), [activeSaga]);
   const storyStyleHint = useMemo(
     () => getStoryDrivenBriefingHint(playerProgress.questStyleProfile),
@@ -92,6 +104,20 @@ export function DailyOperationsBriefing() {
     };
   }, [quests]);
 
+  const handlePrimaryCta = () => {
+    if (remainingBounties > 0) {
+      requestQuestBoardTab('chapter');
+      router.push('/(game)/quests' as Href);
+      return;
+    }
+
+    router.push('/(game)/quests' as Href);
+  };
+
+  const primaryCtaLabel = remainingBounties > 0 ? 'CONTINUE YOUR STORY' : ui.goToQuestBoardLabel;
+  const primaryCtaHint =
+    remainingBounties > 0 ? 'Clear the next chapter bounty' : ui.goToQuestBoardHint;
+
   return (
     <Animated.View
       entering={FadeInDown.duration(500).delay(120)}
@@ -109,19 +135,27 @@ export function DailyOperationsBriefing() {
       <View style={[styles.accent, { backgroundColor: accentColor, width: visualTheme.accentLineWidth }]} />
 
       <View style={[styles.inner, visualTheme.cardSkew !== 0 && styles.innerUnskew]}>
-        <Text style={[styles.eyebrow, { color: goldAccent }]}>DAILY OPERATIONS</Text>
-        <Text style={[styles.title, { color: palette.bone }]}>MISSION BRIEFING</Text>
+        <Text style={[styles.eyebrow, { color: goldAccent }]}>
+          {earlyHq ? 'WELCOME BACK' : 'DAILY OPERATIONS'}
+        </Text>
+        <Text style={[styles.title, { color: palette.bone }]}>
+          {earlyHq ? 'YOUR HQ' : 'MISSION BRIEFING'}
+        </Text>
         <Text style={[styles.subtitle, { color: palette.fog }]}>
           {activeUniverse.locationName} · {activeSaga.title}
         </Text>
 
-        {crewCodeLine ? (
+        {earlyHq ? (
+          <Text style={[styles.welcomeLine, { color: palette.bone }]}>{welcomeLine}</Text>
+        ) : null}
+
+        {showAdvancedTools && crewCodeLine ? (
           <Text style={[styles.crewCodeLine, { color: palette.gold }]} numberOfLines={3}>
             {crewCodeLine}
           </Text>
         ) : null}
 
-        {storyStyleHint ? (
+        {showAdvancedTools && storyStyleHint ? (
           <Text style={[styles.storyStyleHint, { color: palette.fog }]} numberOfLines={3}>
             {storyStyleHint}
           </Text>
@@ -129,21 +163,25 @@ export function DailyOperationsBriefing() {
 
         <NextBestActionCard />
 
-        <ContextualCoachTipCard />
+        {showAdvancedTools ? (
+          <>
+            <ContextualCoachTipCard />
 
-        <MinimumViableDayBriefingActivate />
+            <MinimumViableDayBriefingActivate />
 
-        <DailyStreakDisplay variant="briefing" />
+            <DailyStreakDisplay variant="briefing" />
 
-        <TodayFocusDisplay variant="briefing" />
+            <TodayFocusDisplay variant="briefing" />
 
-        <QuestLoadMeter />
+            <QuestLoadMeter />
 
-        <QuickCaptureInput />
+            <QuickCaptureInput />
 
-        <TraitAlignedSuggestionsPanel />
+            <TraitAlignedSuggestionsPanel />
+          </>
+        ) : null}
 
-        {isTodayFocusLocked ? (
+        {showAdvancedTools && isTodayFocusLocked ? (
           <View style={[styles.lockedBlock, { borderColor: goldAccent, backgroundColor: `${palette.primary}33` }]}>
             <Text style={[styles.lockedTitle, { color: palette.bone }]}>{focusLockCopy.lockedMessage}</Text>
             <Text style={[styles.lockedFlavor, { color: palette.gold }]}>{focusLockCopy.lockedFlavor}</Text>
@@ -155,7 +193,7 @@ export function DailyOperationsBriefing() {
               </Pressable>
             ) : null}
           </View>
-        ) : showLockButton ? (
+        ) : showAdvancedTools && showLockButton ? (
           <Pressable
             onPress={handleLockFocus}
             style={[styles.lockButton, { borderColor: palette.gold, backgroundColor: palette.primary }]}>
@@ -170,38 +208,62 @@ export function DailyOperationsBriefing() {
               ? ui.todaySectorLine(currentChapter.order, currentChapter.title)
               : ui.noActiveChapterBriefing}
           </Text>
+          {earlyHq && remainingBounties > 0 ? (
+            <Text style={[styles.chapterHint, { color: palette.fog }]}>
+              {remainingBounties} chapter {remainingBounties === 1 ? 'bounty' : 'bounties'} left
+            </Text>
+          ) : null}
         </View>
 
-        <View style={styles.statsGrid}>
-          <StatCell
-            label={ui.operationsLeftLabel}
-            value={String(remainingBounties)}
-            palette={palette}
-            goldAccent={goldAccent}
+        {showAdvancedTools ? (
+          <View style={styles.statsGrid}>
+            <StatCell
+              label={ui.operationsLeftLabel}
+              value={String(remainingBounties)}
+              palette={palette}
+              goldAccent={goldAccent}
+            />
+            <StatCell label={ui.personalOpsLeftLabel} value={String(userQuestCount)} palette={palette} goldAccent={goldAccent} />
+            <StatCell label="LEVEL" value={String(player.level)} palette={palette} goldAccent={goldAccent} />
+            <StatCell label="XP" value={String(player.totalXp)} palette={palette} goldAccent={goldAccent} />
+            <StatCell label={ui.reputationLabel} value={String(player.reputation)} palette={palette} goldAccent={goldAccent} />
+            <StatCell label={ui.villainStatLabel} value={`${villainInfluence}%`} palette={palette} goldAccent={goldAccent} danger />
+          </View>
+        ) : null}
+
+        {earlyHq ? (
+          <GlowButton label={primaryCtaLabel} hint={primaryCtaHint} onPress={handlePrimaryCta} />
+        ) : (
+          <GlowButton
+            label={ui.goToQuestBoardLabel}
+            hint={ui.goToQuestBoardHint}
+            onPress={() => router.push('/(game)/quests' as Href)}
           />
-          <StatCell label={ui.personalOpsLeftLabel} value={String(userQuestCount)} palette={palette} goldAccent={goldAccent} />
-          <StatCell label="LEVEL" value={String(player.level)} palette={palette} goldAccent={goldAccent} />
-          <StatCell label="XP" value={String(player.totalXp)} palette={palette} goldAccent={goldAccent} />
-          <StatCell label={ui.reputationLabel} value={String(player.reputation)} palette={palette} goldAccent={goldAccent} />
-          <StatCell label={ui.villainStatLabel} value={`${villainInfluence}%`} palette={palette} goldAccent={goldAccent} danger />
-        </View>
+        )}
 
-        <GlowButton
-          label={ui.goToQuestBoardLabel}
-          hint={ui.goToQuestBoardHint}
-          onPress={() => router.push('/(game)/quests' as Href)}
-        />
+        {earlyHq && !showMoreTools ? (
+          <Pressable onPress={() => setShowMoreTools(true)} style={styles.moreToolsButton}>
+            <Text style={[styles.moreToolsLabel, { color: palette.accent }]}>Show more tools ›</Text>
+            <Text style={[styles.moreToolsHint, { color: palette.fog }]}>
+              Quest load, quick capture, streaks, and more
+            </Text>
+          </Pressable>
+        ) : null}
 
-        <AddQuestTrigger variant="banner" />
+        {showAdvancedTools ? (
+          <>
+            <AddQuestTrigger variant="banner" />
 
-        <Pressable
-          onPress={openQuestPackSheet}
-          style={[styles.packEntry, { borderColor: panelBorder, backgroundColor: `${palette.primary}55` }]}>
-          <Text style={[styles.packEntryLabel, { color: goldAccent }]}>SUGGESTED QUEST PACKS</Text>
-          <Text style={[styles.packEntryHint, { color: palette.fog }]}>
-            Quick bundles — Morning Reset, Deep Work Sprint, Study Session, and more.
-          </Text>
-        </Pressable>
+            <Pressable
+              onPress={openQuestPackSheet}
+              style={[styles.packEntry, { borderColor: panelBorder, backgroundColor: `${palette.primary}55` }]}>
+              <Text style={[styles.packEntryLabel, { color: goldAccent }]}>SUGGESTED QUEST PACKS</Text>
+              <Text style={[styles.packEntryHint, { color: palette.fog }]}>
+                Quick bundles — Morning Reset, Deep Work Sprint, Study Session, and more.
+              </Text>
+            </Pressable>
+          </>
+        ) : null}
       </View>
 
       <PromiseCardSheet visible={promiseCardVisible} onClose={() => setPromiseCardVisible(false)} />
@@ -243,6 +305,12 @@ const styles = StyleSheet.create({
   eyebrow: { fontFamily: GameFonts.ui, fontSize: 10, letterSpacing: 3 },
   title: { fontFamily: GameFonts.display, fontSize: 28, letterSpacing: 2, lineHeight: 34 },
   subtitle: { fontFamily: GameFonts.uiSemi, fontSize: 11, letterSpacing: 1 },
+  welcomeLine: {
+    fontFamily: GameFonts.displayRegular,
+    fontSize: 15,
+    lineHeight: 22,
+    fontStyle: 'italic',
+  },
   crewCodeLine: {
     fontFamily: GameFonts.displayRegular,
     fontSize: 12,
@@ -264,6 +332,28 @@ const styles = StyleSheet.create({
   },
   chapterLabel: { fontFamily: GameFonts.uiSemi, fontSize: 9, letterSpacing: 2 },
   chapterTitle: { fontFamily: GameFonts.ui, fontSize: 16, letterSpacing: 1 },
+  chapterHint: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 10,
+    letterSpacing: 0.5,
+    marginTop: 2,
+  },
+  moreToolsButton: {
+    alignItems: 'center',
+    gap: 2,
+    paddingVertical: 4,
+  },
+  moreToolsLabel: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 11,
+    letterSpacing: 1.2,
+  },
+  moreToolsHint: {
+    fontFamily: GameFonts.ui,
+    fontSize: 10,
+    lineHeight: 14,
+    textAlign: 'center',
+  },
   lockedBlock: {
     borderWidth: 1,
     padding: 12,
