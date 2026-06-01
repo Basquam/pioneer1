@@ -17,6 +17,7 @@ import {
   sanitizeActiveSuiteId,
   sanitizeSuiteStatsById,
 } from '@/lib/quest-suite-stats';
+import { sanitizeOnboardingStep } from '@/lib/onboarding-flow';
 import { sanitizeMascotPreference } from '@/lib/app-mascot-coach';
 import {
   sanitizeEquippedItemsByUniverseId,
@@ -330,6 +331,11 @@ function normalizeProgress(raw: Partial<PlayerProgress> & Record<string, unknown
     reminderPreferences: sanitizeReminderPreferences(raw.reminderPreferences ?? base.reminderPreferences),
     activeSuiteId: sanitizeActiveSuiteId(raw.activeSuiteId),
     suiteStatsById: sanitizeSuiteStatsById(raw.suiteStatsById ?? base.suiteStatsById),
+    onboardingSuiteComplete:
+      raw.onboardingSuiteComplete === true ? true : base.onboardingSuiteComplete,
+    onboardingStep:
+      sanitizeOnboardingStep(raw.onboardingStep) ??
+      (raw.onboardingSuiteComplete === true ? 'first-quest' : base.onboardingStep),
     mascotPreference: sanitizeMascotPreference(raw.mascotPreference ?? base.mascotPreference),
     sagaEndingsBySagaId: sanitizeSagaEndingsBySagaId(raw.sagaEndingsBySagaId ?? base.sagaEndingsBySagaId),
     inventoryItems: sanitizeInventoryItems(raw.inventoryItems ?? base.inventoryItems),

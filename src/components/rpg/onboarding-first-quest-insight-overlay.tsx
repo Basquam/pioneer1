@@ -1,4 +1,4 @@
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Modal, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 
 import { GlowButton } from '@/components/rpg/glow-button';
@@ -26,9 +26,6 @@ export function OnboardingFirstQuestInsightOverlay() {
             {ONBOARDING_FIRST_QUEST_INSIGHT}
           </Animated.Text>
           <GlowButton label="ENTER HQ" hint="YOUR SAGA CONTINUES" onPress={dismissOnboardingFirstQuestInsight} />
-          <Pressable onPress={dismissOnboardingFirstQuestInsight} style={styles.laterButton}>
-            <Text style={[styles.laterLabel, { color: palette.fog }]}>Continue</Text>
-          </Pressable>
         </Animated.View>
       </View>
     </Modal>
@@ -58,14 +55,5 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 24,
     fontStyle: 'italic',
-  },
-  laterButton: {
-    alignItems: 'center',
-    paddingVertical: 6,
-  },
-  laterLabel: {
-    fontFamily: GameFonts.ui,
-    fontSize: 11,
-    letterSpacing: 2,
   },
 });

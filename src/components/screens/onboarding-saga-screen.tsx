@@ -15,7 +15,7 @@ import {
 import { getSagaUnlockHint, isSagaUnlocked } from '@/lib/reward-unlocks';
 
 export function OnboardingSagaScreen() {
-  const { activeUniverse, activeSaga, playerProgress, selectSaga } = useGame();
+  const { activeUniverse, activeSaga, playerProgress, selectSaga, recordOnboardingStep } = useGame();
   const universeLibrary = getUniverseLibraryProgress(activeUniverse, playerProgress);
 
   return (
@@ -25,7 +25,10 @@ export function OnboardingSagaScreen() {
           <GlowButton
             label="CONTINUE"
             hint={`NEXT: CHOOSE YOUR FOCUS`}
-            onPress={() => router.push('/onboarding/suite' as Href)}
+            onPress={() => {
+              recordOnboardingStep('suite');
+              router.push('/onboarding/suite' as Href);
+            }}
           />
         }>
         <Animated.View entering={FadeInDown.duration(500)}>

@@ -14,7 +14,7 @@ import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
 
 export function OnboardingPremiseScreen() {
-  const { activeUniverse } = useGame();
+  const { activeUniverse, recordOnboardingStep } = useGame();
   const { palette } = activeUniverse;
   const [beatIndex, setBeatIndex] = useState(0);
 
@@ -36,7 +36,10 @@ export function OnboardingPremiseScreen() {
             <GlowButton
               label="CHOOSE YOUR UNIVERSE"
               hint="BEGIN YOUR SAGA"
-              onPress={() => router.push('/onboarding/theme' as Href)}
+              onPress={() => {
+                recordOnboardingStep('theme');
+                router.push('/onboarding/theme' as Href);
+              }}
             />
           ) : (
             <Pressable onPress={advance} style={styles.tapZone}>

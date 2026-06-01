@@ -1,5 +1,5 @@
-import { OnboardingQuestStyleScreen } from '@/components/screens/onboarding-quest-style-screen';
+import { LegacyOnboardingRedirect } from '@/components/rpg/legacy-onboarding-redirect';
 
 export default function OnboardingStyleRoute() {
-  return <OnboardingQuestStyleScreen />;
+  return <LegacyOnboardingRedirect />;
 }

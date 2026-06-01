@@ -10,7 +10,7 @@ import { useGame } from '@/hooks/use-game';
 import { getUniverseLibraryProgress } from '@/lib/content-library-progress';
 
 export function OnboardingThemeScreen() {
-  const { universes, activeUniverse, playerProgress, selectUniverse } = useGame();
+  const { universes, activeUniverse, playerProgress, selectUniverse, recordOnboardingStep } = useGame();
   const activeLibrary = getUniverseLibraryProgress(activeUniverse, playerProgress);
   const canContinue = activeLibrary.unlocked;
 
@@ -21,7 +21,10 @@ export function OnboardingThemeScreen() {
           <GlowButton
             label="CONTINUE"
             hint={canContinue ? `NEXT: CHOOSE YOUR SAGA` : 'Choose an unlocked universe'}
-            onPress={() => router.push('/onboarding/saga' as Href)}
+            onPress={() => {
+              recordOnboardingStep('saga');
+              router.push('/onboarding/saga' as Href);
+            }}
           />
         }>
         <Animated.View entering={FadeInDown.duration(500)}>

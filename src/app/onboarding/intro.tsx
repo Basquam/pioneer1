@@ -1,5 +1,5 @@
-import { OnboardingIntroScreen } from '@/components/screens/onboarding-intro-screen';
+import { LegacyOnboardingRedirect } from '@/components/rpg/legacy-onboarding-redirect';
 
 export default function OnboardingIntroRoute() {
-  return <OnboardingIntroScreen />;
+  return <LegacyOnboardingRedirect />;
 }

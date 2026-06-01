@@ -1,5 +1,5 @@
-import { OnboardingIdentityCompassScreen } from '@/components/screens/onboarding-identity-compass-screen';
+import { LegacyOnboardingRedirect } from '@/components/rpg/legacy-onboarding-redirect';
 
 export default function OnboardingCompassRoute() {
-  return <OnboardingIdentityCompassScreen />;
+  return <LegacyOnboardingRedirect />;
 }

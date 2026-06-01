@@ -55,6 +55,12 @@ export function OnboardingFirstQuestScreen() {
     }
   }, [onboardingFirstQuest]);
 
+  useEffect(() => {
+    if (onboardingFirstQuest?.isCompleted) {
+      router.replace('/(game)/hq' as Href);
+    }
+  }, [onboardingFirstQuest?.isCompleted]);
+
   const handleCreate = () => {
     if (!trimmedTitle || createdQuest) return;
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);

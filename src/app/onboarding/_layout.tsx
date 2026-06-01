@@ -9,9 +9,18 @@ export default function OnboardingLayout() {
       <Stack.Screen name="saga" />
       <Stack.Screen name="suite" />
       <Stack.Screen name="first-quest" />
-      <Stack.Screen name="compass" />
-      <Stack.Screen name="style" />
-      <Stack.Screen name="intro" />
+      <Stack.Screen
+        name="compass"
+        options={{ animation: 'fade' }}
+      />
+      <Stack.Screen
+        name="style"
+        options={{ animation: 'fade' }}
+      />
+      <Stack.Screen
+        name="intro"
+        options={{ animation: 'fade' }}
+      />
     </Stack>
   );
 }

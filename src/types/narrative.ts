@@ -785,6 +785,14 @@ export type ProcessAchievementEntry = {
   relatedQuestId?: string;
 };
 
+export type OnboardingStepId =
+  | 'welcome'
+  | 'premise'
+  | 'theme'
+  | 'saga'
+  | 'suite'
+  | 'first-quest';
+
 export type PlayerProgress = {
   /** Local save schema version — used for ordered migrations on load/import. */
   schemaVersion: number;
@@ -889,6 +897,8 @@ export type PlayerProgress = {
   suiteStatsById: Partial<Record<QuestSuiteId, QuestSuiteStats>>;
   /** True after the user finishes or skips the onboarding suite step. */
   onboardingSuiteComplete?: boolean;
+  /** Farthest canonical onboarding screen reached — used for resume routing. */
+  onboardingStep?: OnboardingStepId;
   /** App-level coach mascot visibility preference — not story characters. */
   mascotPreference: MascotPreference;
   /** Earned soft-branch saga finale variants keyed by saga id. */

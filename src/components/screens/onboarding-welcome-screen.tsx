@@ -11,7 +11,7 @@ import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
 
 export function OnboardingWelcomeScreen() {
-  const { activeUniverse } = useGame();
+  const { activeUniverse, recordOnboardingStep } = useGame();
 
   return (
     <ScreenShell edges={['top', 'bottom']}>
@@ -20,7 +20,10 @@ export function OnboardingWelcomeScreen() {
           <GlowButton
             label="BEGIN"
             hint="SEE HOW IT WORKS"
-            onPress={() => router.push('/onboarding/premise' as Href)}
+            onPress={() => {
+              recordOnboardingStep('premise');
+              router.push('/onboarding/premise' as Href);
+            }}
           />
         }>
         <Animated.View entering={FadeInDown.duration(600)} style={styles.content}>

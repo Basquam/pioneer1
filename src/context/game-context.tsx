@@ -13,6 +13,7 @@ import {
 } from '@/lib/narrative-state';
 import { narrativeWarn } from '@/lib/narrative-state-debug';
 import { getLocalDateKey, getTomorrowDateKey } from '@/lib/daily-streak';
+import { shouldAdvanceOnboardingStep } from '@/lib/onboarding-flow';
 import {
   canLockTodayFocus,
   isTodayFocusLocked,
@@ -265,6 +266,7 @@ import type {
   MascotPreference,
   InventoryItemId,
   ItemSlot,
+  OnboardingStepId,
 } from '@/types/narrative';
 
 export type XpBurst = { id: string; amount: number };
@@ -341,6 +343,7 @@ type GameContextValue = {
   createOnboardingFirstQuest: (originalTitle: string) => UserQuest | null;
   beginOnboardingFirstQuestFocus: (questId: string) => void;
   markOnboardingSuiteComplete: () => void;
+  recordOnboardingStep: (step: OnboardingStepId) => void;
   dismissOnboardingFirstQuestInsight: () => void;
   onboardingFirstQuest: UserQuest | null;
   showOnboardingFirstQuestInsight: boolean;
@@ -554,11 +557,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!isHydrated || progress.hasOnboarded || onboardingFirstQuestId) return;
+    if (!progress.onboardingSuiteComplete && progress.onboardingStep !== 'first-quest') return;
     const incomplete = progress.userQuests.find((quest) => !quest.isCompleted);
     if (incomplete) {
       setOnboardingFirstQuestId(incomplete.id);
     }
-  }, [isHydrated, onboardingFirstQuestId, progress.hasOnboarded, progress.userQuests]);
+  }, [isHydrated, onboardingFirstQuestId, progress.hasOnboarded, progress.onboardingStep, progress.onboardingSuiteComplete, progress.userQuests]);
 
   useEffect(() => {
     if (!pendingOnboardingInsight || isCelebrationActive || focusQuestId) return;
@@ -806,13 +810,36 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setProgress((prev) => ({
       ...prev,
       onboardingSuiteComplete: true,
+      onboardingStep: shouldAdvanceOnboardingStep(prev.onboardingStep, 'first-quest')
+        ? 'first-quest'
+        : prev.onboardingStep,
     }));
+  }, []);
+
+  const recordOnboardingStep = useCallback((step: OnboardingStepId) => {
+    setProgress((prev) => {
+      if (!shouldAdvanceOnboardingStep(prev.onboardingStep, step)) return prev;
+      return { ...prev, onboardingStep: step };
+    });
   }, []);
 
   const createOnboardingFirstQuest = useCallback(
     (originalTitle: string): UserQuest | null => {
       const trimmed = originalTitle.trim();
       if (!trimmed || !currentChapter) return null;
+
+      if (onboardingFirstQuestId) {
+        const existingById = progress.userQuests.find((quest) => quest.id === onboardingFirstQuestId);
+        if (existingById) return existingById;
+      }
+
+      if (!progress.hasOnboarded) {
+        const existingIncomplete = progress.userQuests.find((quest) => !quest.isCompleted);
+        if (existingIncomplete) {
+          setOnboardingFirstQuestId(existingIncomplete.id);
+          return existingIncomplete;
+        }
+      }
 
       let created: UserQuest | null = null;
 
@@ -857,6 +884,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
                 ...prev,
                 userQuests: pruneUserQuests([...prev.userQuests, quest]),
                 onboardingSuiteComplete: true,
+                onboardingStep: shouldAdvanceOnboardingStep(prev.onboardingStep, 'first-quest')
+                  ? 'first-quest'
+                  : prev.onboardingStep,
               },
               quest,
             ),
@@ -867,7 +897,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
       return created;
     },
-    [activeSaga, activeUniverse, currentChapter],
+    [activeSaga, activeUniverse, currentChapter, onboardingFirstQuestId, progress.hasOnboarded, progress.userQuests],
   );
 
   const beginOnboardingFirstQuestFocus = useCallback((questId: string) => {
@@ -2453,6 +2483,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setNarrativeMoment(null);
     setCelebrationQueue([]);
     setQuestCreated(null);
+    setOnboardingFirstQuestId(null);
+    setPendingOnboardingInsight(false);
+    setShowOnboardingFirstQuestInsight(false);
     setAddQuestSheetOpen(false);
     setAddQuestRecoveryMode(false);
     pendingChapterCompleteRef.current = null;
@@ -2509,6 +2542,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       createOnboardingFirstQuest,
       beginOnboardingFirstQuestFocus,
       markOnboardingSuiteComplete,
+      recordOnboardingStep,
       dismissOnboardingFirstQuestInsight,
       onboardingFirstQuest,
       showOnboardingFirstQuestInsight,
