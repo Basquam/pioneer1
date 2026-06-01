@@ -29,7 +29,11 @@ import {
 import { recordChapterCompleted, recordQuestCompleted } from '@/lib/weekly-recap';
 import { isHighRiskQuest } from '@/lib/quest-risk';
 import { createUserQuestFromTask, type CreateUserQuestOptions, isUserQuestId } from '@/lib/convert-task-to-quest';
-import { suggestSuiteForCategory } from '@/constants/quest-suites';
+import {
+  getQuestSuiteById,
+  resolveAddQuestSuitePrefill,
+  suggestSuiteForCategory,
+} from '@/constants/quest-suites';
 import {
   recordSuiteQuestCompleted,
   recordSuiteQuestCreated,
@@ -143,6 +147,7 @@ import {
   shouldAutoActivateMvdFromAwareness,
   shouldMarkMinimumViableDaySecuredOnQuestComplete,
 } from '@/lib/minimum-viable-day';
+import { sanitizeMascotPreference } from '@/lib/app-mascot-coach';
 import type { QuestBoardTab } from '@/lib/quest-board-organization';
 import type {
   DailyAwarenessBlocker,
@@ -159,6 +164,8 @@ import {
   getCharacter,
   pickCharacterLine,
 } from '@/lib/narrative-helpers';
+import { suggestTaskCategory } from '@/lib/suggest-task-category';
+import { generateStarterTaskTitle } from '@/lib/two-minute-starter';
 import { computeLevel, rankForLevel } from '@/lib/level';
 import { pruneUserQuests } from '@/lib/player-progress-sanitize';
 import {
@@ -244,6 +251,7 @@ import type {
   QuestStyleProfile,
   ReminderPreferences,
   QuestSuiteId,
+  MascotPreference,
 } from '@/types/narrative';
 
 export type XpBurst = { id: string; amount: number };
@@ -317,6 +325,12 @@ type GameContextValue = {
   selectSaga: (sagaId: string) => void;
   switchSaga: (sagaId: string, options?: { forceFirstChapter?: boolean }) => void;
   completeOnboarding: () => void;
+  createOnboardingFirstQuest: (originalTitle: string) => UserQuest | null;
+  beginOnboardingFirstQuestFocus: (questId: string) => void;
+  markOnboardingSuiteComplete: () => void;
+  dismissOnboardingFirstQuestInsight: () => void;
+  onboardingFirstQuest: UserQuest | null;
+  showOnboardingFirstQuestInsight: boolean;
   addUserQuest: (originalTitle: string, category: TaskCategory, options?: AddUserQuestOptions) => void;
   addUserQuestPack: (
     items: Array<{ originalTitle: string; category: TaskCategory; options?: CreateUserQuestOptions }>,
@@ -378,6 +392,7 @@ type GameContextValue = {
   clearActiveSuiteId: () => void;
   setQuestStyleProfile: (profile: QuestStyleProfile) => void;
   setReminderPreferences: (preferences: ReminderPreferences) => void;
+  setMascotPreference: (preference: MascotPreference) => void;
   applyQuestReminderSyncUpdates: (
     updates: Array<{ questId: string; reminderId: string | null }>,
   ) => void;
@@ -458,6 +473,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const activeCelebration = getActiveRewardEvent(celebrationQueue);
   const isCelebrationActive = celebrationQueue.length > 0;
   const [questCreated, setQuestCreated] = useState<UserQuest | null>(null);
+  const [onboardingFirstQuestId, setOnboardingFirstQuestId] = useState<string | null>(null);
+  const [pendingOnboardingInsight, setPendingOnboardingInsight] = useState(false);
+  const [showOnboardingFirstQuestInsight, setShowOnboardingFirstQuestInsight] = useState(false);
   const [addQuestSheetOpen, setAddQuestSheetOpen] = useState(false);
   const [dailyShutdownOpen, setDailyShutdownOpen] = useState(false);
   const [questPackSheetOpen, setQuestPackSheetOpen] = useState(false);
@@ -517,6 +535,20 @@ export function GameProvider({ children }: { children: ReactNode }) {
     if (!isHydrated) return;
     void savePlayerProgress(progress);
   }, [isHydrated, progress]);
+
+  useEffect(() => {
+    if (!isHydrated || progress.hasOnboarded || onboardingFirstQuestId) return;
+    const incomplete = progress.userQuests.find((quest) => !quest.isCompleted);
+    if (incomplete) {
+      setOnboardingFirstQuestId(incomplete.id);
+    }
+  }, [isHydrated, onboardingFirstQuestId, progress.hasOnboarded, progress.userQuests]);
+
+  useEffect(() => {
+    if (!pendingOnboardingInsight || isCelebrationActive || focusQuestId) return;
+    setShowOnboardingFirstQuestInsight(true);
+    setPendingOnboardingInsight(false);
+  }, [focusQuestId, isCelebrationActive, pendingOnboardingInsight]);
 
   const resolvedNarrative = useMemo(() => resolveNarrativeState(progress), [progress]);
   const narrativeStateValid = resolvedNarrative.isValid;
@@ -629,10 +661,16 @@ export function GameProvider({ children }: { children: ReactNode }) {
       : currentChapter.introDialogue
     : '';
   const showChapterIntro =
+    progress.hasOnboarded &&
     currentChapter !== null &&
     (currentChapter.introScene?.length ?? 0) > 0 &&
     !progress.seenChapterIntros.includes(currentChapter.id) &&
     !isCelebrationActive;
+
+  const onboardingFirstQuest = useMemo(() => {
+    if (!onboardingFirstQuestId) return null;
+    return progress.userQuests.find((quest) => quest.id === onboardingFirstQuestId) ?? null;
+  }, [onboardingFirstQuestId, progress.userQuests]);
 
   const showRecoveryPrompt = useMemo(
     () => isHydrated && shouldShowRecoveryPrompt(progress),
@@ -655,6 +693,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     !progress.tutorialSeen &&
     !showChapterIntro &&
     !isCelebrationActive &&
+    !showOnboardingFirstQuestInsight &&
     questCreated === null &&
     narrativeMoment === null;
 
@@ -747,6 +786,92 @@ export function GameProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const markOnboardingSuiteComplete = useCallback(() => {
+    setProgress((prev) => ({
+      ...prev,
+      onboardingSuiteComplete: true,
+    }));
+  }, []);
+
+  const createOnboardingFirstQuest = useCallback(
+    (originalTitle: string): UserQuest | null => {
+      const trimmed = originalTitle.trim();
+      if (!trimmed || !currentChapter) return null;
+
+      let created: UserQuest | null = null;
+
+      setProgress((prev) => {
+        const category =
+          suggestTaskCategory(trimmed) ??
+          (prev.activeSuiteId
+            ? getQuestSuiteById(prev.activeSuiteId)?.primaryCategories[0]
+            : null) ??
+          'work';
+        const suiteId =
+          resolveAddQuestSuitePrefill({
+            category,
+            activeSuiteId: prev.activeSuiteId,
+            title: trimmed,
+          }) ?? suggestSuiteForCategory(category);
+        const starter = generateStarterTaskTitle(trimmed, category);
+
+        const quest = createUserQuestFromTask(
+          trimmed,
+          category,
+          activeUniverse,
+          activeSaga,
+          currentChapter,
+          prev.userQuests,
+          {
+            suiteId,
+            starterTaskTitle: starter,
+            skipCreatedOverlay: true,
+          },
+          getLocalDateKey(),
+          prev,
+        );
+
+        created = quest;
+        setOnboardingFirstQuestId(quest.id);
+
+        return refreshFeatureDiscoveryState(
+          recordSuiteQuestCreated(
+            recordRoutineQuestSpawned(
+              {
+                ...prev,
+                userQuests: pruneUserQuests([...prev.userQuests, quest]),
+                onboardingSuiteComplete: true,
+              },
+              quest,
+            ),
+            quest.suiteId,
+          ),
+        );
+      });
+
+      return created;
+    },
+    [activeSaga, activeUniverse, currentChapter],
+  );
+
+  const beginOnboardingFirstQuestFocus = useCallback((questId: string) => {
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setProgress((prev) => {
+      let next = markQuestStarted(prev, questId);
+      if (isUserQuestId(questId)) {
+        next = {
+          ...next,
+          userQuests: next.userQuests.map((quest) =>
+            quest.id === questId ? recordFocusStartedActivity(quest) : quest,
+          ),
+        };
+      }
+      return next;
+    });
+    setFocusDecisiveMoment(true);
+    setFocusQuestId(questId);
+  }, []);
+
   const addUserQuest = useCallback(
     (originalTitle: string, category: TaskCategory, options?: AddUserQuestOptions) => {
       const trimmed = originalTitle.trim();
@@ -789,7 +914,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
         setAddQuestSheetOpen(false);
         setAddQuestInboxPrefill(null);
         setAddQuestTraitSuggestionPrefill(null);
-        setQuestCreated(quest);
+        if (!questOptions.skipCreatedOverlay) {
+          setQuestCreated(quest);
+        }
 
         const questInbox = convertFromInboxItemId
           ? markInboxItemConverted(prev.questInbox, convertFromInboxItemId)
@@ -948,6 +1075,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setProgress((prev) => ({
       ...prev,
       reminderPreferences: sanitized,
+    }));
+  }, []);
+
+  const setMascotPreference = useCallback((preference: MascotPreference) => {
+    setProgress((prev) => ({
+      ...prev,
+      mascotPreference: sanitizeMascotPreference(preference),
     }));
   }, []);
 
@@ -1647,6 +1781,15 @@ export function GameProvider({ children }: { children: ReactNode }) {
     markTutorialSeen();
   }, [markTutorialSeen]);
 
+  const dismissOnboardingFirstQuestInsight = useCallback(() => {
+    setShowOnboardingFirstQuestInsight(false);
+    setOnboardingFirstQuestId(null);
+    setPendingOnboardingInsight(false);
+    markChapterIntroSeen();
+    markTutorialSeen();
+    completeOnboarding();
+  }, [completeOnboarding, markChapterIntroSeen, markTutorialSeen]);
+
   const startHqTutorialAddQuest = useCallback(() => {
     markTutorialSeen();
     setAddQuestSheetOpen(true);
@@ -1960,6 +2103,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
       }
 
       enqueueCelebrations(celebrationEvents);
+
+      if (!progress.hasOnboarded && questId === onboardingFirstQuestId) {
+        setPendingOnboardingInsight(true);
+      }
     },
     [
       activeSaga,
@@ -1967,6 +2114,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       currentChapter,
       enqueueCelebrations,
       isCelebrationActive,
+      onboardingFirstQuestId,
       progress,
       quests,
       sagaCompletedQuestIds,
@@ -2207,6 +2355,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setNarrativeMoment(null);
     setCelebrationQueue([]);
     setQuestCreated(null);
+    setOnboardingFirstQuestId(null);
+    setPendingOnboardingInsight(false);
+    setShowOnboardingFirstQuestInsight(false);
     setAddQuestSheetOpen(false);
     pendingChapterCompleteRef.current = null;
     await savePlayerProgress(fresh);
@@ -2272,6 +2423,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
       selectSaga,
       switchSaga,
       completeOnboarding,
+      createOnboardingFirstQuest,
+      beginOnboardingFirstQuestFocus,
+      markOnboardingSuiteComplete,
+      dismissOnboardingFirstQuestInsight,
+      onboardingFirstQuest,
+      showOnboardingFirstQuestInsight,
       addUserQuest,
       addUserQuestPack,
       questPackSheetOpen,
@@ -2319,6 +2476,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       clearActiveSuiteId,
       setQuestStyleProfile,
       setReminderPreferences,
+      setMascotPreference,
       applyQuestReminderSyncUpdates,
       recordFocusDistraction,
       markFrictionShieldApplied,
@@ -2400,6 +2558,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       clearActiveSuiteId,
       setQuestStyleProfile,
       setReminderPreferences,
+      setMascotPreference,
       applyQuestReminderSyncUpdates,
       chapters,
       characters,

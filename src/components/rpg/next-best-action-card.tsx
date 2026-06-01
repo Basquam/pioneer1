@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { GlowButton } from '@/components/rpg/glow-button';
+import { CoachMascotTip } from '@/components/rpg/coach-mascot-tip';
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
 import {
@@ -80,8 +81,12 @@ export function NextBestActionCard() {
       </View>
 
       <Text style={[styles.flavor, { color: palette.fog }]}>{action.universeFlavor}</Text>
+      <CoachMascotTip
+        context={{ kind: 'next-best-action', actionType: action.actionType }}
+        messageOverride={action.description}
+        variant="inline"
+      />
       <Text style={[styles.title, { color: palette.bone }]}>{action.title}</Text>
-      <Text style={[styles.description, { color: palette.fog }]}>{action.description}</Text>
 
       <GlowButton label={action.ctaLabel} hint="One clear move" onPress={handlePress} />
     </View>

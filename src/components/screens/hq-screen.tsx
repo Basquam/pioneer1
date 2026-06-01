@@ -39,6 +39,7 @@ export function HqScreen() {
     maybeShowVillainTaunt,
     hqScrollNonce,
     activeInboxItems,
+    hasOnboarded,
   } = useGame();
   const [sagaSwitcherVisible, setSagaSwitcherVisible] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
@@ -77,40 +78,45 @@ export function HqScreen() {
           />
         </Animated.View>
 
-        <MinimumViableDayBanner />
+        {hasOnboarded ? (
+          <>
+            <MinimumViableDayBanner />
+            <PreparedForTodayCard />
+            <ActiveSuiteFocusCard />
+            <DailyOperationsBriefing />
+          </>
+        ) : null}
 
-        <PreparedForTodayCard />
-
-        <ActiveSuiteFocusCard />
-
-        <DailyOperationsBriefing />
-
-        {activeInboxItems.length > 0 ? (
+        {hasOnboarded && activeInboxItems.length > 0 ? (
           <>
             <SectionLabel>QUEST INBOX</SectionLabel>
             <QuestInboxPanel />
           </>
         ) : null}
 
-        <View
-          collapsable={false}
-          onLayout={(event) => {
-            awarenessScrollYRef.current = event.nativeEvent.layout.y;
-          }}>
-          <DailyAwarenessCheck />
-        </View>
+        {hasOnboarded ? (
+          <>
+            <View
+              collapsable={false}
+              onLayout={(event) => {
+                awarenessScrollYRef.current = event.nativeEvent.layout.y;
+              }}>
+              <DailyAwarenessCheck />
+            </View>
+            <DailyShutdownBanner />
+            <RecoveryQuestBanner />
+            <StorylinesSection onOpenSwitcher={() => setSagaSwitcherVisible(true)} />
+          </>
+        ) : null}
 
-        <DailyShutdownBanner />
+        {isSagaPreview && hasOnboarded ? <SagaPreviewEmptyState /> : null}
 
-        <RecoveryQuestBanner />
+        {hasOnboarded ? (
+          <DialoguePanel line={storyLine} badge="FIELD REPORT" animate={false} />
+        ) : null}
 
-        <StorylinesSection onOpenSwitcher={() => setSagaSwitcherVisible(true)} />
-
-        {isSagaPreview && <SagaPreviewEmptyState />}
-
-        <DialoguePanel line={storyLine} badge="FIELD REPORT" animate={false} />
-
-        <View style={styles.quickRow}>
+        {hasOnboarded ? (
+          <View style={styles.quickRow}>
           <QuickLink
             label="STORY"
             sub={
@@ -128,8 +134,9 @@ export function HqScreen() {
             onPress={() => router.push('/(game)/map' as Href)}
           />
         </View>
+        ) : null}
 
-        <SectionLabel>UP NEXT</SectionLabel>
+        <SectionLabel>{hasOnboarded ? 'UP NEXT' : 'YOUR FIRST QUEST'}</SectionLabel>
         {quests.slice(0, 2).map((q, i) => (
           <QuestCard key={q.id} quest={q} index={i} />
         ))}

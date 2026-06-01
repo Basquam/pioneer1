@@ -16,6 +16,7 @@ import Animated, {
 
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
+import { getOnboardingResumeHref } from '@/lib/onboarding-flow';
 
 const { width, height } = Dimensions.get('window');
 
@@ -86,7 +87,7 @@ function DustMote({
 }
 
 export function SplashScreen() {
-  const { hasOnboarded } = useGame();
+  const { hasOnboarded, playerProgress, isHydrated } = useGame();
   const logoScale = useSharedValue(0.88);
   const logoOpacity = useSharedValue(0);
   const glowOpacity = useSharedValue(0.25);
@@ -105,15 +106,17 @@ export function SplashScreen() {
   }, [glowOpacity, logoOpacity, logoScale]);
 
   useEffect(() => {
+    if (!isHydrated) return;
+
     const timer = setTimeout(() => {
       if (hasOnboarded) {
         router.replace('/(game)/hq' as Href);
       } else {
-        router.replace('/onboarding' as Href);
+        router.replace(getOnboardingResumeHref(playerProgress));
       }
     }, 2800);
     return () => clearTimeout(timer);
-  }, [hasOnboarded]);
+  }, [hasOnboarded, isHydrated, playerProgress]);
 
   const logoStyle = useAnimatedStyle(() => ({
     opacity: logoOpacity.value,

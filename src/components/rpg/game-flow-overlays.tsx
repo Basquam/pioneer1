@@ -8,6 +8,7 @@ import { RecurringRoutineEditSheet } from '@/components/rpg/recurring-routine-ed
 import { SplitQuestChainSheet } from '@/components/rpg/split-quest-chain-sheet';
 import { ChapterIntroScene } from '@/components/rpg/chapter-intro-scene';
 import { HqTutorialOverlay } from '@/components/rpg/hq-tutorial-overlay';
+import { OnboardingFirstQuestInsightOverlay } from '@/components/rpg/onboarding-first-quest-insight-overlay';
 import { CelebrationOverlay } from '@/components/rpg/celebration-overlay';
 import { QuestFocusOverlay } from '@/components/rpg/quest-focus-overlay';
 import { QuestCreatedOverlay } from '@/components/rpg/quest-created-overlay';
@@ -40,6 +41,7 @@ export function GameFlowOverlays() {
     <>
       <QuestReminderSync />
       <CelebrationOverlay />
+      <OnboardingFirstQuestInsightOverlay />
       <QuestFocusOverlay />
       <QuestCreatedOverlay />
       <ChapterIntroScene visible={showChapterIntro} onComplete={markChapterIntroSeen} />

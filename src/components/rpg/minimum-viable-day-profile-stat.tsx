@@ -1,6 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
+import { CoachMascotTip } from '@/components/rpg/coach-mascot-tip';
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
 import { countMinimumDaysSecuredThisMonth } from '@/lib/minimum-viable-day';
@@ -18,9 +19,7 @@ export function MinimumViableDayProfileStat() {
       <Text style={[styles.value, { color: palette.bone }]}>
         {securedThisMonth} minimum day{securedThisMonth === 1 ? '' : 's'} secured this month
       </Text>
-      <Text style={[styles.hint, { color: palette.fog }]}>
-        Low-energy days still count when you return with one small action.
-      </Text>
+      <CoachMascotTip context={{ kind: 'minimum-viable-day' }} variant="inline" />
     </Animated.View>
   );
 }

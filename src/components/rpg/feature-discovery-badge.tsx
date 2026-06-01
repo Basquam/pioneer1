@@ -1,5 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 
+import { CoachMascotTip } from '@/components/rpg/coach-mascot-tip';
 import { GameFonts } from '@/constants/typography';
 import type { FeatureDiscoveryKey } from '@/lib/feature-discovery';
 
@@ -38,13 +39,24 @@ type FeatureDiscoveryHintProps = {
 
 export function FeatureDiscoveryHint({
   hint,
+  feature,
   showTryThis = false,
   palette,
 }: FeatureDiscoveryHintProps) {
   return (
     <View style={styles.hintRow}>
       {showTryThis ? <FeatureDiscoveryBadge label="TRY THIS" palette={palette} /> : null}
-      <Text style={[styles.hint, { color: palette.fog }]}>{hint}</Text>
+      {feature ? (
+        <View style={styles.mascotHint}>
+          <CoachMascotTip
+            context={{ kind: 'feature', feature }}
+            messageOverride={hint}
+            variant="inline"
+          />
+        </View>
+      ) : (
+        <Text style={[styles.hint, { color: palette.fog }]}>{hint}</Text>
+      )}
     </View>
   );
 }
@@ -85,6 +97,10 @@ const styles = StyleSheet.create({
     fontSize: 11,
     lineHeight: 16,
     fontStyle: 'italic',
+    flex: 1,
+    minWidth: 0,
+  },
+  mascotHint: {
     flex: 1,
     minWidth: 0,
   },

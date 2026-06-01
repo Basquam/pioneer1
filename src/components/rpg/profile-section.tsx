@@ -1,5 +1,6 @@
-import { type ReactNode } from 'react';
-import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
+import { type ReactNode, useState } from 'react';
+import * as Haptics from 'expo-haptics';
+import { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { GameLayout } from '@/constants/layout';
 import { GameFonts } from '@/constants/typography';
@@ -11,13 +12,24 @@ type ProfileSectionProps = {
   title: string;
   badge?: ProfileSectionBadge;
   hint?: string;
+  collapsible?: boolean;
+  defaultExpanded?: boolean;
   children: ReactNode;
   style?: StyleProp<ViewStyle>;
 };
 
-export function ProfileSection({ title, badge, hint, children, style }: ProfileSectionProps) {
+export function ProfileSection({
+  title,
+  badge,
+  hint,
+  collapsible = false,
+  defaultExpanded = true,
+  children,
+  style,
+}: ProfileSectionProps) {
   const { activeUniverse } = useGame();
   const { palette } = activeUniverse;
+  const [expanded, setExpanded] = useState(defaultExpanded);
 
   const borderColor =
     badge === 'dev'
@@ -36,18 +48,34 @@ export function ProfileSection({ title, badge, hint, children, style }: ProfileS
   const badgeLabel = badge === 'dev' ? 'DEV' : badge === 'experimental' ? 'EXPERIMENTAL' : null;
   const badgeColor = badge === 'dev' ? palette.primary : palette.gold;
 
+  const handleToggle = () => {
+    if (!collapsible) return;
+    void Haptics.selectionAsync();
+    setExpanded((current) => !current);
+  };
+
   return (
     <View style={[styles.section, style]}>
-      <View style={styles.headerRow}>
-        <Text style={[styles.title, { color: palette.gold }]}>{title}</Text>
+      <Pressable
+        onPress={handleToggle}
+        disabled={!collapsible}
+        style={styles.headerRow}>
+        <View style={styles.headerCopy}>
+          <Text style={[styles.title, { color: palette.gold }]}>{title}</Text>
+          {hint ? <Text style={[styles.hint, { color: palette.fog }]}>{hint}</Text> : null}
+        </View>
         {badgeLabel ? (
           <View style={[styles.badge, { borderColor: badgeColor, backgroundColor: `${badgeColor}18` }]}>
             <Text style={[styles.badgeText, { color: badgeColor }]}>{badgeLabel}</Text>
           </View>
         ) : null}
-      </View>
-      {hint ? <Text style={[styles.hint, { color: palette.fog }]}>{hint}</Text> : null}
-      <View style={[styles.body, { borderColor, backgroundColor }]}>{children}</View>
+        {collapsible ? (
+          <Text style={[styles.chevron, { color: palette.gold }]}>{expanded ? '−' : '+'}</Text>
+        ) : null}
+      </Pressable>
+      {expanded ? (
+        <View style={[styles.body, { borderColor, backgroundColor }]}>{children}</View>
+      ) : null}
     </View>
   );
 }
@@ -59,9 +87,14 @@ const styles = StyleSheet.create({
   },
   headerRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'space-between',
     gap: 10,
+  },
+  headerCopy: {
+    flex: 1,
+    gap: 4,
+    minWidth: 0,
   },
   title: {
     fontFamily: GameFonts.ui,
@@ -87,6 +120,13 @@ const styles = StyleSheet.create({
     fontSize: 10,
     letterSpacing: 0.4,
     lineHeight: 14,
+  },
+  chevron: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 18,
+    lineHeight: 20,
+    flexShrink: 0,
+    marginTop: -2,
   },
   body: {
     borderWidth: 1,

@@ -1,6 +1,7 @@
 import * as Haptics from 'expo-haptics';
 import { Alert, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { CoachMascotTip } from '@/components/rpg/coach-mascot-tip';
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
 import { getTaskCategoryMeta } from '@/lib/task-categories';
@@ -29,7 +30,10 @@ export function QuestInboxPanel() {
 
   if (activeInboxItems.length === 0) {
     return (
-      <Text style={[styles.empty, { color: palette.fog }]}>{QUEST_INBOX_EMPTY_MESSAGE}</Text>
+      <CoachMascotTip
+        context={{ kind: 'empty', variant: 'inbox' }}
+        messageOverride={QUEST_INBOX_EMPTY_MESSAGE}
+      />
     );
   }
 

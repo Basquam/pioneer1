@@ -905,6 +905,7 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
               {hasNewBehaviorTools ? (
                 <FeatureDiscoveryHint
                   hint={getFeatureIntroHint(newlyIntroducedTools[0])}
+                  feature={newlyIntroducedTools[0]}
                   showTryThis
                   palette={palette}
                 />

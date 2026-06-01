@@ -7,6 +7,8 @@ export default function OnboardingLayout() {
       <Stack.Screen name="premise" />
       <Stack.Screen name="theme" />
       <Stack.Screen name="saga" />
+      <Stack.Screen name="suite" />
+      <Stack.Screen name="first-quest" />
       <Stack.Screen name="compass" />
       <Stack.Screen name="style" />
       <Stack.Screen name="intro" />

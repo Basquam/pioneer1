@@ -6,6 +6,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { AddQuestTrigger } from '@/components/rpg/add-quest-trigger';
 import { CharacterDialoguePanel } from '@/components/rpg/character-dialogue-panel';
 import { CinematicEmptyState } from '@/components/rpg/cinematic-empty-state';
+import { CoachMascotTip } from '@/components/rpg/coach-mascot-tip';
 import { CollapsibleSection } from '@/components/rpg/collapsible-section';
 import { DialoguePanel } from '@/components/rpg/dialogue-panel';
 import { GameHud } from '@/components/rpg/game-hud';
@@ -241,6 +242,7 @@ export function QuestsScreen() {
                 message="Add a quest or pin one as focus to build today's window."
                 primaryLabel={ui.addQuestButtonLabel}
                 onPrimaryPress={openAddQuestSheet}
+                coachContext={{ kind: 'empty', variant: 'focus-empty' }}
               />
             ) : (
               <QuestBoardEntryList entries={tabContent.entries} />
@@ -288,9 +290,10 @@ export function QuestsScreen() {
       case 'completed':
         if (tabContent.completedGroups.length === 0) {
           return (
-            <Text style={[styles.emptyLine, { color: palette.fog }]}>
-              No completed quests in the last few days.
-            </Text>
+            <CoachMascotTip
+              context={{ kind: 'empty', variant: 'no-completed' }}
+              messageOverride="No completed quests in the last few days."
+            />
           );
         }
         return tabContent.completedGroups.map((group) => {
@@ -324,6 +327,7 @@ export function QuestsScreen() {
               message={ui.noQuestsYetMessage}
               primaryLabel={ui.addQuestButtonLabel}
               onPrimaryPress={openAddQuestSheet}
+              coachContext={{ kind: 'empty', variant: 'quest-board' }}
             />
           );
         }

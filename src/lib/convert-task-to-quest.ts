@@ -95,6 +95,7 @@ export type CreateUserQuestOptions = {
   reminderTime?: string;
   reminderLabel?: string;
   suiteId?: QuestSuiteId;
+  skipCreatedOverlay?: boolean;
 };
 
 /** Shared user-quest creation used by single and batch add flows. */

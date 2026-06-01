@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown, FadeOut } from 'react-native-reanimated';
 
 import { GlowButton } from '@/components/rpg/glow-button';
+import { CoachMascotTip } from '@/components/rpg/coach-mascot-tip';
 import { OnboardingScroll } from '@/components/rpg/onboarding-scroll';
 import { ScreenShell } from '@/components/rpg/screen-shell';
 import { SectionHeader } from '@/components/rpg/section-header';
@@ -80,6 +81,10 @@ export function OnboardingPremiseScreen() {
             ))}
           </View>
         </View>
+
+        {isLast ? (
+          <CoachMascotTip context={{ kind: 'onboarding-structure' }} />
+        ) : null}
       </OnboardingScroll>
     </ScreenShell>
   );

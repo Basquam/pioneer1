@@ -1,7 +1,9 @@
 import { StyleSheet, Text, View } from 'react-native';
 
 import { getQuestSuiteById } from '@/constants/quest-suites';
+import { CoachMascotTip } from '@/components/rpg/coach-mascot-tip';
 import { GameFonts } from '@/constants/typography';
+import { formatProfileDate } from '@/lib/profile-progress-stats';
 import { listSuiteMasteryEntries, QUESTS_PER_SUITE_LEVEL } from '@/lib/quest-suite-stats';
 import type { PlayerProgress } from '@/types/narrative';
 
@@ -22,9 +24,10 @@ export function SuiteMasteryPanel({ progress, palette }: SuiteMasteryPanelProps)
 
   if (entries.length === 0) {
     return (
-      <Text style={[styles.empty, { color: palette.fog }]}>
-        Complete quests with a suite selected to build mastery here.
-      </Text>
+      <CoachMascotTip
+        context={{ kind: 'empty', variant: 'no-suite-stats' }}
+        messageOverride="Complete quests with a suite selected to build mastery here."
+      />
     );
   }
 
@@ -34,6 +37,9 @@ export function SuiteMasteryPanel({ progress, palette }: SuiteMasteryPanelProps)
         const suite = getQuestSuiteById(suiteId);
         if (!suite) return null;
 
+        const lastCompleted = formatProfileDate(stats.lastCompletedAt);
+        const questsInLevel = stats.questsCompleted % QUESTS_PER_SUITE_LEVEL;
+
         return (
           <View
             key={suiteId}
@@ -41,9 +47,12 @@ export function SuiteMasteryPanel({ progress, palette }: SuiteMasteryPanelProps)
             <View style={styles.rowHeader}>
               <Text style={styles.icon}>{suite.icon}</Text>
               <View style={styles.copy}>
-                <Text style={[styles.label, { color: palette.bone }]}>{suite.label}</Text>
+                <Text style={[styles.label, { color: palette.bone }]}>
+                  {suite.label} · Level {level} · {stats.questsCompleted} quests completed
+                </Text>
                 <Text style={[styles.meta, { color: palette.fog }]}>
-                  Level {level} · {stats.questsCompleted} cleared
+                  {stats.xpEarned} XP earned
+                  {lastCompleted ? ` · Last cleared ${lastCompleted}` : ''}
                 </Text>
               </View>
               <Text style={[styles.levelBadge, { color: palette.gold }]}>L{level}</Text>
@@ -60,7 +69,7 @@ export function SuiteMasteryPanel({ progress, palette }: SuiteMasteryPanelProps)
               />
             </View>
             <Text style={[styles.progressHint, { color: palette.fog }]}>
-              {stats.questsCompleted % QUESTS_PER_SUITE_LEVEL}/{QUESTS_PER_SUITE_LEVEL} to next level
+              {questsInLevel}/{QUESTS_PER_SUITE_LEVEL} to next level
             </Text>
           </View>
         );

@@ -846,6 +846,24 @@ export type PlayerProgress = {
   activeSuiteId?: QuestSuiteId;
   /** Per-suite activity stats keyed by QuestSuiteId. */
   suiteStatsById: Partial<Record<QuestSuiteId, QuestSuiteStats>>;
+  /** True after the user finishes or skips the onboarding suite step. */
+  onboardingSuiteComplete?: boolean;
+  /** App-level coach mascot visibility preference — not story characters. */
+  mascotPreference: MascotPreference;
+};
+
+/** Meta-coach guides (Sasha & Marcus) — separate from universe story characters. */
+export type AppMascotId = 'sasha' | 'marcus';
+
+export type MascotPreference = 'both' | 'sasha' | 'marcus' | 'minimal' | 'off';
+
+export type AppMascot = {
+  id: AppMascotId;
+  name: string;
+  role: string;
+  toneDescription: string;
+  initials: string;
+  portrait?: number;
 };
 
 export type QuestStyleKey =

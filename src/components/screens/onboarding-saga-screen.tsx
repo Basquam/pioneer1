@@ -23,9 +23,9 @@ export function OnboardingSagaScreen() {
       <OnboardingScroll
         footer={
           <GlowButton
-            label="BEGIN PROLOGUE"
-            hint={`NEXT: IDENTITY COMPASS`}
-            onPress={() => router.push('/onboarding/compass' as Href)}
+            label="CONTINUE"
+            hint={`NEXT: CHOOSE YOUR FOCUS`}
+            onPress={() => router.push('/onboarding/suite' as Href)}
           />
         }>
         <Animated.View entering={FadeInDown.duration(500)}>

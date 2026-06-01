@@ -3,6 +3,7 @@ import { type Href, router } from 'expo-router';
 import { useMemo } from 'react';
 import { Alert, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { CoachMascotTip } from '@/components/rpg/coach-mascot-tip';
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
 import { canLockTodayFocus, getFocusLockCopy } from '@/lib/focus-lock';
@@ -116,7 +117,11 @@ export function QuestLoadMeter() {
       </View>
 
       <Text style={[styles.flavor, { color: palette.gold }]}>{loadStatus.universeFlavor}</Text>
-      <Text style={[styles.explanation, { color: palette.fog }]}>{loadStatus.explanation}</Text>
+      <CoachMascotTip
+        context={{ kind: 'quest-load', loadLevel: loadStatus.loadLevel }}
+        messageOverride={loadStatus.explanation}
+        variant="inline"
+      />
 
       <Pressable
         onPress={handleAction}

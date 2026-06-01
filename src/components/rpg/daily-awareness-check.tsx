@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
+import { CoachMascotTip } from '@/components/rpg/coach-mascot-tip';
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
 import {
@@ -79,7 +80,12 @@ export function DailyAwarenessCheck() {
         </>
       ) : (
         <View style={styles.result}>
-          <Text style={[styles.recommendation, { color: palette.bone }]}>{recommendation}</Text>
+          {selectedBlocker ? (
+            <CoachMascotTip
+              context={{ kind: 'awareness', blocker: selectedBlocker }}
+              messageOverride={recommendation ?? undefined}
+            />
+          ) : null}
           {selectedBlocker && shouldAutoActivateMvdFromAwareness(selectedBlocker) ? (
             <>
               <Text style={[styles.mvdNote, { color: palette.fog }]}>

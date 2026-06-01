@@ -5,7 +5,7 @@ function isDevEnvironment(): boolean {
 }
 
 /** Bump when PlayerProgress shape changes and a migration step is required. */
-export const CURRENT_PLAYER_PROGRESS_SCHEMA_VERSION = 2;
+export const CURRENT_PLAYER_PROGRESS_SCHEMA_VERSION = 3;
 
 /** Saves written before schemaVersion existed. */
 export const LEGACY_PLAYER_PROGRESS_SCHEMA_VERSION = 0;
@@ -36,6 +36,12 @@ const MIGRATION_STEPS: PlayerProgressMigrationStep[] = [
     toVersion: 2,
     id: 'v1-to-v2',
     migrate: migrateV1ToV2,
+  },
+  {
+    fromVersion: 2,
+    toVersion: 3,
+    id: 'v2-to-v3',
+    migrate: migrateV2ToV3,
   },
 ];
 
@@ -182,6 +188,16 @@ export function migrateV1ToV2(raw: Record<string, unknown>): Record<string, unkn
   if (next.suiteStatsById === undefined) next.suiteStatsById = {};
 
   next.schemaVersion = 2;
+  return next;
+}
+
+/** v2 → v3: app-level coach mascot preference. */
+export function migrateV2ToV3(raw: Record<string, unknown>): Record<string, unknown> {
+  const next: Record<string, unknown> = { ...raw };
+
+  if (next.mascotPreference === undefined) next.mascotPreference = 'both';
+
+  next.schemaVersion = 3;
   return next;
 }
 

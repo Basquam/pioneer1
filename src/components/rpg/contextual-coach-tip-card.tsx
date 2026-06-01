@@ -3,10 +3,12 @@ import { type Href, router } from 'expo-router';
 import { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { CoachMascotTip } from '@/components/rpg/coach-mascot-tip';
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
 import { getTraitForCategory } from '@/lib/identity-votes';
-import { getContextualCoachTip,
+import {
+  getContextualCoachTip,
   type CoachTip,
   type CoachTipActionType,
 } from '@/lib/contextual-coach-tip';
@@ -68,9 +70,7 @@ export function ContextualCoachTipCard() {
   return (
     <View style={[styles.card, { backgroundColor: palette.night, borderColor: palette.accent }]}>
       <View style={styles.header}>
-        <Text style={[styles.eyebrow, { color: palette.accent }]}>
-          {tip.universeFlavorLabel.toUpperCase()}
-        </Text>
+        <Text style={[styles.eyebrow, { color: palette.accent }]}>COACH TIP</Text>
         {tip.dismissible ? (
           <Pressable onPress={handleDismiss} hitSlop={12}>
             <Text style={[styles.dismiss, { color: palette.fog }]}>Not today</Text>
@@ -78,8 +78,13 @@ export function ContextualCoachTipCard() {
         ) : null}
       </View>
 
+      <CoachMascotTip
+        context={{ kind: 'coach-tip', tipId: tip.id }}
+        messageOverride={tip.message}
+        variant="inline"
+      />
+
       <Text style={[styles.title, { color: palette.bone }]}>{tip.title}</Text>
-      <Text style={[styles.message, { color: palette.fog }]}>{tip.message}</Text>
 
       {tip.ctaLabel ? (
         <Pressable
@@ -203,11 +208,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 19,
     letterSpacing: 0.3,
-  },
-  message: {
-    fontFamily: GameFonts.displayRegular,
-    fontSize: 12,
-    lineHeight: 17,
   },
   cta: {
     borderWidth: 1,

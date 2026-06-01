@@ -1,9 +1,12 @@
 import { Pressable, StyleSheet, Text } from 'react-native';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 
+import { CoachMascotTip } from '@/components/rpg/coach-mascot-tip';
 import { GameLayout } from '@/constants/layout';
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
+
+import type { MascotCoachContext } from '@/lib/app-mascot-coach';
 
 type CinematicEmptyStateProps = {
   title: string;
@@ -13,6 +16,7 @@ type CinematicEmptyStateProps = {
   secondaryLabel?: string;
   onSecondaryPress?: () => void;
   index?: number;
+  coachContext?: MascotCoachContext;
 };
 
 export function CinematicEmptyState({
@@ -23,6 +27,7 @@ export function CinematicEmptyState({
   secondaryLabel,
   onSecondaryPress,
   index = 0,
+  coachContext,
 }: CinematicEmptyStateProps) {
   const { activeUniverse } = useGame();
   const { palette } = activeUniverse;
@@ -38,7 +43,11 @@ export function CinematicEmptyState({
       <Text style={[styles.title, { color: palette.bone }]} numberOfLines={3}>
         {title}
       </Text>
-      <Text style={[styles.message, { color: palette.fog }]}>{message}</Text>
+      {coachContext ? (
+        <CoachMascotTip context={coachContext} messageOverride={message} variant="inline" />
+      ) : (
+        <Text style={[styles.message, { color: palette.fog }]}>{message}</Text>
+      )}
 
       <Pressable
         onPress={onPrimaryPress}
