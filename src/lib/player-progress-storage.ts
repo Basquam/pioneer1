@@ -18,6 +18,12 @@ import {
   sanitizeSuiteStatsById,
 } from '@/lib/quest-suite-stats';
 import { sanitizeMascotPreference } from '@/lib/app-mascot-coach';
+import {
+  sanitizeEquippedItemsByUniverseId,
+  sanitizeInventoryDailyEffectsByDate,
+  sanitizeInventoryItems,
+} from '@/lib/inventory';
+import { sanitizeSagaEndingsBySagaId } from '@/lib/saga-ending-resolver';
 import { sanitizeQuestInbox } from '@/lib/quest-inbox';
 import { sanitizeQuestStyleProfile } from '@/lib/quest-style-profile';
 import { sanitizeReminderPreferences } from '@/lib/reminder-preferences';
@@ -231,6 +237,10 @@ export function createInitialProgress(): PlayerProgress {
     reminderPreferences: createDefaultReminderPreferences(),
     suiteStatsById: createInitialSuiteStatsById(),
     mascotPreference: 'both',
+    sagaEndingsBySagaId: {},
+    inventoryItems: [],
+    equippedItemsByUniverseId: {},
+    inventoryDailyEffectsByDate: {},
   };
 }
 
@@ -321,6 +331,14 @@ function normalizeProgress(raw: Partial<PlayerProgress> & Record<string, unknown
     activeSuiteId: sanitizeActiveSuiteId(raw.activeSuiteId),
     suiteStatsById: sanitizeSuiteStatsById(raw.suiteStatsById ?? base.suiteStatsById),
     mascotPreference: sanitizeMascotPreference(raw.mascotPreference ?? base.mascotPreference),
+    sagaEndingsBySagaId: sanitizeSagaEndingsBySagaId(raw.sagaEndingsBySagaId ?? base.sagaEndingsBySagaId),
+    inventoryItems: sanitizeInventoryItems(raw.inventoryItems ?? base.inventoryItems),
+    equippedItemsByUniverseId: sanitizeEquippedItemsByUniverseId(
+      raw.equippedItemsByUniverseId ?? base.equippedItemsByUniverseId,
+    ),
+    inventoryDailyEffectsByDate: sanitizeInventoryDailyEffectsByDate(
+      raw.inventoryDailyEffectsByDate ?? base.inventoryDailyEffectsByDate,
+    ),
   };
 
   const universeForMigration = findUniverse(merged.selectedUniverseId) ?? DUST_AND_IRON_UNIVERSE;

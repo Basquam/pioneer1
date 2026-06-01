@@ -270,6 +270,47 @@ export type ChapterCompleteState = {
   earnedReputation: number;
   nextChapterId: string | null;
   newRewards?: ChapterReward[];
+  /** Personalized saga finale — only on the last chapter of a saga. */
+  sagaFinale?: ResolvedSagaEnding;
+};
+
+export type SagaEndingConditionType =
+  | 'default'
+  | 'reliable'
+  | 'organized'
+  | 'resilient'
+  | 'loyal'
+  | 'high-noon'
+  | 'recovery';
+
+export type SagaEndingVariant = {
+  id: string;
+  label: string;
+  priority: number;
+  conditionType: SagaEndingConditionType;
+  title: string;
+  summary: string;
+  dialogueOverride?: string;
+  rewardFlavorLine?: string;
+  universeFlavorLine?: string;
+};
+
+export type ResolvedSagaEnding = {
+  endingVariantId: string;
+  label: string;
+  title: string;
+  summary: string;
+  dialogueOverride?: string;
+  rewardFlavorLine?: string;
+  universeFlavorLine?: string;
+};
+
+export type SagaEndingRecord = {
+  endingVariantId: string;
+  earnedAt: string;
+  title: string;
+  summary: string;
+  label?: string;
 };
 
 export type QuestCompleteState = {
@@ -850,6 +891,81 @@ export type PlayerProgress = {
   onboardingSuiteComplete?: boolean;
   /** App-level coach mascot visibility preference — not story characters. */
   mascotPreference: MascotPreference;
+  /** Earned soft-branch saga finale variants keyed by saga id. */
+  sagaEndingsBySagaId: Record<string, SagaEndingRecord>;
+  /** Earned inventory items — non-stackable in v1. */
+  inventoryItems: PlayerInventoryItem[];
+  /** Per-universe equipped item loadouts. */
+  equippedItemsByUniverseId: Record<string, EquippedItemsLoadout>;
+  /** Tracks once-per-day passive item effects by local date. */
+  inventoryDailyEffectsByDate: Record<string, InventoryDailyEffectsEntry>;
+};
+
+export type ItemRarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
+
+export type ItemSlot = 'badge' | 'tool' | 'charm' | 'cosmetic';
+
+export type InventoryItemId =
+  | 'antique-sheriff-badge'
+  | 'golden-bandana'
+  | 'blue-revolver'
+  | 'deputy-canteen'
+  | 'railway-pocket-watch'
+  | 'ledger-compass';
+
+export type ItemEffectType =
+  | 'first-daily-xp-bonus'
+  | 'first-locked-focus-rep-bonus'
+  | 'highlight-starter-move'
+  | 'prioritize-recovery-health'
+  | 'readiness-plan-bonus'
+  | 'prioritize-business-errand-suite';
+
+export type InventoryItemDefinition = {
+  id: InventoryItemId;
+  name: string;
+  description: string;
+  universeId?: string;
+  suiteId?: QuestSuiteId;
+  rarity: ItemRarity;
+  slot: ItemSlot;
+  effectType?: ItemEffectType;
+  effectValue?: number;
+  effectDescription: string;
+  flavorText: string;
+  image?: number;
+};
+
+export type InventoryItemSource =
+  | 'chapter-complete'
+  | 'saga-complete'
+  | 'recovery-quest'
+  | 'minimum-viable-day'
+  | 'dev';
+
+export type PlayerInventoryItem = {
+  itemId: InventoryItemId;
+  earnedAt: string;
+  source: InventoryItemSource;
+  isNew?: boolean;
+};
+
+export type EquippedItemsLoadout = {
+  badge?: InventoryItemId;
+  tool?: InventoryItemId;
+  charm?: InventoryItemId;
+  cosmetic?: InventoryItemId;
+};
+
+export type InventoryDailyEffectsEntry = {
+  goldenBandanaXpUsed?: boolean;
+  sheriffBadgeRepUsed?: boolean;
+};
+
+export type ActiveQuestItemEffectLine = {
+  itemId: InventoryItemId;
+  itemName: string;
+  message: string;
 };
 
 /** Meta-coach guides (Sasha & Marcus) — separate from universe story characters. */

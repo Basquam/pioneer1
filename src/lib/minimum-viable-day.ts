@@ -1,6 +1,7 @@
 import { getDailyFocusLimit, getDailyFocusQuestIds } from '@/lib/daily-focus';
 import { getLocalDateKey } from '@/lib/daily-streak';
 import { hasStarterMove } from '@/lib/decisive-moment';
+import { getEquippedLoadout } from '@/lib/inventory';
 import { getLocalMonthKey } from '@/lib/monthly-review';
 import { isQuestOnActiveBoard } from '@/lib/quest-lifecycle';
 import { isHighRiskQuest, resolveQuestRiskLevel } from '@/lib/quest-risk';
@@ -173,6 +174,24 @@ function scoreQuestForMinimumViableDay(
   return score;
 }
 
+function applyDeputyCanteenMinimumViableScoreBonus(
+  progress: PlayerProgress,
+  universeId: string,
+  quest: UserQuest,
+  baseScore: number,
+  today: string,
+): number {
+  if (!isMinimumViableDayActive(progress, today)) return baseScore;
+
+  const loadout = getEquippedLoadout(progress, universeId);
+  if (!Object.values(loadout).includes('deputy-canteen')) return baseScore;
+
+  if (quest.category === 'health') return baseScore + 25;
+  if (quest.category === 'fitness') return baseScore + Math.round(25 * 0.6);
+
+  return baseScore;
+}
+
 export function pickSuggestedSmallQuest(
   progress: PlayerProgress,
   universeId: string,
@@ -181,7 +200,13 @@ export function pickSuggestedSmallQuest(
   const candidates = progress.userQuests
     .map((quest) => ({
       quest,
-      score: scoreQuestForMinimumViableDay(quest, progress, universeId, today),
+      score: applyDeputyCanteenMinimumViableScoreBonus(
+        progress,
+        universeId,
+        quest,
+        scoreQuestForMinimumViableDay(quest, progress, universeId, today),
+        today,
+      ),
     }))
     .filter((entry) => entry.score > 0)
     .sort((left, right) => right.score - left.score || left.quest.originalTitle.localeCompare(right.quest.originalTitle));

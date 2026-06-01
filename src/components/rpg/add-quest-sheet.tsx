@@ -76,8 +76,8 @@ import { suggestTaskCategory } from '@/lib/suggest-task-category';
 import {
   getQuestSuiteById,
   QUEST_SUITES,
-  resolveAddQuestSuitePrefill,
 } from '@/constants/quest-suites';
+import { resolveInventoryAwareSuitePrefill } from '@/lib/inventory-item-effects';
 import { formatTraitSuggestionLabel } from '@/lib/trait-aligned-suggestions';
 import type { QuestRiskLevel, QuestSuiteId, RecurrenceType, TaskCategory, WeekdayKey } from '@/types/narrative';
 import {
@@ -187,12 +187,12 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
   const selectedSuite = suiteId ? getQuestSuiteById(suiteId) : null;
   const suggestedSuiteId = useMemo(
     () =>
-      resolveAddQuestSuitePrefill({
+      resolveInventoryAwareSuitePrefill(playerProgress, activeUniverse.id, {
         category,
         activeSuiteId: playerProgress.activeSuiteId,
         title: trimmedTitle,
       }),
-    [category, playerProgress.activeSuiteId, trimmedTitle],
+    [activeUniverse.id, category, playerProgress, trimmedTitle],
   );
   const showSuiteSuggestion =
     !suiteManuallySelected &&
@@ -332,13 +332,13 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
   useEffect(() => {
     if (!visible || suiteManuallySelected) return;
 
-    const nextSuite = resolveAddQuestSuitePrefill({
+    const nextSuite = resolveInventoryAwareSuitePrefill(playerProgress, activeUniverse.id, {
       category,
       activeSuiteId: playerProgress.activeSuiteId,
       title: trimmedTitle,
     });
     setSuiteId(nextSuite);
-  }, [category, playerProgress.activeSuiteId, suiteManuallySelected, trimmedTitle, visible]);
+  }, [activeUniverse.id, category, playerProgress, suiteManuallySelected, trimmedTitle, visible]);
 
   const submitQuest = () => {
     if (!trimmedTitle || !category || !suiteId) return;
@@ -540,9 +540,10 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
         <View
           style={[
             styles.sheet,
-            { backgroundColor: palette.night, borderColor: palette.panelBorder, maxHeight: GameLayout.modalMaxHeight },
+            { backgroundColor: palette.night, borderColor: palette.panelBorder, maxHeight: GameLayout.modalMaxHeight, flexShrink: 1 },
           ]}>
           <ScrollView
+            style={styles.sheetScrollView}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
             contentContainerStyle={[styles.sheetScroll, { paddingBottom: modalBottomInset }]}>
@@ -1280,9 +1281,11 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
               hint={
                 !category
                   ? 'Pick a category first.'
-                  : confirmOverLimit
-                    ? ui.addQuestConfirmOverLimitHint
-                    : ui.addQuestCreateHint
+                  : !suiteId
+                    ? 'Choose a focus area.'
+                    : confirmOverLimit
+                      ? ui.addQuestConfirmOverLimitHint
+                      : ui.addQuestCreateHint
               }
               onPress={handleCreate}
             />
@@ -1308,6 +1311,10 @@ const styles = StyleSheet.create({
   sheet: {
     borderTopWidth: 1,
     transform: [{ skewX: '-1deg' }],
+  },
+  sheetScrollView: {
+    flexGrow: 0,
+    flexShrink: 1,
   },
   sheetScroll: {
     paddingHorizontal: GameLayout.screenPaddingHorizontal,

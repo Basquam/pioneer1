@@ -15,10 +15,10 @@ export type RewardEventType =
 export type RewardEventPriority = 1 | 2 | 3 | 4 | 5 | 6 | 7;
 
 export const REWARD_EVENT_TYPE_PRIORITY: Record<RewardEventType, RewardEventPriority> = {
-  chapterReward: 1,
-  storyUnlock: 1,
-  questCompletion: 2,
-  characterReaction: 3,
+  questCompletion: 1,
+  characterReaction: 2,
+  chapterReward: 3,
+  storyUnlock: 3,
   identityMilestone: 4,
   processAchievement: 5,
   momentumMilestone: 6,
@@ -291,6 +291,8 @@ export function buildQuestCompleteCelebrationEvents(
     batchId?: string;
     progressMessage?: string;
     affinityGainLabel?: string | null;
+    /** First-run onboarding: keep only the quest completion beat. */
+    onboardingSimplified?: boolean;
   },
 ): RewardEvent[] {
   const batchId = options?.batchId ?? `quest-${state.questId}-${Date.now()}`;
@@ -404,6 +406,10 @@ export function buildQuestCompleteCelebrationEvents(
     );
   }
 
+  if (options?.onboardingSimplified) {
+    return [questCompletion];
+  }
+
   return coalesceSmallRewardEvents([questCompletion, characterReaction, ...smallEvents]);
 }
 
@@ -416,8 +422,7 @@ export function buildChapterRewardCelebrationEvent(chapter: ChapterCompleteState
     message: 'Chapter complete.',
     payload: chapter,
     batchId,
-    sequence: 0,
-    priority: 1,
+    sequence: 10,
   });
 }
 

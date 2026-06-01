@@ -9,6 +9,7 @@ import { DialoguePanel } from '@/components/rpg/dialogue-panel';
 import { ChapterRewardBadge } from '@/components/rpg/chapter-reward-badge';
 import { GlowButton } from '@/components/rpg/glow-button';
 import { PanelChrome } from '@/components/rpg/panel-chrome';
+import { SagaEndingCard } from '@/components/rpg/saga-ending-card';
 import { ScanlineOverlay } from '@/components/rpg/visual-theme-overlay';
 import { GameLayout } from '@/constants/layout';
 import { GameFonts } from '@/constants/typography';
@@ -49,7 +50,9 @@ export function ChapterCompleteOverlay({ chapterComplete }: { chapterComplete: C
 
   if (!chapterComplete) return null;
 
-  const dialogue = parseDialogueLine(chapterComplete.successDialogue);
+  const dialogue = parseDialogueLine(
+    chapterComplete.sagaFinale?.dialogueOverride ?? chapterComplete.successDialogue,
+  );
   const hasNextChapter = chapterComplete.nextChapterId !== null;
   const storyUnlockReward = chapterComplete.newRewards
     ? findStoryUnlockReward(chapterComplete.newRewards)
@@ -161,7 +164,26 @@ export function ChapterCompleteOverlay({ chapterComplete }: { chapterComplete: C
             </Animated.View>
           ))}
 
-          <Animated.View entering={FadeInUp.duration(500).delay(640)} style={styles.buttonWrap}>
+          {chapterComplete.sagaFinale ? (
+            chapterComplete.sagaFinale.dialogueOverride ? (
+              <Animated.View
+                entering={FadeInUp.duration(500).delay(680)}
+                style={[styles.compactEnding, { borderColor: palette.gold, backgroundColor: palette.panel }]}>
+                <Text style={[styles.compactEndingEyebrow, { color: palette.accent }]}>
+                  SAGA ENDING · {chapterComplete.sagaFinale.title.toUpperCase()}
+                </Text>
+                {chapterComplete.sagaFinale.universeFlavorLine ? (
+                  <Text style={[styles.compactEndingFlavor, { color: palette.gold }]}>
+                    {chapterComplete.sagaFinale.universeFlavorLine}
+                  </Text>
+                ) : null}
+              </Animated.View>
+            ) : (
+              <SagaEndingCard ending={chapterComplete.sagaFinale} palette={palette} />
+            )
+          ) : null}
+
+          <Animated.View entering={FadeInUp.duration(500).delay(720)} style={styles.buttonWrap}>
             {unlockedSaga && unlockedSagaFirstChapterId ? (
               <>
                 <GlowButton
@@ -248,7 +270,6 @@ const styles = StyleSheet.create({
   backdrop: { flex: 1 },
   scrollContent: {
     flexGrow: 1,
-    justifyContent: 'center',
     paddingHorizontal: GameLayout.modalHorizontalPadding,
     paddingVertical: GameLayout.modalVerticalPadding,
   },
@@ -327,5 +348,24 @@ const styles = StyleSheet.create({
     marginTop: 4,
     textAlign: 'center',
     paddingHorizontal: 8,
+  },
+  compactEnding: {
+    borderWidth: 1,
+    padding: 12,
+    gap: 6,
+    transform: [{ skewX: '-2deg' }],
+  },
+  compactEndingEyebrow: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 9,
+    letterSpacing: 2,
+    textAlign: 'center',
+  },
+  compactEndingFlavor: {
+    fontFamily: GameFonts.displayRegular,
+    fontSize: 12,
+    lineHeight: 17,
+    fontStyle: 'italic',
+    textAlign: 'center',
   },
 });

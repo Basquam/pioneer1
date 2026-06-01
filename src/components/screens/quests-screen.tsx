@@ -60,6 +60,7 @@ export function QuestsScreen() {
     requestedQuestBoardTab,
     clearRequestedQuestBoardTab,
     showMinimumViableDayActive,
+    hasOnboarded,
   } = useGame();
 
   const [activeTab, setActiveTab] = useState<QuestBoardTab>('today');
@@ -353,34 +354,44 @@ export function QuestsScreen() {
         <Animated.View entering={FadeInDown.duration(500)}>
           <SectionHeader eyebrow={ui.questBoardEyebrow} title={ui.questBoardTitle} />
         </Animated.View>
-        <GameHud compact />
-        <VillainMeter />
-        {leadBeat && <CharacterDialoguePanel beat={leadBeat} animate={false} />}
-        <Text style={[styles.hint, { color: palette.fog }]}>{ui.questsBoardHint}</Text>
+        {hasOnboarded ? (
+          <>
+            <GameHud compact />
+            <VillainMeter />
+          </>
+        ) : null}
+        {hasOnboarded && leadBeat ? <CharacterDialoguePanel beat={leadBeat} animate={false} /> : null}
+        <Text style={[styles.hint, { color: palette.fog }]}>
+          {hasOnboarded ? ui.questsBoardHint : 'Complete your first quest from HQ, then return here for the full board.'}
+        </Text>
 
-        <AddQuestTrigger variant="banner" />
+        {hasOnboarded ? (
+          <>
+            <AddQuestTrigger variant="banner" />
 
-        <QuestBoardTabBar
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-          universeId={activeUniverse.id}
-          tabCounts={tabCounts}
-          palette={palette}
-        />
+            <QuestBoardTabBar
+              activeTab={activeTab}
+              onTabChange={setActiveTab}
+              universeId={activeUniverse.id}
+              tabCounts={tabCounts}
+              palette={palette}
+            />
 
-        {activeTab !== 'inbox' ? (
-          <QuestBoardFiltersBar
-            filters={filters}
-            onChange={setFilters}
-            expanded={filtersExpanded}
-            onToggleExpanded={() => setFiltersExpanded((open) => !open)}
-            palette={palette}
-          />
+            {activeTab !== 'inbox' ? (
+              <QuestBoardFiltersBar
+                filters={filters}
+                onChange={setFilters}
+                expanded={filtersExpanded}
+                onToggleExpanded={() => setFiltersExpanded((open) => !open)}
+                palette={palette}
+              />
+            ) : null}
+          </>
         ) : null}
 
         <View style={styles.tabBody}>{renderTabBody()}</View>
 
-        <DialoguePanel line={storyLine} badge="AFTERMATH" animate={false} />
+        {hasOnboarded ? <DialoguePanel line={storyLine} badge="AFTERMATH" animate={false} /> : null}
       </ScreenScroll>
       <NarrativeMomentOverlay />
       <XpPopup />

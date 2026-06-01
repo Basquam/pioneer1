@@ -26,6 +26,10 @@ import { getIdentityTraitMeta, getTraitForCategory } from '@/lib/identity-votes'
 import { getCharacter, pickCharacterLine } from '@/lib/narrative-helpers';
 import { formatPrepStepLine } from '@/lib/quest-prep';
 import {
+  getActiveQuestItemEffectLines,
+  shouldHighlightStarterFromInventory,
+} from '@/lib/inventory-item-effects';
+import {
   formatFocusIdentityVotePreview,
   getQuestFocusClearedLabel,
   getQuestFocusCopy,
@@ -64,6 +68,7 @@ export function QuestFocusOverlay() {
     activeSaga,
     focusQuest,
     focusDecisiveMoment,
+    playerProgress,
     closeQuestFocus,
     completeQuest,
     recordFocusDistraction,
@@ -108,7 +113,23 @@ export function QuestFocusOverlay() {
 
   const isCompleted = focusQuest.completed;
   const showDecisiveHighlight = shouldHighlightDecisiveMoment(focusDecisiveMoment, focusQuest);
-  const showDecisiveStarter = showDecisiveHighlight && hasStarterMove(focusQuest);
+  const inventoryHighlightsStarter = shouldHighlightStarterFromInventory(
+    playerProgress,
+    activeUniverse.id,
+    focusQuest,
+  );
+  const inventoryStarterProminent =
+    inventoryHighlightsStarter && Boolean(focusQuest.starterTaskTitle);
+  const showDecisiveStarter =
+    (showDecisiveHighlight && hasStarterMove(focusQuest)) || inventoryStarterProminent;
+  const itemEffectLines = getActiveQuestItemEffectLines(
+    playerProgress,
+    activeUniverse.id,
+    focusQuest,
+  ).filter(
+    (line) =>
+      !(line.itemId === 'blue-revolver' && inventoryStarterProminent),
+  );
   const ritualActive = ritualStep >= 1 && ritualStep <= 3;
   const hasRewardRitual = Boolean(focusQuest.afterQuestReward?.trim());
   const hasPreQuestRitual = Boolean(focusQuest.preQuestRitual?.trim());
@@ -130,6 +151,7 @@ export function QuestFocusOverlay() {
   const highlightStarterAfterPreQuest =
     preQuestRitualDone &&
     (showDecisiveStarter || Boolean(focusQuest.starterTaskTitle && !showDecisiveStarter));
+  const highlightStarterInSupports = highlightStarterAfterPreQuest || inventoryStarterProminent;
   const trait = getIdentityTraitMeta(getTraitForCategory(focusQuest.category));
   const crewCodeLine = getDailyCrewCodeLine(activeSaga);
   const motionGuardActive = focusQuest.isTooMuchMotion === true;
@@ -242,6 +264,19 @@ export function QuestFocusOverlay() {
             {copy.tagline}
           </Animated.Text>
 
+          {!isCompleted && itemEffectLines.length > 0 ? (
+            <Animated.View entering={FadeInDown.duration(380).delay(90)} style={styles.itemEffectWrap}>
+              {itemEffectLines.map((line) => (
+                <Text
+                  key={line.itemId}
+                  style={[styles.itemEffectLine, { color: palette.fog }]}
+                  numberOfLines={1}>
+                  Item effect active: {line.itemName} — {line.message}
+                </Text>
+              ))}
+            </Animated.View>
+          ) : null}
+
           {!isCompleted && hasPreQuestRitual && preQuestRitualDisplay ? (
             <Animated.View
               entering={FadeInDown.duration(400).delay(100)}
@@ -292,7 +327,7 @@ export function QuestFocusOverlay() {
             </Animated.View>
           ) : null}
 
-          {showDecisiveHighlight && (
+          {(showDecisiveHighlight || inventoryStarterProminent) && (
             <Animated.View
               entering={FadeInDown.duration(420).delay(120)}
               style={[
@@ -300,7 +335,7 @@ export function QuestFocusOverlay() {
                 starterWrapStyle,
                 {
                   backgroundColor: `${palette.primary}cc`,
-                  borderColor: highlightStarterAfterPreQuest ? palette.accent : palette.gold,
+                  borderColor: highlightStarterAfterPreQuest || inventoryStarterProminent ? palette.accent : palette.gold,
                 },
               ]}>
               {showDecisiveStarter ? (
@@ -365,13 +400,15 @@ export function QuestFocusOverlay() {
                     style={[
                       styles.supportItem,
                       starterWrapStyle,
-                      highlightStarterAfterPreQuest && {
+                      highlightStarterInSupports && {
                         borderWidth: 1,
                         borderColor: palette.accent,
                         padding: 8,
                       },
                     ]}>
-                    <Text style={[styles.supportItemLabel, { color: palette.fog }]}>Starter move</Text>
+                    <Text style={[styles.supportItemLabel, { color: palette.fog }]}>
+                      {inventoryStarterProminent ? 'Starter move · highlighted' : 'Starter move'}
+                    </Text>
                     <Text style={[styles.supportItemBody, { color: palette.bone }]}>
                       {formatStarterMoveLine(focusQuest.starterTaskTitle, activeUniverse.id)}
                     </Text>
@@ -599,6 +636,19 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     fontStyle: 'italic',
     textAlign: 'center',
+  },
+  itemEffectWrap: {
+    gap: 2,
+    alignItems: 'center',
+  },
+  itemEffectLine: {
+    fontFamily: GameFonts.ui,
+    fontSize: 10,
+    letterSpacing: 0.3,
+    lineHeight: 14,
+    fontStyle: 'italic',
+    textAlign: 'center',
+    opacity: 0.85,
   },
   preQuestRitualBlock: {
     borderWidth: 1,

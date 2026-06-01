@@ -15,6 +15,14 @@ import { sanitizeQuestDefaultsSettings } from '@/lib/quest-defaults';
 import { sanitizeQuestInbox } from '@/lib/quest-inbox';
 import { sanitizeChildQuestIds } from '@/lib/quest-chain';
 import { sanitizeDesiredIdentityTraits } from '@/lib/identity-compass';
+import { sanitizeMascotPreference } from '@/lib/app-mascot-coach';
+import {
+  sanitizeEquippedItemsByUniverseId,
+  sanitizeInventoryDailyEffectsByDate,
+  sanitizeInventoryItems,
+  pruneInventoryDailyEffectsByDate,
+} from '@/lib/inventory';
+import { sanitizeSagaEndingsBySagaId } from '@/lib/saga-ending-resolver';
 import {
   sanitizeActiveSuiteId,
   sanitizeSuiteStatsById,
@@ -432,6 +440,15 @@ export function sanitizePersistedProgress(progress: PlayerProgress): PlayerProgr
     reminderPreferences: sanitizeReminderPreferences(progress.reminderPreferences),
     activeSuiteId: sanitizeActiveSuiteId(progress.activeSuiteId),
     suiteStatsById: sanitizeSuiteStatsById(progress.suiteStatsById),
+    mascotPreference: sanitizeMascotPreference(progress.mascotPreference),
+    sagaEndingsBySagaId: sanitizeSagaEndingsBySagaId(progress.sagaEndingsBySagaId),
+    inventoryItems: sanitizeInventoryItems(progress.inventoryItems),
+    equippedItemsByUniverseId: sanitizeEquippedItemsByUniverseId(progress.equippedItemsByUniverseId),
+    inventoryDailyEffectsByDate: pruneInventoryDailyEffectsByDate(
+      sanitizeInventoryDailyEffectsByDate(progress.inventoryDailyEffectsByDate),
+      new Date(),
+      ACTIVITY_RETENTION_DAYS,
+    ),
     featureDiscoveryState: sanitizeFeatureDiscoveryState(
       progress.featureDiscoveryState,
       progress,

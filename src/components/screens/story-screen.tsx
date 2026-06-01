@@ -17,6 +17,7 @@ import { useGame } from '@/hooks/use-game';
 import { useUniverseUiCopy } from '@/lib/universe-ui-copy';
 import { getActiveChapterId, getChapterStatus, type ChapterStatus } from '@/lib/chapter-progress';
 import { getCrewCodeLines } from '@/lib/crew-code';
+import { getSagaEndingRecord } from '@/lib/saga-ending-resolver';
 import type { Chapter } from '@/types/narrative';
 
 export function StoryScreen() {
@@ -40,6 +41,7 @@ export function StoryScreen() {
 
   const completedCount = chapterRows.filter((row) => row.status === 'completed').length;
   const sagaComplete = chapters.length > 0 && completedCount === chapters.length;
+  const sagaEnding = getSagaEndingRecord(playerProgress, activeSaga.id);
   const activeChapter = chapters.find((chapter) => chapter.id === activeChapterId);
   const crewCodeLines = useMemo(() => getCrewCodeLines(activeSaga), [activeSaga]);
 
@@ -105,6 +107,13 @@ export function StoryScreen() {
                   {line}
                 </Text>
               ))}
+            </View>
+          ) : null}
+          {sagaEnding ? (
+            <View style={[styles.endingBlock, { borderColor: palette.panelBorder }]}>
+              <Text style={[styles.endingTitle, { color: palette.gold }]}>SAGA ENDING</Text>
+              <Text style={[styles.endingName, { color: palette.bone }]}>{sagaEnding.title}</Text>
+              <Text style={[styles.endingSummary, { color: palette.fog }]}>{sagaEnding.summary}</Text>
             </View>
           ) : null}
         </View>
@@ -229,6 +238,28 @@ const styles = StyleSheet.create({
     letterSpacing: 2,
   },
   crewCodeLine: {
+    fontFamily: GameFonts.displayRegular,
+    fontSize: 12,
+    lineHeight: 17,
+    fontStyle: 'italic',
+  },
+  endingBlock: {
+    borderTopWidth: 1,
+    paddingTop: 10,
+    marginTop: 4,
+    gap: 6,
+  },
+  endingTitle: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 9,
+    letterSpacing: 2,
+  },
+  endingName: {
+    fontFamily: GameFonts.ui,
+    fontSize: 15,
+    lineHeight: 20,
+  },
+  endingSummary: {
     fontFamily: GameFonts.displayRegular,
     fontSize: 12,
     lineHeight: 17,

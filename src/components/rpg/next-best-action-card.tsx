@@ -7,6 +7,7 @@ import { GlowButton } from '@/components/rpg/glow-button';
 import { CoachMascotTip } from '@/components/rpg/coach-mascot-tip';
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
+import { getMascotPreference } from '@/lib/app-mascot-coach';
 import {
   getNextBestAction,
   isNextBestActionDismissedToday,
@@ -85,6 +86,7 @@ export function NextBestActionCard() {
         context={{ kind: 'next-best-action', actionType: action.actionType }}
         messageOverride={action.description}
         variant="inline"
+        suppressFallback={getMascotPreference(playerProgress) === 'off'}
       />
       <Text style={[styles.title, { color: palette.bone }]}>{action.title}</Text>
 

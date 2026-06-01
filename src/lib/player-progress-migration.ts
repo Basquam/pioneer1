@@ -5,7 +5,7 @@ function isDevEnvironment(): boolean {
 }
 
 /** Bump when PlayerProgress shape changes and a migration step is required. */
-export const CURRENT_PLAYER_PROGRESS_SCHEMA_VERSION = 3;
+export const CURRENT_PLAYER_PROGRESS_SCHEMA_VERSION = 5;
 
 /** Saves written before schemaVersion existed. */
 export const LEGACY_PLAYER_PROGRESS_SCHEMA_VERSION = 0;
@@ -42,6 +42,18 @@ const MIGRATION_STEPS: PlayerProgressMigrationStep[] = [
     toVersion: 3,
     id: 'v2-to-v3',
     migrate: migrateV2ToV3,
+  },
+  {
+    fromVersion: 3,
+    toVersion: 4,
+    id: 'v3-to-v4',
+    migrate: migrateV3ToV4,
+  },
+  {
+    fromVersion: 4,
+    toVersion: 5,
+    id: 'v4-to-v5',
+    migrate: migrateV4ToV5,
   },
 ];
 
@@ -198,6 +210,28 @@ export function migrateV2ToV3(raw: Record<string, unknown>): Record<string, unkn
   if (next.mascotPreference === undefined) next.mascotPreference = 'both';
 
   next.schemaVersion = 3;
+  return next;
+}
+
+/** v3 → v4: soft-branch saga ending records. */
+export function migrateV3ToV4(raw: Record<string, unknown>): Record<string, unknown> {
+  const next: Record<string, unknown> = { ...raw };
+
+  if (next.sagaEndingsBySagaId === undefined) next.sagaEndingsBySagaId = {};
+
+  next.schemaVersion = 4;
+  return next;
+}
+
+/** v4 → v5: inventory items and loadouts. */
+export function migrateV4ToV5(raw: Record<string, unknown>): Record<string, unknown> {
+  const next: Record<string, unknown> = { ...raw };
+
+  if (next.inventoryItems === undefined) next.inventoryItems = [];
+  if (next.equippedItemsByUniverseId === undefined) next.equippedItemsByUniverseId = {};
+  if (next.inventoryDailyEffectsByDate === undefined) next.inventoryDailyEffectsByDate = {};
+
+  next.schemaVersion = 5;
   return next;
 }
 

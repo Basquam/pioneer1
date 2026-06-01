@@ -117,11 +117,13 @@ export function QuestLoadMeter() {
       </View>
 
       <Text style={[styles.flavor, { color: palette.gold }]}>{loadStatus.universeFlavor}</Text>
-      <CoachMascotTip
-        context={{ kind: 'quest-load', loadLevel: loadStatus.loadLevel }}
-        messageOverride={loadStatus.explanation}
-        variant="inline"
-      />
+      {loadStatus.loadLevel === 'heavy' || loadStatus.loadLevel === 'overloaded' ? (
+        <CoachMascotTip
+          context={{ kind: 'quest-load', loadLevel: loadStatus.loadLevel }}
+          messageOverride={loadStatus.explanation}
+          variant="inline"
+        />
+      ) : null}
 
       <Pressable
         onPress={handleAction}

@@ -1,3 +1,4 @@
+import { suggestSuiteForCategory } from '@/constants/quest-suites';
 import { createUserQuestFromTask, type CreateUserQuestOptions } from '@/lib/convert-task-to-quest';
 import { getLocalDateKey } from '@/lib/daily-streak';
 import { resolveQuestReminderSchedule } from '@/lib/quest-reminders';
@@ -201,6 +202,7 @@ export function generateRecurringQuestInstances(
     if (!shouldGenerateRecurringToday(template, today)) continue;
     if (hasRecurringInstanceForDate(workingQuests, template.id, today)) continue;
 
+    const suiteId = suggestSuiteForCategory(template.category);
     const quest = createUserQuestFromTask(
       template.originalTitle,
       template.category,
@@ -208,7 +210,10 @@ export function generateRecurringQuestInstances(
       saga,
       chapter,
       workingQuests,
-      templateToQuestOptions(template),
+      {
+        ...templateToQuestOptions(template),
+        ...(suiteId ? { suiteId } : {}),
+      },
       today,
       progress,
     );

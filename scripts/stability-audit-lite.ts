@@ -305,6 +305,10 @@ function baseProgress(): PlayerProgress {
     tomorrowSetupByDate: {},
     suiteStatsById: {},
     mascotPreference: 'both',
+    sagaEndingsBySagaId: {},
+    inventoryItems: [],
+    equippedItemsByUniverseId: {},
+    inventoryDailyEffectsByDate: {},
   } as PlayerProgress;
 
   for (const universe of UNIVERSES) {

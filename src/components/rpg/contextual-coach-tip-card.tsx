@@ -12,6 +12,10 @@ import {
   type CoachTip,
   type CoachTipActionType,
 } from '@/lib/contextual-coach-tip';
+import {
+  isNextBestActionDismissedToday,
+  type NextBestAction,
+} from '@/lib/next-best-action';
 import { isFeatureUnlocked } from '@/lib/feature-discovery';
 import { getLocalDateKey } from '@/lib/daily-streak';
 import { getTomorrowSetupForDate } from '@/lib/tomorrow-setup';
@@ -41,6 +45,13 @@ export function ContextualCoachTipCard() {
       }),
     [activeUniverse.id, playerProgress, today],
   );
+
+  const nextBestActionVisible = useMemo(() => {
+    if (isNextBestActionDismissedToday(playerProgress)) return false;
+    return true;
+  }, [playerProgress]);
+
+  if (nextBestActionVisible) return null;
 
   if (!tip) return null;
 

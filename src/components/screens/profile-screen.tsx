@@ -10,6 +10,7 @@ import { CinematicEmptyState } from '@/components/rpg/cinematic-empty-state';
 import { DailyStreakDisplay } from '@/components/rpg/daily-streak-display';
 import { BecomingPathPanel } from '@/components/rpg/identity-evidence-panel';
 import { IdentityCompassSheet } from '@/components/rpg/identity-compass-sheet';
+import { InventoryPanel } from '@/components/rpg/inventory-panel';
 import { QuestStyleSheet } from '@/components/rpg/quest-style-sheet';
 import { ReminderPreferencesSheet } from '@/components/rpg/reminder-preferences-sheet';
 import { EvidenceTimelinePanel } from '@/components/rpg/evidence-timeline-panel';
@@ -39,6 +40,7 @@ import { ProcessAchievementsPanel } from '@/components/rpg/process-achievements-
 import { SuiteMasteryPanel } from '@/components/rpg/suite-mastery-panel';
 import { ProfileSection } from '@/components/rpg/profile-section';
 import { ProgressBackupPanel } from '@/components/rpg/progress-backup-panel';
+import { SagaEndingsPanel } from '@/components/rpg/saga-endings-panel';
 import { ScreenScroll } from '@/components/rpg/screen-scroll';
 import { ScreenShell } from '@/components/rpg/screen-shell';
 import { SectionHeader } from '@/components/rpg/section-header';
@@ -68,6 +70,7 @@ export function ProfileScreen() {
   const { activeUniverse, player, playerProgress } = useGame();
   const reminderPrefs = sanitizeReminderPreferences(playerProgress.reminderPreferences);
   const palette = activeUniverse.palette;
+  const hasOnboarded = playerProgress.hasOnboarded;
 
   const unlockedRewards = useMemo(
     () => getUnlockedRewardEntries(activeUniverse, playerProgress.unlockedRewards),
@@ -92,7 +95,12 @@ export function ProfileScreen() {
           <SectionHeader eyebrow={ui.operativeFileEyebrow} title="PROFILE" />
         </Animated.View>
 
-        <ProfileSection title="GLOBAL PROGRESS" hint={GLOBAL_PROGRESS_HINT} style={styles.firstSection}>
+        <ProfileSection
+          title="GLOBAL PROGRESS"
+          hint={GLOBAL_PROGRESS_HINT}
+          style={styles.firstSection}
+          collapsible
+          defaultExpanded={hasOnboarded}>
           <GlobalProgressPanel progress={playerProgress} totalXp={player.totalXp} palette={palette} />
           {onboardingOrigin ? (
             <View style={styles.originBlock}>
@@ -105,23 +113,45 @@ export function ProfileScreen() {
           ) : null}
         </ProfileSection>
 
-        <ProfileSection title="UNIVERSE PROGRESS" hint={UNIVERSE_PROGRESS_HINT}>
+        {!hasOnboarded ? (
+          <ProfileSection title="GETTING STARTED" collapsible defaultExpanded>
+            <Text style={[styles.preOnboardingHint, { color: palette.fog }]}>
+              Complete your first quest on HQ to unlock universe progress, inventory, and the rest of your operative file.
+            </Text>
+          </ProfileSection>
+        ) : null}
+
+        {hasOnboarded ? (
+          <>
+        <ProfileSection title="UNIVERSE PROGRESS" hint={UNIVERSE_PROGRESS_HINT} collapsible defaultExpanded={false}>
           <UniverseProgressPanel
             progress={playerProgress}
             activeUniverseId={activeUniverse.id}
             palette={palette}
           />
+          <View style={styles.subsection}>
+            <Text style={[styles.subsectionLabel, { color: palette.gold }]}>SAGA ENDINGS</Text>
+            <SagaEndingsPanel progress={playerProgress} palette={palette} />
+          </View>
         </ProfileSection>
 
-        <ProfileSection title="SUITE MASTERY" hint={SUITE_MASTERY_HINT} collapsible defaultExpanded>
+        <ProfileSection title="SUITE MASTERY" hint={SUITE_MASTERY_HINT} collapsible defaultExpanded={false}>
           <SuiteMasteryPanel progress={playerProgress} palette={palette} />
+        </ProfileSection>
+
+        <ProfileSection
+          title="INVENTORY"
+          hint="Earned items support real tasks — they never complete quests for you."
+          collapsible
+          defaultExpanded={false}>
+          <InventoryPanel palette={palette} />
         </ProfileSection>
 
         <ProfileSection
           title="IDENTITY / BECOMING"
           hint="Every quest is evidence of who you are becoming."
           collapsible
-          defaultExpanded>
+          defaultExpanded={false}>
           {isFeatureNewlyIntroduced(playerProgress, 'identityVotes') ? (
             <FeatureDiscoveryHint
               hint="Each completed quest adds a quiet vote for who you are becoming."
@@ -203,6 +233,9 @@ export function ProfileScreen() {
             </View>
           </FeatureDiscoveryGate>
         </ProfileSection>
+
+          </>
+        ) : null}
 
         <ProfileSection title="SETTINGS / BACKUP / DEV TOOLS" collapsible defaultExpanded={false}>
           <MascotPreferenceSettings />
@@ -299,6 +332,12 @@ function OriginRow({
 const styles = StyleSheet.create({
   firstSection: {
     marginTop: 0,
+  },
+  preOnboardingHint: {
+    fontFamily: GameFonts.displayRegular,
+    fontSize: 13,
+    lineHeight: 19,
+    fontStyle: 'italic',
   },
   compassEditButton: {
     alignSelf: 'flex-start',

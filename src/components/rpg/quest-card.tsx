@@ -23,6 +23,7 @@ import {
   formatReadinessLabel,
   getQuestReadinessSuggestion,
 } from '@/lib/quest-readiness';
+import { applyInventoryReadinessDisplayBonus } from '@/lib/inventory-item-effects';
 import { formatQuestRiskCardLine, resolveQuestRiskLevel } from '@/lib/quest-risk';
 import {
   MOTION_GUARD_CARD_CTA,
@@ -101,14 +102,17 @@ export function QuestCard({ quest, index, variant = 'default' }: QuestCardProps)
   const lockedFocus = quest.isFocusLocked === true;
   const resolvedRisk = resolveQuestRiskLevel(quest.riskLevel);
   const showRisk = quest.source === 'user' && resolvedRisk !== 'standard';
-  const readinessSuggestion =
-    quest.readinessScore != null && quest.readinessChecklist
-      ? getQuestReadinessSuggestion({
+  const displayReadiness =
+    quest.source === 'user' && quest.readinessScore != null && quest.readinessChecklist
+      ? applyInventoryReadinessDisplayBonus(playerProgress, activeUniverse.id, quest, {
           score: quest.readinessScore,
           maxScore: 4,
           checklist: quest.readinessChecklist,
         })
       : null;
+  const readinessSuggestion = displayReadiness
+    ? getQuestReadinessSuggestion(displayReadiness)
+    : null;
 
   const isChainChild = variant === 'chain-child' || quest.parentQuestId != null;
   const isChainParent = quest.isQuestChainParent === true;
@@ -303,11 +307,11 @@ export function QuestCard({ quest, index, variant = 'default' }: QuestCardProps)
           </Text>
         </View>
 
-        {quest.source === 'user' && showQuestReadiness && (quest.readinessScore != null || showRisk) && (
+        {quest.source === 'user' && showQuestReadiness && (displayReadiness != null || showRisk) && (
           <View style={[styles.metaRow, { borderTopColor: 'rgba(255,255,255,0.08)' }]}>
-            {quest.readinessScore != null && (
+            {displayReadiness != null && (
               <Text style={[styles.metaLine, { color: palette.gold }]}>
-                {formatReadinessLabel(quest.readinessScore)}
+                {formatReadinessLabel(displayReadiness.score)}
               </Text>
             )}
             {showRisk && (
