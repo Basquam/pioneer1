@@ -12,6 +12,14 @@ export const NEON_DELIVERY_CHARACTERS: NarrativeCharacter[] = [
     sagaId: 'neon-delivery',
     name: 'Juno Vale',
     portrait: '▣',
+    media: {
+      portraitImageKey: 'neuronet.character.juno-vale-neutral',
+      portraitExpressions: {
+        neutral: 'neuronet.character.juno-vale-neutral',
+        approving: 'neuronet.character.juno-vale-approving',
+        worried: 'neuronet.character.juno-vale-worried',
+      },
+    },
     role: 'Main Ally · Route Dispatcher',
     personality:
       'Street-smart, fast-talking, and impossible to pin down — she knows every shortcut, every lie, and every package that should never have left the safehouse.',
@@ -59,6 +67,14 @@ export const NEON_DELIVERY_CHARACTERS: NarrativeCharacter[] = [
     sagaId: 'neon-delivery',
     name: 'Razor Jackal',
     portrait: '✦',
+    media: {
+      portraitImageKey: 'neuronet.character.razor-jackal-neutral',
+      portraitExpressions: {
+        neutral: 'neuronet.character.razor-jackal-neutral',
+        taunting: 'neuronet.character.razor-jackal-taunting',
+        angry: 'neuronet.character.razor-jackal-angry',
+      },
+    },
     role: 'Courier Gang Leader',
     personality:
       'Violent, predatory, and convinced that every route belongs to whoever takes it — he hijacks deliveries and sells the memories sealed inside like contraband.',

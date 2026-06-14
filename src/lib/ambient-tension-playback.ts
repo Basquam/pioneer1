@@ -95,7 +95,7 @@ export function applyDustAndIronTensionMix({
   };
 
   if (__DEV__) {
-    ambientDebug('Dust & Iron tension mix updated', {
+    ambientDebug('Ambient tension mix updated', {
       tensionActive,
       townTarget,
       tensionTarget,

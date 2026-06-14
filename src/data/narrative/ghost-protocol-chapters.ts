@@ -50,6 +50,7 @@ const GHOST_PROTOCOL_CHAPTERS_RAW: Chapter[] = [
     order: 1,
     title: 'Signal Leak',
     territoryName: 'Relay District',
+    media: { sceneImageKey: 'neuronet.chapter.ghost-protocol.01-signal-leak' },
     mapPosition: { x: 14, y: 78 },
     summary:
       'A corrupted packet bleeds through Relay District — proof that memories can be edited and identities are never truly private.',
@@ -87,13 +88,21 @@ const GHOST_PROTOCOL_CHAPTERS_RAW: Chapter[] = [
       template('signal-leak', 'creative', 'Draft a Ghost Manifest', 'Create a short design or writing piece', 'Your words shape the runners who follow your route.', 115, 8, LYRA_VOSS_ID, SIGNAL_LEAK_QUEST_VARIATIONS.creative),
       template('signal-leak', 'errand', 'Midnight Supply Run', 'Complete one pending errand', 'Spoof chips and power cells vanish fast under siege.', 110, 8, LYRA_VOSS_ID, SIGNAL_LEAK_QUEST_VARIATIONS.errand),
     ],
-    chapterRewards: [{ id: 'signal-carrier-badge', type: 'badge', name: 'Signal Carrier' }],
+    chapterRewards: [
+      {
+        id: 'signal-carrier-badge',
+        type: 'badge',
+        name: 'Signal Carrier',
+        media: { rewardImageKey: 'neuronet.reward.signal-carrier-badge' },
+      },
+    ],
   },
   {
     id: 'blackline-drop',
     order: 2,
     title: 'Blackline Drop',
     territoryName: 'Blackline Tunnel',
+    media: { sceneImageKey: 'neuronet.chapter.ghost-protocol.02-blackline-drop' },
     mapPosition: { x: 32, y: 58 },
     summary:
       'An illegal memory drop through Blackline Tunnel — Cain’s Ministry watches every packet that moves without a license.',
@@ -131,13 +140,21 @@ const GHOST_PROTOCOL_CHAPTERS_RAW: Chapter[] = [
       template('blackline-drop', 'creative', 'Blackline Anthem', 'Create a short audio/text/art piece', 'Hope encrypts better than fear.', 115, 8, LYRA_VOSS_ID),
       template('blackline-drop', 'errand', 'Tunnel Pickup', 'Finish one practical chore outside', 'Memory shards arrive under active scan.', 120, 9, LYRA_VOSS_ID),
     ],
-    chapterRewards: [{ id: 'blackline-runner-title', type: 'title', name: 'Blackline Runner' }],
+    chapterRewards: [
+      {
+        id: 'blackline-runner-title',
+        type: 'title',
+        name: 'Blackline Runner',
+        media: { rewardImageKey: 'neuronet.reward.blackline-runner-title' },
+      },
+    ],
   },
   {
     id: 'memory-shard',
     order: 3,
     title: 'Memory Shard',
     territoryName: 'Shard Plaza',
+    media: { sceneImageKey: 'neuronet.chapter.ghost-protocol.03-memory-shard' },
     mapPosition: { x: 50, y: 40 },
     summary:
       'A dangerous memory shard surfaces in Shard Plaza — memories can be edited when corporate control finds an open mind.',
@@ -175,13 +192,21 @@ const GHOST_PROTOCOL_CHAPTERS_RAW: Chapter[] = [
       template('memory-shard', 'creative', 'Paint the Ghost Crest', 'Create/update something expressive', 'Symbols remind runners what they protect.', 120, 9, LYRA_VOSS_ID),
       template('memory-shard', 'errand', 'Find Decryption Keys', 'Complete a practical pickup errand', 'The right key at the right cycle saves the shard.', 125, 10, LYRA_VOSS_ID),
     ],
-    chapterRewards: [{ id: 'ghost-patch-cosmetic', type: 'cosmetic', name: 'Ghost Patch' }],
+    chapterRewards: [
+      {
+        id: 'ghost-patch-cosmetic',
+        type: 'cosmetic',
+        name: 'Ghost Patch',
+        media: { rewardImageKey: 'neuronet.reward.ghost-patch-cosmetic' },
+      },
+    ],
   },
   {
     id: 'ghost-sector',
     order: 4,
     title: 'Ghost Sector',
     territoryName: 'Ghost Sector',
+    media: { sceneImageKey: 'neuronet.chapter.ghost-protocol.04-ghost-sector' },
     mapPosition: { x: 68, y: 28 },
     summary:
       'The Ministry locks down Ghost Sector — memories can be edited when exhaustion finds a runner alone in the dark grid.',
@@ -219,13 +244,21 @@ const GHOST_PROTOCOL_CHAPTERS_RAW: Chapter[] = [
       template('ghost-sector', 'creative', 'Ghost Flare Design', 'Creative micro-session', 'In darkness, even small signals matter.', 125, 9, LYRA_VOSS_ID),
       template('ghost-sector', 'errand', 'Sector Supply Check', 'Complete a practical checklist errand', 'One missing spoof chip can end the night.', 130, 10, LYRA_VOSS_ID),
     ],
-    chapterRewards: [{ id: 'sector-phantom-badge', type: 'badge', name: 'Sector Phantom' }],
+    chapterRewards: [
+      {
+        id: 'sector-phantom-badge',
+        type: 'badge',
+        name: 'Sector Phantom',
+        media: { rewardImageKey: 'neuronet.reward.sector-phantom-badge' },
+      },
+    ],
   },
   {
     id: 'cains-mirror',
     order: 5,
     title: "Cain's Mirror",
     territoryName: 'Ministry Core',
+    media: { sceneImageKey: 'neuronet.chapter.ghost-protocol.05-cains-mirror' },
     mapPosition: { x: 82, y: 14 },
     summary:
       'Director Cain’s neural mirror goes live — memories can be edited, and this is the price of a free identity in the Neon Spire.',
@@ -269,6 +302,7 @@ const GHOST_PROTOCOL_CHAPTERS_RAW: Chapter[] = [
         type: 'storyUnlock',
         name: 'Zenith Corporation',
         unlockTargetId: 'zenith-corporation',
+        media: { rewardImageKey: 'neuronet.reward.zenith-corporation-story-unlock' },
       },
     ],
   },

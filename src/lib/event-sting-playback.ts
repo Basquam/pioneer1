@@ -2,14 +2,18 @@ import { Platform } from 'react-native';
 import type { AudioPlayer } from 'expo-audio';
 import { Asset } from 'expo-asset';
 
-import { EventStingConfig, getDustAndIronStingModule } from '@/constants/audio';
+import {
+  EventStingConfig,
+  eventStingPlayerKey,
+  getEventStingModule,
+} from '@/constants/audio';
 import { ambientDebug } from '@/lib/ambient-audio-debug';
 import type { EventStingKind } from '@/lib/celebration-sting-resolver';
 import { safePlay } from '@/lib/safe-audio-play';
 
 const IS_WEB = Platform.OS === 'web';
 
-export type EventStingPlayerMap = Partial<Record<EventStingKind, AudioPlayer>>;
+export type EventStingPlayerMap = Partial<Record<string, AudioPlayer>>;
 
 export type EventStingPlaybackGate = {
   ambientEnabled: boolean;
@@ -20,15 +24,19 @@ export type EventStingPlaybackGate = {
 let webStingAudio: HTMLAudioElement | null = null;
 let webStingToken = 0;
 
-function canPlaySting(gate: EventStingPlaybackGate): boolean {
-  if (gate.universeId !== 'dust-and-iron') return false;
+function canPlaySting(gate: EventStingPlaybackGate, kind: EventStingKind): boolean {
+  if (!getEventStingModule(gate.universeId, kind)) return false;
   if (!gate.ambientEnabled) return false;
   if (IS_WEB && !gate.webPlaybackUnlocked) return false;
   return true;
 }
 
-async function resolveStingUri(kind: EventStingKind): Promise<string> {
-  const module = getDustAndIronStingModule(kind);
+async function resolveStingUri(universeId: string, kind: EventStingKind): Promise<string> {
+  const module = getEventStingModule(universeId, kind);
+  if (!module) {
+    throw new Error(`No event sting module for universe ${universeId}: ${kind}`);
+  }
+
   const asset = Asset.fromModule(module);
   if (!asset.downloaded) {
     await asset.downloadAsync();
@@ -36,9 +44,9 @@ async function resolveStingUri(kind: EventStingKind): Promise<string> {
   return asset.localUri ?? asset.uri;
 }
 
-async function playWebSting(kind: EventStingKind): Promise<void> {
+async function playWebSting(universeId: string, kind: EventStingKind): Promise<void> {
   try {
-    const resolvedUri = await resolveStingUri(kind);
+    const resolvedUri = await resolveStingUri(universeId, kind);
 
     if (!webStingAudio) {
       webStingAudio = new Audio();
@@ -54,22 +62,23 @@ async function playWebSting(kind: EventStingKind): Promise<void> {
     if (token !== webStingToken) {
       webStingAudio.pause();
     }
-    ambientDebug('Event sting played (web)', { kind });
+    ambientDebug('Event sting played (web)', { universeId, kind });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     if (!message.includes('NotAllowedError') && !message.includes('AbortError')) {
-      ambientDebug('Event sting failed (web)', { kind, error: message });
+      ambientDebug('Event sting failed (web)', { universeId, kind, error: message });
     }
   }
 }
 
 async function playNativeSting(
+  universeId: string,
   kind: EventStingKind,
   players: EventStingPlayerMap,
 ): Promise<void> {
-  const player = players[kind];
+  const player = players[eventStingPlayerKey(universeId, kind)];
   if (!player) {
-    ambientDebug('Event sting skipped — player not ready', { kind });
+    ambientDebug('Event sting skipped — player not ready', { universeId, kind });
     return;
   }
 
@@ -80,10 +89,10 @@ async function playNativeSting(
       player.seekTo(0);
     }
     await safePlay(player);
-    ambientDebug('Event sting played (native)', { kind });
+    ambientDebug('Event sting played (native)', { universeId, kind });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    ambientDebug('Event sting failed (native)', { kind, error: message });
+    ambientDebug('Event sting failed (native)', { universeId, kind, error: message });
   }
 }
 
@@ -92,14 +101,14 @@ export async function playEventSting(
   gate: EventStingPlaybackGate,
   nativePlayers: EventStingPlayerMap,
 ): Promise<void> {
-  if (!canPlaySting(gate)) return;
+  if (!canPlaySting(gate, kind)) return;
 
   if (IS_WEB) {
-    await playWebSting(kind);
+    await playWebSting(gate.universeId, kind);
     return;
   }
 
-  await playNativeSting(kind, nativePlayers);
+  await playNativeSting(gate.universeId, kind, nativePlayers);
 }
 
 export function stopWebEventSting(): void {

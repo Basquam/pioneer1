@@ -1,6 +1,7 @@
 import type { ImageSourcePropType } from 'react-native';
 
 import { DUST_AND_IRON_MEDIA_ASSETS } from '@/constants/narrative-media/dust-and-iron';
+import { NEURONET_MEDIA_ASSETS } from '@/constants/narrative-media/neuronet';
 import type {
   Chapter,
   ChapterReward,
@@ -14,16 +15,21 @@ import type {
 
 const ALL_MEDIA_ASSETS: Record<string, ImageSourcePropType> = {
   ...DUST_AND_IRON_MEDIA_ASSETS,
+  ...NEURONET_MEDIA_ASSETS,
 };
 
 const UNIVERSE_MOOD_BY_ID: Record<string, string> = {
   'dust-and-iron': 'dust-and-iron.mood',
+  neuronet: 'neuronet.mood',
 };
 
 const SAGA_BANNER_BY_ID: Record<string, string> = {
   'vulture-gang': 'dust-and-iron.saga.vulture-gang-banner',
   'iron-railway-company': 'dust-and-iron.saga.iron-railway-company-banner',
   'honest-businessman': 'dust-and-iron.saga.honest-businessman-banner',
+  'ghost-protocol': 'neuronet.saga.ghost-protocol-banner',
+  'zenith-corporation': 'neuronet.saga.zenith-corporation-banner',
+  'neon-delivery': 'neuronet.saga.neon-delivery-banner',
 };
 
 const SAGA_DETAIL_BY_ID: Record<string, string> = {
@@ -42,6 +48,21 @@ const CHAPTER_SCENE_BY_ID: Record<string, string> = {
   'broken-tracks': 'dust-and-iron.chapter.iron-railway.03-broken-tracks-pass',
   'freight-war': 'dust-and-iron.chapter.iron-railway.04-freight-war-junction',
   'golden-route': 'dust-and-iron.chapter.iron-railway.05-golden-route-terminal',
+  'signal-leak': 'neuronet.chapter.ghost-protocol.01-signal-leak',
+  'blackline-drop': 'neuronet.chapter.ghost-protocol.02-blackline-drop',
+  'memory-shard': 'neuronet.chapter.ghost-protocol.03-memory-shard',
+  'ghost-sector': 'neuronet.chapter.ghost-protocol.04-ghost-sector',
+  'cains-mirror': 'neuronet.chapter.ghost-protocol.05-cains-mirror',
+  'first-login': 'neuronet.chapter.zenith-corporation.01-first-login',
+  'metrics-review': 'neuronet.chapter.zenith-corporation.02-metrics-review',
+  'compliance-floor': 'neuronet.chapter.zenith-corporation.03-compliance-floor',
+  'productivity-purge': 'neuronet.chapter.zenith-corporation.04-productivity-purge',
+  'the-helix-report': 'neuronet.chapter.zenith-corporation.05-the-helix-report',
+  'first-route': 'neuronet.chapter.neon-delivery.01-first-route',
+  'rainline-package': 'neuronet.chapter.neon-delivery.02-rainline-package',
+  'stolen-coordinates': 'neuronet.chapter.neon-delivery.03-stolen-coordinates',
+  'jackal-run': 'neuronet.chapter.neon-delivery.04-jackal-run',
+  'final-delivery': 'neuronet.chapter.neon-delivery.05-final-delivery',
 };
 
 const REWARD_IMAGE_BY_ID: Record<string, string> = {
@@ -56,6 +77,21 @@ const REWARD_IMAGE_BY_ID: Record<string, string> = {
   'freight-war-badge': 'dust-and-iron.reward.iron-railway.route-marshal-badge',
   'golden-route-title': 'dust-and-iron.reward.iron-railway.golden-route-charter',
   'honest-businessman-story-unlock': 'dust-and-iron.reward.honest-businessman.silver-contract',
+  'signal-carrier-badge': 'neuronet.reward.signal-carrier-badge',
+  'blackline-runner-title': 'neuronet.reward.blackline-runner-title',
+  'ghost-patch-cosmetic': 'neuronet.reward.ghost-patch-cosmetic',
+  'sector-phantom-badge': 'neuronet.reward.sector-phantom-badge',
+  'zenith-corporation-story-unlock': 'neuronet.reward.zenith-corporation-story-unlock',
+  'first-login-badge': 'neuronet.reward.first-login-badge',
+  'metric-analyst-title': 'neuronet.reward.metric-analyst-title',
+  'chrome-access-card-cosmetic': 'neuronet.reward.chrome-access-card-cosmetic',
+  'compliance-breaker-badge': 'neuronet.reward.compliance-breaker-badge',
+  'neon-delivery-story-unlock': 'neuronet.reward.neon-delivery-story-unlock',
+  'first-route-cleared-badge': 'neuronet.reward.first-route-cleared-badge',
+  'rainline-courier-title': 'neuronet.reward.rainline-courier-title',
+  'neon-rider-patch-cosmetic': 'neuronet.reward.neon-rider-patch-cosmetic',
+  'jackal-survivor-badge': 'neuronet.reward.jackal-survivor-badge',
+  'final-runner-title': 'neuronet.reward.final-runner-title',
 };
 
 const CHARACTER_NEUTRAL_PORTRAIT_BY_ID: Record<string, string> = {
@@ -64,6 +100,12 @@ const CHARACTER_NEUTRAL_PORTRAIT_BY_ID: Record<string, string> = {
   'station-master-briggs': 'dust-and-iron.character.station-master-briggs-neutral',
   'silas-vane': 'dust-and-iron.character.silas-vane-neutral',
   'victor-crane': 'dust-and-iron.character.victor-crane-neutral',
+  'lyra-voss': 'neuronet.character.lyra-voss-neutral',
+  'director-cain': 'neuronet.character.director-cain-neutral',
+  'mira-kade': 'neuronet.character.mira-kade-neutral',
+  'executive-helix': 'neuronet.character.executive-helix-neutral',
+  'juno-vale': 'neuronet.character.juno-vale-neutral',
+  'razor-jackal': 'neuronet.character.razor-jackal-neutral',
 };
 
 const CHARACTER_EXPRESSION_ASSETS: Record<string, Partial<Record<CharacterPortraitExpression, string>>> = {
@@ -90,11 +132,41 @@ const CHARACTER_EXPRESSION_ASSETS: Record<string, Partial<Record<CharacterPortra
     neutral: 'dust-and-iron.character.victor-crane-neutral',
     taunting: 'dust-and-iron.character.victor-crane-smirk',
   },
+  'lyra-voss': {
+    neutral: 'neuronet.character.lyra-voss-neutral',
+    approving: 'neuronet.character.lyra-voss-approving',
+    worried: 'neuronet.character.lyra-voss-worried',
+  },
+  'director-cain': {
+    neutral: 'neuronet.character.director-cain-neutral',
+    taunting: 'neuronet.character.director-cain-taunting',
+    angry: 'neuronet.character.director-cain-angry',
+  },
+  'mira-kade': {
+    neutral: 'neuronet.character.mira-kade-neutral',
+    approving: 'neuronet.character.mira-kade-approving',
+    worried: 'neuronet.character.mira-kade-worried',
+  },
+  'executive-helix': {
+    neutral: 'neuronet.character.executive-helix-neutral',
+    taunting: 'neuronet.character.executive-helix-taunting',
+    angry: 'neuronet.character.executive-helix-angry',
+  },
+  'juno-vale': {
+    neutral: 'neuronet.character.juno-vale-neutral',
+    approving: 'neuronet.character.juno-vale-approving',
+    worried: 'neuronet.character.juno-vale-worried',
+  },
+  'razor-jackal': {
+    neutral: 'neuronet.character.razor-jackal-neutral',
+    taunting: 'neuronet.character.razor-jackal-taunting',
+    angry: 'neuronet.character.razor-jackal-angry',
+  },
 };
 
 const VILLAIN_TAUNT_BADGES = new Set(['TAUNT', 'VILLAIN']);
 const CONFRONTATION_BADGES = new Set(['SHOWDOWN']);
-const ENCOURAGEMENT_BADGES = new Set(['ORDERS', 'FINALE', 'LAST RUN', 'STAND FAST']);
+const ENCOURAGEMENT_BADGES = new Set(['ORDERS', 'FINALE', 'LAST RUN', 'STAND FAST', 'EXTRACTION']);
 const SETBACK_BADGES = new Set(['FIELD REPORT', 'MIDNIGHT', 'WHISPER', 'LOGISTICS']);
 
 function resolveNarrativeMediaAsset(key: string | undefined): ImageSourcePropType | null {
@@ -128,22 +200,51 @@ export function portraitContextToExpression(
     case 'questComplete':
     case 'chapterSuccess':
     case 'encouragement':
-      if (characterId === 'ada-mercer' || characterId === 'station-master-briggs') {
+      if (
+        characterId === 'ada-mercer' ||
+        characterId === 'station-master-briggs' ||
+        characterId === 'lyra-voss' ||
+        characterId === 'mira-kade' ||
+        characterId === 'juno-vale'
+      ) {
         return 'approving';
       }
       return 'neutral';
     case 'questMissed':
     case 'chapterFailure':
     case 'setback':
-      if (characterId === 'ada-mercer') return 'worried';
+      if (
+        characterId === 'ada-mercer' ||
+        characterId === 'lyra-voss' ||
+        characterId === 'mira-kade' ||
+        characterId === 'juno-vale'
+      ) {
+        return 'worried';
+      }
       if (characterId === 'station-master-briggs') return 'concerned';
       return 'neutral';
     case 'villainTaunt':
     case 'lockedTeaser':
-      if (characterId === 'elias-crow' || characterId === 'victor-crane') return 'taunting';
+      if (
+        characterId === 'elias-crow' ||
+        characterId === 'victor-crane' ||
+        characterId === 'director-cain' ||
+        characterId === 'executive-helix' ||
+        characterId === 'razor-jackal'
+      ) {
+        return 'taunting';
+      }
       return 'neutral';
     case 'confrontation':
-      if (characterId === 'elias-crow' || characterId === 'silas-vane') return 'angry';
+      if (
+        characterId === 'elias-crow' ||
+        characterId === 'silas-vane' ||
+        characterId === 'director-cain' ||
+        characterId === 'executive-helix' ||
+        characterId === 'razor-jackal'
+      ) {
+        return 'angry';
+      }
       return 'neutral';
     default:
       return 'neutral';
@@ -158,6 +259,18 @@ export function inferPortraitContextFromDialogueBeat(
 
   if (character.isVillain) {
     if (CONFRONTATION_BADGES.has(badge)) return 'confrontation';
+    if (character.id === 'director-cain') {
+      if (badge === 'MINISTRY') return 'villainTaunt';
+      if (badge === 'CHAPTER IV') return 'confrontation';
+    }
+    if (character.id === 'executive-helix') {
+      if (badge === 'ZENITH') return 'villainTaunt';
+      if (badge === 'SECTOR IV') return 'confrontation';
+    }
+    if (character.id === 'razor-jackal') {
+      if (badge === 'SYNDICATE') return 'villainTaunt';
+      if (badge === 'SECTOR IV') return 'confrontation';
+    }
     if (character.id === 'elias-crow') {
       if (VILLAIN_TAUNT_BADGES.has(badge)) return 'villainTaunt';
       if (badge === 'CHAPTER IV') return 'villainTaunt';
@@ -170,6 +283,9 @@ export function inferPortraitContextFromDialogueBeat(
   if (SETBACK_BADGES.has(badge)) {
     if (character.id === 'station-master-briggs') return 'setback';
     if (character.id === 'ada-mercer' && badge === 'FIELD REPORT') return 'setback';
+    if (character.id === 'lyra-voss' || character.id === 'mira-kade' || character.id === 'juno-vale') {
+      return 'setback';
+    }
   }
 
   if (ENCOURAGEMENT_BADGES.has(badge)) return 'encouragement';

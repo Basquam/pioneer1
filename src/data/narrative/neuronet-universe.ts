@@ -54,6 +54,7 @@ export const NEURONET_FACTIONS: UniverseFaction[] = [
 const ghostProtocolSaga: Saga = {
   id: 'ghost-protocol',
   title: 'Ghost Protocol',
+  media: { bannerImageKey: 'neuronet.saga.ghost-protocol-banner' },
   allyName: 'Lyra Voss',
   villainName: 'Director Cain',
   villainTitle: 'Signal Ministry Director',
@@ -75,6 +76,7 @@ const ghostProtocolSaga: Saga = {
 const zenithCorporationSaga: Saga = {
   id: 'zenith-corporation',
   title: 'Zenith Corporation',
+  media: { bannerImageKey: 'neuronet.saga.zenith-corporation-banner' },
   allyName: 'Mira Kade',
   villainName: 'Executive Helix',
   villainTitle: 'Corporate Strategist',
@@ -96,6 +98,7 @@ const zenithCorporationSaga: Saga = {
 const neonDeliverySaga: Saga = {
   id: 'neon-delivery',
   title: 'Neon Delivery',
+  media: { bannerImageKey: 'neuronet.saga.neon-delivery-banner' },
   allyName: 'Juno Vale',
   villainName: 'Razor Jackal',
   villainTitle: 'Courier Gang Leader',
@@ -117,6 +120,7 @@ const neonDeliverySaga: Saga = {
 export const NEURONET_UNIVERSE: Universe = {
   id: 'neuronet',
   name: 'NeuroNet',
+  media: { moodImageKey: 'neuronet.mood' },
   tagline: 'Neon rain, signal decay, and memories for sale.',
   icon: '💠',
   mentorName: 'Lyra Voss',

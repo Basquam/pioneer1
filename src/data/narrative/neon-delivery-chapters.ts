@@ -50,6 +50,7 @@ const NEON_DELIVERY_CHAPTERS_RAW: Chapter[] = [
     order: 1,
     title: 'First Route',
     territoryName: 'Dispatch Alley',
+    media: { sceneImageKey: 'neuronet.chapter.neon-delivery.01-first-route' },
     mapPosition: { x: 16, y: 70 },
     summary:
       'Your first manifest clears at Dispatch Alley — proof that everyone is carrying something before you’ve even clipped the package seal.',
@@ -87,13 +88,21 @@ const NEON_DELIVERY_CHAPTERS_RAW: Chapter[] = [
       template('first-route', 'creative', 'Draft a Route Manifest', 'Create a short design or writing piece', 'Your words shape the riders who follow your trail.', 115, 8, JUNO_VALE_ID, FIRST_ROUTE_QUEST_VARIATIONS.creative),
       template('first-route', 'errand', 'Midnight Supply Run', 'Complete one pending errand', 'Spoof chips and rain seals vanish fast under siege.', 110, 8, JUNO_VALE_ID, FIRST_ROUTE_QUEST_VARIATIONS.errand),
     ],
-    chapterRewards: [{ id: 'first-route-cleared-badge', type: 'badge', name: 'First Route Cleared' }],
+    chapterRewards: [
+      {
+        id: 'first-route-cleared-badge',
+        type: 'badge',
+        name: 'First Route Cleared',
+        media: { rewardImageKey: 'neuronet.reward.first-route-cleared-badge' },
+      },
+    ],
   },
   {
     id: 'rainline-package',
     order: 2,
     title: 'Rainline Package',
     territoryName: 'Rainline Overpass',
+    media: { sceneImageKey: 'neuronet.chapter.neon-delivery.02-rainline-package' },
     mapPosition: { x: 30, y: 52 },
     summary:
       'A high-risk package crosses Rainline Overpass — Jackal’s gang watches every drop that moves without a sealed manifest.',
@@ -131,13 +140,21 @@ const NEON_DELIVERY_CHAPTERS_RAW: Chapter[] = [
       template('rainline-package', 'creative', 'Rainline Anthem', 'Create a short audio/text/art piece', 'Hope encrypts better than fear.', 115, 8, JUNO_VALE_ID),
       template('rainline-package', 'errand', 'Overpass Pickup', 'Finish one practical chore outside', 'Memory shards arrive under active scan.', 120, 9, JUNO_VALE_ID),
     ],
-    chapterRewards: [{ id: 'rainline-courier-title', type: 'title', name: 'Rainline Courier' }],
+    chapterRewards: [
+      {
+        id: 'rainline-courier-title',
+        type: 'title',
+        name: 'Rainline Courier',
+        media: { rewardImageKey: 'neuronet.reward.rainline-courier-title' },
+      },
+    ],
   },
   {
     id: 'stolen-coordinates',
     order: 3,
     title: 'Stolen Coordinates',
     territoryName: 'Gridlock Junction',
+    media: { sceneImageKey: 'neuronet.chapter.neon-delivery.03-stolen-coordinates' },
     mapPosition: { x: 48, y: 36 },
     summary:
       'Stolen coordinates surface at Gridlock Junction — everyone is carrying something when syndicate control finds an open route.',
@@ -175,13 +192,21 @@ const NEON_DELIVERY_CHAPTERS_RAW: Chapter[] = [
       template('stolen-coordinates', 'creative', 'Paint the Neon Crest', 'Create/update something expressive', 'Symbols remind riders what they protect.', 120, 9, JUNO_VALE_ID),
       template('stolen-coordinates', 'errand', 'Find Decryption Keys', 'Complete a practical pickup errand', 'The right key at the right cycle saves the coordinates.', 125, 10, JUNO_VALE_ID),
     ],
-    chapterRewards: [{ id: 'neon-rider-patch-cosmetic', type: 'cosmetic', name: 'Neon Rider Patch' }],
+    chapterRewards: [
+      {
+        id: 'neon-rider-patch-cosmetic',
+        type: 'cosmetic',
+        name: 'Neon Rider Patch',
+        media: { rewardImageKey: 'neuronet.reward.neon-rider-patch-cosmetic' },
+      },
+    ],
   },
   {
     id: 'jackal-run',
     order: 4,
     title: 'Jackal Run',
     territoryName: 'Syndicate Cut',
+    media: { sceneImageKey: 'neuronet.chapter.neon-delivery.04-jackal-run' },
     mapPosition: { x: 66, y: 22 },
     summary:
       'Jackal’s crew locks down Syndicate Cut — everyone is carrying something when exhaustion finds a rider alone in the neon rain.',
@@ -219,13 +244,21 @@ const NEON_DELIVERY_CHAPTERS_RAW: Chapter[] = [
       template('jackal-run', 'creative', 'Neon Flare Design', 'Creative micro-session', 'In darkness, even small signals matter.', 125, 9, JUNO_VALE_ID),
       template('jackal-run', 'errand', 'Cut Supply Check', 'Complete a practical checklist errand', 'One missing spoof chip can end the night.', 130, 10, JUNO_VALE_ID),
     ],
-    chapterRewards: [{ id: 'jackal-survivor-badge', type: 'badge', name: 'Jackal Survivor' }],
+    chapterRewards: [
+      {
+        id: 'jackal-survivor-badge',
+        type: 'badge',
+        name: 'Jackal Survivor',
+        media: { rewardImageKey: 'neuronet.reward.jackal-survivor-badge' },
+      },
+    ],
   },
   {
     id: 'final-delivery',
     order: 5,
     title: 'Final Delivery',
     territoryName: 'Spire Drop Point',
+    media: { sceneImageKey: 'neuronet.chapter.neon-delivery.05-final-delivery' },
     mapPosition: { x: 86, y: 8 },
     summary:
       'Razor Jackal’s final ambush goes live at Spire Drop Point — everyone is carrying something, and this is the price of a free route through the Neon Spire.',
@@ -263,7 +296,14 @@ const NEON_DELIVERY_CHAPTERS_RAW: Chapter[] = [
       template('final-delivery', 'creative', 'Identity Seal Design', 'Creative micro-session', 'Art outlasts edits — if you finish it.', 140, 11, JUNO_VALE_ID),
       template('final-delivery', 'errand', 'Deliver the Final Package', 'Finish critical practical errand', 'The seal reaches the drop point or Jackal wins by default.', 140, 11, JUNO_VALE_ID),
     ],
-    chapterRewards: [{ id: 'final-runner-title', type: 'title', name: 'Final Runner' }],
+    chapterRewards: [
+      {
+        id: 'final-runner-title',
+        type: 'title',
+        name: 'Final Runner',
+        media: { rewardImageKey: 'neuronet.reward.final-runner-title' },
+      },
+    ],
   },
 ];
 

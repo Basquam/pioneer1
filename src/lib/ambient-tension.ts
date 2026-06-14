@@ -1,10 +1,16 @@
+import { getAmbientTensionAudioModule } from '@/constants/audio';
 import type { RewardEvent } from '@/lib/reward-event-queue';
 import { getCharacter } from '@/lib/narrative-helpers';
 import type { NarrativeMoment, Saga, Universe } from '@/types/narrative';
 
-export const DUST_AND_IRON_TENSION_ADAPTER_KEY = 'dust-and-iron::tension';
+export function getTensionAdapterKey(universeId: string): string {
+  return `${universeId}::tension`;
+}
 
-export function isDustAndIronTensionActive({
+/** @deprecated Prefer getTensionAdapterKey('dust-and-iron'). */
+export const DUST_AND_IRON_TENSION_ADAPTER_KEY = getTensionAdapterKey('dust-and-iron');
+
+export function isAmbientTensionActive({
   universe,
   narrativeMoment,
   isCelebrationActive,
@@ -17,7 +23,7 @@ export function isDustAndIronTensionActive({
   activeCelebration: RewardEvent | null;
   activeSaga: Saga;
 }): boolean {
-  if (universe.id !== 'dust-and-iron') return false;
+  if (!getAmbientTensionAudioModule(universe.id)) return false;
 
   if (narrativeMoment?.type === 'villain_taunt') return true;
 
@@ -32,4 +38,11 @@ export function isDustAndIronTensionActive({
   }
 
   return false;
+}
+
+/** @deprecated Use isAmbientTensionActive. */
+export function isDustAndIronTensionActive(
+  args: Parameters<typeof isAmbientTensionActive>[0],
+): boolean {
+  return args.universe.id === 'dust-and-iron' && isAmbientTensionActive(args);
 }

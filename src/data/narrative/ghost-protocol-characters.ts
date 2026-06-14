@@ -12,6 +12,14 @@ export const GHOST_PROTOCOL_CHARACTERS: NarrativeCharacter[] = [
     sagaId: 'ghost-protocol',
     name: 'Lyra Voss',
     portrait: '◈',
+    media: {
+      portraitImageKey: 'neuronet.character.lyra-voss-neutral',
+      portraitExpressions: {
+        neutral: 'neuronet.character.lyra-voss-neutral',
+        approving: 'neuronet.character.lyra-voss-approving',
+        worried: 'neuronet.character.lyra-voss-worried',
+      },
+    },
     role: 'Main Ally · Underground Hacker',
     personality:
       'Paranoid, razor-sharp, and fiercely loyal — she trusts code more than people, but she’ll burn a server farm for the right runner.',
@@ -59,6 +67,14 @@ export const GHOST_PROTOCOL_CHARACTERS: NarrativeCharacter[] = [
     sagaId: 'ghost-protocol',
     name: 'Director Cain',
     portrait: '⬡',
+    media: {
+      portraitImageKey: 'neuronet.character.director-cain-neutral',
+      portraitExpressions: {
+        neutral: 'neuronet.character.director-cain-neutral',
+        taunting: 'neuronet.character.director-cain-taunting',
+        angry: 'neuronet.character.director-cain-angry',
+      },
+    },
     role: 'Signal Ministry Director',
     personality:
       'Cold, methodical, and convinced that safety requires total visibility — he edits memories the way others edit spreadsheets.',

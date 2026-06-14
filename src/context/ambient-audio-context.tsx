@@ -19,6 +19,7 @@ import {
   NEON_ASHES_AMBIENT_AUDIO_MODULE,
   NEURONET_AMBIENT_AUDIO_MODULE,
   getAmbientAudioModule,
+  getAmbientTensionAudioModule,
   universeHasAmbientAudio,
 } from '@/constants/audio';
 import { GameFonts } from '@/constants/typography';
@@ -36,8 +37,8 @@ import {
 import { createExpoAmbientPlayer } from '@/lib/ambient-expo-player';
 import type { AmbientPlayerAdapter } from '@/lib/ambient-player-adapter';
 import {
-  DUST_AND_IRON_TENSION_ADAPTER_KEY,
-  isDustAndIronTensionActive,
+  getTensionAdapterKey,
+  isAmbientTensionActive,
 } from '@/lib/ambient-tension';
 import { applyDustAndIronTensionMix } from '@/lib/ambient-tension-playback';
 import {
@@ -371,13 +372,15 @@ function AmbientAudioEngine({
 
   const activeUniverseId = activeUniverse.id;
   const hasTrack = universeHasAmbientAudio(activeUniverseId);
+  const hasTensionTrack = getAmbientTensionAudioModule(activeUniverseId) !== null;
+  const tensionAdapterKey = getTensionAdapterKey(activeUniverseId);
   const wantsAmbient =
     settingsHydrated && gameHydrated && ambientEnabled && hasTrack;
   const shouldPlay = wantsAmbient && (!IS_WEB || webPlaybackUnlocked);
   const tensionActive =
     shouldPlay &&
-    activeUniverseId === 'dust-and-iron' &&
-    isDustAndIronTensionActive({
+    hasTensionTrack &&
+    isAmbientTensionActive({
       universe: activeUniverse,
       narrativeMoment,
       isCelebrationActive,
@@ -478,10 +481,10 @@ function AmbientAudioEngine({
     applyDustAndIronTensionMix({
       townAdapters: adaptersRef.current,
       tensionAdapters: tensionAdaptersRef.current,
-      townAdapterKey: 'dust-and-iron',
-      tensionAdapterKey: DUST_AND_IRON_TENSION_ADAPTER_KEY,
+      townAdapterKey: activeUniverseId,
+      tensionAdapterKey,
       tensionActive,
-      shouldPlay: shouldPlay && activeUniverseId === 'dust-and-iron',
+      shouldPlay: shouldPlay && hasTensionTrack,
       fadeCancelRef: tensionFadeCancelRef,
     });
   }, [
@@ -489,10 +492,12 @@ function AmbientAudioEngine({
     activeUniverse,
     activeUniverseId,
     adaptersRef,
+    hasTensionTrack,
     isCelebrationActive,
     narrativeMoment,
     shouldPlay,
     tensionActive,
+    tensionAdapterKey,
     tensionAdaptersRef,
     tensionFadeCancelRef,
     tensionRegistryVersion,
@@ -502,11 +507,13 @@ function AmbientAudioEngine({
     () => () => {
       tensionFadeCancelRef.current?.();
       tensionFadeCancelRef.current = null;
-      const tensionAdapter = tensionAdaptersRef.current[DUST_AND_IRON_TENSION_ADAPTER_KEY];
-      if (tensionAdapter) {
-        tensionAdapter.pause();
-        tensionAdapter.setVolume(0);
-      }
+      Object.keys(AMBIENT_TENSION_AUDIO_BY_UNIVERSE_ID).forEach((universeId) => {
+        const tensionAdapter = tensionAdaptersRef.current[getTensionAdapterKey(universeId)];
+        if (tensionAdapter) {
+          tensionAdapter.pause();
+          tensionAdapter.setVolume(0);
+        }
+      });
     },
     [tensionAdaptersRef, tensionFadeCancelRef],
   );

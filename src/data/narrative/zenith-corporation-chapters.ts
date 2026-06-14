@@ -50,6 +50,7 @@ const ZENITH_CORPORATION_CHAPTERS_RAW: Chapter[] = [
     order: 1,
     title: 'First Login',
     territoryName: 'Lobby Terminal',
+    media: { sceneImageKey: 'neuronet.chapter.zenith-corporation.01-first-login' },
     mapPosition: { x: 18, y: 72 },
     summary:
       'Your first clearance badge pings at the Lobby Terminal — proof that productivity metrics already watch before you’ve typed a single line.',
@@ -87,13 +88,21 @@ const ZENITH_CORPORATION_CHAPTERS_RAW: Chapter[] = [
       template('first-login', 'creative', 'Draft an Access Manifest', 'Create a short design or writing piece', 'Your words shape the analysts who follow your route.', 115, 8, MIRA_KADE_ID, FIRST_LOGIN_QUEST_VARIATIONS.creative),
       template('first-login', 'errand', 'Midnight Supply Run', 'Complete one pending errand', 'Clearance chips and power cells vanish fast under review.', 110, 8, MIRA_KADE_ID, FIRST_LOGIN_QUEST_VARIATIONS.errand),
     ],
-    chapterRewards: [{ id: 'first-login-badge', type: 'badge', name: 'First Login' }],
+    chapterRewards: [
+      {
+        id: 'first-login-badge',
+        type: 'badge',
+        name: 'First Login',
+        media: { rewardImageKey: 'neuronet.reward.first-login-badge' },
+      },
+    ],
   },
   {
     id: 'metrics-review',
     order: 2,
     title: 'Metrics Review',
     territoryName: 'Analytics Deck',
+    media: { sceneImageKey: 'neuronet.chapter.zenith-corporation.02-metrics-review' },
     mapPosition: { x: 35, y: 55 },
     summary:
       'A quarterly metrics review on Analytics Deck — Helix’s board watches every packet that moves without a compliant score.',
@@ -131,13 +140,21 @@ const ZENITH_CORPORATION_CHAPTERS_RAW: Chapter[] = [
       template('metrics-review', 'creative', 'Metrics Anthem', 'Create a short audio/text/art piece', 'Hope encrypts better than fear.', 115, 8, MIRA_KADE_ID),
       template('metrics-review', 'errand', 'Deck Pickup', 'Finish one practical chore outside', 'Review packets arrive under active scan.', 120, 9, MIRA_KADE_ID),
     ],
-    chapterRewards: [{ id: 'metric-analyst-title', type: 'title', name: 'Metric Analyst' }],
+    chapterRewards: [
+      {
+        id: 'metric-analyst-title',
+        type: 'title',
+        name: 'Metric Analyst',
+        media: { rewardImageKey: 'neuronet.reward.metric-analyst-title' },
+      },
+    ],
   },
   {
     id: 'compliance-floor',
     order: 3,
     title: 'Compliance Floor',
     territoryName: 'Compliance Floor',
+    media: { sceneImageKey: 'neuronet.chapter.zenith-corporation.03-compliance-floor' },
     mapPosition: { x: 52, y: 38 },
     summary:
       'A dangerous compliance audit surfaces on Compliance Floor — metrics rewrite memory when corporate control finds an open mind.',
@@ -175,13 +192,21 @@ const ZENITH_CORPORATION_CHAPTERS_RAW: Chapter[] = [
       template('compliance-floor', 'creative', 'Paint the Zenith Crest', 'Create/update something expressive', 'Symbols remind analysts what they protect.', 120, 9, MIRA_KADE_ID),
       template('compliance-floor', 'errand', 'Find Decryption Keys', 'Complete a practical pickup errand', 'The right key at the right cycle saves the floor.', 125, 10, MIRA_KADE_ID),
     ],
-    chapterRewards: [{ id: 'chrome-access-card-cosmetic', type: 'cosmetic', name: 'Chrome Access Card' }],
+    chapterRewards: [
+      {
+        id: 'chrome-access-card-cosmetic',
+        type: 'cosmetic',
+        name: 'Chrome Access Card',
+        media: { rewardImageKey: 'neuronet.reward.chrome-access-card-cosmetic' },
+      },
+    ],
   },
   {
     id: 'productivity-purge',
     order: 4,
     title: 'Productivity Purge',
     territoryName: 'Executive Lift',
+    media: { sceneImageKey: 'neuronet.chapter.zenith-corporation.04-productivity-purge' },
     mapPosition: { x: 68, y: 24 },
     summary:
       'Zenith locks down Executive Lift for a productivity purge — metrics rewrite memory when exhaustion finds an analyst alone in the chrome corridors.',
@@ -219,13 +244,21 @@ const ZENITH_CORPORATION_CHAPTERS_RAW: Chapter[] = [
       template('productivity-purge', 'creative', 'Purge Flare Design', 'Creative micro-session', 'In darkness, even small signals matter.', 125, 9, MIRA_KADE_ID),
       template('productivity-purge', 'errand', 'Lift Supply Check', 'Complete a practical checklist errand', 'One missing clearance chip can end the night.', 130, 10, MIRA_KADE_ID),
     ],
-    chapterRewards: [{ id: 'compliance-breaker-badge', type: 'badge', name: 'Compliance Breaker' }],
+    chapterRewards: [
+      {
+        id: 'compliance-breaker-badge',
+        type: 'badge',
+        name: 'Compliance Breaker',
+        media: { rewardImageKey: 'neuronet.reward.compliance-breaker-badge' },
+      },
+    ],
   },
   {
     id: 'the-helix-report',
     order: 5,
     title: 'The Helix Report',
     territoryName: 'Helix Boardroom',
+    media: { sceneImageKey: 'neuronet.chapter.zenith-corporation.05-the-helix-report' },
     mapPosition: { x: 84, y: 10 },
     summary:
       'Executive Helix’s final report goes live — efficiency is obedience, and this is the price of a free identity inside Zenith Corporation.',
@@ -269,6 +302,7 @@ const ZENITH_CORPORATION_CHAPTERS_RAW: Chapter[] = [
         type: 'storyUnlock',
         name: 'Neon Delivery',
         unlockTargetId: 'neon-delivery',
+        media: { rewardImageKey: 'neuronet.reward.neon-delivery-story-unlock' },
       },
     ],
   },

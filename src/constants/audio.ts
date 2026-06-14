@@ -34,8 +34,11 @@ export const DUST_AND_IRON_TENSION_AMBIENT_MODULE = require('@/assets/audio/ambi
 /** @deprecated Use DUST_AND_IRON_TOWN_AMBIENT_MODULE — kept for dev diagnostics. */
 export const AMBIENT_AUDIO_MODULE = DUST_AND_IRON_TOWN_AMBIENT_MODULE;
 
-/** Bundled NeuroNet cyberpunk ambience — rain, synth hum, electric buzz, city drone. */
-export const NEURONET_AMBIENT_AUDIO_MODULE = require('@/assets/audio/neuronet-ambient.wav');
+/** NeuroNet primary cyberpunk ambience loop. */
+export const NEURONET_AMBIENT_AUDIO_MODULE = require('@/assets/audio/ambience/neuronet/neuronet-ambient.mp3.mp3');
+
+/** NeuroNet tension overlay for villain / high-stakes moments. */
+export const NEURONET_TENSION_AMBIENT_MODULE = require('@/assets/audio/ambience/neuronet/neuronet-tension.mp3.mp3');
 
 /** Bundled Neon Ashes noir ambience — rain on glass, jazz club murmur, city rumble, vinyl crackle. */
 export const NEON_ASHES_AMBIENT_AUDIO_MODULE = require('@/assets/audio/neon-ashes-ambient.wav');
@@ -48,6 +51,7 @@ export const AMBIENT_AUDIO_BY_UNIVERSE_ID: Record<string, number | null> = {
 
 export const AMBIENT_TENSION_AUDIO_BY_UNIVERSE_ID: Record<string, number> = {
   'dust-and-iron': DUST_AND_IRON_TENSION_AMBIENT_MODULE,
+  neuronet: NEURONET_TENSION_AMBIENT_MODULE,
 };
 
 export const DUST_AND_IRON_STING_MODULES: Record<EventStingKind, number> = {
@@ -55,6 +59,18 @@ export const DUST_AND_IRON_STING_MODULES: Record<EventStingKind, number> = {
   chapterComplete: require('@/assets/audio/stings/dust-and-iron/create-a-short-cinematic-western_053126.mp3'),
   villainAppearance: require('@/assets/audio/stings/dust-and-iron/create-a-short-western-villain_053126.mp3'),
   rewardUnlock: require('@/assets/audio/stings/dust-and-iron/create-a-short-western-reward_060126.mp3'),
+};
+
+export const NEURONET_STING_MODULES: Record<EventStingKind, number> = {
+  questComplete: require('@/assets/audio/stings/neuronet/neuronet-quest-complete.mp3.mp3'),
+  chapterComplete: require('@/assets/audio/stings/neuronet/neuronet-chapter-complete.mp3.mp3'),
+  villainAppearance: require('@/assets/audio/stings/neuronet/neuronet-villain.mp3.mp3'),
+  rewardUnlock: require('@/assets/audio/stings/neuronet/neuronet-reward-unlock.mp3.mp3'),
+};
+
+export const EVENT_STING_MODULES_BY_UNIVERSE_ID: Record<string, Record<EventStingKind, number>> = {
+  'dust-and-iron': DUST_AND_IRON_STING_MODULES,
+  neuronet: NEURONET_STING_MODULES,
 };
 
 export function getAmbientAudioModule(universeId: string): number | null {
@@ -69,6 +85,18 @@ export function universeHasAmbientAudio(universeId: string): boolean {
   return getAmbientAudioModule(universeId) !== null;
 }
 
+export function getEventStingModule(universeId: string, kind: EventStingKind): number | null {
+  return EVENT_STING_MODULES_BY_UNIVERSE_ID[universeId]?.[kind] ?? null;
+}
+
+export function universeHasEventStings(universeId: string): boolean {
+  return universeId in EVENT_STING_MODULES_BY_UNIVERSE_ID;
+}
+
 export function getDustAndIronStingModule(kind: EventStingKind): number {
   return DUST_AND_IRON_STING_MODULES[kind];
+}
+
+export function eventStingPlayerKey(universeId: string, kind: EventStingKind): string {
+  return `${universeId}::${kind}`;
 }

@@ -12,6 +12,14 @@ export const ZENITH_CORPORATION_CHARACTERS: NarrativeCharacter[] = [
     sagaId: 'zenith-corporation',
     name: 'Mira Kade',
     portrait: '◆',
+    media: {
+      portraitImageKey: 'neuronet.character.mira-kade-neutral',
+      portraitExpressions: {
+        neutral: 'neuronet.character.mira-kade-neutral',
+        approving: 'neuronet.character.mira-kade-approving',
+        worried: 'neuronet.character.mira-kade-worried',
+      },
+    },
     role: 'Main Ally · Executive Sponsor',
     personality:
       'Ambitious, polished, and always three moves ahead — she offers access and protection inside Zenith, but every favor arrives with a metric attached.',
@@ -59,6 +67,14 @@ export const ZENITH_CORPORATION_CHARACTERS: NarrativeCharacter[] = [
     sagaId: 'zenith-corporation',
     name: 'Executive Helix',
     portrait: '⬢',
+    media: {
+      portraitImageKey: 'neuronet.character.executive-helix-neutral',
+      portraitExpressions: {
+        neutral: 'neuronet.character.executive-helix-neutral',
+        taunting: 'neuronet.character.executive-helix-taunting',
+        angry: 'neuronet.character.executive-helix-angry',
+      },
+    },
     role: 'Corporate Strategist',
     personality:
       'Surgical, serene, and convinced that human potential is best expressed as a KPI — he edits memory through metrics the way others edit budgets.',

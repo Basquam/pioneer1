@@ -4,7 +4,8 @@ import { useAudioPlayer } from 'expo-audio';
 
 import {
   AMBIENT_TENSION_AUDIO_BY_UNIVERSE_ID,
-  DUST_AND_IRON_STING_MODULES,
+  EVENT_STING_MODULES_BY_UNIVERSE_ID,
+  eventStingPlayerKey,
 } from '@/constants/audio';
 import { createExpoAmbientPlayer } from '@/lib/ambient-expo-player';
 import type { AdapterRegistry } from '@/lib/ambient-track-playback';
@@ -14,14 +15,14 @@ import type { EventStingPlayerMap } from '@/lib/event-sting-playback';
 const IS_WEB = Platform.OS === 'web';
 
 type NativeEventStingTrackProps = {
-  kind: EventStingKind;
+  playerKey: string;
   module: number;
   playersRef: MutableRefObject<EventStingPlayerMap>;
   onRegistryChange: () => void;
 };
 
 function NativeEventStingTrack({
-  kind,
+  playerKey,
   module,
   playersRef,
   onRegistryChange,
@@ -29,13 +30,13 @@ function NativeEventStingTrack({
   const player = useAudioPlayer(module);
 
   useEffect(() => {
-    playersRef.current[kind] = player;
+    playersRef.current[playerKey] = player;
     onRegistryChange();
     return () => {
-      delete playersRef.current[kind];
+      delete playersRef.current[playerKey];
       onRegistryChange();
     };
-  }, [kind, module, onRegistryChange, player, playersRef]);
+  }, [module, onRegistryChange, player, playerKey, playersRef]);
 
   return null;
 }
@@ -79,16 +80,16 @@ export function EventStingRegistry({ playersRef, onRegistryChange }: EventStingR
 
   return (
     <>
-      {(Object.entries(DUST_AND_IRON_STING_MODULES) as [EventStingKind, number][]).map(
-        ([kind, module]) => (
+      {Object.entries(EVENT_STING_MODULES_BY_UNIVERSE_ID).flatMap(([universeId, modules]) =>
+        (Object.entries(modules) as [EventStingKind, number][]).map(([kind, module]) => (
           <NativeEventStingTrack
-            key={kind}
-            kind={kind}
+            key={eventStingPlayerKey(universeId, kind)}
+            playerKey={eventStingPlayerKey(universeId, kind)}
             module={module}
             playersRef={playersRef}
             onRegistryChange={onRegistryChange}
           />
-        ),
+        )),
       )}
     </>
   );
