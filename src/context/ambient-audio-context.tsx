@@ -55,6 +55,7 @@ import {
   stopWebEventSting,
 } from '@/lib/event-sting-playback';
 import { loadAudioSettings, saveAudioSettings } from '@/lib/audio-settings-storage';
+import { SHOW_INTERNAL_TOOLS } from '@/lib/internal-test-tools';
 
 const IS_WEB = Platform.OS === 'web';
 
@@ -667,7 +668,7 @@ export function AmbientAudioProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const devTestAmbience = useCallback(() => {
-    if (!__DEV__) return;
+    if (!SHOW_INTERNAL_TOOLS) return;
 
     if (IS_WEB) {
       setWebPlaybackUnlocked(true);
@@ -703,7 +704,7 @@ export function AmbientAudioProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const devStopAmbience = useCallback(() => {
-    if (!__DEV__) return;
+    if (!SHOW_INTERNAL_TOOLS) return;
 
     fadeCancelRef.current?.();
     fadeCancelRef.current = null;

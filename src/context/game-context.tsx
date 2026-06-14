@@ -14,6 +14,7 @@ import {
 import { narrativeWarn } from '@/lib/narrative-state-debug';
 import { getLocalDateKey, getTomorrowDateKey } from '@/lib/daily-streak';
 import { shouldAdvanceOnboardingStep } from '@/lib/onboarding-flow';
+import { SHOW_INTERNAL_TOOLS } from '@/lib/internal-test-tools';
 import {
   canLockTodayFocus,
   isTodayFocusLocked,
@@ -1796,6 +1797,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   }, [activeUniverse.id]);
 
   const devUnlockTodayFocus = useCallback(() => {
+    if (!SHOW_INTERNAL_TOOLS) return;
     setProgress((prev) => unlockTodayFocus(prev));
   }, []);
 
@@ -2319,7 +2321,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const dismissXpBurst = useCallback(() => setXpBurst(null), []);
 
   const devAddXp = useCallback((amount: number) => {
-    if (!__DEV__) return;
+    if (!SHOW_INTERNAL_TOOLS) return;
     setProgress((prev) => {
       const nextTotalXp = prev.totalXp + amount;
       return { ...prev, totalXp: nextTotalXp, level: computeLevel(nextTotalXp).level };
@@ -2327,7 +2329,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const devCompleteCurrentChapter = useCallback(() => {
-    if (!__DEV__ || !currentChapter) return;
+    if (!SHOW_INTERNAL_TOOLS || !currentChapter) return;
 
     const templateIds = currentChapter.questTemplates.map((template) => template.id);
     const nextChapter = activeSaga.chapters.find(
@@ -2369,7 +2371,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   }, [activeSaga, currentChapter]);
 
   const devUnlockVultureGangChapters = useCallback(() => {
-    if (!__DEV__) return;
+    if (!SHOW_INTERNAL_TOOLS) return;
 
     const vultureSaga = activeUniverse.sagas.find((saga) => saga.id === 'vulture-gang');
     if (!vultureSaga || vultureSaga.chapters.length === 0) return;
@@ -2410,7 +2412,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   }, [activeSaga.id, activeUniverse.sagas]);
 
   const devUnlockIronRailwayCompany = useCallback(() => {
-    if (!__DEV__) return;
+    if (!SHOW_INTERNAL_TOOLS) return;
     setProgress((prev) => ({
       ...prev,
       unlockedRewards: unlockRewardIds(prev.unlockedRewards, 'high-noon-story-unlock'),
@@ -2418,7 +2420,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const devUnlockNeuroNet = useCallback(() => {
-    if (!__DEV__) return;
+    if (!SHOW_INTERNAL_TOOLS) return;
     setProgress((prev) => ({
       ...prev,
       unlockedRewards: unlockRewardIds(prev.unlockedRewards, NEURONET_UNIVERSE_UNLOCK_ID),
@@ -2426,7 +2428,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const devUnlockNeonAshes = useCallback(() => {
-    if (!__DEV__) return;
+    if (!SHOW_INTERNAL_TOOLS) return;
     setProgress((prev) => ({
       ...prev,
       unlockedRewards: unlockRewardIds(prev.unlockedRewards, NEON_ASHES_UNIVERSE_UNLOCK_ID),
@@ -2434,7 +2436,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const devSwitchToNeonAshes = useCallback(() => {
-    if (!__DEV__) return;
+    if (!SHOW_INTERNAL_TOOLS) return;
     setProgress((prev) => applyDevSwitchToNeonAshes(prev));
     setNarrativeMoment(null);
     setCelebrationQueue([]);
@@ -2442,7 +2444,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const devSwitchToNeuroNet = useCallback(() => {
-    if (!__DEV__) return;
+    if (!SHOW_INTERNAL_TOOLS) return;
     setProgress((prev) => applyDevSwitchToNeuroNet(prev));
     setNarrativeMoment(null);
     setCelebrationQueue([]);
@@ -2450,7 +2452,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const devSwitchToDustAndIron = useCallback(() => {
-    if (!__DEV__) return;
+    if (!SHOW_INTERNAL_TOOLS) return;
     setProgress((prev) => applyDevSwitchToDustAndIron(prev));
     setNarrativeMoment(null);
     setCelebrationQueue([]);

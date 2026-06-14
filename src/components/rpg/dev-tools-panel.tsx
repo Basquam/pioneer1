@@ -4,6 +4,12 @@ import { Alert, Platform, Pressable, StyleSheet, Text, View } from 'react-native
 import { GameLayout } from '@/constants/layout';
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
+import {
+  getInternalToolsSectionHint,
+  getInternalToolsSectionLabel,
+  IS_PREVIEW_INTERNAL_TOOLS,
+  SHOW_INTERNAL_TOOLS,
+} from '@/lib/internal-test-tools';
 import { testSaveMigration } from '@/lib/player-progress-migration';
 import { restorePlayerProgress } from '@/lib/player-progress-storage';
 
@@ -41,7 +47,10 @@ export function DevToolsPanel({ embedded = false }: { embedded?: boolean }) {
   } = useGame();
   const { palette } = activeUniverse;
 
-  if (!__DEV__) return null;
+  if (!SHOW_INTERNAL_TOOLS) return null;
+
+  const sectionLabel = getInternalToolsSectionLabel();
+  const sectionHint = getInternalToolsSectionHint();
 
   const performReset = async () => {
     await resetProgress();
@@ -145,9 +154,10 @@ export function DevToolsPanel({ embedded = false }: { embedded?: boolean }) {
   return (
     embedded ? (
       <View style={styles.embeddedBody}>
-        <Text style={[styles.sectionHint, { color: palette.fog }]}>
-          Dev shortcuts — hidden in production builds.
-        </Text>
+        {IS_PREVIEW_INTERNAL_TOOLS ? (
+          <Text style={[styles.previewWarning, { color: palette.primary }]}>Preview build only</Text>
+        ) : null}
+        <Text style={[styles.sectionHint, { color: palette.fog }]}>{sectionHint}</Text>
         {tools.map((tool) => (
           <Pressable
             key={tool.label}
@@ -174,10 +184,11 @@ export function DevToolsPanel({ embedded = false }: { embedded?: boolean }) {
         styles.panel,
         { backgroundColor: `${palette.primary}12`, borderColor: palette.primary },
       ]}>
-      <Text style={[styles.sectionLabel, { color: palette.primary }]}>DEV / TESTING</Text>
-      <Text style={[styles.sectionHint, { color: palette.fog }]}>
-        Dev shortcuts — hidden in production builds.
-      </Text>
+      <Text style={[styles.sectionLabel, { color: palette.primary }]}>{sectionLabel}</Text>
+      {IS_PREVIEW_INTERNAL_TOOLS ? (
+        <Text style={[styles.previewWarning, { color: palette.primary }]}>Preview build only</Text>
+      ) : null}
+      <Text style={[styles.sectionHint, { color: palette.fog }]}>{sectionHint}</Text>
 
       {tools.map((tool) => (
         <Pressable
@@ -211,6 +222,12 @@ const styles = StyleSheet.create({
     transform: [{ skewX: '-2deg' }],
   },
   sectionLabel: { fontFamily: GameFonts.ui, fontSize: 11, letterSpacing: 3 },
+  previewWarning: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 10,
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
+  },
   sectionHint: {
     fontFamily: GameFonts.uiSemi,
     fontSize: 10,

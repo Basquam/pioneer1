@@ -4,13 +4,22 @@ import { GameLayout } from '@/constants/layout';
 import { GameFonts } from '@/constants/typography';
 import { useAmbientAudio } from '@/context/ambient-audio-context';
 import { useGame } from '@/hooks/use-game';
+import {
+  IS_PREVIEW_INTERNAL_TOOLS,
+  SHOW_INTERNAL_TOOLS,
+} from '@/lib/internal-test-tools';
 
 export function AudioDevTools() {
   const { activeUniverse } = useGame();
   const { devTestAmbience, devStopAmbience } = useAmbientAudio();
   const { palette } = activeUniverse;
 
-  if (!__DEV__) return null;
+  if (!SHOW_INTERNAL_TOOLS) return null;
+
+  const sectionLabel = IS_PREVIEW_INTERNAL_TOOLS ? 'AUDIO TEST TOOLS' : 'AUDIO DEBUG';
+  const sectionHint = IS_PREVIEW_INTERNAL_TOOLS
+    ? 'Preview build only — verify ambience playback on device.'
+    : 'Dev-only controls to verify ambience playback on web and native.';
 
   return (
     <View
@@ -18,10 +27,11 @@ export function AudioDevTools() {
         styles.panel,
         { backgroundColor: `${palette.gold}10`, borderColor: palette.gold },
       ]}>
-      <Text style={[styles.sectionLabel, { color: palette.gold }]}>AUDIO DEBUG</Text>
-      <Text style={[styles.sectionHint, { color: palette.fog }]}>
-        Dev-only controls to verify ambience playback on web and native.
-      </Text>
+      <Text style={[styles.sectionLabel, { color: palette.gold }]}>{sectionLabel}</Text>
+      {IS_PREVIEW_INTERNAL_TOOLS ? (
+        <Text style={[styles.previewWarning, { color: palette.primary }]}>Preview build only</Text>
+      ) : null}
+      <Text style={[styles.sectionHint, { color: palette.fog }]}>{sectionHint}</Text>
 
       <Pressable
         onPress={devTestAmbience}
@@ -52,6 +62,12 @@ const styles = StyleSheet.create({
     transform: [{ skewX: '-2deg' }],
   },
   sectionLabel: { fontFamily: GameFonts.ui, fontSize: 11, letterSpacing: 3 },
+  previewWarning: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 10,
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
+  },
   sectionHint: {
     fontFamily: GameFonts.uiSemi,
     fontSize: 10,

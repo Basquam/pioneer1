@@ -31,6 +31,10 @@ import { GoldilocksCoachPanel } from '@/components/rpg/goldilocks-coach-panel';
 import { DailyShutdownBanner } from '@/components/rpg/daily-shutdown-banner';
 import { DevToolsPanel } from '@/components/rpg/dev-tools-panel';
 import { GlossaryHelpButton } from '@/components/rpg/glossary-help-button';
+import {
+  getInternalToolsSectionLabel,
+  SHOW_INTERNAL_TOOLS,
+} from '@/lib/internal-test-tools';
 import { GlossarySheet } from '@/components/rpg/glossary-sheet';
 import { QuestDefaultsPanel } from '@/components/rpg/quest-defaults-panel';
 import { RecurringQuestsPanel } from '@/components/rpg/recurring-quests-panel';
@@ -278,14 +282,16 @@ export function ProfileScreen() {
           </View>
           <GlossaryHelpButton onPress={() => setGlossaryVisible(true)} />
           <AmbientAudioToggle />
-          {__DEV__ ? <AudioDevTools /> : null}
+          {SHOW_INTERNAL_TOOLS ? <AudioDevTools /> : null}
           <View style={styles.subsection}>
             <Text style={[styles.subsectionLabel, { color: palette.gold }]}>BACKUP</Text>
             <ProgressBackupPanel embedded />
           </View>
-          {__DEV__ ? (
+          {SHOW_INTERNAL_TOOLS ? (
             <View style={styles.subsection}>
-              <Text style={[styles.subsectionLabel, { color: palette.primary }]}>DEV / TESTING</Text>
+              <Text style={[styles.subsectionLabel, { color: palette.primary }]}>
+                {getInternalToolsSectionLabel()}
+              </Text>
               <DevToolsPanel embedded />
             </View>
           ) : null}
