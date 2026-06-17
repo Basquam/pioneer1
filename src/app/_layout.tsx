@@ -1,22 +1,24 @@
 import {
-  BarlowCondensed_600SemiBold,
-  BarlowCondensed_700Bold,
-  useFonts as useBarlowFonts,
+    BarlowCondensed_600SemiBold,
+    BarlowCondensed_700Bold,
+    useFonts as useBarlowFonts,
 } from '@expo-google-fonts/barlow-condensed';
 import {
-  PlayfairDisplay_400Regular,
-  PlayfairDisplay_700Bold,
-  useFonts as usePlayfairFonts,
+    PlayfairDisplay_400Regular,
+    PlayfairDisplay_700Bold,
+    useFonts as usePlayfairFonts,
 } from '@expo-google-fonts/playfair-display';
-import { DarkTheme, DefaultTheme, ThemeProvider, Stack } from 'expo-router';
+import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { useColorScheme } from 'react-native';
 
-import { GameProvider } from '@/context/game-context';
-import { AmbientAudioProvider } from '@/context/ambient-audio-context';
 import { NarrativeRecoveryGate } from '@/components/rpg/narrative-recovery-gate';
+import { AmbientAudioProvider } from '@/context/ambient-audio-context';
+import { GameProvider } from '@/context/game-context';
+import { initAnalytics } from '@/lib/analytics/analytics-service';
 import { configureLocalNotifications } from '@/lib/local-notifications';
+import { useRouteAnalytics } from '@/hooks/useRouteAnalytics';
 
 SplashScreen.preventAutoHideAsync();
 SplashScreen.setOptions({
@@ -45,7 +47,10 @@ export default function RootLayout() {
 
   useEffect(() => {
     void configureLocalNotifications();
+    void initAnalytics();
   }, []);
+
+  useRouteAnalytics();
 
   if (!fontsLoaded) {
     return null;

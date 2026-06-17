@@ -39,6 +39,7 @@ import { GlossarySheet } from '@/components/rpg/glossary-sheet';
 import { QuestDefaultsPanel } from '@/components/rpg/quest-defaults-panel';
 import { RecurringQuestsPanel } from '@/components/rpg/recurring-quests-panel';
 import { MascotPreferenceSettings } from '@/components/rpg/mascot-preference-settings';
+import { NotificationSettingsPanel } from '@/components/rpg/notification-settings-panel';
 import { ProfileAppInfo } from '@/components/rpg/profile-app-info';
 import { ProcessAchievementsPanel } from '@/components/rpg/process-achievements-panel';
 import { SuiteMasteryPanel } from '@/components/rpg/suite-mastery-panel';
@@ -64,6 +65,10 @@ import {
 import { getUnlockedRewardEntries, REWARD_TYPE_LABELS } from '@/lib/reward-unlocks';
 import { formatQuestStyleSummary } from '@/lib/quest-style-profile';
 import { sanitizeReminderPreferences } from '@/lib/reminder-preferences';
+import {
+  getAnalyticsEnabled,
+  setAnalyticsEnabled,
+} from '@/lib/analytics/analytics-service';
 
 export function ProfileScreen() {
   const ui = useUniverseUiCopy();
@@ -71,6 +76,7 @@ export function ProfileScreen() {
   const [identityCompassVisible, setIdentityCompassVisible] = useState(false);
   const [questStyleVisible, setQuestStyleVisible] = useState(false);
   const [reminderPrefsVisible, setReminderPrefsVisible] = useState(false);
+  const [analyticsOn, setAnalyticsOn] = useState<boolean>(() => getAnalyticsEnabled());
   const { activeUniverse, player, playerProgress } = useGame();
   const reminderPrefs = sanitizeReminderPreferences(playerProgress.reminderPreferences);
   const palette = activeUniverse.palette;
@@ -244,6 +250,35 @@ export function ProfileScreen() {
         <ProfileSection title="SETTINGS / BACKUP / DEV TOOLS" collapsible defaultExpanded={false}>
           <MascotPreferenceSettings />
           <FeatureDiscoverySettings />
+          <View style={styles.subsection}>
+            <Text style={[styles.subsectionLabel, { color: palette.gold }]}>NOTIFICATIONS</Text>
+            <NotificationSettingsPanel />
+          </View>
+          <View style={styles.subsection}>
+            <Text style={[styles.subsectionLabel, { color: palette.gold }]}>ANALYTICS</Text>
+            <Pressable
+              onPress={() => {
+                const next = !analyticsOn;
+                setAnalyticsOn(next);
+                void setAnalyticsEnabled(next);
+              }}
+              style={[
+                styles.analyticsToggleRow,
+                { borderColor: palette.panelBorder, backgroundColor: palette.panel },
+              ]}>
+              <View style={styles.analyticsToggleText}>
+                <Text style={[styles.analyticsToggleLabel, { color: palette.bone }]}>
+                  Help improve Questory
+                </Text>
+                <Text style={[styles.analyticsToggleHint, { color: palette.fog }]}>
+                  Share anonymous usage data. No personal content is ever sent.
+                </Text>
+              </View>
+              <Text style={[styles.analyticsToggleStatus, { color: analyticsOn ? palette.gold : palette.fog }]}>
+                {analyticsOn ? 'ON' : 'OFF'}
+              </Text>
+            </Pressable>
+          </View>
           <Pressable
             onPress={() => setQuestStyleVisible(true)}
             style={[
@@ -412,6 +447,31 @@ const styles = StyleSheet.create({
     fontSize: 9,
     letterSpacing: 2,
     marginBottom: 2,
+  },
+  analyticsToggleRow: {
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  analyticsToggleText: { flex: 1, gap: 3 },
+  analyticsToggleLabel: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 12,
+    letterSpacing: 0.4,
+  },
+  analyticsToggleHint: {
+    fontFamily: GameFonts.ui,
+    fontSize: 10,
+    lineHeight: 14,
+  },
+  analyticsToggleStatus: {
+    fontFamily: GameFonts.uiSemi,
+    fontSize: 11,
+    letterSpacing: 1,
   },
   rewardRow: {
     borderWidth: 1,

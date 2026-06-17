@@ -1,6 +1,8 @@
 import { Platform } from 'react-native';
 import * as Device from 'expo-device';
 
+import { configureQuestoryNotificationBehavior } from '@/lib/notifications/notification-service';
+
 import {
   buildQuestReminderId,
   getQuestReminderNotificationCopy,
@@ -35,9 +37,12 @@ async function getNotificationsModule(): Promise<NotificationModule | null> {
 }
 
 export async function configureLocalNotifications(): Promise<void> {
+  await configureQuestoryNotificationBehavior();
+
   const Notifications = await getNotificationsModule();
   if (!Notifications) return;
 
+  // Quest cues keep a lighter handler preference when Questory behavior is already configured.
   Notifications.setNotificationHandler({
     handleNotification: async () => ({
       shouldShowBanner: true,

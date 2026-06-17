@@ -13,6 +13,7 @@ import {
   getUniverseLibraryProgress,
 } from '@/lib/content-library-progress';
 import { getSagaUnlockHint, isSagaUnlocked } from '@/lib/reward-unlocks';
+import { trackSagaSelected } from '@/lib/analytics/questory-analytics';
 
 export function OnboardingSagaScreen() {
   const { activeUniverse, activeSaga, playerProgress, selectSaga, recordOnboardingStep } = useGame();
@@ -26,6 +27,7 @@ export function OnboardingSagaScreen() {
             label="CONTINUE"
             hint={`NEXT: CHOOSE YOUR FOCUS`}
             onPress={() => {
+              trackSagaSelected({ universe_id: activeUniverse.id, saga_id: activeSaga.id });
               recordOnboardingStep('suite');
               router.push('/onboarding/suite' as Href);
             }}

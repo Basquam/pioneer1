@@ -8,6 +8,7 @@ import { SectionHeader } from '@/components/rpg/section-header';
 import { ThemeCard } from '@/components/rpg/theme-card';
 import { useGame } from '@/hooks/use-game';
 import { getUniverseLibraryProgress } from '@/lib/content-library-progress';
+import { trackUniverseSelected } from '@/lib/analytics/questory-analytics';
 
 export function OnboardingThemeScreen() {
   const { universes, activeUniverse, playerProgress, selectUniverse, recordOnboardingStep } = useGame();
@@ -22,6 +23,7 @@ export function OnboardingThemeScreen() {
             label="CONTINUE"
             hint={canContinue ? `NEXT: CHOOSE YOUR SAGA` : 'Choose an unlocked universe'}
             onPress={() => {
+              trackUniverseSelected({ universe_id: activeUniverse.id });
               recordOnboardingStep('saga');
               router.push('/onboarding/saga' as Href);
             }}

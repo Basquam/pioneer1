@@ -5,13 +5,14 @@ import { GameLayout } from '@/constants/layout';
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
 import {
-  getInternalToolsSectionHint,
-  getInternalToolsSectionLabel,
-  IS_PREVIEW_INTERNAL_TOOLS,
-  SHOW_INTERNAL_TOOLS,
+    getInternalToolsSectionHint,
+    getInternalToolsSectionLabel,
+    IS_PREVIEW_INTERNAL_TOOLS,
+    SHOW_INTERNAL_TOOLS,
 } from '@/lib/internal-test-tools';
 import { testSaveMigration } from '@/lib/player-progress-migration';
 import { restorePlayerProgress } from '@/lib/player-progress-storage';
+import { trackResetProgressUsed } from '@/lib/analytics/questory-analytics';
 
 const RESET_CONFIRM_TITLE = 'Erase All Progress?';
 const RESET_CONFIRM_MESSAGE =
@@ -53,6 +54,7 @@ export function DevToolsPanel({ embedded = false }: { embedded?: boolean }) {
   const sectionHint = getInternalToolsSectionHint();
 
   const performReset = async () => {
+    trackResetProgressUsed();
     await resetProgress();
     router.replace('/onboarding' as Href);
   };

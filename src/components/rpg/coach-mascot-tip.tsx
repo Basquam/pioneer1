@@ -4,10 +4,10 @@ import { APP_MASCOTS } from '@/constants/app-mascots';
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
 import {
-  getMascotCoachDisplay,
-  getMascotPreference,
-  type MascotCoachContext,
-  type MascotCoachDisplay,
+    getMascotCoachDisplay,
+    getMascotPreference,
+    type MascotCoachContext,
+    type MascotCoachDisplay,
 } from '@/lib/app-mascot-coach';
 
 type CoachMascotTipProps = {

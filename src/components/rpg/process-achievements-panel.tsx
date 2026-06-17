@@ -4,8 +4,8 @@ import { StyleSheet, Text, View } from 'react-native';
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
 import {
-  getProcessAchievementDefinition,
-  PROCESS_ACHIEVEMENT_IDS,
+    getProcessAchievementDefinition,
+    PROCESS_ACHIEVEMENT_IDS,
 } from '@/lib/process-achievements';
 
 export function ProcessAchievementsPanel() {

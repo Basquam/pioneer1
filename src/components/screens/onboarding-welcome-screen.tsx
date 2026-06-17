@@ -9,6 +9,7 @@ import { SectionHeader } from '@/components/rpg/section-header';
 import { GameLayout } from '@/constants/layout';
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
+import { trackOnboardingStarted } from '@/lib/analytics/questory-analytics';
 
 export function OnboardingWelcomeScreen() {
   const { activeUniverse, recordOnboardingStep } = useGame();
@@ -21,6 +22,7 @@ export function OnboardingWelcomeScreen() {
             label="BEGIN"
             hint="SEE HOW IT WORKS"
             onPress={() => {
+              trackOnboardingStarted();
               recordOnboardingStep('premise');
               router.push('/onboarding/premise' as Href);
             }}
