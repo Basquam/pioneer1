@@ -7,11 +7,8 @@
  * This file is also used by TypeScript for type resolution since TS does not
  * understand Metro's platform extension rules.
  *
- * TODO: Before a native release build, add the Firebase config files:
- *   Android → google-services.json  (root of the project)
- *   iOS     → GoogleService-Info.plist  (root of the project)
- * Then reference them in app.json under expo.android.googleServicesFile
- * and expo.ios.googleServicesFile. Do NOT commit those files to source control.
+ * See docs/firebase-setup.md for setup steps.
+ * Config files are wired automatically by app.config.js when present.
  */
 import type { AnalyticsProvider } from './analytics-types';
 

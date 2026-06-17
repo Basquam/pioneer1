@@ -19,6 +19,7 @@ import {
   trackNotificationPermissionResult,
   trackNotificationTestSent,
 } from '@/lib/analytics/questory-analytics';
+import { playNotificationCue } from '@/lib/audio/sound-service';
 
 type UseNotificationsResult = {
   permissionStatus: NotificationPermissionStatus;
@@ -146,6 +147,7 @@ export function useNotifications(): UseNotificationsResult {
       }
 
       trackNotificationTestSent();
+      playNotificationCue();
       setFeedback('Test notification scheduled — arrives in about 5 seconds.');
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       return true;

@@ -1,10 +1,12 @@
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown, FadeInUp, ZoomIn } from 'react-native-reanimated';
+import { useEffect, useRef } from 'react';
 
 import { GlowButton } from '@/components/rpg/glow-button';
 import { GameLayout } from '@/constants/layout';
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
+import { playQuestCreated } from '@/lib/audio/sound-service';
 import { useUniverseUiCopy } from '@/lib/universe-ui-copy';
 import { getTaskCategoryMeta } from '@/lib/task-categories';
 
@@ -17,6 +19,17 @@ export function QuestCreatedOverlay() {
     addAnotherQuest,
   } = useGame();
   const { palette } = activeUniverse;
+  const playedForQuestIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!questCreated) {
+      playedForQuestIdRef.current = null;
+      return;
+    }
+    if (playedForQuestIdRef.current === questCreated.id) return;
+    playedForQuestIdRef.current = questCreated.id;
+    playQuestCreated();
+  }, [questCreated]);
 
   if (!questCreated) return null;
 

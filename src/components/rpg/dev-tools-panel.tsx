@@ -13,6 +13,7 @@ import {
 import { testSaveMigration } from '@/lib/player-progress-migration';
 import { restorePlayerProgress } from '@/lib/player-progress-storage';
 import { trackResetProgressUsed } from '@/lib/analytics/questory-analytics';
+import { crashForTest, reportError } from '@/lib/crash/crash-service';
 
 const RESET_CONFIRM_TITLE = 'Erase All Progress?';
 const RESET_CONFIRM_MESSAGE =
@@ -89,7 +90,50 @@ export function DevToolsPanel({ embedded = false }: { embedded?: boolean }) {
     );
   };
 
+  const handleTestCrashReport = () => {
+    reportError(new Error('Questory test crash report'), {
+      feature: 'dev_tools',
+      action: 'test_report',
+    });
+
+    if (Platform.OS === 'web') {
+      window.alert('Test crash report sent (dev console on web).');
+      return;
+    }
+
+    Alert.alert('Test Crash Report', 'Non-fatal test error reported to Crashlytics.');
+  };
+
+  const handleForceNativeCrash = () => {
+    if (Platform.OS === 'web') {
+      window.alert('Native crash test is unavailable on web.');
+      return;
+    }
+
+    Alert.alert('Force Native Crash', 'This will crash the app for Crashlytics testing.', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Crash', style: 'destructive', onPress: () => crashForTest() },
+    ]);
+  };
+
+  const devCrashTools: DevToolButton[] = __DEV__
+    ? [
+        {
+          label: 'TEST CRASH REPORT',
+          hint: 'Send a non-fatal test error to Crashlytics',
+          onPress: handleTestCrashReport,
+        },
+        {
+          label: 'FORCE NATIVE CRASH',
+          hint: 'Triggers a native Crashlytics test crash (dev only)',
+          onPress: handleForceNativeCrash,
+          destructive: true,
+        },
+      ]
+    : [];
+
   const tools: DevToolButton[] = [
+    ...devCrashTools,
     {
       label: 'TEST SAVE MIGRATION',
       hint: 'Simulate loading a legacy minimal save and verify migration',

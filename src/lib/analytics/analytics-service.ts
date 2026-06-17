@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import { reportError } from '@/lib/crash/crash-service';
 import { firebaseAnalyticsProvider } from './firebase-analytics-provider';
 import type { AnalyticsEventName, AnalyticsParams, AnalyticsProvider } from './analytics-types';
 
@@ -153,6 +154,7 @@ export function trackEvent(name: AnalyticsEventName, params?: AnalyticsParams): 
   const sanitised = params ? sanitiseParams(params) : undefined;
 
   void provider.logEvent(name, sanitised).catch((err) => {
+    reportError(err, { feature: 'analytics', action: 'log_event' });
     if (__DEV__) {
       console.warn('[Analytics] logEvent error:', name, err);
     }
@@ -170,6 +172,7 @@ export function trackScreenView(screenName: string, screenClass?: string): void 
   if (!analyticsEnabled) return;
 
   void provider.logScreenView(screenName, screenClass).catch((err) => {
+    reportError(err, { feature: 'analytics', action: 'log_screen_view' });
     if (__DEV__) {
       console.warn('[Analytics] logScreenView error:', screenName, err);
     }
@@ -185,6 +188,7 @@ export function setAnalyticsUserProperty(name: string, value: string | null): vo
   if (!analyticsEnabled) return;
   const safeName = name.slice(0, 24);
   void provider.setUserProperty(safeName, value).catch((err) => {
+    reportError(err, { feature: 'analytics', action: 'set_user_property' });
     if (__DEV__) {
       console.warn('[Analytics] setUserProperty error:', safeName, err);
     }

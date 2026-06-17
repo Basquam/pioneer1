@@ -26,6 +26,7 @@ import {
   serializeProgressBackup,
   validateProgressBackupJson,
 } from '@/lib/progress-backup';
+import { reportStorageError } from '@/lib/crash/questory-crash';
 import { restorePlayerProgress } from '@/lib/player-progress-storage';
 
 const IMPORT_CONFIRM_TITLE = 'Replace Current Save?';
@@ -75,7 +76,7 @@ export function ProgressBackupPanel({ embedded = false }: ProgressBackupPanelPro
       try {
         await Share.share({
           message: json,
-          title: 'Pioneer Progress Backup',
+          title: 'Questory Progress Backup',
         });
         clearStatusLater('Backup shared. Copy from the modal if needed.');
       } catch {
@@ -118,12 +119,17 @@ export function ProgressBackupPanel({ embedded = false }: ProgressBackupPanelPro
       return;
     }
 
-    await importProgress(result.playerProgress);
-    void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    closeImportModal();
-    clearStatusLater(
-      `Save restored · schema v${result.playerProgress.schemaVersion} · backup ${result.backup.appVersionLabel} (${result.backup.exportedAt.slice(0, 10)}).`,
-    );
+    try {
+      await importProgress(result.playerProgress);
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      closeImportModal();
+      clearStatusLater(
+        `Save restored · schema v${result.playerProgress.schemaVersion} · backup ${result.backup.appVersionLabel} (${result.backup.exportedAt.slice(0, 10)}).`,
+      );
+    } catch (err) {
+      reportStorageError(err, { action: 'import_backup' });
+      setImportError('Could not restore this backup. Please try again.');
+    }
   };
 
   const requestImport = () => {

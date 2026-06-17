@@ -8,6 +8,7 @@ import {
   type CoachVoice,
   type NotificationPreset,
 } from '@/lib/notifications/notification-messages';
+import { reportNotificationError } from '@/lib/crash/questory-crash';
 
 export const QUESTORY_NOTIFICATIONS_SUPPORTED = Platform.OS !== 'web';
 
@@ -199,7 +200,8 @@ export async function scheduleQuestoryDailyReminders(): Promise<{ ok: true } | {
     );
     await setDailyRemindersEnabled(true);
     return { ok: true };
-  } catch {
+  } catch (err) {
+    reportNotificationError(err, { action: 'schedule_daily_reminders' });
     return { ok: false, reason: 'Could not schedule daily reminders. Please try again.' };
   }
 }
@@ -269,7 +271,8 @@ export async function scheduleTestNotification(
       },
     });
     return { ok: true };
-  } catch {
+  } catch (err) {
+    reportNotificationError(err, { action: 'schedule_test_notification' });
     return { ok: false, reason: 'Could not schedule the test notification.' };
   }
 }
@@ -316,7 +319,8 @@ export async function schedulePresetLocalNotification(
         : null,
     });
     return { ok: true };
-  } catch {
+  } catch (err) {
+    reportNotificationError(err, { action: 'schedule_preset_notification', reason: preset });
     return { ok: false, reason: 'Could not schedule the notification.' };
   }
 }

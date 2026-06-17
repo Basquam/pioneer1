@@ -49,4 +49,10 @@ export const ANALYTICS_EVENTS = {
 
   // Developer / testing
   reset_progress_used: 'reset_progress_used',
+
+  // Audio settings
+  ambience_enabled: 'ambience_enabled',
+  ambience_disabled: 'ambience_disabled',
+  sound_enabled: 'sound_enabled',
+  sound_disabled: 'sound_disabled',
 } as const satisfies Record<AnalyticsEventName, AnalyticsEventName>;

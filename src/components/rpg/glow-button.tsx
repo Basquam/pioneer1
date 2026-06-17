@@ -13,6 +13,7 @@ import Animated, {
 import { GameFonts } from '@/constants/typography';
 import { skewTransform } from '@/constants/universe-visual-theme';
 import { useGame } from '@/hooks/use-game';
+import { playButtonTap } from '@/lib/audio/sound-service';
 import { useUniverseVisualTheme } from '@/hooks/use-universe-visual-theme';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -49,6 +50,7 @@ export function GlowButton({ label, hint, onPress }: GlowButtonProps) {
   const btnStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
 
   const handlePress = () => {
+    playButtonTap();
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     onPress();
   };

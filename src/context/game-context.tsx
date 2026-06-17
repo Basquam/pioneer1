@@ -288,6 +288,7 @@ import {
   trackSagaCompleted,
 } from '@/lib/analytics/questory-analytics';
 import { trackAnalyticsOnce } from '@/lib/analytics/analytics-dedupe';
+import { setQuestoryCrashContext, reportProgressionError } from '@/lib/crash/questory-crash';
 import type { QuestSource } from '@/lib/analytics/analytics-types';
 
 export type XpBurst = { id: string; amount: number };
@@ -559,23 +560,33 @@ export function GameProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let active = true;
 
-    loadPlayerProgress().then((saved) => {
-      if (!active) return;
-      const base = saved ?? createInitialProgress();
-      setProgress(applySessionOnOpen(base));
-      setIsHydrated(true);
+    loadPlayerProgress()
+      .then((saved) => {
+        if (!active) return;
+        const base = saved ?? createInitialProgress();
+        setProgress(applySessionOnOpen(base));
+        setIsHydrated(true);
 
-      trackAppOpened({
-        has_onboarded: base.hasOnboarded,
-        universe_id: base.selectedUniverseId,
-        saga_id: base.selectedSagaId,
-        level: computeLevel(base.totalXp).level,
+        trackAppOpened({
+          has_onboarded: base.hasOnboarded,
+          universe_id: base.selectedUniverseId,
+          saga_id: base.selectedSagaId,
+          level: computeLevel(base.totalXp).level,
+        });
+        setUserPropHasOnboarded(base.hasOnboarded);
+        setUserPropUniverse(base.selectedUniverseId);
+        setUserPropSaga(base.selectedSagaId);
+        setUserPropLevel(computeLevel(base.totalXp).level);
+        setQuestoryCrashContext(base);
+      })
+      .catch((err) => {
+        if (!active) return;
+        reportProgressionError(err, { action: 'hydrate' });
+        const base = createInitialProgress();
+        setProgress(applySessionOnOpen(base));
+        setIsHydrated(true);
+        setQuestoryCrashContext(base);
       });
-      setUserPropHasOnboarded(base.hasOnboarded);
-      setUserPropUniverse(base.selectedUniverseId);
-      setUserPropSaga(base.selectedSagaId);
-      setUserPropLevel(computeLevel(base.totalXp).level);
-    });
 
     return () => {
       active = false;
@@ -2699,6 +2710,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setAddQuestRecoveryMode(false);
     pendingChapterCompleteRef.current = null;
     await savePlayerProgress(restored);
+    setQuestoryCrashContext(restored);
   }, []);
 
   const value = useMemo<GameContextValue>(

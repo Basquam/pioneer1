@@ -37,7 +37,11 @@ export type AnalyticsEventName =
   | 'guide_panel_opened'
   | 'inventory_item_equipped'
   | 'reward_unlocked'
-  | 'reset_progress_used';
+  | 'reset_progress_used'
+  | 'ambience_enabled'
+  | 'ambience_disabled'
+  | 'sound_enabled'
+  | 'sound_disabled';
 
 /** Origin of a quest: user-written or a saga template/system quest. */
 export type QuestSource = 'user' | 'template' | 'recovery' | 'inbox';

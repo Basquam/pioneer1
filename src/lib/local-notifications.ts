@@ -2,6 +2,7 @@ import { Platform } from 'react-native';
 import * as Device from 'expo-device';
 
 import { configureQuestoryNotificationBehavior } from '@/lib/notifications/notification-service';
+import { reportNotificationError } from '@/lib/crash/questory-crash';
 
 import {
   buildQuestReminderId,
@@ -37,20 +38,28 @@ async function getNotificationsModule(): Promise<NotificationModule | null> {
 }
 
 export async function configureLocalNotifications(): Promise<void> {
-  await configureQuestoryNotificationBehavior();
+  try {
+    await configureQuestoryNotificationBehavior();
+  } catch (err) {
+    reportNotificationError(err, { action: 'configure_behavior' });
+    return;
+  }
 
   const Notifications = await getNotificationsModule();
   if (!Notifications) return;
 
-  // Quest cues keep a lighter handler preference when Questory behavior is already configured.
-  Notifications.setNotificationHandler({
-    handleNotification: async () => ({
-      shouldShowBanner: true,
-      shouldShowList: true,
-      shouldPlaySound: false,
-      shouldSetBadge: false,
-    }),
-  });
+  try {
+    Notifications.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldShowBanner: true,
+        shouldShowList: true,
+        shouldPlaySound: false,
+        shouldSetBadge: false,
+      }),
+    });
+  } catch (err) {
+    reportNotificationError(err, { action: 'set_handler' });
+  }
 }
 
 async function ensureAndroidChannel(Notifications: NotificationModule): Promise<void> {
@@ -157,7 +166,8 @@ export async function scheduleQuestReminderNotification(
       },
     });
     return identifier;
-  } catch {
+  } catch (err) {
+    reportNotificationError(err, { action: 'schedule_quest_reminder' });
     return null;
   }
 }

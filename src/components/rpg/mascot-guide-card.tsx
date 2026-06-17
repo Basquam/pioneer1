@@ -11,6 +11,7 @@ import { trackGuidePanelOpened, trackMascotTipSeen } from '@/lib/analytics/quest
 import { getMascotPreference } from '@/lib/app-mascot-coach';
 import { resolveMascotImageSource, type MascotFraming, type MascotMood } from '@/lib/mascot-assets';
 import { getMascotGuideCopy, type MascotGuideContextId } from '@/lib/mascots/mascot-guide-copy';
+import { playMascotTip } from '@/lib/audio/sound-service';
 import type { AppMascotId, MascotPreference } from '@/types/narrative';
 
 function shouldShowGuideForPreference(preference: MascotPreference, mascot: AppMascotId): boolean {
@@ -82,6 +83,7 @@ function MascotGuideCardComponent({
   const handleExpand = useCallback(() => {
     setExpanded((prev) => {
       if (!prev && expandableDetail) {
+        playMascotTip();
         trackAnalyticsOnce(`guide_panel_opened:${tipId}`, () => {
           trackGuidePanelOpened({
             mascot_id: mascot as MascotId,

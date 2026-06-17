@@ -68,6 +68,7 @@ import {
   sanitizePersistedProgress,
   sanitizeUserQuestList,
 } from '@/lib/player-progress-sanitize';
+import { reportStorageError } from '@/lib/crash/questory-crash';
 
 const STORAGE_KEY = '@pioneer/player-progress';
 
@@ -389,7 +390,8 @@ export async function loadPlayerProgress(): Promise<PlayerProgress | null> {
     const raw = await AsyncStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
     return restorePlayerProgress(JSON.parse(raw));
-  } catch {
+  } catch (err) {
+    reportStorageError(err, { action: 'load' });
     return null;
   }
 }
@@ -398,15 +400,15 @@ export async function savePlayerProgress(progress: PlayerProgress): Promise<void
   try {
     const persisted = sanitizePersistedProgress(progress);
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(persisted));
-  } catch {
-    // Ignore write failures for now — local-only persistence.
+  } catch (err) {
+    reportStorageError(err, { action: 'save' });
   }
 }
 
 export async function clearPlayerProgress(): Promise<void> {
   try {
     await AsyncStorage.removeItem(STORAGE_KEY);
-  } catch {
-    // Ignore clear failures for now.
+  } catch (err) {
+    reportStorageError(err, { action: 'clear' });
   }
 }

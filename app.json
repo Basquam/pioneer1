@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Pioneer",
+    "name": "Questory",
     "slug": "pioneer1",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -22,7 +22,6 @@
       "predictiveBackGestureEnabled": false,
       "package": "com.pioneer.pioneer1",
       "permissions": [
-        "android.permission.RECORD_AUDIO",
         "android.permission.MODIFY_AUDIO_SETTINGS",
         "android.permission.FOREGROUND_SERVICE",
         "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"
@@ -31,7 +30,7 @@
     "web": {
       "output": "static",
       "favicon": "./assets/images/favicon.png",
-      "name": "Pioneer"
+      "name": "Questory"
     },
     "plugins": [
       "expo-router",
@@ -67,7 +66,8 @@
       ],
       "expo-asset",
       "@react-native-firebase/app",
-      "@react-native-firebase/analytics"
+      "@react-native-firebase/analytics",
+      "@react-native-firebase/crashlytics"
     ],
     "experiments": {
       "typedRoutes": true,

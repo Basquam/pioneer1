@@ -18,10 +18,10 @@ export const AmbientAudioConfig = {
 
 export const EventStingConfig = {
   volumes: {
-    chapterComplete: 0.28,
-    rewardUnlock: 0.24,
-    questComplete: 0.22,
-    villainAppearance: 0.2,
+    chapterComplete: 0.38,
+    rewardUnlock: 0.34,
+    questComplete: 0.32,
+    villainAppearance: 0.3,
   } satisfies Record<EventStingKind, number>,
 } as const;
 

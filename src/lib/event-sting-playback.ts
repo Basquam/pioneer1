@@ -9,6 +9,7 @@ import {
 } from '@/constants/audio';
 import { ambientDebug } from '@/lib/ambient-audio-debug';
 import type { EventStingKind } from '@/lib/celebration-sting-resolver';
+import { reportAssetError } from '@/lib/crash/questory-crash';
 import { safePlay } from '@/lib/safe-audio-play';
 
 const IS_WEB = Platform.OS === 'web';
@@ -16,7 +17,7 @@ const IS_WEB = Platform.OS === 'web';
 export type EventStingPlayerMap = Partial<Record<string, AudioPlayer>>;
 
 export type EventStingPlaybackGate = {
-  ambientEnabled: boolean;
+  soundEffectsEnabled: boolean;
   webPlaybackUnlocked: boolean;
   universeId: string;
 };
@@ -26,7 +27,7 @@ let webStingToken = 0;
 
 function canPlaySting(gate: EventStingPlaybackGate, kind: EventStingKind): boolean {
   if (!getEventStingModule(gate.universeId, kind)) return false;
-  if (!gate.ambientEnabled) return false;
+  if (!gate.soundEffectsEnabled) return false;
   if (IS_WEB && !gate.webPlaybackUnlocked) return false;
   return true;
 }
@@ -67,6 +68,7 @@ async function playWebSting(universeId: string, kind: EventStingKind): Promise<v
     const message = error instanceof Error ? error.message : String(error);
     if (!message.includes('NotAllowedError') && !message.includes('AbortError')) {
       ambientDebug('Event sting failed (web)', { universeId, kind, error: message });
+      reportAssetError(error, { feature: 'audio', action: 'play_sting_web', reason: kind });
     }
   }
 }
@@ -93,6 +95,7 @@ async function playNativeSting(
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     ambientDebug('Event sting failed (native)', { universeId, kind, error: message });
+    reportAssetError(error, { feature: 'audio', action: 'play_sting_native', reason: kind });
   }
 }
 

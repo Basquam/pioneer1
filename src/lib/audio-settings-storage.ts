@@ -4,10 +4,12 @@ const STORAGE_KEY = '@pioneer/audio-settings';
 
 export type AudioSettings = {
   ambientEnabled: boolean;
+  soundEffectsEnabled: boolean;
 };
 
 const DEFAULT_SETTINGS: AudioSettings = {
   ambientEnabled: true,
+  soundEffectsEnabled: true,
 };
 
 export async function loadAudioSettings(): Promise<AudioSettings> {
@@ -17,6 +19,7 @@ export async function loadAudioSettings(): Promise<AudioSettings> {
     const parsed = JSON.parse(raw) as Partial<AudioSettings>;
     return {
       ambientEnabled: parsed.ambientEnabled ?? DEFAULT_SETTINGS.ambientEnabled,
+      soundEffectsEnabled: parsed.soundEffectsEnabled ?? DEFAULT_SETTINGS.soundEffectsEnabled,
     };
   } catch {
     return DEFAULT_SETTINGS;

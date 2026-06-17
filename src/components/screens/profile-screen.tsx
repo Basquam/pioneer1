@@ -4,6 +4,7 @@ import { StyleSheet, Text, View, Pressable } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { AmbientAudioToggle } from '@/components/rpg/ambient-audio-toggle';
+import { SoundEffectsToggle } from '@/components/rpg/sound-effects-toggle';
 import { AudioDevTools } from '@/components/rpg/audio-dev-tools';
 import { ChapterRewardBadge } from '@/components/rpg/chapter-reward-badge';
 import { CinematicEmptyState } from '@/components/rpg/cinematic-empty-state';
@@ -70,6 +71,10 @@ import {
   getAnalyticsEnabled,
   setAnalyticsEnabled,
 } from '@/lib/analytics/analytics-service';
+import {
+  getCrashReportingEnabled,
+  setCrashReportingEnabled,
+} from '@/lib/crash/crash-service';
 
 export function ProfileScreen() {
   const ui = useUniverseUiCopy();
@@ -78,6 +83,7 @@ export function ProfileScreen() {
   const [questStyleVisible, setQuestStyleVisible] = useState(false);
   const [reminderPrefsVisible, setReminderPrefsVisible] = useState(false);
   const [analyticsOn, setAnalyticsOn] = useState<boolean>(() => getAnalyticsEnabled());
+  const [crashReportingOn, setCrashReportingOn] = useState<boolean>(() => getCrashReportingEnabled());
   const { activeUniverse, player, playerProgress } = useGame();
   const reminderPrefs = sanitizeReminderPreferences(playerProgress.reminderPreferences);
   const palette = activeUniverse.palette;
@@ -290,6 +296,28 @@ export function ProfileScreen() {
                 {analyticsOn ? 'ON' : 'OFF'}
               </Text>
             </Pressable>
+            <Pressable
+              onPress={() => {
+                const next = !crashReportingOn;
+                setCrashReportingOn(next);
+                void setCrashReportingEnabled(next);
+              }}
+              style={[
+                styles.analyticsToggleRow,
+                { borderColor: palette.panelBorder, backgroundColor: palette.panel },
+              ]}>
+              <View style={styles.analyticsToggleText}>
+                <Text style={[styles.analyticsToggleLabel, { color: palette.bone }]}>
+                  Help detect app crashes
+                </Text>
+                <Text style={[styles.analyticsToggleHint, { color: palette.fog }]}>
+                  Send anonymous crash reports. No personal content is ever sent.
+                </Text>
+              </View>
+              <Text style={[styles.analyticsToggleStatus, { color: crashReportingOn ? palette.gold : palette.fog }]}>
+                {crashReportingOn ? 'ON' : 'OFF'}
+              </Text>
+            </Pressable>
           </View>
           <Pressable
             onPress={() => setQuestStyleVisible(true)}
@@ -329,6 +357,7 @@ export function ProfileScreen() {
           </View>
           <GlossaryHelpButton onPress={() => setGlossaryVisible(true)} />
           <AmbientAudioToggle />
+          <SoundEffectsToggle />
           {SHOW_INTERNAL_TOOLS ? <AudioDevTools /> : null}
           <View style={styles.subsection}>
             <Text style={[styles.subsectionLabel, { color: palette.gold }]}>BACKUP</Text>

@@ -55,7 +55,16 @@ import {
   playEventSting,
   stopWebEventSting,
 } from '@/lib/event-sting-playback';
-import { loadAudioSettings, saveAudioSettings } from '@/lib/audio-settings-storage';
+import {
+  getAmbienceEnabled,
+  getSoundEnabled,
+  initSoundSystem,
+  playCelebrationSting,
+  playVillainSting,
+  registerSoundPlaybackBridge,
+  setAmbienceEnabled as persistAmbienceEnabled,
+  setSoundEnabled as persistSoundEnabled,
+} from '@/lib/audio/sound-service';
 import { SHOW_INTERNAL_TOOLS } from '@/lib/internal-test-tools';
 
 const IS_WEB = Platform.OS === 'web';
@@ -63,6 +72,8 @@ const IS_WEB = Platform.OS === 'web';
 type AmbientAudioContextValue = {
   ambientEnabled: boolean;
   setAmbientEnabled: (enabled: boolean) => void;
+  soundEffectsEnabled: boolean;
+  setSoundEffectsEnabled: (enabled: boolean) => void;
   isHydrated: boolean;
   webPlaybackUnlocked: boolean;
   unlockWebPlayback: () => void;
@@ -581,6 +592,7 @@ function AmbientWebUnlockPrompt() {
 
 export function AmbientAudioProvider({ children }: { children: ReactNode }) {
   const [ambientEnabled, setAmbientEnabledState] = useState(true);
+  const [soundEffectsEnabled, setSoundEffectsEnabledState] = useState(true);
   const [isHydrated, setIsHydrated] = useState(false);
   const [webPlaybackUnlocked, setWebPlaybackUnlocked] = useState(!IS_WEB);
   const adaptersRef = useRef<AdapterRegistry>({});
@@ -592,27 +604,21 @@ export function AmbientAudioProvider({ children }: { children: ReactNode }) {
   const playingUniverseIdRef = useRef<string | null>(null);
   const bumpStingRegistry = useCallback(() => {}, []);
 
-  const playSting = useCallback(
-    (kind: EventStingKind) => {
-      void playEventSting(
-        kind,
-        {
-          ambientEnabled,
-          webPlaybackUnlocked,
-          universeId: activeUniverseIdRef.current,
-        },
-        stingPlayersRef.current,
-      );
-    },
-    [ambientEnabled, webPlaybackUnlocked],
-  );
+  const playSting = useCallback((kind: EventStingKind) => {
+    if (kind === 'villainAppearance') {
+      playVillainSting();
+      return;
+    }
+    playCelebrationSting(kind);
+  }, []);
 
   useEffect(() => {
     let mounted = true;
 
-    void loadAudioSettings().then((settings) => {
+    void initSoundSystem().then((settings) => {
       if (!mounted) return;
       setAmbientEnabledState(settings.ambientEnabled);
+      setSoundEffectsEnabledState(settings.soundEffectsEnabled);
       setIsHydrated(true);
       ambientDebug('Audio settings hydrated', settings);
     });
@@ -621,6 +627,61 @@ export function AmbientAudioProvider({ children }: { children: ReactNode }) {
       mounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    registerSoundPlaybackBridge({
+      playSting: (kind) => {
+        void playEventSting(
+          kind,
+          {
+            soundEffectsEnabled: getSoundEnabled(),
+            webPlaybackUnlocked: IS_WEB ? webPlaybackUnlocked : true,
+            universeId: activeUniverseIdRef.current,
+          },
+          stingPlayersRef.current,
+        );
+      },
+      stopAmbience: () => {
+        fadeCancelRef.current?.();
+        fadeCancelRef.current = null;
+        stopAllAmbientTracks(adaptersRef.current, fadeCancelRef, playingUniverseIdRef);
+      },
+      startAmbienceForUniverse: (universeId) => {
+        activeUniverseIdRef.current = universeId;
+        if (!getAmbienceEnabled()) return;
+        const adapter = adaptersRef.current[universeId];
+        if (!adapter) return;
+        switchAmbientTrack(
+          adaptersRef.current,
+          playingUniverseIdRef.current,
+          universeId,
+          fadeCancelRef,
+          playingUniverseIdRef,
+        );
+      },
+      stopAllAudio: () => {
+        fadeCancelRef.current?.();
+        fadeCancelRef.current = null;
+        tensionFadeCancelRef.current?.();
+        tensionFadeCancelRef.current = null;
+        stopAllAmbientTracks(adaptersRef.current, fadeCancelRef, playingUniverseIdRef);
+        stopWebEventSting();
+      },
+      unlockWebPlayback: () => {
+        setWebPlaybackUnlocked(true);
+      },
+      getGate: () => ({
+        soundEffectsEnabled: getSoundEnabled(),
+        webPlaybackUnlocked: IS_WEB ? webPlaybackUnlocked : true,
+        universeId: activeUniverseIdRef.current,
+      }),
+      getNativeStingPlayers: () => stingPlayersRef.current,
+    });
+
+    return () => {
+      registerSoundPlaybackBridge(null);
+    };
+  }, [webPlaybackUnlocked]);
 
   useEffect(() => {
     if (!__DEV__) return;
@@ -666,12 +727,19 @@ export function AmbientAudioProvider({ children }: { children: ReactNode }) {
       ambientDebug('Web playback unlocked (ambient toggle ON)');
       setWebPlaybackUnlocked(true);
     }
+    setAmbientEnabledState(enabled);
+    persistAmbienceEnabled(enabled);
+  }, []);
+
+  const setSoundEffectsEnabled = useCallback((enabled: boolean) => {
+    if (enabled && IS_WEB) {
+      setWebPlaybackUnlocked(true);
+    }
     if (!enabled) {
       stopWebEventSting();
     }
-    setAmbientEnabledState(enabled);
-    void saveAudioSettings({ ambientEnabled: enabled });
-    ambientDebug('Ambient preference updated', { enabled });
+    setSoundEffectsEnabledState(enabled);
+    persistSoundEnabled(enabled);
   }, []);
 
   const devTestAmbience = useCallback(() => {
@@ -735,6 +803,8 @@ export function AmbientAudioProvider({ children }: { children: ReactNode }) {
     () => ({
       ambientEnabled,
       setAmbientEnabled,
+      soundEffectsEnabled,
+      setSoundEffectsEnabled,
       isHydrated,
       webPlaybackUnlocked,
       unlockWebPlayback,
@@ -749,6 +819,8 @@ export function AmbientAudioProvider({ children }: { children: ReactNode }) {
       isHydrated,
       needsWebUnlock,
       setAmbientEnabled,
+      setSoundEffectsEnabled,
+      soundEffectsEnabled,
       unlockWebPlayback,
       webPlaybackUnlocked,
     ],

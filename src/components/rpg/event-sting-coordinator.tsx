@@ -1,8 +1,10 @@
 import { useEffect, useRef } from 'react';
 import { Platform } from 'react-native';
 
+import { universeHasEventStings } from '@/constants/audio';
 import { useAmbientAudio } from '@/context/ambient-audio-context';
 import { useGame } from '@/hooks/use-game';
+import { getSoundEnabled } from '@/lib/audio/sound-service';
 import { resolveCelebrationSting } from '@/lib/celebration-sting-resolver';
 import type { EventStingKind } from '@/lib/celebration-sting-resolver';
 
@@ -14,12 +16,12 @@ type EventStingCoordinatorProps = {
 
 export function EventStingCoordinator({ playSting }: EventStingCoordinatorProps) {
   const { activeUniverse, celebrationQueue, narrativeMoment, isCelebrationActive } = useGame();
-  const { ambientEnabled, webPlaybackUnlocked } = useAmbientAudio();
+  const { soundEffectsEnabled, webPlaybackUnlocked } = useAmbientAudio();
   const prevQueueLengthRef = useRef(0);
   const lastTauntKeyRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (activeUniverse.id !== 'dust-and-iron' || !ambientEnabled) {
+    if (!universeHasEventStings(activeUniverse.id) || !soundEffectsEnabled) {
       prevQueueLengthRef.current = celebrationQueue.length;
       return;
     }
@@ -37,9 +39,9 @@ export function EventStingCoordinator({ playSting }: EventStingCoordinatorProps)
     prevQueueLengthRef.current = celebrationQueue.length;
   }, [
     activeUniverse.id,
-    ambientEnabled,
     celebrationQueue,
     playSting,
+    soundEffectsEnabled,
     webPlaybackUnlocked,
   ]);
 
@@ -49,7 +51,7 @@ export function EventStingCoordinator({ playSting }: EventStingCoordinatorProps)
       return;
     }
 
-    if (activeUniverse.id !== 'dust-and-iron' || !ambientEnabled) return;
+    if (!universeHasEventStings(activeUniverse.id) || !getSoundEnabled()) return;
     if (IS_WEB && !webPlaybackUnlocked) return;
     if (isCelebrationActive) return;
 
@@ -60,10 +62,10 @@ export function EventStingCoordinator({ playSting }: EventStingCoordinatorProps)
     playSting('villainAppearance');
   }, [
     activeUniverse.id,
-    ambientEnabled,
     isCelebrationActive,
     narrativeMoment,
     playSting,
+    soundEffectsEnabled,
     webPlaybackUnlocked,
   ]);
 
