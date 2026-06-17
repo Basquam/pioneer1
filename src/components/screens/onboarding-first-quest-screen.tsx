@@ -5,7 +5,7 @@ import { StyleSheet, Text, TextInput, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { GlowButton } from '@/components/rpg/glow-button';
-import { CoachMascotTip } from '@/components/rpg/coach-mascot-tip';
+import { MascotGuideFromContext } from '@/components/rpg/mascot-guide-card';
 import { OnboardingScroll } from '@/components/rpg/onboarding-scroll';
 import { ScreenShell } from '@/components/rpg/screen-shell';
 import { SectionHeader } from '@/components/rpg/section-header';
@@ -100,7 +100,10 @@ export function OnboardingFirstQuestScreen() {
           Small is fine. Vague is fine. You can always complete it.
         </Text>
 
-        <CoachMascotTip context={{ kind: 'onboarding-first-quest' }} />
+        <MascotGuideFromContext
+          contextId={createdQuest ? 'after_first_quest_created' : 'onboarding_first_quest'}
+          screenName="/onboarding/first-quest"
+        />
 
         {!createdQuest ? (
           <>

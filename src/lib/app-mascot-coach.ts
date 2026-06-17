@@ -196,7 +196,7 @@ export function getMascotPreference(
   return sanitizeMascotPreference(progress.mascotPreference);
 }
 
-function contextKey(context: MascotCoachContext): string {
+export function getMascotCoachContextKey(context: MascotCoachContext): string {
   switch (context.kind) {
     case 'onboarding-structure':
       return 'onboarding-structure';
@@ -222,7 +222,7 @@ function contextKey(context: MascotCoachContext): string {
 }
 
 function getFallbackMessage(context: MascotCoachContext): string {
-  const key = contextKey(context);
+  const key = getMascotCoachContextKey(context);
   return FALLBACK_MESSAGES[key] ?? 'One clear move is enough for today.';
 }
 
@@ -283,7 +283,7 @@ export function getMascotCoachDisplay(
   messageOverride?: string,
 ): MascotCoachDisplay {
   const fallback = messageOverride ?? getFallbackMessage(context);
-  const key = contextKey(context);
+  const key = getMascotCoachContextKey(context);
   const mascotId = resolveActiveMascot(context, preference);
 
   if (preference === 'off' || !mascotId) {

@@ -3,6 +3,7 @@ import { StyleSheet, Text } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { GlowButton } from '@/components/rpg/glow-button';
+import { MascotGuideFromContext } from '@/components/rpg/mascot-guide-card';
 import { OnboardingScroll } from '@/components/rpg/onboarding-scroll';
 import { ScreenShell } from '@/components/rpg/screen-shell';
 import { SectionHeader } from '@/components/rpg/section-header';
@@ -30,6 +31,11 @@ export function OnboardingWelcomeScreen() {
         }>
         <Animated.View entering={FadeInDown.duration(600)} style={styles.content}>
           <SectionHeader eyebrow="PIONEER" title="YOUR LIFE\nBECOMES LEGEND" />
+          <MascotGuideFromContext
+            contextId="onboarding_start"
+            mode="full"
+            screenName="/onboarding"
+          />
           <Text style={[styles.body, { color: activeUniverse.palette.fog }]}>
             Turn daily life into a cinematic saga. Bounties drive the chapter. You write the quests.
           </Text>

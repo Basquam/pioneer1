@@ -7,6 +7,7 @@
  * All functions are fire-and-forget — they never throw to callers.
  */
 import { ANALYTICS_EVENTS } from './analytics-events';
+import { trackAnalyticsOnce } from './analytics-dedupe';
 import {
   setAnalyticsUserProperty,
   trackEvent,
@@ -59,6 +60,7 @@ export function trackQuestCreated(params: {
   chapter_id: string;
   category: string;
   quest_source: QuestSource;
+  level?: number;
   is_first_quest: boolean;
 }): void {
   trackEvent(ANALYTICS_EVENTS.quest_created, params);
@@ -128,6 +130,9 @@ export function trackChapterStarted(params: {
   universe_id: string;
   saga_id: string;
   chapter_id: string;
+  chapter_index?: number;
+  level?: number;
+  reputation?: number;
 }): void {
   trackEvent(ANALYTICS_EVENTS.chapter_started, params);
 }
@@ -136,15 +141,31 @@ export function trackChapterCompleted(params: {
   universe_id: string;
   saga_id: string;
   chapter_id: string;
+  chapter_index?: number;
+  level?: number;
+  reputation?: number;
+  villain_influence?: number;
+  completed_quest_count?: number;
+  unlock_type?: string;
 }): void {
   trackEvent(ANALYTICS_EVENTS.chapter_completed, params);
 }
 
-export function trackSagaCompleted(params: { universe_id: string; saga_id: string }): void {
+export function trackSagaCompleted(params: {
+  universe_id: string;
+  saga_id: string;
+  level?: number;
+  reputation?: number;
+}): void {
   trackEvent(ANALYTICS_EVENTS.saga_completed, params);
 }
 
-export function trackSagaUnlocked(params: { universe_id: string; saga_id: string }): void {
+export function trackSagaUnlocked(params: {
+  universe_id: string;
+  saga_id: string;
+  unlocked_by_chapter_id?: string;
+  unlock_type?: string;
+}): void {
   trackEvent(ANALYTICS_EVENTS.saga_unlocked, params);
 }
 
@@ -186,6 +207,7 @@ export function trackMascotTipSeen(params: {
   mascot_id: MascotId;
   tip_context: string;
   universe_id?: string;
+  screen_name?: string;
 }): void {
   trackEvent(ANALYTICS_EVENTS.mascot_tip_seen, params);
 }
@@ -199,6 +221,8 @@ export function trackMascotReactionSeen(params: {
 
 export function trackGuidePanelOpened(params: {
   mascot_id: MascotId;
+  tip_context?: string;
+  screen_name?: string;
   universe_id?: string;
 }): void {
   trackEvent(ANALYTICS_EVENTS.guide_panel_opened, params);
@@ -245,4 +269,51 @@ export function setUserPropSaga(sagaId: string | null): void {
 
 export function setUserPropLevel(level: number): void {
   setAnalyticsUserProperty('player_level', String(level));
+}
+
+// ─── Story unlock helpers ──────────────────────────────────────────────────────
+
+type ChapterRewardLike = {
+  id: string;
+  type: string;
+  unlockTargetId?: string;
+};
+
+/**
+ * Tracks reward_unlocked and saga_unlocked for rewards newly added to progress.
+ * Skips ids already present in `previousUnlockedIds` to avoid hydration duplicates.
+ */
+export function trackNewlyUnlockedChapterRewards(
+  previousUnlockedIds: string[],
+  rewards: ChapterRewardLike[],
+  context: {
+    universe_id: string;
+    saga_id: string;
+    chapter_id: string;
+  },
+): void {
+  for (const reward of rewards) {
+    if (previousUnlockedIds.includes(reward.id)) continue;
+
+    trackAnalyticsOnce(`reward_unlocked:${reward.id}`, () => {
+      trackRewardUnlocked({
+        reward_id: reward.id,
+        unlock_type: reward.type,
+        universe_id: context.universe_id,
+        saga_id: context.saga_id,
+        chapter_id: context.chapter_id,
+      });
+    });
+
+    if (reward.type === 'storyUnlock' && reward.unlockTargetId) {
+      trackAnalyticsOnce(`saga_unlocked:${reward.unlockTargetId}`, () => {
+        trackSagaUnlocked({
+          universe_id: context.universe_id,
+          saga_id: reward.unlockTargetId!,
+          unlocked_by_chapter_id: context.chapter_id,
+          unlock_type: reward.type,
+        });
+      });
+    }
+  }
 }

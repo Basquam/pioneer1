@@ -1,6 +1,6 @@
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 
@@ -8,6 +8,8 @@ import { CharacterDialoguePanel } from '@/components/rpg/character-dialogue-pane
 import { GlowButton } from '@/components/rpg/glow-button';
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
+import { trackAnalyticsOnce } from '@/lib/analytics/analytics-dedupe';
+import { trackChapterStarted } from '@/lib/analytics/questory-analytics';
 import { getChapterSceneImage } from '@/lib/narrative-media';
 import { useUniverseUiCopy } from '@/lib/universe-ui-copy';
 
@@ -18,13 +20,40 @@ type ChapterIntroSceneProps = {
 
 export function ChapterIntroScene({ visible, onComplete }: ChapterIntroSceneProps) {
   const ui = useUniverseUiCopy();
-  const { activeUniverse, currentChapter } = useGame();
+  const { activeUniverse, activeSaga, currentChapter, playerProgress } = useGame();
   const { palette } = activeUniverse;
   const sceneImage = currentChapter ? getChapterSceneImage(currentChapter) : null;
   const beats = currentChapter?.introScene ?? [];
   const [beatIndex, setBeatIndex] = useState(0);
   const [typingDone, setTypingDone] = useState(false);
   const [sceneFailed, setSceneFailed] = useState(false);
+  const trackedChapterIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!visible || !currentChapter) return;
+    if (playerProgress.seenChapterIntros.includes(currentChapter.id)) return;
+    if (trackedChapterIdRef.current === currentChapter.id) return;
+
+    trackedChapterIdRef.current = currentChapter.id;
+    trackAnalyticsOnce(`chapter_started:${currentChapter.id}`, () => {
+      trackChapterStarted({
+        universe_id: activeUniverse.id,
+        saga_id: activeSaga.id,
+        chapter_id: currentChapter.id,
+        chapter_index: currentChapter.order,
+        level: playerProgress.level,
+        reputation: playerProgress.reputation,
+      });
+    });
+  }, [
+    activeSaga.id,
+    activeUniverse.id,
+    currentChapter,
+    playerProgress.level,
+    playerProgress.reputation,
+    playerProgress.seenChapterIntros,
+    visible,
+  ]);
 
   useEffect(() => {
     if (!visible || !currentChapter) return;

@@ -7,6 +7,7 @@ import { AddQuestTrigger } from '@/components/rpg/add-quest-trigger';
 import { CharacterDialoguePanel } from '@/components/rpg/character-dialogue-panel';
 import { CinematicEmptyState } from '@/components/rpg/cinematic-empty-state';
 import { CoachMascotTip } from '@/components/rpg/coach-mascot-tip';
+import { MascotGuideFromContext } from '@/components/rpg/mascot-guide-card';
 import { CollapsibleSection } from '@/components/rpg/collapsible-section';
 import { DialoguePanel } from '@/components/rpg/dialogue-panel';
 import { GameHud } from '@/components/rpg/game-hud';
@@ -254,13 +255,19 @@ export function QuestsScreen() {
       case 'chapter':
         if (tabContent.chapterQuests.length === 0) {
           return (
-            <CinematicEmptyState
-              title={ui.chapterTemplatesClearedTitle}
-              message={ui.chapterTemplatesClearedContinueMessage}
-              primaryLabel={ui.hqReturnLabel}
-              onPrimaryPress={() => router.push('/(game)/hq' as Href)}
-              index={1}
-            />
+            <>
+              <MascotGuideFromContext
+                contextId="quest_board_chapter_cleared"
+                screenName="/(game)/quests"
+              />
+              <CinematicEmptyState
+                title={ui.chapterTemplatesClearedTitle}
+                message={ui.chapterTemplatesClearedContinueMessage}
+                primaryLabel={ui.hqReturnLabel}
+                onPrimaryPress={() => router.push('/(game)/hq' as Href)}
+                index={1}
+              />
+            </>
           );
         }
         return (
@@ -323,13 +330,20 @@ export function QuestsScreen() {
           tabContent.chapterQuests.length === 0
         ) {
           return (
-            <CinematicEmptyState
-              title={ui.noQuestsYetTitle}
-              message={ui.noQuestsYetMessage}
-              primaryLabel={ui.addQuestButtonLabel}
-              onPrimaryPress={openAddQuestSheet}
-              coachContext={{ kind: 'empty', variant: 'quest-board' }}
-            />
+            <>
+              <MascotGuideFromContext
+                contextId="quest_board_empty_state"
+                screenName="/(game)/quests"
+                onAction={openAddQuestSheet}
+              />
+              <CinematicEmptyState
+                title={ui.noQuestsYetTitle}
+                message={ui.noQuestsYetMessage}
+                primaryLabel={ui.addQuestButtonLabel}
+                onPrimaryPress={openAddQuestSheet}
+                index={1}
+              />
+            </>
           );
         }
 
@@ -364,6 +378,14 @@ export function QuestsScreen() {
         <Text style={[styles.hint, { color: palette.fog }]}>
           {hasOnboarded ? ui.questsBoardHint : 'Complete your first quest from HQ, then return here for the full board.'}
         </Text>
+
+        {hasOnboarded && !hasPersonalQuests ? (
+          <MascotGuideFromContext
+            contextId="quest_board_custom_empty"
+            screenName="/(game)/quests"
+            onAction={openAddQuestSheet}
+          />
+        ) : null}
 
         {hasOnboarded ? (
           <>

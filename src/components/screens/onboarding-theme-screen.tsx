@@ -2,6 +2,7 @@ import { type Href, router } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { GlowButton } from '@/components/rpg/glow-button';
+import { MascotGuideFromContext } from '@/components/rpg/mascot-guide-card';
 import { OnboardingScroll } from '@/components/rpg/onboarding-scroll';
 import { ScreenShell } from '@/components/rpg/screen-shell';
 import { SectionHeader } from '@/components/rpg/section-header';
@@ -32,6 +33,11 @@ export function OnboardingThemeScreen() {
         <Animated.View entering={FadeInDown.duration(500)}>
           <SectionHeader eyebrow="UNIVERSE LIBRARY" title="CHOOSE YOUR UNIVERSE" />
         </Animated.View>
+        <MascotGuideFromContext
+          contextId="universe_selection"
+          screenName="/onboarding/theme"
+          expandableDetail="Dust & Iron and NeuroNet each have their own sagas, tone, and chapter bounties."
+        />
         {universes.map((universe, i) => (
           <ThemeCard
             key={universe.id}

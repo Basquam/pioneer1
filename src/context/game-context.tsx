@@ -275,14 +275,20 @@ import {
   setUserPropSaga,
   setUserPropUniverse,
   trackAppOpened,
+  trackChapterCompleted,
   trackFirstFocusStarted,
   trackFirstQuestCompleted,
   trackFirstQuestCreated,
   trackFocusStarted,
+  trackInventoryItemEquipped,
+  trackNewlyUnlockedChapterRewards,
   trackOnboardingCompleted,
   trackQuestCompleted,
   trackQuestCreated,
+  trackSagaCompleted,
 } from '@/lib/analytics/questory-analytics';
+import { trackAnalyticsOnce } from '@/lib/analytics/analytics-dedupe';
+import type { QuestSource } from '@/lib/analytics/analytics-types';
 
 export type XpBurst = { id: string; amount: number };
 
@@ -988,6 +994,15 @@ export function GameProvider({ children }: { children: ReactNode }) {
       const trimmed = originalTitle.trim();
       if (!trimmed || !currentChapter) return;
 
+      const userQuestCountBefore = progress.userQuests.length;
+      const questSource: QuestSource = options?.convertFromInboxItemId ? 'inbox' : 'user';
+      const questCategory: TaskCategory =
+        suggestTaskCategory(trimmed) ??
+        (progress.activeSuiteId
+          ? getQuestSuiteById(progress.activeSuiteId)?.primaryCategories[0] ?? 'work'
+          : null) ??
+        'work';
+
       let achievementUnlocks: ProcessAchievementUnlock[] = [];
 
       setProgress((prev) => {
@@ -1060,9 +1075,29 @@ export function GameProvider({ children }: { children: ReactNode }) {
         return next;
       });
 
+      const isFirstQuest = userQuestCountBefore === 0;
+      trackQuestCreated({
+        universe_id: activeUniverse.id,
+        saga_id: activeSaga.id,
+        chapter_id: currentChapter.id,
+        category: questCategory,
+        quest_source: questSource,
+        level: progress.level,
+        is_first_quest: isFirstQuest,
+      });
+      if (isFirstQuest) {
+        trackFirstQuestCreated({
+          universe_id: activeUniverse.id,
+          saga_id: activeSaga.id,
+          chapter_id: currentChapter.id,
+          category: questCategory,
+          quest_source: questSource,
+        });
+      }
+
       enqueueProcessAchievementUnlocks(achievementUnlocks, activeUniverse.id);
     },
-    [activeSaga, activeUniverse, currentChapter, enqueueProcessAchievementUnlocks],
+    [activeSaga, activeUniverse, currentChapter, enqueueProcessAchievementUnlocks, progress.level, progress.userQuests.length],
   );
 
   const disableRecurringQuest = useCallback((templateId: string) => {
@@ -1199,6 +1234,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const equipInventoryItemForUniverse = useCallback(
     (universeId: string, slot: ItemSlot, itemId: InventoryItemId) => {
       setProgress((prev) => equipInventoryItem(prev, universeId, slot, itemId));
+      trackInventoryItemEquipped({ item_id: itemId, universe_id: universeId });
     },
     [],
   );
@@ -1243,6 +1279,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
     (items: Array<{ originalTitle: string; category: TaskCategory; options?: CreateUserQuestOptions }>) => {
       if (!currentChapter || items.length === 0) return;
 
+      const userQuestCountBefore = progress.userQuests.length;
+      const createdQuests: UserQuest[] = [];
+
       setProgress((prev) => {
         let workingQuests = prev.userQuests;
         const created: UserQuest[] = [];
@@ -1271,6 +1310,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
         if (created.length === 0) return prev;
 
+        createdQuests.push(...created);
+
         setAddQuestSheetOpen(false);
         setQuestPackSheetOpen(false);
 
@@ -1286,8 +1327,30 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
         return next;
       });
+
+      createdQuests.forEach((quest, index) => {
+        const isFirstQuest = userQuestCountBefore === 0 && index === 0;
+        trackQuestCreated({
+          universe_id: activeUniverse.id,
+          saga_id: activeSaga.id,
+          chapter_id: currentChapter.id,
+          category: quest.category,
+          quest_source: 'user',
+          level: progress.level,
+          is_first_quest: isFirstQuest,
+        });
+        if (isFirstQuest) {
+          trackFirstQuestCreated({
+            universe_id: activeUniverse.id,
+            saga_id: activeSaga.id,
+            chapter_id: currentChapter.id,
+            category: quest.category,
+            quest_source: 'user',
+          });
+        }
+      });
     },
-    [activeSaga, activeUniverse, currentChapter],
+    [activeSaga, activeUniverse, currentChapter, progress.level, progress.userQuests.length],
   );
 
   const openQuestPackSheet = useCallback(() => {
@@ -2309,6 +2372,15 @@ export function GameProvider({ children }: { children: ReactNode }) {
       pendingChapterCompleteRef.current = null;
       if (pendingChapter) {
         if (pendingChapter.newRewards?.length) {
+          trackNewlyUnlockedChapterRewards(
+            progress.unlockedRewards,
+            pendingChapter.newRewards,
+            {
+              universe_id: activeUniverse.id,
+              saga_id: activeSaga.id,
+              chapter_id: pendingChapter.chapterId,
+            },
+          );
           setProgress((prev) => ({
             ...prev,
             unlockedRewards: unlockChapterRewards(prev.unlockedRewards, pendingChapter.newRewards!),
@@ -2356,6 +2428,37 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   const finalizeChapterComplete = useCallback(
     (chapter: ChapterCompleteState, options?: { switchToSagaId?: string; entryChapterId?: string }) => {
+      const storyUnlockReward = chapter.newRewards?.find((reward) => reward.type === 'storyUnlock');
+      const analyticsLevel = progress.level;
+      const analyticsReputation = progress.reputation;
+      const analyticsVillainInfluence = progress.villainInfluenceBySaga[activeSaga.id] ?? 100;
+
+      trackAnalyticsOnce(`chapter_completed:${chapter.chapterId}`, () => {
+        trackChapterCompleted({
+          universe_id: activeUniverse.id,
+          saga_id: activeSaga.id,
+          chapter_id: chapter.chapterId,
+          chapter_index: chapter.chapterOrder,
+          level: analyticsLevel,
+          reputation: analyticsReputation,
+          villain_influence: analyticsVillainInfluence,
+          completed_quest_count:
+            progress.chapterCompletions[chapter.chapterId] ?? currentChapter?.questTemplates.length,
+          unlock_type: storyUnlockReward?.type,
+        });
+      });
+
+      if (!chapter.nextChapterId && chapter.sagaFinale) {
+        trackAnalyticsOnce(`saga_completed:${activeSaga.id}`, () => {
+          trackSagaCompleted({
+            universe_id: activeUniverse.id,
+            saga_id: activeSaga.id,
+            level: analyticsLevel,
+            reputation: analyticsReputation,
+          });
+        });
+      }
+
       setProgress((prev) => {
         let next = appendSagaCompletedChapter(prev, activeSaga.id, chapter.chapterId);
 
@@ -2399,7 +2502,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         return recordChapterCompleted(next);
       });
     },
-    [activeSaga.id, activeUniverse],
+    [activeSaga.id, activeUniverse, currentChapter, progress.chapterCompletions, progress.level, progress.reputation, progress.villainInfluenceBySaga],
   );
 
   const continueFromChapterComplete = useCallback(

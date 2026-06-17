@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 
 import { GlowButton } from '@/components/rpg/glow-button';
+import { MascotGuideFromContext } from '@/components/rpg/mascot-guide-card';
 import { CollapsibleSection } from '@/components/rpg/collapsible-section';
 import {
   FeatureDiscoveryBadge,
@@ -558,6 +559,14 @@ export function AddQuestSheet({ visible, onClose }: AddQuestSheetProps) {
             <Text style={[styles.sub, { color: palette.fog }]} numberOfLines={2}>
               {ui.addQuestSubtitle(currentChapter?.title)}
             </Text>
+
+            {visible && playerProgress.userQuests.length === 0 && !addQuestRecoveryMode ? (
+              <MascotGuideFromContext
+                contextId="add_quest_first_time"
+                screenName="/add-quest-sheet"
+                expandableDetail="Chapter bounties are story missions tied to the current chapter. Personal quests are yours — they do not replace bounties."
+              />
+            ) : null}
 
             <Pressable
               onPress={() => {

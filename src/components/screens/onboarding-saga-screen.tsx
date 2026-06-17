@@ -2,6 +2,7 @@ import { type Href, router } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { GlowButton } from '@/components/rpg/glow-button';
+import { MascotGuideFromContext } from '@/components/rpg/mascot-guide-card';
 import { OnboardingScroll } from '@/components/rpg/onboarding-scroll';
 import { SagaCard } from '@/components/rpg/saga-card';
 import { ScreenShell } from '@/components/rpg/screen-shell';
@@ -43,6 +44,12 @@ export function OnboardingSagaScreen() {
             )}
           />
         </Animated.View>
+
+        <MascotGuideFromContext
+          contextId="saga_selection"
+          screenName="/onboarding/saga"
+          expandableDetail="Your first saga sets the opening arc. You can unlock more as you complete chapters."
+        />
 
         {activeUniverse.sagas.map((saga, index) => (
           <SagaCard

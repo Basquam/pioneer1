@@ -1,14 +1,19 @@
 import { Image, Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
+import { useEffect, useRef } from 'react';
 
 import { APP_MASCOTS } from '@/constants/app-mascots';
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
 import {
+    getMascotCoachContextKey,
     getMascotCoachDisplay,
     getMascotPreference,
     type MascotCoachContext,
     type MascotCoachDisplay,
 } from '@/lib/app-mascot-coach';
+import { trackAnalyticsOnce } from '@/lib/analytics/analytics-dedupe';
+import { trackMascotTipSeen } from '@/lib/analytics/questory-analytics';
+import type { MascotId } from '@/lib/analytics/analytics-types';
 
 type CoachMascotTipProps = {
   context: MascotCoachContext;
@@ -38,6 +43,23 @@ export function CoachMascotTip({
   const { activeUniverse, playerProgress } = useGame();
   const { palette } = activeUniverse;
   const display = getMascotCoachDisplay(context, getMascotPreference(playerProgress), messageOverride);
+  const trackedTipRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (display.mode !== 'full' || !display.mascotId) return;
+
+    const tipKey = `${display.mascotId}:${getMascotCoachContextKey(context)}`;
+    if (trackedTipRef.current === tipKey) return;
+    trackedTipRef.current = tipKey;
+
+    trackAnalyticsOnce(`mascot_tip_seen:${tipKey}`, () => {
+      trackMascotTipSeen({
+        mascot_id: display.mascotId as MascotId,
+        tip_context: getMascotCoachContextKey(context),
+        universe_id: activeUniverse.id,
+      });
+    });
+  }, [activeUniverse.id, context, display.mascotId, display.mode]);
 
   if (display.mode === 'fallback') {
     if (suppressFallback) return null;

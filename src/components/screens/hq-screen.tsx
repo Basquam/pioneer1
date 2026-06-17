@@ -9,6 +9,7 @@ import { DailyAwarenessCheck } from '@/components/rpg/daily-awareness-check';
 import { QuestInboxPanel } from '@/components/rpg/quest-inbox-panel';
 import { DailyOperationsBriefing } from '@/components/rpg/daily-operations-briefing';
 import { DialoguePanel } from '@/components/rpg/dialogue-panel';
+import { MascotGuideFromContext } from '@/components/rpg/mascot-guide-card';
 import { MinimumViableDayBanner } from '@/components/rpg/minimum-viable-day-banner';
 import { PreparedForTodayCard } from '@/components/rpg/prepared-for-today-card';
 import { NarrativeMomentOverlay } from '@/components/rpg/narrative-moment-overlay';
@@ -25,6 +26,7 @@ import { XpPopup } from '@/components/rpg/xp-popup';
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
 import { isEarlyHqExperience } from '@/lib/hq-experience';
+import { resolveHqGuideContext } from '@/lib/mascots/hq-guide-state';
 import { useUniverseUiCopy } from '@/lib/universe-ui-copy';
 
 export function HqScreen() {
@@ -42,6 +44,9 @@ export function HqScreen() {
     activeInboxItems,
     hasOnboarded,
     playerProgress,
+    openAddQuestSheet,
+    allQuestsComplete,
+    villainInfluence,
   } = useGame();
   const [sagaSwitcherVisible, setSagaSwitcherVisible] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
@@ -51,6 +56,36 @@ export function HqScreen() {
     () => isEarlyHqExperience({ ...playerProgress, hasOnboarded }),
     [hasOnboarded, playerProgress],
   );
+
+  const hqGuideContext = useMemo(
+    () =>
+      resolveHqGuideContext({
+        playerProgress,
+        completedQuestCount,
+        totalQuests: quests.length,
+        allQuestsComplete,
+        villainInfluence,
+        hasOnboarded,
+        earlyHq,
+      }),
+    [
+      allQuestsComplete,
+      completedQuestCount,
+      earlyHq,
+      hasOnboarded,
+      playerProgress,
+      quests.length,
+      villainInfluence,
+    ],
+  );
+
+  const handleHqGuideAction = () => {
+    if (hqGuideContext === 'hq_story_continue') {
+      router.push('/(game)/story' as Href);
+      return;
+    }
+    openAddQuestSheet();
+  };
 
   useEffect(() => {
     if (hqScrollNonce === 0) return;
@@ -84,6 +119,19 @@ export function HqScreen() {
             right={activeUniverse.name}
           />
         </Animated.View>
+
+        {hasOnboarded && hqGuideContext ? (
+          <MascotGuideFromContext
+            contextId={hqGuideContext}
+            screenName="/(game)/hq"
+            onAction={
+              hqGuideContext === 'hq_no_user_quest' ||
+              hqGuideContext === 'hq_story_continue'
+                ? handleHqGuideAction
+                : undefined
+            }
+          />
+        ) : null}
 
         {hasOnboarded ? (
           <>

@@ -39,6 +39,7 @@ import { GlossarySheet } from '@/components/rpg/glossary-sheet';
 import { QuestDefaultsPanel } from '@/components/rpg/quest-defaults-panel';
 import { RecurringQuestsPanel } from '@/components/rpg/recurring-quests-panel';
 import { MascotPreferenceSettings } from '@/components/rpg/mascot-preference-settings';
+import { MascotGuideFromContext } from '@/components/rpg/mascot-guide-card';
 import { NotificationSettingsPanel } from '@/components/rpg/notification-settings-panel';
 import { ProfileAppInfo } from '@/components/rpg/profile-app-info';
 import { ProcessAchievementsPanel } from '@/components/rpg/process-achievements-panel';
@@ -111,6 +112,9 @@ export function ProfileScreen() {
           style={styles.firstSection}
           collapsible
           defaultExpanded={hasOnboarded}>
+          {hasOnboarded ? (
+            <MascotGuideFromContext contextId="profile_progress" screenName="/(game)/profile" />
+          ) : null}
           <GlobalProgressPanel progress={playerProgress} totalXp={player.totalXp} palette={palette} />
           {onboardingOrigin ? (
             <View style={styles.originBlock}>
@@ -252,10 +256,18 @@ export function ProfileScreen() {
           <FeatureDiscoverySettings />
           <View style={styles.subsection}>
             <Text style={[styles.subsectionLabel, { color: palette.gold }]}>NOTIFICATIONS</Text>
+            <MascotGuideFromContext
+              contextId="notification_settings"
+              screenName="/(game)/profile"
+            />
             <NotificationSettingsPanel />
           </View>
           <View style={styles.subsection}>
             <Text style={[styles.subsectionLabel, { color: palette.gold }]}>ANALYTICS</Text>
+            <MascotGuideFromContext
+              contextId="analytics_settings"
+              screenName="/(game)/profile"
+            />
             <Pressable
               onPress={() => {
                 const next = !analyticsOn;

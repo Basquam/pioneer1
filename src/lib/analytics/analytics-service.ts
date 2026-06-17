@@ -27,6 +27,33 @@ const BLOCKED_PARAM_KEYS = new Set([
   'narrative_title',
 ]);
 
+/** Safe param keys that contain blocked substrings but are intentional metadata. */
+const ALLOWED_PARAM_KEYS = new Set([
+  'screen_name',
+  'chapter_id',
+  'chapter_index',
+  'saga_id',
+  'universe_id',
+  'quest_id',
+  'mascot_id',
+  'tip_context',
+  'notification_type',
+  'reward_id',
+  'item_id',
+  'unlock_type',
+  'quest_source',
+  'permission_status',
+]);
+
+const BLOCKED_PARAM_SUBSTRINGS = ['title', 'description', 'note', 'text', 'email', 'name'] as const;
+
+function isBlockedParamKey(key: string): boolean {
+  if (ALLOWED_PARAM_KEYS.has(key)) return false;
+  if (BLOCKED_PARAM_KEYS.has(key)) return true;
+  const lower = key.toLowerCase();
+  return BLOCKED_PARAM_SUBSTRINGS.some((sub) => lower.includes(sub));
+}
+
 let provider: AnalyticsProvider = firebaseAnalyticsProvider;
 let analyticsEnabled = true;
 
@@ -95,7 +122,7 @@ function sanitiseParams(
   const out: Record<string, string | number | boolean> = {};
 
   for (const [key, value] of Object.entries(params)) {
-    if (BLOCKED_PARAM_KEYS.has(key)) {
+    if (isBlockedParamKey(key)) {
       if (__DEV__) {
         console.warn('[Analytics] Blocked param key:', key);
       }
