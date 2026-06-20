@@ -7,16 +7,10 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 
-import { PanelChrome } from '@/components/rpg/panel-chrome';
-import { GameFonts } from '@/constants/typography';
-import {
-  getPanelAccentColor,
-  getPanelBorderColor,
-  getPanelShadow,
-  skewTransform,
-} from '@/constants/universe-visual-theme';
+import { QuestoryCard } from '@/components/ui/questory-card';
+import { QuestoryStatusPill } from '@/components/ui/questory-status-pill';
+import { SuiteBadge } from '@/components/rpg/suite-badge';
 import { useGame } from '@/hooks/use-game';
-import { useUniverseVisualTheme } from '@/hooks/use-universe-visual-theme';
 import { useUniverseUiCopy } from '@/lib/universe-ui-copy';
 import { getFocusLockCopy } from '@/lib/focus-lock';
 import {
@@ -30,11 +24,13 @@ import {
   MOTION_GUARD_CARD_PROMPT,
 } from '@/lib/motion-vs-action';
 import { getTaskCategoryMeta } from '@/lib/task-categories';
-import { SuiteBadge } from '@/components/rpg/suite-badge';
 import { formatChainProgressLabel, isQuestChainParentBlocked, isQuestChainSplittable, shouldHighlightQuestChainSplit } from '@/lib/quest-chain';
 import { formatPreQuestRitualCardLine } from '@/lib/pre-quest-ritual';
 import { formatQuestReminderCue } from '@/lib/quest-reminders';
 import { isFeatureUnlocked } from '@/lib/feature-discovery';
+import { QuestoryTypography } from '@/theme/typography';
+import { getUniverseCardVariant } from '@/theme/universe-skins';
+import { QuestoryTheme } from '@/theme/questory-theme';
 import type { BoardQuest } from '@/types/narrative';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -44,6 +40,13 @@ type QuestCardProps = {
   index: number;
   variant?: 'default' | 'chain-child';
 };
+
+function resolveCardVariant(quest: BoardQuest, universeId: string): 'default' | 'elevated' | 'dossier' | 'terminal' | 'danger' | 'success' {
+  if (quest.completed) return 'success';
+  if (quest.source === 'template') return getUniverseCardVariant(universeId);
+  if (quest.isFocusLocked) return 'elevated';
+  return 'default';
+}
 
 export function QuestCard({ quest, index, variant = 'default' }: QuestCardProps) {
   const ui = useUniverseUiCopy();
@@ -57,42 +60,33 @@ export function QuestCard({ quest, index, variant = 'default' }: QuestCardProps)
     openFrictionReview,
     openSplitQuestChain,
   } = useGame();
-  const visualTheme = useUniverseVisualTheme();
   const { palette } = activeUniverse;
   const showFocusMode = isFeatureUnlocked(playerProgress, 'focusMode');
   const showQuestReadiness = isFeatureUnlocked(playerProgress, 'questReadiness');
   const showFrictionReview = isFeatureUnlocked(playerProgress, 'frictionReview');
   const showQuestChain = isFeatureUnlocked(playerProgress, 'questChain');
   const scale = useSharedValue(1);
-  const panelBorder = getPanelBorderColor(palette, visualTheme);
-  const accentColor = getPanelAccentColor(palette, visualTheme);
-  const goldAccent = getPanelAccentColor(palette, visualTheme, 'gold');
 
   const cardStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
   }));
 
+  const isChainChild = variant === 'chain-child' || quest.parentQuestId != null;
+  const cardVariant = resolveCardVariant(quest, activeUniverse.id);
+
   if (quest.completed) {
     return (
-      <Animated.View
-        entering={FadeInDown.delay(index * 100).springify()}
-        style={[
-          styles.wrapper,
-          {
-            borderColor: goldAccent,
-            backgroundColor: `${accentColor}22`,
-            transform: skewTransform(visualTheme.cardSkew),
-          },
-          getPanelShadow(palette, visualTheme),
-        ]}>
-        <Text style={[styles.stamp, { color: goldAccent }]}>CLEARED</Text>
-        {quest.source === 'user' && quest.isDailyFocus && (
-          <Text style={[styles.focusStamp, { color: goldAccent }]}>{ui.focusQuestLabel}</Text>
-        )}
-        <Text style={[styles.doneTitle, { color: palette.fog }]}>{quest.narrativeTitle}</Text>
-        {quest.source === 'user' && (
-          <Text style={[styles.doneReal, { color: palette.fog }]}>{quest.originalTitle}</Text>
-        )}
+      <Animated.View entering={FadeInDown.delay(index * 100).springify()}>
+        <QuestoryCard variant="success" contentStyle={styles.completedContent}>
+          <QuestoryStatusPill label="CLEARED" tone="success" />
+          {quest.source === 'user' && quest.isDailyFocus && (
+            <QuestoryStatusPill label={ui.focusQuestLabel} tone="accent" />
+          )}
+          <Text style={[QuestoryTypography.flavor, { color: palette.fog }]}>{quest.narrativeTitle}</Text>
+          {quest.source === 'user' && (
+            <Text style={[QuestoryTypography.caption, { color: palette.fog }]}>{quest.originalTitle}</Text>
+          )}
+        </QuestoryCard>
       </Animated.View>
     );
   }
@@ -114,7 +108,6 @@ export function QuestCard({ quest, index, variant = 'default' }: QuestCardProps)
     ? getQuestReadinessSuggestion(displayReadiness)
     : null;
 
-  const isChainChild = variant === 'chain-child' || quest.parentQuestId != null;
   const isChainParent = quest.isQuestChainParent === true;
   const chainBlocked = isQuestChainParentBlocked(quest);
   const canSplit = quest.source === 'user' && isQuestChainSplittable({
@@ -128,199 +121,109 @@ export function QuestCard({ quest, index, variant = 'default' }: QuestCardProps)
 
   const handlePress = () => {
     if (chainBlocked) return;
-    scale.value = withSpring(0.94, { damping: 10 }, () => {
+    scale.value = withSpring(0.97, { damping: 10 }, () => {
       scale.value = withSpring(1);
     });
     completeQuest(quest.id);
   };
 
-  const handleFocusPress = () => {
-    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    openQuestFocus(quest.id);
-  };
-
-  const handleImprovePress = () => {
-    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    openImproveQuest(quest.id);
-  };
-
-  const handleFrictionPress = () => {
-    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    openFrictionReview(quest.id);
-  };
-
-  const handleStartNowPress = () => {
-    startQuestNow(quest.id);
-  };
-
-  const handleStartFirstMovePress = () => {
-    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    startQuestNow(quest.id);
-  };
-
-  const handleSplitPress = () => {
-    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    openSplitQuestChain(quest.id);
-  };
-
-  const secondaryBadges: Array<{ key: string; label: string; backgroundColor: string; borderColor?: string; textColor: string; borderWidth?: number }> = [];
+  const secondaryBadges: Array<{ key: string; label: string; tone: 'default' | 'accent' | 'muted' }> = [];
   if (lockedFocus) {
-    secondaryBadges.push({
-      key: 'locked',
-      label: focusLockCopy.lockedQuestBadge,
-      backgroundColor: palette.primary,
-      borderColor: goldAccent,
-      borderWidth: 1,
-      textColor: goldAccent,
-    });
+    secondaryBadges.push({ key: 'locked', label: focusLockCopy.lockedQuestBadge, tone: 'muted' });
   } else if (quest.source === 'user' && quest.isDailyFocus) {
-    secondaryBadges.push({
-      key: 'focus',
-      label: ui.focusQuestLabel,
-      backgroundColor: goldAccent,
-      textColor: palette.void,
-    });
+    secondaryBadges.push({ key: 'focus', label: ui.focusQuestLabel, tone: 'accent' });
   }
   if (isChainChild && quest.chainStepOrder != null) {
-    secondaryBadges.push({
-      key: 'step',
-      label: `STEP ${quest.chainStepOrder}`,
-      backgroundColor: palette.night,
-      borderColor: palette.gold,
-      borderWidth: 1,
-      textColor: palette.gold,
-    });
+    secondaryBadges.push({ key: 'step', label: `STEP ${quest.chainStepOrder}`, tone: 'muted' });
   } else if (isChainParent) {
-    secondaryBadges.push({
-      key: 'chain',
-      label: 'CHAIN',
-      backgroundColor: palette.primary,
-      borderColor: palette.gold,
-      borderWidth: 1,
-      textColor: palette.bone,
-    });
+    secondaryBadges.push({ key: 'chain', label: 'CHAIN', tone: 'accent' });
   }
   if (quest.source === 'user' && quest.isRecurring) {
-    secondaryBadges.push({
-      key: 'recurring',
-      label: 'RECURRING',
-      backgroundColor: palette.primary,
-      borderColor: palette.accent,
-      borderWidth: 1,
-      textColor: palette.accent,
-    });
+    secondaryBadges.push({ key: 'recurring', label: 'RECURRING', tone: 'accent' });
   }
   if (quest.isStarted) {
-    secondaryBadges.push({
-      key: 'started',
-      label: 'STARTED',
-      backgroundColor: palette.night,
-      borderColor: palette.accent,
-      borderWidth: 1,
-      textColor: palette.accent,
-    });
+    secondaryBadges.push({ key: 'started', label: 'IN PROGRESS', tone: 'accent' });
   }
-  const visibleSecondaryBadges = secondaryBadges.slice(0, 2);
+  const visibleSecondaryBadges = secondaryBadges.slice(0, 3);
 
   return (
     <AnimatedPressable
       entering={FadeInDown.delay(index * 100).springify()}
       onPress={handlePress}
-      style={[
-        styles.wrapper,
-        isChainChild && styles.wrapperChainChild,
-        cardStyle,
-        {
-          backgroundColor: lockedFocus ? `${palette.primary}44` : palette.panel,
-          borderColor: lockedFocus ? goldAccent : panelBorder,
-          borderWidth: lockedFocus ? Math.max(visualTheme.panelBorderWidth, 2) : visualTheme.panelBorderWidth,
-          transform: skewTransform(visualTheme.cardSkew),
-        },
-        getPanelShadow(palette, visualTheme),
-      ]}>
-      <PanelChrome palette={palette} theme={visualTheme} />
-      <View style={[styles.accent, { backgroundColor: accentColor, width: visualTheme.accentLineWidth }]} />
-      <View style={[styles.inner, visualTheme.cardSkew !== 0 && styles.innerUnskew]}>
+      style={[cardStyle, isChainChild && styles.chainChildWrap]}>
+      <QuestoryCard
+        variant={cardVariant}
+        glow={!isChainChild}
+        contentStyle={[styles.cardContent, isChainChild && styles.chainChildContent]}>
         <View style={styles.topRow}>
           <View style={styles.badges}>
-            <View style={[styles.badge, { backgroundColor: palette.primary }]}>
-              <Text style={[styles.badgeText, { color: palette.bone }]} numberOfLines={1}>
-                {categoryMeta.icon} {categoryMeta.label.toUpperCase()}
-              </Text>
-            </View>
+            <QuestoryStatusPill
+              label={
+                quest.source === 'template'
+                  ? `BOUNTY · ${categoryMeta.label.toUpperCase()}`
+                  : `${categoryMeta.icon} ${categoryMeta.label.toUpperCase()}`
+              }
+              tone={quest.source === 'template' ? 'accent' : 'default'}
+            />
             {quest.source === 'user' && quest.suiteId ? (
               <SuiteBadge suiteId={quest.suiteId} palette={palette} />
             ) : null}
             {visibleSecondaryBadges.map((badge) => (
-              <View
-                key={badge.key}
-                style={[
-                  styles.badge,
-                  {
-                    backgroundColor: badge.backgroundColor,
-                    ...(badge.borderColor
-                      ? { borderWidth: badge.borderWidth ?? 1, borderColor: badge.borderColor }
-                      : {}),
-                  },
-                ]}>
-                <Text style={[styles.badgeText, { color: badge.textColor }]} numberOfLines={1}>
-                  {badge.label}
-                </Text>
-              </View>
+              <QuestoryStatusPill key={badge.key} label={badge.label} tone={badge.tone} />
             ))}
           </View>
           {!isChainParent ? (
-            <Text style={[styles.xp, { color: goldAccent }]} numberOfLines={1}>
+            <Text style={[QuestoryTypography.statValue, { color: palette.gold, fontSize: 14 }]} numberOfLines={1}>
               +{quest.xpReward} XP
             </Text>
           ) : null}
         </View>
 
-        <Text style={[styles.title, { color: palette.bone }]} numberOfLines={3}>
+        <Text style={[QuestoryTypography.sectionTitle, { color: palette.bone, fontSize: 18, lineHeight: 24 }]} numberOfLines={3}>
           {quest.narrativeTitle}
         </Text>
 
         {isChainParent && quest.chainProgress ? (
-          <Text style={[styles.chainProgress, { color: palette.gold }]}>
+          <Text style={[QuestoryTypography.caption, { color: palette.gold }]}>
             {formatChainProgressLabel(quest.chainProgress.completed, quest.chainProgress.total)}
           </Text>
         ) : null}
 
         {isChainChild && quest.chainTitle ? (
-          <Text style={[styles.chainChildHint, { color: palette.fog }]} numberOfLines={1}>
+          <Text style={[QuestoryTypography.caption, { color: palette.fog }]} numberOfLines={1}>
             Part of: {quest.chainTitle}
           </Text>
         ) : null}
 
         {quest.source === 'user' && quest.routineFreshnessHint ? (
-          <Text style={[styles.freshnessHint, { color: palette.fog }]} numberOfLines={2}>
+          <Text style={[QuestoryTypography.flavor, { color: palette.fog, fontSize: 11 }]} numberOfLines={2}>
             {quest.routineFreshnessHint}
           </Text>
         ) : null}
 
-        <View style={styles.realRow}>
-          <Text style={[styles.realLabel, { color: palette.fog }]}>
+        <View style={[styles.realRow, { borderTopColor: QuestoryTheme.colors.border.subtle }]}>
+          <Text style={[QuestoryTypography.caption, { color: palette.fog, letterSpacing: 2 }]}>
             {quest.source === 'user' ? ui.realTaskLabel : ui.templateQuestLabel}
           </Text>
-          <Text style={[styles.realTask, { color: goldAccent }]} numberOfLines={2}>
+          <Text style={[QuestoryTypography.body, { color: palette.gold, flex: 1 }]} numberOfLines={2}>
             {quest.originalTitle}
           </Text>
         </View>
 
         {quest.source === 'user' && showQuestReadiness && (displayReadiness != null || showRisk) && (
-          <View style={[styles.metaRow, { borderTopColor: 'rgba(255,255,255,0.08)' }]}>
+          <View style={[styles.metaRow, { borderTopColor: QuestoryTheme.colors.border.subtle }]}>
             {displayReadiness != null && (
-              <Text style={[styles.metaLine, { color: palette.gold }]}>
+              <Text style={[QuestoryTypography.caption, { color: palette.gold }]}>
                 {formatReadinessLabel(displayReadiness.score)}
               </Text>
             )}
             {showRisk && (
-              <Text style={[styles.metaLine, { color: palette.fog }]} numberOfLines={1}>
+              <Text style={[QuestoryTypography.caption, { color: palette.fog }]} numberOfLines={1}>
                 {formatQuestRiskCardLine(resolvedRisk, activeUniverse.id)}
               </Text>
             )}
             {readinessSuggestion ? (
-              <Text style={[styles.metaHint, { color: palette.fog }]} numberOfLines={2}>
+              <Text style={[QuestoryTypography.flavor, { color: palette.fog, fontSize: 11 }]} numberOfLines={2}>
                 {readinessSuggestion}
               </Text>
             ) : null}
@@ -328,51 +231,53 @@ export function QuestCard({ quest, index, variant = 'default' }: QuestCardProps)
         )}
 
         {quest.source === 'user' && quest.preQuestRitual?.trim() ? (
-          <Text style={[styles.ritualLine, { color: palette.fog }]} numberOfLines={2}>
+          <Text style={[QuestoryTypography.caption, { color: palette.fog }]} numberOfLines={2}>
             {formatPreQuestRitualCardLine(quest.preQuestRitual, activeUniverse.id)}
           </Text>
         ) : null}
 
         {reminderCue ? (
-          <Text style={[styles.cueLine, { color: palette.fog }]} numberOfLines={1}>
+          <Text style={[QuestoryTypography.caption, { color: palette.fog, opacity: 0.85 }]} numberOfLines={1}>
             {reminderCue}
           </Text>
         ) : null}
 
         {quest.source === 'user' && quest.isTooMuchMotion && (
           <View style={[styles.motionGuardBox, { borderColor: palette.accent, backgroundColor: `${palette.primary}33` }]}>
-            <Text style={[styles.motionGuardPrompt, { color: palette.bone }]}>{MOTION_GUARD_CARD_PROMPT}</Text>
+            <Text style={[QuestoryTypography.flavor, { color: palette.bone, fontSize: 12 }]}>{MOTION_GUARD_CARD_PROMPT}</Text>
             <Pressable
               onPress={(event) => {
                 event.stopPropagation();
-                handleStartFirstMovePress();
+                void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                startQuestNow(quest.id);
               }}
               style={[styles.motionGuardButton, { borderColor: palette.gold, backgroundColor: palette.primary }]}>
-              <Text style={[styles.motionGuardButtonText, { color: palette.bone }]}>{MOTION_GUARD_CARD_CTA}</Text>
+              <Text style={[QuestoryTypography.caption, { color: palette.bone, letterSpacing: 1.5 }]}>{MOTION_GUARD_CARD_CTA}</Text>
             </Pressable>
           </View>
         )}
 
         <View style={styles.actionRow}>
           {showFocusMode ? (
-          <Pressable
-            onPress={(event) => {
-              event.stopPropagation();
-              handleFocusPress();
-            }}
-            style={[styles.focusButton, { borderColor: palette.gold, backgroundColor: palette.primary }]}>
-            <Text style={[styles.focusButtonText, { color: palette.bone }]}>START FOCUS</Text>
-          </Pressable>
+            <Pressable
+              onPress={(event) => {
+                event.stopPropagation();
+                void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                openQuestFocus(quest.id);
+              }}
+              style={[styles.actionButton, styles.actionPrimary, { borderColor: palette.gold, backgroundColor: palette.primary }]}>
+              <Text style={[QuestoryTypography.caption, { color: palette.bone, letterSpacing: 1.5 }]}>START FOCUS</Text>
+            </Pressable>
           ) : null}
 
           {quest.source === 'user' && !quest.isStarted && (
             <Pressable
               onPress={(event) => {
                 event.stopPropagation();
-                handleStartNowPress();
+                startQuestNow(quest.id);
               }}
-              style={[styles.secondaryButton, { borderColor: palette.accent, backgroundColor: palette.night }]}>
-              <Text style={[styles.secondaryButtonText, { color: palette.bone }]}>START NOW</Text>
+              style={[styles.actionButton, { borderColor: `${palette.accent}66`, backgroundColor: palette.night }]}>
+              <Text style={[QuestoryTypography.caption, { color: palette.bone, letterSpacing: 1.2 }]}>START NOW</Text>
             </Pressable>
           )}
 
@@ -380,10 +285,11 @@ export function QuestCard({ quest, index, variant = 'default' }: QuestCardProps)
             <Pressable
               onPress={(event) => {
                 event.stopPropagation();
-                handleImprovePress();
+                void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                openImproveQuest(quest.id);
               }}
-              style={[styles.secondaryButton, { borderColor: palette.panelBorder, backgroundColor: palette.night }]}>
-              <Text style={[styles.secondaryButtonText, { color: palette.fog }]}>IMPROVE</Text>
+              style={[styles.actionButton, { borderColor: palette.panelBorder, backgroundColor: palette.night }]}>
+              <Text style={[QuestoryTypography.caption, { color: palette.fog, letterSpacing: 1.2 }]}>IMPROVE</Text>
             </Pressable>
           )}
 
@@ -391,20 +297,17 @@ export function QuestCard({ quest, index, variant = 'default' }: QuestCardProps)
             <Pressable
               onPress={(event) => {
                 event.stopPropagation();
-                handleSplitPress();
+                void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                openSplitQuestChain(quest.id);
               }}
               style={[
-                styles.secondaryButton,
+                styles.actionButton,
                 {
                   borderColor: highlightSplit ? palette.gold : palette.panelBorder,
                   backgroundColor: highlightSplit ? palette.primary : palette.night,
                 },
               ]}>
-              <Text
-                style={[
-                  styles.secondaryButtonText,
-                  { color: highlightSplit ? palette.bone : palette.fog },
-                ]}>
+              <Text style={[QuestoryTypography.caption, { color: highlightSplit ? palette.bone : palette.fog, letterSpacing: 1.2 }]}>
                 SPLIT
               </Text>
             </Pressable>
@@ -414,130 +317,59 @@ export function QuestCard({ quest, index, variant = 'default' }: QuestCardProps)
             <Pressable
               onPress={(event) => {
                 event.stopPropagation();
-                handleFrictionPress();
+                void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                openFrictionReview(quest.id);
               }}
-              style={[styles.secondaryButton, { borderColor: palette.accent, backgroundColor: palette.night }]}>
-              <Text style={[styles.secondaryButtonText, { color: palette.accent }]}>FRICTION</Text>
+              style={[styles.actionButton, { borderColor: palette.accent, backgroundColor: palette.night }]}>
+              <Text style={[QuestoryTypography.caption, { color: palette.accent, letterSpacing: 1.2 }]}>FRICTION</Text>
             </Pressable>
           )}
 
           {!chainBlocked ? (
-            <Text style={[styles.tap, { color: palette.accent }]}>TAP TO COMPLETE ›</Text>
+            <Text style={[QuestoryTypography.caption, { color: palette.accent, letterSpacing: 2, flex: 1, textAlign: 'right' }]}>
+              TAP TO COMPLETE ›
+            </Text>
           ) : (
-            <Text style={[styles.tap, { color: palette.fog }]}>CLEAR ALL STEPS ›</Text>
+            <Text style={[QuestoryTypography.caption, { color: palette.fog, letterSpacing: 2, flex: 1, textAlign: 'right' }]}>
+              CLEAR ALL STEPS ›
+            </Text>
           )}
         </View>
-      </View>
+      </QuestoryCard>
     </AnimatedPressable>
   );
 }
 
 const styles = StyleSheet.create({
-  wrapper: {
-    borderWidth: 1,
-    overflow: 'hidden',
-    marginBottom: 12,
-    padding: 16,
-  },
-  wrapperChainChild: {
-    marginBottom: 8,
-    paddingVertical: 14,
-    borderStyle: 'dashed',
-  },
-  accent: { position: 'absolute', left: 0, top: 0, bottom: 0 },
-  inner: { paddingLeft: 8, gap: 8, minWidth: 0 },
-  innerUnskew: { transform: [{ skewX: '2deg' }] },
+  completedContent: { gap: 8 },
+  chainChildWrap: { marginBottom: 4 },
+  chainChildContent: { opacity: 0.95 },
+  cardContent: { gap: 8 },
   topRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 },
   badges: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, flex: 1, minWidth: 0 },
-  badge: { paddingHorizontal: 8, paddingVertical: 3, transform: [{ skewX: '-8deg' }], maxWidth: '100%' },
-  badgeText: { fontFamily: GameFonts.uiSemi, fontSize: 9, letterSpacing: 2 },
-  xp: { fontFamily: GameFonts.ui, fontSize: 13, letterSpacing: 2, flexShrink: 0 },
-  title: { fontFamily: GameFonts.display, fontSize: 18, lineHeight: 24 },
-  chainProgress: {
-    fontFamily: GameFonts.uiSemi,
-    fontSize: 11,
-    letterSpacing: 0.6,
-    lineHeight: 15,
-  },
-  chainChildHint: {
-    fontFamily: GameFonts.uiSemi,
-    fontSize: 10,
-    letterSpacing: 0.4,
-    lineHeight: 14,
-  },
-  freshnessHint: {
-    fontFamily: GameFonts.displayRegular,
-    fontSize: 11,
-    lineHeight: 15,
-    fontStyle: 'italic',
-    marginTop: -2,
-  },
   realRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
     alignItems: 'flex-start',
-    paddingTop: 6,
+    paddingTop: 8,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.08)',
   },
-  realLabel: { fontFamily: GameFonts.uiSemi, fontSize: 9, letterSpacing: 2, flexShrink: 0 },
-  realTask: { fontFamily: GameFonts.ui, fontSize: 13, letterSpacing: 1, flex: 1, minWidth: 120, lineHeight: 18 },
   metaRow: {
     borderTopWidth: 1,
     paddingTop: 8,
     gap: 4,
   },
-  metaLine: {
-    fontFamily: GameFonts.uiSemi,
-    fontSize: 10,
-    letterSpacing: 0.5,
-    lineHeight: 14,
-  },
-  metaHint: {
-    fontFamily: GameFonts.displayRegular,
-    fontSize: 11,
-    lineHeight: 15,
-    fontStyle: 'italic',
-  },
-  ritualLine: {
-    fontFamily: GameFonts.uiSemi,
-    fontSize: 10,
-    letterSpacing: 0.4,
-    lineHeight: 14,
-    marginTop: 2,
-  },
-  cueLine: {
-    fontFamily: GameFonts.uiSemi,
-    fontSize: 10,
-    letterSpacing: 0.35,
-    lineHeight: 14,
-    marginTop: 2,
-    opacity: 0.85,
-  },
   motionGuardBox: {
     borderWidth: 1,
     padding: 10,
     gap: 8,
-    marginTop: 2,
-  },
-  motionGuardPrompt: {
-    fontFamily: GameFonts.displayRegular,
-    fontSize: 12,
-    lineHeight: 17,
-    fontStyle: 'italic',
   },
   motionGuardButton: {
     alignSelf: 'flex-start',
     borderWidth: 1,
     paddingHorizontal: 10,
     paddingVertical: 8,
-    transform: [{ skewX: '-6deg' }],
-  },
-  motionGuardButtonText: {
-    fontFamily: GameFonts.uiSemi,
-    fontSize: 10,
-    letterSpacing: 1.5,
   },
   actionRow: {
     flexDirection: 'row',
@@ -547,31 +379,10 @@ const styles = StyleSheet.create({
     marginTop: 2,
     flexWrap: 'wrap',
   },
-  focusButton: {
-    borderWidth: 1,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    transform: [{ skewX: '-6deg' }],
-  },
-  focusButtonText: {
-    fontFamily: GameFonts.uiSemi,
-    fontSize: 10,
-    letterSpacing: 1.5,
-  },
-  secondaryButton: {
+  actionButton: {
     borderWidth: 1,
     paddingHorizontal: 8,
     paddingVertical: 8,
-    transform: [{ skewX: '-6deg' }],
   },
-  secondaryButtonText: {
-    fontFamily: GameFonts.uiSemi,
-    fontSize: 9,
-    letterSpacing: 1.5,
-  },
-  tap: { fontFamily: GameFonts.ui, fontSize: 11, letterSpacing: 2, textAlign: 'right', flex: 1 },
-  stamp: { fontFamily: GameFonts.ui, fontSize: 11, letterSpacing: 3 },
-  focusStamp: { fontFamily: GameFonts.uiSemi, fontSize: 9, letterSpacing: 2, marginTop: 2 },
-  doneTitle: { fontFamily: GameFonts.displayRegular, fontSize: 14, fontStyle: 'italic', marginTop: 4 },
-  doneReal: { fontFamily: GameFonts.uiSemi, fontSize: 11, marginTop: 2, letterSpacing: 0.5 },
+  actionPrimary: {},
 });

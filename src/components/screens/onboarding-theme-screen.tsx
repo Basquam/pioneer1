@@ -5,8 +5,8 @@ import { GlowButton } from '@/components/rpg/glow-button';
 import { MascotGuideFromContext } from '@/components/rpg/mascot-guide-card';
 import { OnboardingScroll } from '@/components/rpg/onboarding-scroll';
 import { ScreenShell } from '@/components/rpg/screen-shell';
-import { SectionHeader } from '@/components/rpg/section-header';
 import { ThemeCard } from '@/components/rpg/theme-card';
+import { QuestorySectionHeader } from '@/components/ui/questory-section-header';
 import { useGame } from '@/hooks/use-game';
 import { getUniverseLibraryProgress } from '@/lib/content-library-progress';
 import { trackUniverseSelected } from '@/lib/analytics/questory-analytics';
@@ -31,7 +31,7 @@ export function OnboardingThemeScreen() {
           />
         }>
         <Animated.View entering={FadeInDown.duration(500)}>
-          <SectionHeader eyebrow="UNIVERSE LIBRARY" title="CHOOSE YOUR UNIVERSE" />
+          <QuestorySectionHeader eyebrow="UNIVERSE LIBRARY" title="CHOOSE YOUR UNIVERSE" />
         </Animated.View>
         <MascotGuideFromContext
           contextId="universe_selection"

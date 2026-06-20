@@ -6,12 +6,13 @@ import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 
 import { CharacterDialoguePanel } from '@/components/rpg/character-dialogue-panel';
 import { GlowButton } from '@/components/rpg/glow-button';
-import { GameFonts } from '@/constants/typography';
+import { QuestoryStatusPill } from '@/components/ui/questory-status-pill';
 import { useGame } from '@/hooks/use-game';
 import { trackAnalyticsOnce } from '@/lib/analytics/analytics-dedupe';
 import { trackChapterStarted } from '@/lib/analytics/questory-analytics';
 import { getChapterSceneImage } from '@/lib/narrative-media';
 import { useUniverseUiCopy } from '@/lib/universe-ui-copy';
+import { QuestoryTypography } from '@/theme/typography';
 
 type ChapterIntroSceneProps = {
   visible: boolean;
@@ -104,10 +105,8 @@ export function ChapterIntroScene({ visible, onComplete }: ChapterIntroSceneProp
         />
 
         <Animated.View entering={FadeIn.duration(400)} exiting={FadeOut.duration(300)} style={styles.content}>
-          <Text style={[styles.chapterLabel, { color: palette.accent }]}>
-            {ui.sectorIntroLabel(currentChapter.order, currentChapter.title)}
-          </Text>
-          <Text style={[styles.summary, { color: palette.fog }]}>{currentChapter.summary}</Text>
+          <QuestoryStatusPill label={ui.sectorIntroLabel(currentChapter.order, currentChapter.title)} tone="accent" />
+          <Text style={[QuestoryTypography.flavor, { color: palette.fog }]}>{currentChapter.summary}</Text>
 
           <CharacterDialoguePanel
             key={`${currentChapter.id}-${beatIndex}`}
@@ -117,7 +116,7 @@ export function ChapterIntroScene({ visible, onComplete }: ChapterIntroSceneProp
 
           {typingDone && !isLast && (
             <Pressable onPress={handleAdvance} style={styles.tapArea}>
-              <Text style={[styles.tapHint, { color: palette.gold }]}>TAP TO CONTINUE ›</Text>
+              <Text style={[QuestoryTypography.caption, { color: palette.gold, letterSpacing: 2 }]}>TAP TO CONTINUE ›</Text>
             </Pressable>
           )}
 
@@ -133,13 +132,5 @@ export function ChapterIntroScene({ visible, onComplete }: ChapterIntroSceneProp
 const styles = StyleSheet.create({
   backdrop: { flex: 1, justifyContent: 'flex-end', padding: 20, paddingBottom: 36 },
   content: { gap: 14 },
-  chapterLabel: { fontFamily: GameFonts.ui, fontSize: 11, letterSpacing: 3 },
-  summary: {
-    fontFamily: GameFonts.displayRegular,
-    fontSize: 14,
-    fontStyle: 'italic',
-    lineHeight: 20,
-  },
   tapArea: { alignItems: 'flex-end', paddingVertical: 8 },
-  tapHint: { fontFamily: GameFonts.ui, fontSize: 11, letterSpacing: 2 },
 });

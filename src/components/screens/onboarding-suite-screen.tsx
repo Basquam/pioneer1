@@ -7,9 +7,10 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { GlowButton } from '@/components/rpg/glow-button';
 import { OnboardingScroll } from '@/components/rpg/onboarding-scroll';
 import { ScreenShell } from '@/components/rpg/screen-shell';
-import { SectionHeader } from '@/components/rpg/section-header';
+import { QuestoryCard } from '@/components/ui/questory-card';
+import { QuestorySectionHeader } from '@/components/ui/questory-section-header';
 import { QUEST_SUITES } from '@/constants/quest-suites';
-import { GameFonts } from '@/constants/typography';
+import { QuestoryTypography } from '@/theme/typography';
 import { useGame } from '@/hooks/use-game';
 import type { QuestSuiteId } from '@/types/narrative';
 
@@ -57,15 +58,15 @@ export function OnboardingSuiteScreen() {
               onPress={handleContinue}
             />
             <Pressable onPress={handleSkip} style={styles.skipButton}>
-              <Text style={[styles.skipLabel, { color: palette.fog }]}>Skip for now</Text>
+              <Text style={[QuestoryTypography.caption, { color: palette.fog }]}>Skip for now</Text>
             </Pressable>
           </>
         }>
         <Animated.View entering={FadeInDown.duration(500)}>
-          <SectionHeader eyebrow="YOUR FOCUS" title="OPTIONAL: PICK A QUEST SUITE" />
+          <QuestorySectionHeader eyebrow="YOUR FOCUS" title="OPTIONAL: PICK A QUEST SUITE" />
         </Animated.View>
 
-        <Text style={[styles.subtitle, { color: palette.fog }]}>
+        <Text style={[QuestoryTypography.flavor, { color: palette.fog, marginTop: -4 }]}>
           Shapes suggestions only. Skip if you are not sure yet.
         </Text>
 
@@ -74,22 +75,18 @@ export function OnboardingSuiteScreen() {
             const selected = selectedSuiteId === suite.id;
             return (
               <Animated.View key={suite.id} entering={FadeInDown.duration(450).delay(index * 40)}>
-                <Pressable
-                  onPress={() => handleSelect(suite.id)}
-                  style={[
-                    styles.card,
-                    {
-                      backgroundColor: selected ? palette.primary : palette.panel,
-                      borderColor: selected ? palette.gold : palette.panelBorder,
-                    },
-                  ]}>
-                  <Text style={styles.cardIcon}>{suite.icon}</Text>
-                  <View style={styles.cardCopy}>
-                    <Text style={[styles.cardTitle, { color: palette.bone }]}>{suite.label}</Text>
-                    <Text style={[styles.cardDescription, { color: palette.fog }]} numberOfLines={2}>
-                      {suite.description}
-                    </Text>
-                  </View>
+                <Pressable onPress={() => handleSelect(suite.id)}>
+                  <QuestoryCard
+                    variant={selected ? 'elevated' : 'default'}
+                    contentStyle={styles.card}>
+                    <Text style={styles.cardIcon}>{suite.icon}</Text>
+                    <View style={styles.cardCopy}>
+                      <Text style={[QuestoryTypography.body, { color: palette.bone }]}>{suite.label}</Text>
+                      <Text style={[QuestoryTypography.bodySmall, { color: palette.fog }]} numberOfLines={2}>
+                        {suite.description}
+                      </Text>
+                    </View>
+                  </QuestoryCard>
                 </Pressable>
               </Animated.View>
             );
@@ -101,41 +98,16 @@ export function OnboardingSuiteScreen() {
 }
 
 const styles = StyleSheet.create({
-  subtitle: {
-    fontFamily: GameFonts.displayRegular,
-    fontSize: 14,
-    lineHeight: 20,
-    fontStyle: 'italic',
-    marginTop: -4,
-  },
   list: { gap: 8 },
   card: {
-    borderWidth: 1,
-    padding: 12,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    transform: [{ skewX: '-2deg' }],
   },
   cardIcon: { fontSize: 22 },
   cardCopy: { flex: 1, gap: 4 },
-  cardTitle: {
-    fontFamily: GameFonts.uiSemi,
-    fontSize: 13,
-    letterSpacing: 0.5,
-  },
-  cardDescription: {
-    fontFamily: GameFonts.ui,
-    fontSize: 11,
-    lineHeight: 15,
-  },
   skipButton: {
     alignItems: 'center',
     paddingVertical: 10,
-  },
-  skipLabel: {
-    fontFamily: GameFonts.uiSemi,
-    fontSize: 11,
-    letterSpacing: 1,
   },
 });

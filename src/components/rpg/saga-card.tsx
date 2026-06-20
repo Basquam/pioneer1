@@ -1,11 +1,12 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
-import { ContentProgressBar } from '@/components/rpg/content-progress-bar';
 import { ChapterRewardBadge } from '@/components/rpg/chapter-reward-badge';
 import { CharacterPortrait } from '@/components/rpg/character-portrait';
 import { NarrativeMediaFrame } from '@/components/rpg/narrative-media-frame';
-import { GameFonts } from '@/constants/typography';
+import { QuestoryCard } from '@/components/ui/questory-card';
+import { QuestoryProgressBar } from '@/components/ui/questory-progress-bar';
+import { QuestoryStatusPill } from '@/components/ui/questory-status-pill';
 import { useGame } from '@/hooks/use-game';
 import {
   formatChapterProgress,
@@ -15,6 +16,8 @@ import { getCharacter } from '@/lib/narrative-helpers';
 import { getSagaBannerImage, getSagaDetailImage } from '@/lib/narrative-media';
 import { findRewardById } from '@/lib/reward-unlocks';
 import { useUniverseUiCopy } from '@/lib/universe-ui-copy';
+import { getUniverseCardVariant } from '@/theme/universe-skins';
+import { QuestoryTypography } from '@/theme/typography';
 import type { Saga, UniversePalette } from '@/types/narrative';
 
 type SagaCardProps = {
@@ -55,20 +58,19 @@ export function SagaCard({
   const chapterLabel =
     libraryProgress.totalChapters === 1 ? 'chapter' : 'chapters';
   const showProgress = unlocked && libraryProgress.totalChapters > 0;
+  const progressRatio =
+    libraryProgress.totalChapters > 0
+      ? libraryProgress.completedChapters / libraryProgress.totalChapters
+      : 0;
 
   return (
     <Animated.View entering={FadeInDown.delay(index * 80).springify()}>
-      <Pressable
-        disabled={!unlocked}
-        onPress={onPress}
-        style={[
-          styles.card,
-          {
-            backgroundColor: palette.panel,
-            borderColor: selected ? palette.gold : palette.panelBorder,
-            opacity: unlocked ? 1 : 0.72,
-          },
-        ]}>
+      <Pressable disabled={!unlocked} onPress={onPress}>
+        <QuestoryCard
+          variant={selected && unlocked ? 'elevated' : getUniverseCardVariant(activeUniverse.id)}
+          glow={selected && unlocked}
+          style={{ opacity: unlocked ? 1 : 0.72 }}
+          contentStyle={styles.cardBody}>
         {bannerImage ? (
           <NarrativeMediaFrame
             source={bannerImage}
@@ -89,24 +91,16 @@ export function SagaCard({
 
         <View style={styles.body}>
           <View style={styles.headerRow}>
-            <Text style={[styles.title, { color: palette.bone }]} numberOfLines={2}>
+            <Text style={[QuestoryTypography.sectionTitle, { color: palette.bone, flex: 1, minWidth: 120 }]} numberOfLines={2}>
               {saga.title}
             </Text>
-            <View
-              style={[
-                styles.statusBadge,
-                {
-                  borderColor: unlocked ? palette.gold : palette.fog,
-                  backgroundColor: unlocked ? `${palette.primary}33` : `${palette.ink}88`,
-                },
-              ]}>
-              <Text style={[styles.statusText, { color: unlocked ? palette.gold : palette.fog }]}>
-                {unlocked ? 'UNLOCKED' : 'LOCKED'}
-              </Text>
-            </View>
+            <QuestoryStatusPill
+              label={unlocked ? 'UNLOCKED' : 'LOCKED'}
+              tone={unlocked ? 'accent' : 'muted'}
+            />
           </View>
 
-          <Text style={[styles.meta, { color: palette.fog }]}>
+          <Text style={[QuestoryTypography.caption, { color: palette.fog }]}>
             {libraryProgress.totalChapters} {chapterLabel}
             {showProgress
               ? ` · ${formatChapterProgress(
@@ -119,20 +113,20 @@ export function SagaCard({
           </Text>
 
           {showProgress && (
-            <ContentProgressBar
-              completed={libraryProgress.completedChapters}
-              total={libraryProgress.totalChapters}
-              palette={palette}
-            />
+            <QuestoryProgressBar progress={progressRatio} />
           )}
 
-          <Text style={[styles.label, { color: palette.accent }]}>YOUR ROLE</Text>
-          <Text style={[styles.value, { color: palette.bone }]}>{playerRole}</Text>
+          <Text style={[QuestoryTypography.caption, { color: palette.accent, letterSpacing: 2, marginTop: 6 }]}>
+            YOUR ROLE
+          </Text>
+          <Text style={[QuestoryTypography.body, { color: palette.bone }]}>{playerRole}</Text>
 
           {!compact && (
             <>
-              <Text style={[styles.label, { color: palette.accent }]}>STORY FANTASY</Text>
-              <Text style={[styles.summary, { color: palette.fog }]} numberOfLines={2}>
+              <Text style={[QuestoryTypography.caption, { color: palette.accent, letterSpacing: 2, marginTop: 6 }]}>
+                STORY FANTASY
+              </Text>
+              <Text style={[QuestoryTypography.flavor, { color: palette.fog }]} numberOfLines={2}>
                 {saga.summary}
               </Text>
             </>
@@ -140,74 +134,55 @@ export function SagaCard({
 
           {saga.allyName ? (
             <>
-              <Text style={[styles.label, { color: palette.accent }]}>MAIN ALLY</Text>
-              <Text style={[styles.value, { color: palette.bone }]}>{saga.allyName}</Text>
+              <Text style={[QuestoryTypography.caption, { color: palette.accent, letterSpacing: 2, marginTop: 6 }]}>
+                MAIN ALLY
+              </Text>
+              <Text style={[QuestoryTypography.body, { color: palette.bone }]}>{saga.allyName}</Text>
             </>
           ) : null}
 
           {saga.villainName ? (
             <>
-              <Text style={[styles.label, { color: palette.accent }]}>{ui.villainLabel}</Text>
-              <Text style={[styles.villain, { color: palette.villainGlow }]}>
+              <Text style={[QuestoryTypography.caption, { color: palette.accent, letterSpacing: 2, marginTop: 6 }]}>
+                {ui.villainLabel}
+              </Text>
+              <Text style={[QuestoryTypography.caption, { color: palette.villainGlow, letterSpacing: 1.5 }]}>
                 {saga.villainName} · {saga.villainTitle}
               </Text>
             </>
           ) : null}
 
-        {!unlocked && unlockHint && (
-          <View style={styles.requirementRow}>
-            {villainCharacter ? (
-              <CharacterPortrait character={villainCharacter} size="sm" context="lockedTeaser" />
-            ) : null}
-            {unlockReward ? (
-              <ChapterRewardBadge reward={unlockReward} palette={palette} size="sm" />
-            ) : null}
-            <Text style={[styles.requirement, { color: palette.villainGlow }]}>
-              REQUIRES: {unlockHint.toUpperCase()}
-            </Text>
-          </View>
-        )}
+          {!unlocked && unlockHint && (
+            <View style={styles.requirementRow}>
+              {villainCharacter ? (
+                <CharacterPortrait character={villainCharacter} size="sm" context="lockedTeaser" />
+              ) : null}
+              {unlockReward ? (
+                <ChapterRewardBadge reward={unlockReward} palette={palette} size="sm" />
+              ) : null}
+              <Text style={[QuestoryTypography.caption, { color: palette.villainGlow, letterSpacing: 1.5, flex: 1 }]}>
+                REQUIRES: {unlockHint.toUpperCase()}
+              </Text>
+            </View>
+          )}
 
           {selected && unlocked && (
-            <Text style={[styles.selected, { color: palette.gold }]}>SELECTED</Text>
+            <Text style={[QuestoryTypography.caption, { color: palette.gold, textAlign: 'right', marginTop: 8, letterSpacing: 2 }]}>
+              SELECTED
+            </Text>
           )}
         </View>
+        </QuestoryCard>
       </Pressable>
     </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
-    borderWidth: 2,
-    marginBottom: 12,
-    overflow: 'hidden',
-    transform: [{ skewX: '-2deg' }],
-  },
+  cardBody: { gap: 0, padding: 0, paddingLeft: 0 },
   banner: { marginBottom: 0 },
   detailStrip: { marginBottom: 0 },
   body: { padding: 16, gap: 4 },
   headerRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },
-  title: { fontFamily: GameFonts.ui, fontSize: 18, letterSpacing: 2, flex: 1, minWidth: 120 },
-  statusBadge: {
-    borderWidth: 1,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    transform: [{ skewX: '-8deg' }],
-  },
-  statusText: { fontFamily: GameFonts.uiSemi, fontSize: 8, letterSpacing: 1.5 },
-  meta: { fontFamily: GameFonts.uiSemi, fontSize: 10, letterSpacing: 1, marginBottom: 2 },
-  label: { fontFamily: GameFonts.uiSemi, fontSize: 8, letterSpacing: 2, marginTop: 6 },
-  value: { fontFamily: GameFonts.ui, fontSize: 14, letterSpacing: 1 },
-  summary: { fontFamily: GameFonts.displayRegular, fontSize: 13, fontStyle: 'italic', lineHeight: 19 },
-  villain: { fontFamily: GameFonts.uiSemi, fontSize: 10, letterSpacing: 1.5 },
   requirementRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 8 },
-  requirement: { fontFamily: GameFonts.uiSemi, fontSize: 9, letterSpacing: 1.5, flex: 1 },
-  selected: {
-    fontFamily: GameFonts.ui,
-    fontSize: 10,
-    letterSpacing: 2,
-    textAlign: 'right',
-    marginTop: 8,
-  },
 });

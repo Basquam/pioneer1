@@ -1,6 +1,9 @@
 import { type Href, router } from 'expo-router';
 import { Alert, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { openHqDesignLab } from '@/components/design-lab/hq-design-lab';
+import { openStyleLab } from '@/components/design-lab/style-lab';
+
 import { GameLayout } from '@/constants/layout';
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
@@ -134,6 +137,16 @@ export function DevToolsPanel({ embedded = false }: { embedded?: boolean }) {
 
   const tools: DevToolButton[] = [
     ...devCrashTools,
+    {
+      label: 'OPEN HQ DESIGN LAB',
+      hint: 'Preview radical HQ visual prototypes (dev only)',
+      onPress: openHqDesignLab,
+    },
+    {
+      label: 'OPEN RADICAL STYLE LAB',
+      hint: 'Explore 10 experimental mobile UI style directions (dev only)',
+      onPress: openStyleLab,
+    },
     {
       label: 'TEST SAVE MIGRATION',
       hint: 'Simulate loading a legacy minimal save and verify migration',

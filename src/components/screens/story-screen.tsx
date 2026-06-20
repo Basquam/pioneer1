@@ -9,10 +9,15 @@ import { SagaPreviewEmptyState } from '@/components/rpg/saga-preview-empty-state
 import { SagaSwitcherSheet } from '@/components/rpg/saga-switcher-sheet';
 import { ScreenScroll } from '@/components/rpg/screen-scroll';
 import { ScreenShell } from '@/components/rpg/screen-shell';
-import { SectionHeader } from '@/components/rpg/section-header';
 import { SectionLabel } from '@/components/rpg/section-label';
 import { VillainMeter } from '@/components/rpg/villain-meter';
-import { GameFonts } from '@/constants/typography';
+import { QuestoryCard } from '@/components/ui/questory-card';
+import { QuestoryProgressBar } from '@/components/ui/questory-progress-bar';
+import { QuestorySectionHeader } from '@/components/ui/questory-section-header';
+import { QuestoryStatusPill } from '@/components/ui/questory-status-pill';
+import { QuestoryTheme } from '@/theme/questory-theme';
+import { QuestoryTypography } from '@/theme/typography';
+import { getUniverseCardVariant, getUniverseSkin } from '@/theme/universe-skins';
 import { useGame } from '@/hooks/use-game';
 import { useUniverseUiCopy } from '@/lib/universe-ui-copy';
 import { getActiveChapterId, getChapterStatus, type ChapterStatus } from '@/lib/chapter-progress';
@@ -24,6 +29,7 @@ export function StoryScreen() {
   const ui = useUniverseUiCopy();
   const { activeUniverse, activeSaga, chapters, isSagaPreview, playerProgress } = useGame();
   const { palette } = activeUniverse;
+  const skin = getUniverseSkin(activeUniverse.id);
   const [selectedChapter, setSelectedChapter] = useState<Chapter | null>(null);
   const [detailMode, setDetailMode] = useState<ChapterStatus | null>(null);
   const [sagaSwitcherVisible, setSagaSwitcherVisible] = useState(false);
@@ -67,43 +73,46 @@ export function StoryScreen() {
     <ScreenShell edges={['top']} padded={false}>
       <ScreenScroll>
         <Animated.View entering={FadeInDown.duration(500)}>
-          <View style={styles.titleRow}>
-            <View style={styles.titleBlock}>
-              <SectionHeader
-                eyebrow={`${activeSaga.title.toUpperCase()} · SAGA TRAIL`}
-                title={ui.storyTitle}
-                right={activeUniverse.locationName}
-              />
+          <QuestoryCard variant="elevated" contentStyle={styles.campaignHeader}>
+            <View style={styles.titleRow}>
+              <View style={styles.titleBlock}>
+                <QuestoryStatusPill label="CAMPAIGN DOSSIER" tone="accent" />
+                <QuestorySectionHeader
+                  eyebrow={`${activeSaga.title.toUpperCase()} · SAGA TRAIL`}
+                  title={ui.storyTitle}
+                  right={activeUniverse.locationName}
+                />
+              </View>
+              <Pressable
+                onPress={() => setSagaSwitcherVisible(true)}
+                style={[styles.switchButton, { borderColor: skin.accentPrimary, backgroundColor: `${skin.accentPrimary}18` }]}>
+                <Text style={[QuestoryTypography.caption, { color: skin.accentPrimary, letterSpacing: 1.5 }]}>SWITCH SAGA</Text>
+              </Pressable>
             </View>
-            <Pressable
-              onPress={() => setSagaSwitcherVisible(true)}
-              style={[styles.switchButton, { borderColor: palette.gold }]}>
-              <Text style={[styles.switchLabel, { color: palette.gold }]}>SWITCH SAGA</Text>
-            </Pressable>
-          </View>
+          </QuestoryCard>
         </Animated.View>
 
         <VillainMeter />
 
-        <View
-          style={[
-            styles.progressCard,
-            { backgroundColor: palette.panel, borderColor: palette.panelBorder },
-          ]}>
-          <Text style={[styles.progressEyebrow, { color: palette.gold }]}>
-            {ui.sectorsClearedLabel(completedCount, chapters.length)}
-          </Text>
+        <QuestoryCard variant={getUniverseCardVariant(activeUniverse.id)} contentStyle={styles.progressCard}>
+          <QuestoryProgressBar
+            progress={chapters.length > 0 ? completedCount / chapters.length : 0}
+            label={ui.sectorsClearedLabel(completedCount, chapters.length)}
+          />
           {activeChapter && (
-            <Text style={[styles.progressActive, { color: palette.bone }]} numberOfLines={2}>
-              {ui.activeSectorLine(activeChapter.title)}
-            </Text>
+            <>
+              <QuestoryStatusPill label="ACTIVE MISSION" tone="accent" />
+              <Text style={[QuestoryTypography.sectionTitle, { color: palette.bone }]} numberOfLines={2}>
+                {ui.activeSectorLine(activeChapter.title)}
+              </Text>
+            </>
           )}
-          <Text style={[styles.progressSub, { color: palette.fog }]}>{activeSaga.summary}</Text>
+          <Text style={[QuestoryTypography.flavor, { color: palette.fog }]}>{activeSaga.summary}</Text>
           {crewCodeLines.length > 0 ? (
             <View style={[styles.crewCodeBlock, { borderColor: palette.panelBorder }]}>
-              <Text style={[styles.crewCodeTitle, { color: palette.gold }]}>CREW CODE</Text>
+              <Text style={[QuestoryTypography.caption, { color: palette.gold, letterSpacing: 2 }]}>CREW CODE</Text>
               {crewCodeLines.map((line) => (
-                <Text key={line} style={[styles.crewCodeLine, { color: palette.bone }]}>
+                <Text key={line} style={[QuestoryTypography.flavor, { color: palette.bone, fontSize: 12, lineHeight: 17 }]}>
                   {line}
                 </Text>
               ))}
@@ -111,12 +120,14 @@ export function StoryScreen() {
           ) : null}
           {sagaEnding ? (
             <View style={[styles.endingBlock, { borderColor: palette.panelBorder }]}>
-              <Text style={[styles.endingTitle, { color: palette.gold }]}>SAGA ENDING</Text>
-              <Text style={[styles.endingName, { color: palette.bone }]}>{sagaEnding.title}</Text>
-              <Text style={[styles.endingSummary, { color: palette.fog }]}>{sagaEnding.summary}</Text>
+              <Text style={[QuestoryTypography.caption, { color: palette.gold, letterSpacing: 2 }]}>SAGA ENDING</Text>
+              <Text style={[QuestoryTypography.sectionTitle, { color: palette.bone }]}>{sagaEnding.title}</Text>
+              <Text style={[QuestoryTypography.flavor, { color: palette.fog, fontSize: 12, lineHeight: 17 }]}>
+                {sagaEnding.summary}
+              </Text>
             </View>
           ) : null}
-        </View>
+        </QuestoryCard>
 
         {sagaComplete && (
           <CinematicEmptyState
@@ -148,11 +159,13 @@ export function StoryScreen() {
                     {
                       backgroundColor:
                         status === 'completed'
-                          ? palette.gold
+                          ? skin.accentPrimary
                           : status === 'active'
-                            ? palette.primary
+                            ? skin.accentSecondary
                             : palette.ink,
-                      borderColor: status === 'active' ? palette.gold : palette.panelBorder,
+                      borderColor: status === 'active' ? skin.accentPrimary : palette.panelBorder,
+                      borderWidth: status === 'active' ? 2 : 1,
+                      ...(status === 'active' ? QuestoryTheme.shadow.glowGold : {}),
                     },
                   ]}
                 />
@@ -162,7 +175,7 @@ export function StoryScreen() {
                       styles.railLine,
                       {
                         backgroundColor:
-                          status === 'completed' ? `${palette.gold}88` : `${palette.panelBorder}88`,
+                          status === 'completed' ? `${skin.accentPrimary}88` : `${palette.panelBorder}66`,
                       },
                     ]}
                   />
@@ -197,6 +210,7 @@ export function StoryScreen() {
 }
 
 const styles = StyleSheet.create({
+  campaignHeader: { gap: 8 },
   titleRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -208,40 +222,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     paddingHorizontal: 10,
     paddingVertical: 8,
-    transform: [{ skewX: '-6deg' }],
     alignSelf: 'flex-start',
   },
-  switchLabel: { fontFamily: GameFonts.ui, fontSize: 9, letterSpacing: 1.5 },
-  progressCard: {
-    borderWidth: 1,
-    padding: 16,
-    gap: 8,
-    transform: [{ skewX: '-2deg' }],
-  },
-  progressEyebrow: { fontFamily: GameFonts.ui, fontSize: 10, letterSpacing: 2 },
-  progressActive: { fontFamily: GameFonts.ui, fontSize: 15, letterSpacing: 1, lineHeight: 20 },
-  progressSub: {
-    fontFamily: GameFonts.displayRegular,
-    fontSize: 13,
-    lineHeight: 19,
-    fontStyle: 'italic',
-  },
+  progressCard: { gap: 10 },
   crewCodeBlock: {
     borderTopWidth: 1,
     paddingTop: 10,
     marginTop: 4,
     gap: 6,
-  },
-  crewCodeTitle: {
-    fontFamily: GameFonts.uiSemi,
-    fontSize: 9,
-    letterSpacing: 2,
-  },
-  crewCodeLine: {
-    fontFamily: GameFonts.displayRegular,
-    fontSize: 12,
-    lineHeight: 17,
-    fontStyle: 'italic',
   },
   endingBlock: {
     borderTopWidth: 1,
@@ -249,35 +237,18 @@ const styles = StyleSheet.create({
     marginTop: 4,
     gap: 6,
   },
-  endingTitle: {
-    fontFamily: GameFonts.uiSemi,
-    fontSize: 9,
-    letterSpacing: 2,
-  },
-  endingName: {
-    fontFamily: GameFonts.ui,
-    fontSize: 15,
-    lineHeight: 20,
-  },
-  endingSummary: {
-    fontFamily: GameFonts.displayRegular,
-    fontSize: 12,
-    lineHeight: 17,
-    fontStyle: 'italic',
-  },
   trail: { gap: 0 },
   trailRow: { flexDirection: 'row', gap: 12 },
   rail: { width: 16, alignItems: 'center', paddingTop: 22 },
   railDot: {
-    width: 12,
-    height: 12,
+    width: 14,
+    height: 14,
     borderWidth: 1,
-    transform: [{ skewX: '-12deg' }],
   },
   railLine: {
     flex: 1,
-    width: 2,
-    minHeight: 24,
+    width: 3,
+    minHeight: 28,
     marginTop: 4,
   },
   cardWrap: { flex: 1, minWidth: 0 },

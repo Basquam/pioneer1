@@ -74,6 +74,7 @@ export default function RootLayout() {
                 <Stack.Screen name="index" />
                 <Stack.Screen name="onboarding" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="(game)" options={{ animation: 'fade_from_bottom' }} />
+                <Stack.Screen name="design-lab" options={{ animation: 'slide_from_right' }} />
               </Stack>
             </NarrativeRecoveryGate>
           </ThemeProvider>

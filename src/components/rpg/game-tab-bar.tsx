@@ -2,11 +2,12 @@ import * as Haptics from 'expo-haptics';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { GameFonts } from '@/constants/typography';
-import { getPanelAccentColor } from '@/constants/universe-visual-theme';
 import { useGame } from '@/hooks/use-game';
 import { useUniverseVisualTheme } from '@/hooks/use-universe-visual-theme';
 import { getUniverseTabMeta } from '@/lib/universe-ui-copy';
+import { QuestoryTheme } from '@/theme/questory-theme';
+import { getUniverseSkin } from '@/theme/universe-skins';
+import { QuestoryTypography } from '@/theme/typography';
 
 export function GameTabBar(props: {
   state: { index: number; routes: { key: string; name: string }[] };
@@ -22,80 +23,122 @@ export function GameTabBar(props: {
   const { activeUniverse } = useGame();
   const visualTheme = useUniverseVisualTheme();
   const { palette } = activeUniverse;
+  const skin = getUniverseSkin(activeUniverse.id);
   const tabMeta = getUniverseTabMeta(activeUniverse.id);
-  const focusColor = getPanelAccentColor(palette, visualTheme, 'gold');
 
   return (
     <View
       style={[
-        styles.bar,
+        styles.barWrap,
         {
-          paddingBottom: insets.bottom + 8,
-          backgroundColor: palette.ink,
-          borderTopColor: palette.panelBorder,
+          paddingBottom: insets.bottom + 6,
+          backgroundColor: QuestoryTheme.colors.background.panel,
+          borderTopColor: `${skin.accentPrimary}44`,
         },
+        QuestoryTheme.shadow.raised,
       ]}>
-      {state.routes.map((route, index) => {
-        const focused = state.index === index;
-        const meta = tabMeta[route.name] ?? { label: route.name, icon: '•' };
+      <View pointerEvents="none" style={[styles.barGlow, { backgroundColor: skin.glowColor }]} />
+      <View style={styles.bar}>
+        {state.routes.map((route, index) => {
+          const focused = state.index === index;
+          const meta = tabMeta[route.name] ?? { label: route.name, icon: '•' };
 
-        const onPress = () => {
-          void Haptics.selectionAsync();
-          const event = navigation.emit({
-            type: 'tabPress',
-            target: route.key,
-            canPreventDefault: true,
-          });
-          if (!focused && !event.defaultPrevented) {
-            navigation.navigate(route.name);
-          }
-        };
+          const onPress = () => {
+            void Haptics.selectionAsync();
+            const event = navigation.emit({
+              type: 'tabPress',
+              target: route.key,
+              canPreventDefault: true,
+            });
+            if (!focused && !event.defaultPrevented) {
+              navigation.navigate(route.name);
+            }
+          };
 
-        return (
-          <Pressable key={route.key} onPress={onPress} style={styles.tab}>
-            <Text style={[styles.icon, { color: focused ? focusColor : palette.fog }]}>
-              {meta.icon}
-            </Text>
-            <Text
-              style={[
-                styles.label,
-                { color: focused ? focusColor : palette.fog },
-              ]}
-              numberOfLines={1}
-              adjustsFontSizeToFit
-              minimumFontScale={0.8}>
-              {meta.label}
-            </Text>
-            {focused && (
-              <View style={[styles.indicator, { backgroundColor: palette.accent }]} />
-            )}
-          </Pressable>
-        );
-      })}
+          return (
+            <Pressable key={route.key} onPress={onPress} style={styles.tab}>
+              {focused ? (
+                <View
+                  style={[
+                    styles.activePill,
+                    {
+                      backgroundColor: `${skin.accentPrimary}22`,
+                      borderColor: skin.accentPrimary,
+                    },
+                  ]}
+                />
+              ) : null}
+              <Text style={[styles.icon, { color: focused ? skin.accentPrimary : palette.fog }]}>
+                {meta.icon}
+              </Text>
+              <Text
+                style={[
+                  QuestoryTypography.caption,
+                  {
+                    color: focused ? palette.bone : palette.fog,
+                    letterSpacing: focused ? 1.5 : 0.8,
+                    fontSize: 9,
+                  },
+                ]}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.8}>
+                {meta.label}
+              </Text>
+              {focused && visualTheme.panelUsesHolographic ? (
+                <View style={[styles.indicator, { backgroundColor: skin.accentSecondary }]} />
+              ) : focused ? (
+                <View style={[styles.indicator, { backgroundColor: skin.accentPrimary }]} />
+              ) : null}
+            </Pressable>
+          );
+        })}
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  barWrap: {
+    borderTopWidth: 1,
+    position: 'relative',
+  },
+  barGlow: {
+    position: 'absolute',
+    top: -1,
+    left: 24,
+    right: 24,
+    height: 1,
+    opacity: 0.6,
+  },
   bar: {
     flexDirection: 'row',
-    borderTopWidth: 1,
     paddingTop: 8,
     paddingHorizontal: 4,
   },
   tab: {
     flex: 1,
     alignItems: 'center',
-    gap: 2,
-    paddingVertical: 4,
+    gap: 3,
+    paddingVertical: 6,
     minWidth: 0,
+    position: 'relative',
   },
-  icon: { fontSize: 18 },
-  label: { fontFamily: GameFonts.uiSemi, fontSize: 9, letterSpacing: 1, textAlign: 'center' },
+  activePill: {
+    position: 'absolute',
+    top: -2,
+    left: 2,
+    right: 2,
+    bottom: -2,
+    borderWidth: 1,
+    borderRadius: 2,
+  },
+  icon: { fontSize: 18, zIndex: 1 },
   indicator: {
-    width: 20,
+    width: 16,
     height: 2,
-    marginTop: 2,
-    transform: [{ skewX: '-12deg' }],
+    marginTop: 1,
+    transform: [{ skewX: '-10deg' }],
+    zIndex: 1,
   },
 });

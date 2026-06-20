@@ -3,6 +3,8 @@ import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { APP_MASCOTS } from '@/constants/app-mascots';
+import { QuestoryCard } from '@/components/ui/questory-card';
+import { QuestoryStatusPill } from '@/components/ui/questory-status-pill';
 import { GameFonts } from '@/constants/typography';
 import { useGame } from '@/hooks/use-game';
 import { trackAnalyticsOnce } from '@/lib/analytics/analytics-dedupe';
@@ -12,6 +14,8 @@ import { getMascotPreference } from '@/lib/app-mascot-coach';
 import { resolveMascotImageSource, type MascotFraming, type MascotMood } from '@/lib/mascot-assets';
 import { getMascotGuideCopy, type MascotGuideContextId } from '@/lib/mascots/mascot-guide-copy';
 import { playMascotTip } from '@/lib/audio/sound-service';
+import { QuestoryTypography } from '@/theme/typography';
+import { getUniverseAccent } from '@/theme/universe-skins';
 import type { AppMascotId, MascotPreference } from '@/types/narrative';
 
 function shouldShowGuideForPreference(preference: MascotPreference, mascot: AppMascotId): boolean {
@@ -37,6 +41,7 @@ export type MascotGuideCardProps = {
   expandableDetail?: string;
   style?: StyleProp<ViewStyle>;
   respectPreference?: boolean;
+  presentation?: 'default' | 'transmission';
 };
 
 function MascotGuideCardComponent({
@@ -52,6 +57,7 @@ function MascotGuideCardComponent({
   expandableDetail,
   style,
   respectPreference = true,
+  presentation = 'default',
 }: MascotGuideCardProps) {
   const { activeUniverse, playerProgress } = useGame();
   const { palette } = activeUniverse;
@@ -100,31 +106,45 @@ function MascotGuideCardComponent({
   if (!shouldShowCard) return null;
 
   const isFull = mode === 'full';
-  const imageWidth = isFull ? 120 : 72;
-  const imageHeight = isFull ? 160 : 88;
+  const accent = getUniverseAccent(activeUniverse.id);
+  const isTransmission = presentation === 'transmission';
+  const directiveLabel = mascot === 'sasha' ? 'SASHA DIRECTIVE' : 'MARCUS NOTE';
+  const imageWidth = isTransmission ? 88 : isFull ? 120 : 72;
+  const imageHeight = isTransmission ? 112 : isFull ? 160 : 88;
 
-  return (
-    <View
-      style={[
-        isFull ? styles.fullCard : styles.compactCard,
-        { backgroundColor: palette.night, borderColor: palette.panelBorder },
-        style,
-      ]}>
-      <View style={styles.row}>
+  const body = (
+    <>
+      {!isTransmission ? (
+        <QuestoryStatusPill label="COMMAND BRIEFING" tone="accent" universeId={activeUniverse.id} />
+      ) : (
+        <QuestoryStatusPill label={directiveLabel} tone="accent" universeId={activeUniverse.id} />
+      )}
+      <View style={[styles.row, isTransmission && styles.transmissionRow]}>
         {shouldShowImage ? (
           <Image
             source={imageSource}
-            style={[styles.image, { width: imageWidth, height: imageHeight, borderColor: palette.gold }]}
-            contentFit="contain"
+            style={[
+              styles.image,
+              isTransmission && styles.transmissionImage,
+              {
+                width: imageWidth,
+                height: imageHeight,
+                borderColor: accent.primary,
+                backgroundColor: palette.ink,
+              },
+            ]}
+            contentFit={isTransmission ? 'cover' : 'contain'}
             transition={120}
           />
         ) : null}
         <View style={styles.copy}>
-          <Text style={[styles.eyebrow, { color: palette.accent }]}>
-            {mascotMeta.name.toUpperCase()} · {mascotMeta.role.toUpperCase()}
-          </Text>
-          <Text style={[styles.title, { color: palette.bone }]}>{title}</Text>
-          <Text style={[styles.message, { color: palette.fog }]}>{message}</Text>
+          {!isTransmission ? (
+            <Text style={[QuestoryTypography.caption, { color: palette.accent }]}>
+              {mascotMeta.name.toUpperCase()} · {mascotMeta.role.toUpperCase()}
+            </Text>
+          ) : null}
+          <Text style={[QuestoryTypography.sectionTitle, { color: palette.bone }]}>{title}</Text>
+          <Text style={[QuestoryTypography.flavor, { color: palette.fog }]}>{message}</Text>
           {expandableDetail ? (
             <>
               {expanded ? (
@@ -147,7 +167,24 @@ function MascotGuideCardComponent({
           <Text style={[styles.actionLabel, { color: palette.bone }]}>{actionLabel}</Text>
         </Pressable>
       ) : null}
-    </View>
+    </>
+  );
+
+  if (isTransmission) {
+    return (
+      <View style={[isTransmission ? styles.transmissionContent : undefined, style]}>
+        {body}
+      </View>
+    );
+  }
+
+  return (
+    <QuestoryCard
+      variant="elevated"
+      style={style}
+      contentStyle={[isFull ? styles.fullContent : styles.compactContent]}>
+      {body}
+    </QuestoryCard>
   );
 }
 
@@ -162,6 +199,7 @@ type MascotGuideFromContextProps = {
   mode?: 'compact' | 'full';
   expandableDetail?: string;
   style?: StyleProp<ViewStyle>;
+  presentation?: 'default' | 'transmission';
 };
 
 export function MascotGuideFromContext({
@@ -173,6 +211,7 @@ export function MascotGuideFromContext({
   mode,
   expandableDetail,
   style,
+  presentation,
 }: MascotGuideFromContextProps) {
   const copy = getMascotGuideCopy(contextId);
 
@@ -189,22 +228,33 @@ export function MascotGuideFromContext({
       screenName={screenName}
       expandableDetail={expandableDetail}
       style={style}
+      presentation={presentation}
     />
   );
 }
 
 const styles = StyleSheet.create({
-  compactCard: {
-    borderWidth: 1,
-    padding: 10,
+  compactContent: {
     gap: 8,
-    transform: [{ skewX: '-2deg' }],
+    padding: 10,
+    paddingLeft: 14,
   },
-  fullCard: {
-    borderWidth: 1,
-    padding: 14,
+  fullContent: {
     gap: 10,
-    transform: [{ skewX: '-2deg' }],
+    padding: 14,
+    paddingLeft: 18,
+  },
+  transmissionContent: {
+    gap: 10,
+    paddingHorizontal: 14,
+    paddingBottom: 14,
+  },
+  transmissionRow: {
+    alignItems: 'stretch',
+  },
+  transmissionImage: {
+    borderRadius: 2,
+    overflow: 'hidden',
   },
   row: {
     flexDirection: 'row',
@@ -215,29 +265,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 4,
     flexShrink: 0,
-    backgroundColor: '#0a0810',
   },
   copy: {
     flex: 1,
-    gap: 4,
+    gap: 6,
     minWidth: 0,
-  },
-  eyebrow: {
-    fontFamily: GameFonts.uiSemi,
-    fontSize: 8,
-    letterSpacing: 1.4,
-  },
-  title: {
-    fontFamily: GameFonts.uiSemi,
-    fontSize: 13,
-    letterSpacing: 0.3,
-    lineHeight: 18,
-  },
-  message: {
-    fontFamily: GameFonts.displayRegular,
-    fontSize: 12,
-    lineHeight: 17,
-    fontStyle: 'italic',
   },
   detail: {
     fontFamily: GameFonts.ui,

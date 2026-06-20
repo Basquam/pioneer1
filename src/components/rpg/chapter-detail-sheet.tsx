@@ -4,8 +4,11 @@ import Animated, { FadeInUp } from 'react-native-reanimated';
 import { DialoguePanel } from '@/components/rpg/dialogue-panel';
 import { GlowButton } from '@/components/rpg/glow-button';
 import { NarrativeMediaFrame } from '@/components/rpg/narrative-media-frame';
+import { QuestoryCard } from '@/components/ui/questory-card';
+import { QuestoryStatusPill } from '@/components/ui/questory-status-pill';
 import { GameLayout } from '@/constants/layout';
-import { GameFonts } from '@/constants/typography';
+import { getUniverseCardVariant } from '@/theme/universe-skins';
+import { QuestoryTypography } from '@/theme/typography';
 import { parseDialogueLine } from '@/lib/narrative-helpers';
 import { getChapterSceneImage } from '@/lib/narrative-media';
 import type { ChapterStatus } from '@/lib/chapter-progress';
@@ -47,6 +50,7 @@ export function ChapterDetailSheet({ visible, chapter, mode, onClose }: ChapterD
             },
           ]}
           onPress={(event) => event.stopPropagation()}>
+          <QuestoryCard variant={getUniverseCardVariant(activeUniverse.id)} accentStrip contentStyle={styles.dossierCard}>
           <ScrollView
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
@@ -59,66 +63,60 @@ export function ChapterDetailSheet({ visible, chapter, mode, onClose }: ChapterD
 
             {mode === 'locked' ? (
               <>
-                <Animated.Text entering={FadeInUp.duration(400)} style={[styles.eyebrow, { color: palette.villainGlow }]}>
-                  {statusLabel}
-                </Animated.Text>
+                <QuestoryStatusPill label={statusLabel} tone="muted" />
                 <Animated.Text
                   entering={FadeInUp.duration(450).delay(80)}
-                  style={[styles.territory, { color: palette.bone }]}
+                  style={[QuestoryTypography.cinematicTitle, { color: palette.bone, fontSize: 26, lineHeight: 32 }]}
                   numberOfLines={2}>
                   {chapter.territoryName.toUpperCase()}
                 </Animated.Text>
-                <Animated.Text entering={FadeInUp.duration(450).delay(120)} style={[styles.chapterRef, { color: palette.fog }]}>
+                <Animated.Text entering={FadeInUp.duration(450).delay(120)} style={[QuestoryTypography.caption, { color: palette.fog, letterSpacing: 1.5 }]}>
                   {ui.sectorRef(chapter.order, chapter.title)}
                 </Animated.Text>
                 <Animated.Text
                   entering={FadeInUp.duration(450).delay(140)}
-                  style={[styles.lockedMessage, { color: palette.fog }]}>
+                  style={[QuestoryTypography.flavor, { color: palette.fog, fontSize: 16, lineHeight: 24, marginTop: 8 }]}>
                   {ui.lockedSectorMessage}
                 </Animated.Text>
               </>
             ) : mode === 'active' ? (
               <>
-                <Animated.Text entering={FadeInUp.duration(400)} style={[styles.eyebrow, { color: palette.accent }]}>
-                  {statusLabel}
-                </Animated.Text>
+                <QuestoryStatusPill label={statusLabel} tone="accent" />
                 <Animated.Text
                   entering={FadeInUp.duration(450).delay(80)}
-                  style={[styles.territory, { color: palette.bone }]}
+                  style={[QuestoryTypography.cinematicTitle, { color: palette.bone, fontSize: 26, lineHeight: 32 }]}
                   numberOfLines={2}>
                   {chapter.territoryName.toUpperCase()}
                 </Animated.Text>
-                <Animated.Text entering={FadeInUp.duration(450).delay(120)} style={[styles.chapterRef, { color: palette.fog }]}>
+                <Animated.Text entering={FadeInUp.duration(450).delay(120)} style={[QuestoryTypography.caption, { color: palette.fog, letterSpacing: 1.5 }]}>
                   {ui.sectorRef(chapter.order, chapter.title)}
                 </Animated.Text>
                 <Animated.Text
                   entering={FadeInUp.duration(450).delay(140)}
-                  style={[styles.summary, { color: palette.fog }]}>
+                  style={[QuestoryTypography.flavor, { color: palette.fog }]}>
                   {chapter.summary}
                 </Animated.Text>
                 <Animated.Text
                   entering={FadeInUp.duration(450).delay(180)}
-                  style={[styles.purpose, { color: palette.accent }]}>
+                  style={[QuestoryTypography.flavor, { color: palette.accent }]}>
                   {chapter.dramaticPurpose}
                 </Animated.Text>
               </>
             ) : (
               <>
-                <Animated.Text entering={FadeInUp.duration(400)} style={[styles.eyebrow, { color: palette.gold }]}>
-                  {statusLabel}
-                </Animated.Text>
+                <QuestoryStatusPill label={statusLabel} tone="success" />
                 <Animated.Text
                   entering={FadeInUp.duration(450).delay(80)}
-                  style={[styles.territory, { color: palette.bone }]}
+                  style={[QuestoryTypography.cinematicTitle, { color: palette.bone, fontSize: 26, lineHeight: 32 }]}
                   numberOfLines={2}>
                   {chapter.territoryName.toUpperCase()}
                 </Animated.Text>
-                <Animated.Text entering={FadeInUp.duration(450).delay(120)} style={[styles.chapterRef, { color: palette.fog }]}>
+                <Animated.Text entering={FadeInUp.duration(450).delay(120)} style={[QuestoryTypography.caption, { color: palette.fog, letterSpacing: 1.5 }]}>
                   {ui.sectorRef(chapter.order, chapter.title)}
                 </Animated.Text>
                 <Animated.Text
                   entering={FadeInUp.duration(450).delay(140)}
-                  style={[styles.summary, { color: palette.fog }]}>
+                  style={[QuestoryTypography.flavor, { color: palette.fog }]}>
                   {chapter.summary}
                 </Animated.Text>
                 <Animated.View entering={FadeInUp.duration(450).delay(220)} style={styles.dialogueWrap}>
@@ -135,6 +133,7 @@ export function ChapterDetailSheet({ visible, chapter, mode, onClose }: ChapterD
 
             <GlowButton label="CLOSE" onPress={onClose} />
           </ScrollView>
+          </QuestoryCard>
         </Pressable>
       </Pressable>
     </Modal>
@@ -149,30 +148,9 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: GameLayout.screenPaddingHorizontal,
-    paddingTop: 24,
+    paddingTop: 8,
     gap: 14,
   },
-  eyebrow: { fontFamily: GameFonts.ui, fontSize: 11, letterSpacing: 3 },
-  territory: { fontFamily: GameFonts.display, fontSize: 26, letterSpacing: 2, lineHeight: 32 },
-  chapterRef: { fontFamily: GameFonts.uiSemi, fontSize: 11, letterSpacing: 1.5 },
-  summary: {
-    fontFamily: GameFonts.displayRegular,
-    fontSize: 14,
-    lineHeight: 21,
-    fontStyle: 'italic',
-  },
-  purpose: {
-    fontFamily: GameFonts.displayRegular,
-    fontSize: 14,
-    lineHeight: 21,
-    fontStyle: 'italic',
-  },
-  lockedMessage: {
-    fontFamily: GameFonts.displayRegular,
-    fontSize: 16,
-    lineHeight: 24,
-    fontStyle: 'italic',
-    marginTop: 8,
-  },
+  dossierCard: { gap: 12 },
   dialogueWrap: { marginTop: 4 },
 });

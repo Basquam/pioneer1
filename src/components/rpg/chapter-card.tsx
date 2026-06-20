@@ -4,6 +4,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { PanelChrome } from '@/components/rpg/panel-chrome';
 import { NarrativeMediaFrame } from '@/components/rpg/narrative-media-frame';
+import { QuestoryMissionPill } from '@/components/ui/questory-mission-pill';
 import { GameFonts } from '@/constants/typography';
 import {
   getPanelAccentColor,
@@ -15,6 +16,7 @@ import { useGame } from '@/hooks/use-game';
 import { useUniverseVisualTheme } from '@/hooks/use-universe-visual-theme';
 import { useUniverseUiCopy } from '@/lib/universe-ui-copy';
 import { getChapterSceneImage } from '@/lib/narrative-media';
+import { QuestoryTypography } from '@/theme/typography';
 import type { ChapterStatus } from '@/lib/chapter-progress';
 import type { Chapter } from '@/types/narrative';
 
@@ -89,25 +91,32 @@ export function ChapterCard({ chapter, status, index, onPress }: ChapterCardProp
 
       <View style={styles.body}>
         <View style={styles.titleRow}>
-          <Text style={[styles.title, { color: palette.bone }]} numberOfLines={2}>
+          <Text style={[QuestoryTypography.sectionTitle, { color: palette.bone, flex: 1, minWidth: 120 }]} numberOfLines={2}>
             {chapter.title}
           </Text>
           {isCompleted && (
-            <View style={[styles.stamp, { borderColor: goldAccent }]}>
-              <Text style={[styles.stampText, { color: goldAccent }]}>{visualTheme.completedStamp}</Text>
-            </View>
+            <QuestoryMissionPill
+              status="completed"
+              label={visualTheme.completedStamp}
+              universeId={activeUniverse.id}
+            />
           )}
           {isActive && (
-            <View style={[styles.stamp, { borderColor: palette.accent, backgroundColor: `${palette.accent}22` }]}>
-              <Text style={[styles.stampText, { color: palette.accent }]}>{visualTheme.activeStamp}</Text>
-            </View>
+            <QuestoryMissionPill
+              status="active"
+              label={visualTheme.activeStamp}
+              universeId={activeUniverse.id}
+            />
+          )}
+          {isLocked && (
+            <QuestoryMissionPill status="locked" universeId={activeUniverse.id} />
           )}
         </View>
-        <Text style={[styles.summary, { color: palette.fog }]} numberOfLines={isLocked ? 2 : 3}>
+        <Text style={[QuestoryTypography.flavor, { color: palette.fog }]} numberOfLines={isLocked ? 2 : 3}>
           {isLocked ? ui.lockedSectorCardMessage : chapter.summary}
         </Text>
         {isActive && (
-          <Text style={[styles.purpose, { color: palette.accent }]}>{chapter.dramaticPurpose}</Text>
+          <Text style={[QuestoryTypography.flavor, { color: palette.accent }]}>{chapter.dramaticPurpose}</Text>
         )}
       </View>
       </View>
@@ -136,14 +145,4 @@ const styles = StyleSheet.create({
   indexText: { fontFamily: GameFonts.ui, fontSize: 16 },
   body: { flex: 1, gap: 6, minWidth: 0 },
   titleRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },
-  title: { fontFamily: GameFonts.ui, fontSize: 16, letterSpacing: 1, flex: 1, minWidth: 120 },
-  stamp: {
-    borderWidth: 1,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    transform: [{ skewX: '-8deg' }],
-  },
-  stampText: { fontFamily: GameFonts.uiSemi, fontSize: 8, letterSpacing: 1.5 },
-  summary: { fontFamily: GameFonts.displayRegular, fontSize: 13, fontStyle: 'italic', lineHeight: 19 },
-  purpose: { fontFamily: GameFonts.displayRegular, fontSize: 13, fontStyle: 'italic', lineHeight: 19 },
 });

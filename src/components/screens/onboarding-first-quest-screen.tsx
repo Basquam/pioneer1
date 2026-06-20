@@ -8,9 +8,12 @@ import { GlowButton } from '@/components/rpg/glow-button';
 import { MascotGuideFromContext } from '@/components/rpg/mascot-guide-card';
 import { OnboardingScroll } from '@/components/rpg/onboarding-scroll';
 import { ScreenShell } from '@/components/rpg/screen-shell';
-import { SectionHeader } from '@/components/rpg/section-header';
+import { QuestoryCard } from '@/components/ui/questory-card';
+import { QuestorySectionHeader } from '@/components/ui/questory-section-header';
+import { QuestoryStatusPill } from '@/components/ui/questory-status-pill';
 import { getQuestSuiteById, resolveAddQuestSuitePrefill } from '@/constants/quest-suites';
 import { GameFonts } from '@/constants/typography';
+import { QuestoryTypography } from '@/theme/typography';
 import { useGame } from '@/hooks/use-game';
 import { ONBOARDING_FIRST_QUEST_PLACEHOLDERS } from '@/lib/onboarding-flow';
 import { getTaskCategoryMeta } from '@/lib/task-categories';
@@ -93,10 +96,10 @@ export function OnboardingFirstQuestScreen() {
           )
         }>
         <Animated.View entering={FadeInDown.duration(500)}>
-          <SectionHeader eyebrow="FIRST QUEST" title="NAME ONE REAL TASK" />
+          <QuestorySectionHeader eyebrow="FIRST QUEST" title="NAME ONE REAL TASK" />
         </Animated.View>
 
-        <Text style={[styles.subtitle, { color: palette.fog }]}>
+        <Text style={[QuestoryTypography.flavor, { color: palette.fog, marginTop: -4 }]}>
           Small is fine. Vague is fine. You can always complete it.
         </Text>
 
@@ -107,43 +110,47 @@ export function OnboardingFirstQuestScreen() {
 
         {!createdQuest ? (
           <>
-            <TextInput
-              value={title}
-              onChangeText={setTitle}
-              placeholder={placeholder}
-              placeholderTextColor={`${palette.fog}88`}
-              autoFocus
-              returnKeyType="done"
-              onSubmitEditing={() => {
-                if (trimmedTitle && !createdQuest) handleCreate();
-              }}
-              style={[
-                styles.input,
-                { color: palette.bone, borderColor: palette.panelBorder, backgroundColor: palette.panel },
-              ]}
-            />
+            <QuestoryCard contentStyle={styles.inputCard}>
+              <TextInput
+                value={title}
+                onChangeText={setTitle}
+                placeholder={placeholder}
+                placeholderTextColor={`${palette.fog}88`}
+                autoFocus
+                returnKeyType="done"
+                onSubmitEditing={() => {
+                  if (trimmedTitle && !createdQuest) handleCreate();
+                }}
+                style={[
+                  styles.input,
+                  { color: palette.bone, borderColor: palette.panelBorder, backgroundColor: palette.ink },
+                ]}
+              />
+            </QuestoryCard>
 
             {trimmedTitle && categoryMeta ? (
-              <View style={[styles.suggestionBox, { borderColor: palette.panelBorder, backgroundColor: palette.night }]}>
-                <Text style={[styles.suggestionLabel, { color: palette.gold }]}>SUGGESTED</Text>
-                <Text style={[styles.suggestionLine, { color: palette.bone }]}>
+              <QuestoryCard contentStyle={styles.suggestionCard}>
+                <QuestoryStatusPill label="SUGGESTED" tone="accent" />
+                <Text style={[QuestoryTypography.bodySmall, { color: palette.bone }]}>
                   {categoryMeta.realWorldLabel}
                   {suiteMeta ? ` · ${suiteMeta.shortLabel}` : ''}
                 </Text>
-              </View>
+              </QuestoryCard>
             ) : null}
           </>
         ) : (
-          <View style={[styles.createdCard, { borderColor: palette.gold, backgroundColor: palette.panel }]}>
-            <Text style={[styles.realLabel, { color: palette.accent }]}>YOUR TASK</Text>
-            <Text style={[styles.realTask, { color: palette.bone }]}>{createdQuest.originalTitle}</Text>
+          <QuestoryCard variant="elevated" contentStyle={styles.createdCard}>
+            <QuestoryStatusPill label="YOUR TASK" tone="muted" />
+            <Text style={[QuestoryTypography.body, { color: palette.bone }]}>{createdQuest.originalTitle}</Text>
             <View style={[styles.divider, { backgroundColor: palette.panelBorder }]} />
-            <Text style={[styles.narrativeLabel, { color: palette.gold }]}>YOUR QUEST</Text>
-            <Text style={[styles.narrativeTitle, { color: palette.bone }]}>{createdQuest.narrativeTitle}</Text>
-            <Text style={[styles.narrativeDescription, { color: palette.fog }]}>
+            <QuestoryStatusPill label="YOUR QUEST" tone="accent" />
+            <Text style={[QuestoryTypography.cinematicTitle, { color: palette.bone, fontSize: 22, lineHeight: 28 }]}>
+              {createdQuest.narrativeTitle}
+            </Text>
+            <Text style={[QuestoryTypography.flavor, { color: palette.fog }]}>
               {createdQuest.narrativeDescription}
             </Text>
-          </View>
+          </QuestoryCard>
         )}
       </OnboardingScroll>
     </ScreenShell>
@@ -151,13 +158,7 @@ export function OnboardingFirstQuestScreen() {
 }
 
 const styles = StyleSheet.create({
-  subtitle: {
-    fontFamily: GameFonts.displayRegular,
-    fontSize: 14,
-    lineHeight: 20,
-    fontStyle: 'italic',
-    marginTop: -4,
-  },
+  inputCard: { gap: 0, padding: 0, paddingLeft: 0 },
   input: {
     borderWidth: 1,
     paddingHorizontal: 14,
@@ -165,39 +166,8 @@ const styles = StyleSheet.create({
     fontFamily: GameFonts.ui,
     fontSize: 16,
     lineHeight: 22,
-    transform: [{ skewX: '-2deg' }],
   },
-  suggestionBox: {
-    borderWidth: 1,
-    padding: 10,
-    gap: 4,
-    transform: [{ skewX: '-2deg' }],
-  },
-  suggestionLabel: {
-    fontFamily: GameFonts.uiSemi,
-    fontSize: 9,
-    letterSpacing: 1.5,
-  },
-  suggestionLine: {
-    fontFamily: GameFonts.ui,
-    fontSize: 12,
-    letterSpacing: 0.3,
-  },
-  createdCard: {
-    borderWidth: 1,
-    padding: 16,
-    gap: 8,
-    transform: [{ skewX: '-2deg' }],
-  },
-  realLabel: { fontFamily: GameFonts.uiSemi, fontSize: 9, letterSpacing: 2 },
-  realTask: { fontFamily: GameFonts.ui, fontSize: 15, lineHeight: 21 },
+  suggestionCard: { gap: 8 },
+  createdCard: { gap: 8 },
   divider: { height: 1, marginVertical: 4 },
-  narrativeLabel: { fontFamily: GameFonts.uiSemi, fontSize: 9, letterSpacing: 2 },
-  narrativeTitle: { fontFamily: GameFonts.display, fontSize: 22, lineHeight: 28 },
-  narrativeDescription: {
-    fontFamily: GameFonts.displayRegular,
-    fontSize: 13,
-    lineHeight: 19,
-    fontStyle: 'italic',
-  },
 });

@@ -8,11 +8,11 @@ import Animated, { FadeIn, FadeInDown, FadeInUp, ZoomIn } from 'react-native-rea
 import { DialoguePanel } from '@/components/rpg/dialogue-panel';
 import { ChapterRewardBadge } from '@/components/rpg/chapter-reward-badge';
 import { GlowButton } from '@/components/rpg/glow-button';
-import { PanelChrome } from '@/components/rpg/panel-chrome';
 import { SagaEndingCard } from '@/components/rpg/saga-ending-card';
 import { ScanlineOverlay } from '@/components/rpg/visual-theme-overlay';
+import { QuestoryCard } from '@/components/ui/questory-card';
+import { QuestoryStatusPill } from '@/components/ui/questory-status-pill';
 import { GameLayout } from '@/constants/layout';
-import { GameFonts } from '@/constants/typography';
 import {
   getPanelAccentColor,
   getPanelBorderColor,
@@ -32,6 +32,7 @@ import type { ChapterCompleteState } from '@/types/narrative';
 import { useGame } from '@/hooks/use-game';
 import { useUniverseVisualTheme } from '@/hooks/use-universe-visual-theme';
 import { useUniverseUiCopy } from '@/lib/universe-ui-copy';
+import { QuestoryTypography } from '@/theme/typography';
 
 export function ChapterCompleteOverlay({ chapterComplete }: { chapterComplete: ChapterCompleteState }) {
   const ui = useUniverseUiCopy();
@@ -99,18 +100,15 @@ export function ChapterCompleteOverlay({ chapterComplete }: { chapterComplete: C
           keyboardShouldPersistTaps="handled"
           bounces={false}>
           <Animated.View entering={FadeIn.duration(500)} style={styles.content}>
-          <Animated.Text
-            entering={ZoomIn.duration(650).delay(120)}
-            style={[styles.stamp, { color: goldAccent, borderColor: goldAccent, transform: skewTransform(visualTheme.buttonSkew) }]}
-          >
-            {ui.chapterCompleteStamp}
-          </Animated.Text>
+          <Animated.View entering={ZoomIn.duration(650).delay(120)} style={styles.stampWrap}>
+            <QuestoryStatusPill label={ui.chapterCompleteStamp} tone="success" />
+          </Animated.View>
 
           <Animated.View entering={FadeInDown.duration(550).delay(220)} style={styles.titleBlock}>
-            <Text style={[styles.chapterEyebrow, { color: palette.accent }]}>
+            <Text style={[QuestoryTypography.sectionEyebrow, { color: palette.accent, letterSpacing: 3 }]}>
               {ui.sectorEyebrow(chapterComplete.chapterOrder)}
             </Text>
-            <Text style={[styles.chapterTitle, { color: palette.bone }]} numberOfLines={3}>
+            <Text style={[QuestoryTypography.cinematicTitle, { color: palette.bone, textAlign: 'center' }]} numberOfLines={3}>
               {chapterComplete.chapterTitle.toUpperCase()}
             </Text>
           </Animated.View>
@@ -125,42 +123,36 @@ export function ChapterCompleteOverlay({ chapterComplete }: { chapterComplete: C
             />
           </Animated.View>
 
-          <Animated.View entering={FadeInUp.duration(500).delay(520)} style={styles.rewardsRow}>
-            <RewardStat label="XP EARNED" value={`+${chapterComplete.earnedXp}`} palette={palette} goldAccent={goldAccent} />
-            <View style={[styles.rewardDivider, { backgroundColor: panelBorder }]} />
-            <RewardStat
-              label={ui.reputationLabel}
-              value={`+${chapterComplete.earnedReputation}`}
-              palette={palette}
-              goldAccent={goldAccent}
-            />
+          <Animated.View entering={FadeInUp.duration(500).delay(520)}>
+            <QuestoryCard variant="elevated" contentStyle={styles.rewardsRow}>
+              <RewardStat label="XP EARNED" value={`+${chapterComplete.earnedXp}`} palette={palette} goldAccent={goldAccent} />
+              <View style={[styles.rewardDivider, { backgroundColor: panelBorder }]} />
+              <RewardStat
+                label={ui.reputationLabel}
+                value={`+${chapterComplete.earnedReputation}`}
+                palette={palette}
+                goldAccent={goldAccent}
+              />
+            </QuestoryCard>
           </Animated.View>
 
           {chapterComplete.newRewards?.map((reward, index) => (
             <Animated.View
               key={reward.id}
-              entering={FadeInUp.duration(500).delay(600 + index * 80)}
-              style={[
-                styles.unlockCard,
-                {
-                  backgroundColor: palette.panel,
-                  borderColor: goldAccent,
-                  transform: skewTransform(visualTheme.cardSkew),
-                },
-              ]}>
-              {visualTheme.panelTopHighlight && (
-                <PanelChrome palette={palette} theme={visualTheme} />
-              )}
-              <ChapterRewardBadge reward={reward} palette={palette} size="md" />
-              <Text style={[styles.unlockEyebrow, { color: goldAccent }]}>
-                {reward.type === 'storyUnlock' ? 'STORY UNLOCKED' : 'NEW REWARD'}
-              </Text>
-              <Text style={[styles.unlockType, { color: palette.accent }]}>
-                {REWARD_TYPE_LABELS[reward.type]}
-              </Text>
-              <Text style={[styles.unlockName, { color: palette.bone }]}>
-                {reward.name}
-              </Text>
+              entering={FadeInUp.duration(500).delay(600 + index * 80)}>
+              <QuestoryCard variant="elevated" contentStyle={styles.unlockCard}>
+                <ChapterRewardBadge reward={reward} palette={palette} size="md" />
+                <QuestoryStatusPill
+                  label={reward.type === 'storyUnlock' ? 'STORY UNLOCKED' : 'NEW REWARD'}
+                  tone="accent"
+                />
+                <Text style={[QuestoryTypography.caption, { color: palette.accent, letterSpacing: 2 }]}>
+                  {REWARD_TYPE_LABELS[reward.type]}
+                </Text>
+                <Text style={[QuestoryTypography.cinematicTitle, { color: palette.bone, fontSize: 22, textAlign: 'center' }]}>
+                  {reward.name}
+                </Text>
+              </QuestoryCard>
             </Animated.View>
           ))}
 
@@ -169,11 +161,12 @@ export function ChapterCompleteOverlay({ chapterComplete }: { chapterComplete: C
               <Animated.View
                 entering={FadeInUp.duration(500).delay(680)}
                 style={[styles.compactEnding, { borderColor: palette.gold, backgroundColor: palette.panel }]}>
-                <Text style={[styles.compactEndingEyebrow, { color: palette.accent }]}>
-                  SAGA ENDING · {chapterComplete.sagaFinale.title.toUpperCase()}
-                </Text>
+                <QuestoryStatusPill
+                  label={`SAGA ENDING · ${chapterComplete.sagaFinale.title.toUpperCase()}`}
+                  tone="accent"
+                />
                 {chapterComplete.sagaFinale.universeFlavorLine ? (
-                  <Text style={[styles.compactEndingFlavor, { color: palette.gold }]}>
+                  <Text style={[QuestoryTypography.flavor, { color: palette.gold, textAlign: 'center' }]}>
                     {chapterComplete.sagaFinale.universeFlavorLine}
                   </Text>
                 ) : null}
@@ -241,8 +234,8 @@ function SecondaryButton({
           transform: skewTransform(visualTheme.buttonSkew),
         },
       ]}>
-      <Text style={[styles.secondaryLabel, { color: palette.bone }]}>{label}</Text>
-      {hint ? <Text style={[styles.secondaryHint, { color: palette.fog }]}>{hint}</Text> : null}
+      <Text style={[QuestoryTypography.caption, { color: palette.bone, letterSpacing: 2, textAlign: 'center' }]}>{label}</Text>
+      {hint ? <Text style={[QuestoryTypography.caption, { color: palette.fog, marginTop: 4, textAlign: 'center', paddingHorizontal: 8 }]}>{hint}</Text> : null}
     </Pressable>
   );
 }
@@ -260,8 +253,8 @@ function RewardStat({
 }) {
   return (
     <View style={styles.rewardStat}>
-      <Text style={[styles.rewardLabel, { color: palette.fog }]}>{label}</Text>
-      <Text style={[styles.rewardValue, { color: goldAccent }]}>{value}</Text>
+      <Text style={[QuestoryTypography.caption, { color: palette.fog, letterSpacing: 2 }]}>{label}</Text>
+      <Text style={[QuestoryTypography.statValue, { color: goldAccent, fontSize: 24 }]}>{value}</Text>
     </View>
   );
 }
@@ -292,24 +285,8 @@ const styles = StyleSheet.create({
     transform: [{ rotate: '12deg' }],
   },
   content: { gap: 18 },
-  stamp: {
-    alignSelf: 'center',
-    fontFamily: GameFonts.ui,
-    fontSize: 12,
-    letterSpacing: 5,
-    borderWidth: 1,
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-  },
+  stampWrap: { alignSelf: 'center' },
   titleBlock: { alignItems: 'center', gap: 6 },
-  chapterEyebrow: { fontFamily: GameFonts.ui, fontSize: 11, letterSpacing: 3 },
-  chapterTitle: {
-    fontFamily: GameFonts.display,
-    fontSize: 28,
-    letterSpacing: 2,
-    textAlign: 'center',
-    lineHeight: 34,
-  },
   dialogueWrap: { marginTop: 4 },
   rewardsRow: {
     flexDirection: 'row',
@@ -319,19 +296,11 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   rewardStat: { alignItems: 'center', gap: 4, minWidth: 120 },
-  rewardLabel: { fontFamily: GameFonts.uiSemi, fontSize: 9, letterSpacing: 2 },
-  rewardValue: { fontFamily: GameFonts.ui, fontSize: 24, letterSpacing: 2 },
   rewardDivider: { width: 1, height: 36 },
   unlockCard: {
-    borderWidth: 1,
-    padding: 14,
     gap: 6,
     alignItems: 'center',
-    overflow: 'hidden',
   },
-  unlockEyebrow: { fontFamily: GameFonts.ui, fontSize: 10, letterSpacing: 3 },
-  unlockType: { fontFamily: GameFonts.uiSemi, fontSize: 9, letterSpacing: 2 },
-  unlockName: { fontFamily: GameFonts.display, fontSize: 22, letterSpacing: 1, textAlign: 'center' },
   buttonWrap: { marginTop: 8, gap: 4 },
   secondaryButton: {
     width: '100%',
@@ -340,32 +309,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginTop: 4,
   },
-  secondaryLabel: { fontFamily: GameFonts.ui, fontSize: 14, letterSpacing: 2, textAlign: 'center' },
-  secondaryHint: {
-    fontFamily: GameFonts.uiSemi,
-    fontSize: 9,
-    letterSpacing: 1.5,
-    marginTop: 4,
-    textAlign: 'center',
-    paddingHorizontal: 8,
-  },
   compactEnding: {
     borderWidth: 1,
     padding: 12,
     gap: 6,
     transform: [{ skewX: '-2deg' }],
-  },
-  compactEndingEyebrow: {
-    fontFamily: GameFonts.uiSemi,
-    fontSize: 9,
-    letterSpacing: 2,
-    textAlign: 'center',
-  },
-  compactEndingFlavor: {
-    fontFamily: GameFonts.displayRegular,
-    fontSize: 12,
-    lineHeight: 17,
-    fontStyle: 'italic',
-    textAlign: 'center',
   },
 });

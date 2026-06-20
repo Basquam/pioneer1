@@ -6,7 +6,7 @@ import { MascotGuideFromContext } from '@/components/rpg/mascot-guide-card';
 import { OnboardingScroll } from '@/components/rpg/onboarding-scroll';
 import { SagaCard } from '@/components/rpg/saga-card';
 import { ScreenShell } from '@/components/rpg/screen-shell';
-import { SectionHeader } from '@/components/rpg/section-header';
+import { QuestorySectionHeader } from '@/components/ui/questory-section-header';
 import { useGame } from '@/hooks/use-game';
 import {
   formatChapterProgress,
@@ -35,7 +35,7 @@ export function OnboardingSagaScreen() {
           />
         }>
         <Animated.View entering={FadeInDown.duration(500)}>
-          <SectionHeader
+          <QuestorySectionHeader
             eyebrow={`${activeUniverse.name.toUpperCase()} · SAGA LIBRARY`}
             title="CHOOSE YOUR PATH"
             right={formatChapterProgress(

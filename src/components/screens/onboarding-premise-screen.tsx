@@ -6,10 +6,12 @@ import Animated, { FadeIn, FadeInDown, FadeOut } from 'react-native-reanimated';
 import { GlowButton } from '@/components/rpg/glow-button';
 import { OnboardingScroll } from '@/components/rpg/onboarding-scroll';
 import { ScreenShell } from '@/components/rpg/screen-shell';
-import { SectionHeader } from '@/components/rpg/section-header';
+import { QuestoryCard } from '@/components/ui/questory-card';
+import { QuestorySectionHeader } from '@/components/ui/questory-section-header';
+import { QuestoryStatusPill } from '@/components/ui/questory-status-pill';
 import { ONBOARDING_PREMISE_BEATS } from '@/data/narrative/onboarding-premise';
 import { GameLayout } from '@/constants/layout';
-import { GameFonts } from '@/constants/typography';
+import { QuestoryTypography } from '@/theme/typography';
 import { useGame } from '@/hooks/use-game';
 
 export function OnboardingPremiseScreen() {
@@ -49,23 +51,23 @@ export function OnboardingPremiseScreen() {
           )
         }>
         <Animated.View entering={FadeInDown.duration(500)} style={styles.header}>
-          <SectionHeader eyebrow="THE PREMISE" title="HOW PIONEER\nWORKS" />
+          <QuestorySectionHeader eyebrow="THE PREMISE" title="HOW QUESTORY\nWORKS" />
         </Animated.View>
 
         <View style={styles.beatArea}>
           <Animated.View
             key={beat.badge}
             entering={FadeIn.duration(450)}
-            exiting={FadeOut.duration(200)}
-            style={[styles.beatCard, { backgroundColor: palette.panel, borderColor: palette.gold }]}>
-            <View style={[styles.accent, { backgroundColor: palette.primary }]} />
-            <View style={styles.beatInner}>
-              <Text style={[styles.beatBadge, { color: palette.accent }]}>BEAT {beat.badge}</Text>
-              <Text style={[styles.beatTitle, { color: palette.bone }]} numberOfLines={3}>
+            exiting={FadeOut.duration(200)}>
+            <QuestoryCard variant="elevated" contentStyle={styles.beatContent}>
+              <QuestoryStatusPill label={`BEAT ${beat.badge}`} tone="accent" />
+              <Text style={[QuestoryTypography.cinematicTitle, { color: palette.bone, fontSize: 24, lineHeight: 30 }]} numberOfLines={3}>
                 {beat.title}
               </Text>
-              <Text style={[styles.beatLine, { color: palette.fog }]}>{beat.line}</Text>
-            </View>
+              <Text style={[QuestoryTypography.flavor, { color: palette.fog, fontSize: 17, lineHeight: 26 }]}>
+                {beat.line}
+              </Text>
+            </QuestoryCard>
           </Animated.View>
 
           <View style={styles.dots}>
@@ -92,23 +94,9 @@ export function OnboardingPremiseScreen() {
 const styles = StyleSheet.create({
   header: { paddingTop: 24 },
   beatArea: { justifyContent: 'center', gap: GameLayout.screenContentGap, minHeight: 280 },
-  beatCard: {
-    borderWidth: 2,
-    overflow: 'hidden',
-    transform: [{ skewX: '-2deg' }],
-  },
-  accent: { position: 'absolute', left: 0, top: 0, bottom: 0, width: 4 },
-  beatInner: { padding: 22, paddingLeft: 26, gap: 10, transform: [{ skewX: '2deg' }] },
-  beatBadge: { fontFamily: GameFonts.ui, fontSize: 10, letterSpacing: 3 },
-  beatTitle: { fontFamily: GameFonts.display, fontSize: 24, letterSpacing: 2, lineHeight: 30 },
-  beatLine: {
-    fontFamily: GameFonts.displayRegular,
-    fontSize: 17,
-    lineHeight: 26,
-    fontStyle: 'italic',
-  },
+  beatContent: { gap: 10 },
   dots: { flexDirection: 'row', justifyContent: 'center', gap: 6, alignItems: 'center' },
   dot: { height: 8, borderRadius: 1 },
   tapZone: { alignItems: 'flex-end', paddingBottom: 4 },
-  tapHint: { fontFamily: GameFonts.ui, fontSize: 11, letterSpacing: 2 },
+  tapHint: { ...QuestoryTypography.caption, letterSpacing: 2 },
 });

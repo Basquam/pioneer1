@@ -22,7 +22,9 @@ import { RecurringQuestsPanel } from '@/components/rpg/recurring-quests-panel';
 import { SagaPreviewEmptyState } from '@/components/rpg/saga-preview-empty-state';
 import { ScreenScroll } from '@/components/rpg/screen-scroll';
 import { ScreenShell } from '@/components/rpg/screen-shell';
-import { SectionHeader } from '@/components/rpg/section-header';
+import { QuestoryCard } from '@/components/ui/questory-card';
+import { QuestorySectionHeader } from '@/components/ui/questory-section-header';
+import { QuestoryStatusPill } from '@/components/ui/questory-status-pill';
 import { TodayFocusDisplay } from '@/components/rpg/today-focus-display';
 import { VillainMeter } from '@/components/rpg/villain-meter';
 import { XpPopup } from '@/components/rpg/xp-popup';
@@ -171,7 +173,7 @@ export function QuestsScreen() {
     return (
       <ScreenShell edges={['top']} padded={false}>
         <ScreenScroll>
-          <SectionHeader eyebrow={ui.questBoardEyebrow} title={ui.questBoardTitle} />
+          <QuestorySectionHeader eyebrow={ui.questBoardEyebrow} title={ui.questBoardTitle} />
           {isSagaPreview ? (
             <SagaPreviewEmptyState />
           ) : (
@@ -272,9 +274,14 @@ export function QuestsScreen() {
         }
         return (
           <>
-            <Text style={[styles.tabHint, { color: palette.fog }]}>
-              {ui.chapterTemplatesLabel} — story missions for this chapter.
-            </Text>
+            <View style={styles.sectionHeaderRow}>
+              <QuestoryStatusPill label="CHAPTER BOUNTIES" tone="accent" />
+            </View>
+            <QuestorySectionHeader
+              compact
+              title={ui.chapterTemplatesLabel}
+              subtitle="Story missions for this chapter."
+            />
             {tabContent.chapterQuests.map((quest, index) => (
               <QuestCard key={quest.id} quest={quest} index={index} />
             ))}
@@ -286,11 +293,11 @@ export function QuestsScreen() {
           <>
             {tabContent.entries.length > 0 ? (
               <>
-                <Text style={[styles.sectionMiniLabel, { color: palette.gold }]}>TODAY'S INSTANCES</Text>
+                <QuestorySectionHeader compact title="TODAY'S INSTANCES" />
                 <QuestBoardEntryList entries={tabContent.entries} />
               </>
             ) : null}
-            <Text style={[styles.sectionMiniLabel, { color: palette.gold }]}>ACTIVE ROUTINES</Text>
+            <QuestorySectionHeader compact title="ACTIVE ROUTINES" />
             <RecurringQuestsPanel />
           </>
         );
@@ -366,7 +373,10 @@ export function QuestsScreen() {
     <ScreenShell edges={['top']} padded={false}>
       <ScreenScroll>
         <Animated.View entering={FadeInDown.duration(500)}>
-          <SectionHeader eyebrow={ui.questBoardEyebrow} title={ui.questBoardTitle} />
+          <QuestoryCard variant="elevated" contentStyle={styles.commandPanel}>
+            <QuestoryStatusPill label="QUEST BOARD" tone="accent" />
+            <QuestorySectionHeader eyebrow={ui.questBoardEyebrow} title={ui.questBoardTitle} />
+          </QuestoryCard>
         </Animated.View>
         {hasOnboarded ? (
           <>
@@ -422,6 +432,7 @@ export function QuestsScreen() {
 }
 
 const styles = StyleSheet.create({
+  commandPanel: { gap: 8 },
   hint: {
     fontFamily: GameFonts.displayRegular,
     fontSize: 13,
@@ -432,6 +443,9 @@ const styles = StyleSheet.create({
   tabBody: {
     marginTop: 12,
     gap: 10,
+  },
+  sectionHeaderRow: {
+    marginBottom: 4,
   },
   tabHint: {
     fontFamily: GameFonts.displayRegular,

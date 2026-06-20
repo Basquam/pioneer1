@@ -1,6 +1,6 @@
 import { type Href, router } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 
 import { CharacterDialoguePanel } from '@/components/rpg/character-dialogue-panel';
@@ -8,10 +8,10 @@ import { GlowButton } from '@/components/rpg/glow-button';
 import { NarrativeMediaFrame } from '@/components/rpg/narrative-media-frame';
 import { OnboardingScroll } from '@/components/rpg/onboarding-scroll';
 import { ScreenShell } from '@/components/rpg/screen-shell';
-import { SectionHeader } from '@/components/rpg/section-header';
+import { QuestorySectionHeader } from '@/components/ui/questory-section-header';
 import { VillainMeter } from '@/components/rpg/villain-meter';
 import { GameLayout } from '@/constants/layout';
-import { GameFonts } from '@/constants/typography';
+import { QuestoryTypography } from '@/theme/typography';
 import { useGame } from '@/hooks/use-game';
 import { getChapterSceneImage } from '@/lib/narrative-media';
 
@@ -58,7 +58,7 @@ export function OnboardingIntroScreen() {
     <ScreenShell edges={['top', 'bottom']}>
       <OnboardingScroll
         footer={showStart ? <GlowButton label="ENTER HQ" hint="BEGIN YOUR RUN" onPress={handleStart} /> : undefined}>
-        <SectionHeader
+        <QuestorySectionHeader
           eyebrow={`PROLOGUE · ${activeSaga.title.toUpperCase()}`}
           title={activeUniverse.locationName.toUpperCase()}
         />
@@ -79,7 +79,7 @@ export function OnboardingIntroScreen() {
             <Animated.Text
               entering={FadeIn}
               exiting={FadeOut}
-              style={[styles.tap, { color: activeUniverse.palette.gold }]}>
+              style={[QuestoryTypography.caption, { color: activeUniverse.palette.gold, letterSpacing: 3, textAlign: 'right' }]}>
               TAP TO CONTINUE ›
             </Animated.Text>
           )}
@@ -101,11 +101,5 @@ const styles = StyleSheet.create({
     gap: GameLayout.screenContentGap,
     minHeight: 240,
     paddingBottom: GameLayout.screenContentGap,
-  },
-  tap: {
-    fontFamily: GameFonts.ui,
-    fontSize: 12,
-    letterSpacing: 3,
-    textAlign: 'right',
   },
 });
